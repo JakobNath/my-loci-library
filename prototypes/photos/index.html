@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>My Loci Library · Photo ideas</title>
+<link rel="icon" href="../../app/icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../styles/tokens.css">
+<link rel="stylesheet" href="photos.css">
+</head>
+<body>
+<main>
+  <p class="small"><a href="../">Prototypes</a></p>
+  <h1>Photos: every book has a picture</h1>
+  <p class="lede">Ideas for how photos work in the app, with mockups. The goal: every book has a picture, and the picture is how we recognize the book, both on screen and on the shelf. The Luther's Works volume uses your real photos; the other books are drawn stand-ins.</p>
+
+  <h3>What each book could carry</h3>
+  <table>
+    <tr><th>Picture</th><th>Where it comes from</th><th>Sizes kept</th><th>Your photos, actual size</th></tr>
+    <tr><td>Front cover</td><td>Phone photo, or an online cover found by the lookup</td><td>200 px tall (offline on every phone), 600 px tall (loaded when opened)</td><td>3 KB + 48 KB</td></tr>
+    <tr><td>Spine</td><td>Phone photo</td><td>300 px tall (offline), 900 px tall (opened); taller than covers because a spine is narrow and its lettering is small</td><td>4 KB + 33 KB</td></tr>
+    <tr><td>Fallback</td><td>Drawn by the app from the title, author and a color; costs nothing to store</td><td>none</td><td>0 KB</td></tr>
+  </table>
+  <p class="small muted">So a spine adds about 37 KB per book, or about 4 KB to what each phone keeps offline. For 1,500 physical books that is about 55 MB more in the data repository and 6 MB more on each phone. The 4,000 Logos books have no spines to photograph.</p>
+
+  <h2><span class="num">1</span>Taking the photos</h2>
+  <p>In batch add, after the barcode: the cover, then the spine. Each step can be skipped and done later. The spine screen uses a tall, narrow guide, so the phone stays upright and the spine fills the frame. The same four-corner straightening already planned for covers works for spines, and the spine photo is turned upright automatically.</p>
+  <div class="row" id="capture"></div>
+
+  <h2><span class="num">2</span>The Library: four ways to look at it</h2>
+  <p>One switch at the top of the Library, remembered on each device. Tap the buttons inside the phone to try each view.</p>
+  <div class="row">
+    <div class="mock"><div class="phone phone-tall" id="views"></div></div>
+    <div class="mock" style="flex:1;min-width:260px">
+      <div class="cap"><b>Covers</b>The current design: large front covers. Beautiful for books with designed covers; a plain cloth cover like Luther's Works shows only a signature.</div>
+      <div class="cap"><b>Best face</b>Each book shows whichever picture says more. A plain cover gets its spine instead, standing on a mat in the spine's own color, so the grid stays even. The app can suggest this when a cover photo has very little detail (a simple contrast measure, no AI), and one switch on the book page changes it.</div>
+      <div class="cap"><b>Spines</b>A wall of spines at their real proportions: thick books look thick. About four times as many books fit on a screen. This is the view to use standing in a used bookstore: what you see on our phone looks like what you see on their shelf.</div>
+      <div class="cap"><b>Shelves</b>The same spines grouped by location, in shelf order, so the screen looks like the real bookcase. Handy for finding a book and for checking a shelf against the catalog.</div>
+    </div>
+  </div>
+
+  <h2><span class="num">3</span>The book page</h2>
+  <p>Three ways to show both photos on a book's own page.</p>
+  <div class="row" id="detail"></div>
+
+  <h2><span class="num">4</span>Lists and search</h2>
+  <p>In the list view and in search results, a thin spine makes a neat thumbnail that matches what you see on a shelf. Cover thumbnails are kept where a book has no spine photo.</p>
+  <div class="row" id="lists"></div>
+
+  <h2><span class="num">5</span>Sets and series</h2>
+  <p>A multi-volume set shown as a row of spines, numbered, with the gaps visible. At a glance you see which volumes of Luther's Works we have, which are on the wishlist, and which are missing. Tap a missing volume to put it on the wishlist (try it).</p>
+  <div class="row"><div class="mock-wide card" id="set"></div></div>
+
+  <h2><span class="num">6</span>Every book has a picture</h2>
+  <p>Nothing is ever shown without a picture. Until a real photo exists, the app draws one, and it keeps a quiet count of what is still to photograph.</p>
+  <div class="row" id="fallbacks"></div>
+
+  <h2>Recommendation</h2>
+  <div class="rec">
+    <ol>
+      <li><strong>Take two photos of every physical book: cover and spine.</strong> Both are optional at entry, but the app keeps asking gently (a "Needs photo" filter and a progress count) until both exist.</li>
+      <li><strong>Library views: Covers, Best face and Spines</strong>, with <strong>Best face as the default</strong>: it keeps the large-cover look while plain cloth books show their spines. Add <strong>Shelves</strong> once locations are filled in.</li>
+      <li><strong>Book page: cover and spine side by side</strong>, with the 3D book as a small extra if you both like it (it is a few lines of CSS, no library).</li>
+      <li><strong>Spine thumbnails in lists and search.</strong></li>
+      <li><strong>The set view</strong> for any book with a set title, such as Luther's Works, Chemnitz's Works and the Ante-Nicene Fathers.</li>
+      <li><strong>Logos books:</strong> the downloaded cover, plus a drawn spine in the cover's own color, so they fit every view.</li>
+      <li><strong>Photos belong to the copy</strong>, not the edition, because two copies can look different (the two Treasury of Daily Prayer bindings). The edition shows its first copy's photos; a wishlist item can carry a photo taken in the store.</li>
+    </ol>
+    <p class="small muted">What this changes in the plan: the master plan has covers only, so spines, the Best face and Spines views, the set view and the "Needs photo" filter would be added to <code>PLAN.md</code>, and the data format (written next, in phase 3) would include a spine image and a "show spine as this book's picture" setting. Nothing here needs a new library or an outside service. Say which of these you want and I will update the plan before building.</p>
+  </div>
+
+  <footer>My Loci Library. Created by Jakob Nath. Luther's Works volume 4 is a real photo from our shelf; all other covers are drawn stand-ins.</footer>
+</main>
+<script type="module" src="photos.js"></script>
+</body>
+</html>
