@@ -123,6 +123,12 @@ test('the files a phone loads stay within the size budget', () => {
   assert.ok(total <= SIZE_BUDGET, `the app's code is ${Math.round(total / 1024)} KB without comments; the budget is ${SIZE_BUDGET / 1024} KB`);
 });
 
+test('the service worker keeps every file the app loads, so it opens offline', () => {
+  const listed = [...read('sw.js').matchAll(/'([\w/.-]+\.(?:js|css|html|png|svg|webmanifest))'/g)].map(match => match[1]);
+  const missing = loadedFiles().filter(file => !listed.includes(file));
+  assert.deepEqual(missing, [], 'add these to FILES in sw.js');
+});
+
 test('the size check counts code, not comments, and follows imports', () => {
   assert.equal(codeSize('// a note\nconst a = 1; // why\n/* more */\n'), 'const a = 1; \n'.length);
   assert.equal(codeSize("const url = 'https://example.org';"), "const url = 'https://example.org';".length);

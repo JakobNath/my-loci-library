@@ -6,12 +6,12 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v0.5.1';
+const VERSION = 'v0.5.2';
 const FILES = [
   './', 'index.html', 'main.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
   'core/ids.js', 'core/html.js', 'core/dating.js', 'core/anthology.js', 'core/pages.js', 'core/sizes.js',
-  'core/search.js', 'core/records.js', 'core/merge.js', 'core/shelf-order.js', 'core/zotero.js', 'core/library.js', 'core/contents.js',
+  'core/search.js', 'core/records.js', 'core/merge.js', 'core/shelf-order.js', 'core/zotero.js', 'core/library.js', 'core/contents.js', 'core/entry.js',
   'edges/storage.js', 'edges/device.js',
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/edit.js',
 ];
