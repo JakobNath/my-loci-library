@@ -1,10 +1,12 @@
 // Runs every test file listed below and prints one line per check.
-// To add tests, create a file in this folder that exports `tests`,
-// an array of { name, fn } objects, and add its name to this list.
-// A test fails if its function throws (or returns a rejected promise).
+// Each file exports `tests`, an array of { name, fn } objects; a test fails
+// if its function throws (or returns a rejected promise). The core tests
+// also run in Node: `node --test` (see tests/core.test.mjs).
 
 const testFiles = [
-  // './date-parser.test.js',
+  '../core/tests/dating.tests.js',
+  '../core/tests/catalog.tests.js',
+  '../core/tests/records.tests.js',
 ];
 
 const out = document.getElementById('out');

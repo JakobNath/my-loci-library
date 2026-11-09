@@ -6,14 +6,14 @@
 <title>My Loci Library self-tests</title>
 <link rel="stylesheet" href="../styles/tokens.css">
 <style>
-  body { margin: 0; padding: var(--space-4); background: var(--bg); color: var(--ink); font: 14px/1.5 ui-monospace, Consolas, monospace; }
-  .pass { color: green; } .fail { color: #c00; font-weight: bold; }
+  body { margin: 0; padding: var(--space-4); background: var(--bg); color: var(--ink); font: var(--fs-small)/1.5 var(--font-mono); }
+  .pass { color: var(--accent-ink); } .fail { color: var(--fail-ink); font-weight: bold; }
   #total { margin-top: var(--space-3); font-weight: bold; }
 </style>
 </head>
 <body>
 <h1>Self-tests</h1>
-<p>Each line is one check. Red lines need fixing. The list of test files is in <code>tests/run.js</code>.</p>
+<p>Each line is one check. Red lines need fixing. The list of test files is in <code>tests/run.js</code>. The same core tests, plus the architecture checks, also run with <code>node --test</code> in this folder.</p>
 <div id="out"></div>
 <p id="total">Running...</p>
 <script type="module" src="run.js"></script>
