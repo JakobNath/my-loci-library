@@ -1,5 +1,6 @@
 // One entry point for finding a book in a photo: covers and spines.
 //   find(source, 'cover' | 'spine', opts) -> { quad, auto, reason, relErr, errPx, ms, ... }
+// opts.fromCamera: the photo came from the app's own camera (never pre-cropped).
 // `auto` says whether the result may be saved without asking. The bar is a
 // share of the book's width: 2% for covers, 3% of the (much narrower) spine
 // width for spines, so a spine 50 pixels wide must be right to 1.5 pixels.
@@ -11,8 +12,20 @@ import { pixels, refineQuad } from './refine.js';
 
 export const BARS = { cover: 0.02, spine: 0.03 };
 
+// A photo straight from a phone camera has the camera's exact shape. One
+// cropped in the phone's editor almost never does, so it is used as it is.
+const CAMERA_SHAPES = [3 / 4, 9 / 16, 1, 2 / 3];
+export function isCameraFrame(w, h) {
+  const r = Math.min(w, h) / Math.max(w, h);
+  return CAMERA_SHAPES.some(c => Math.abs(r - c) / c < 0.012);
+}
+
 export function find(source, kind, opts = {}) {
   const t0 = performance.now();
+  const sw0 = source.videoWidth || source.naturalWidth || source.width, sh0 = source.videoHeight || source.naturalHeight || source.height;
+  if (!opts.fromCamera && !isCameraFrame(sw0, sh0)) {
+    return { kind, found: true, wholeImage: true, quad: [[0, 0], [sw0, 0], [sw0, sh0], [0, sh0]], auto: true, reason: 'Already cropped: used as it is', relErr: 0, errPx: 0, ms: performance.now() - t0 };
+  }
   if (kind === 'spine') {
     const r = findSpine(source, opts);
     const v = spineVerdict(r);

@@ -49,17 +49,20 @@ async function loadSet() {
   truth = { ...truth, ...store.get('loci-lab-truth', {}) };
   const real = list.filter(p => !p.sample).length;
   $('set-status').innerHTML = real
-    ? `${real} real photos from <code>inputs/photos/</code>: ${list.filter(p => p.kind === 'cover').length} covers and ${list.filter(p => p.kind === 'spine').length} spines.`
+    ? `${real} real photos from <code>inputs/photos/</code>: ${list.filter(p => !p.cropped && p.kind === 'cover').length} uncropped covers and ${list.filter(p => !p.cropped && p.kind === 'spine').length} uncropped spines (on the wood table in daylight, one on the duvet), plus ${list.filter(p => p.cropped).length} photos already cropped in the phone's editor. No duplicate files; 18 of them are the photos you sent in chat earlier. Reduced to 1,600 pixels on the long side for this page.`
     : `<strong>Waiting for your test set.</strong> Your 30+ photos in <code>inputs/photos/</code> are not there yet, so this page shows only the one uncropped photo it has (the Concordia Theological Quarterly spine). Nothing on this page is measured on composites any more. When the photos arrive they are added here, and the rates below fill in after the review.`;
   items = [];
-  for (const p of list) {
+  $('results').innerHTML = '';
+  // Uncropped photos first; each result appears as soon as it is ready.
+  const ordered = [...list.filter(p => !p.cropped), ...list.filter(p => p.cropped)];
+  for (const p of ordered) {
     const img = await loadImg(p.file);
     const photo = toCanvas(img);
     const it = { ...p, photo, original: store.get('loci-lab-original', {})[p.file] || false, view: 'after' };
     items.push(it);
+    process(it); renderCard(it);
+    await new Promise(r => setTimeout(r, 0)); // let the page draw between photos
   }
-  $('results').innerHTML = '';
-  for (const it of items) { process(it); renderCard(it); }
   renderRates(); renderReview();
 }
 
@@ -136,7 +139,7 @@ function renderCard(it) {
 
 function renderRates() {
   const rows = ['cover', 'spine'].map(kind => {
-    const all = items.filter(i => i.kind === kind && !i.sample), rev = all.filter(i => truth[i.file]);
+    const all = items.filter(i => i.kind === kind && !i.sample && !i.cropped), rev = all.filter(i => truth[i.file]);
     const s = { n: all.length, rev: rev.length, autoRight: 0, autoWrong: 0, askedRight: 0, askedWrong: 0 };
     for (const i of rev) {
       const ok = errVsTruth({ ...i, quad: i.r.quad }).rel <= BARS[kind];
@@ -144,12 +147,30 @@ function renderRates() {
     }
     return { kind, ...s };
   });
+  const cropped = items.filter(i => i.cropped), keptWhole = cropped.filter(i => i.r.wholeImage && i.r.auto).length;
   const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '—');
-  $('rates').innerHTML = `<table class="tbl-num">
-    <tr><th></th><th>Photos</th><th>Reviewed</th><th>Saved by itself, right</th><th>Saved by itself, wrong</th><th>Asked (would have been right)</th><th>Asked (needed fixing)</th><th>Success rate</th></tr>
+  $('rates').innerHTML = `
+  <h3>Measured against your review</h3>
+  <table class="tbl-num">
+    <tr><th>Uncropped photos</th><th>Photos</th><th>Reviewed</th><th>Saved by itself, right</th><th>Saved by itself, wrong</th><th>Asked (would have been right)</th><th>Asked (needed fixing)</th><th>Success rate</th></tr>
     ${rows.map(r => `<tr><td>${r.kind === 'cover' ? 'Covers' : 'Spines'}</td><td>${r.n}</td><td>${r.rev}</td><td>${r.autoRight}</td><td>${r.autoWrong}</td><td>${r.askedRight}</td><td>${r.askedWrong}</td><td><b>${pct(r.autoRight, r.rev)}</b></td></tr>`).join('')}
   </table>
-  <p class="small muted">Success rate: the share of reviewed photos that were saved without asking <em>and</em> were right. "Saved by itself, wrong" must stay at zero; if it does not, the bar is tightened. ${rows.every(r => !r.n) ? '<span class="pending">No real test photos yet: the table fills in once your photos are added and reviewed.</span>' : ''}</p>`;
+  <p class="small muted">Success rate: the share of reviewed photos that were saved without asking <em>and</em> were right. "Saved by itself, wrong" must stay at zero; if it does not, the bar is tightened. ${rows.some(r => r.rev) ? '' : '<span class="pending">Fills in after the review below.</span>'}</p>
+  <p class="small">Already-cropped photos (from the phone's editor): <b>${keptWhole} of ${cropped.length}</b> recognised and kept whole without asking.</p>
+  <h3>Provisional, checked by eye (9 Nov 2026)</h3>
+  <p class="small">Before your review, every automatic result was checked by eye on magnified corners (good to about 2 to 3 pixels, not 1). These are the numbers after the two fixes described below.</p>
+  <table class="tbl-num">
+    <tr><th>Uncropped photos</th><th>Photos</th><th>Saved by itself, right</th><th>Saved by itself, wrong</th><th>Asked</th><th>Success rate</th></tr>
+    <tr><td>Covers</td><td>14</td><td>12</td><td>0</td><td>2 (a book far from the camera; one right at the edge-clarity limit, which saves in some browsers)</td><td><b>86%</b></td></tr>
+    <tr><td>Spines</td><td>15</td><td>1</td><td>0</td><td>14 (13 because a hand may hide an end)</td><td><b>7%</b></td></tr>
+  </table>
+  <p class="small"><b>What the real photos taught, and what changed:</b></p>
+  <ul class="pros" style="max-width:46em">
+    <li><b>Hands hide spine ends.</b> In 11 of the 15 spine photos a hand holds one end. Before the fix, three spines were saved without asking but cut short where the hand began: the edges were measured precisely, they just stopped at the hand. Now the app checks that the surface just beyond each end matches the surface beside the spine; if something else is there, it asks. In the camera flow the advice is: lay the book on its back cover, or hold it by the middle, never by the ends.</li>
+    <li><b>Already-cropped photos.</b> Two photos cropped in the phone's editor were cropped a second time. Now a photo that does not have a camera's exact shape (3 : 4, 9 : 16 and so on) is used as it is. Photos from the app's own camera are always treated as uncropped.</li>
+    <li><b>White balance on wood.</b> On the wood table, the old rule took the brown wood for a grey mat and would have turned books blue. Measured on these photos, a dark grey surface cannot be told from brown wood by color or texture, so only a light surface (the duvet, the light side of a mat) is now used as white. Everything else gets a cautious estimate from the book itself. None of the test photos were taken on a mat, so the mat path is still untested on real photos.</li>
+    <li><b>Lighting correction was too strong</b> on wood (the book's own shadow looked like dim light). It is now gentler by default and samples the surface further from the book.</li>
+  </ul>`;
 }
 
 // ---------- review: confirm or correct the true edges ----------
@@ -261,7 +282,7 @@ function tick() {
   history.push(ok ? q : null); if (history.length > 6) history.shift();
   const size = Math.max(video.videoWidth, video.videoHeight);
   const steady = history.length === 6 && history.every(h => h) && history.every(h => h.every((p, i) => Math.hypot(p[0] - history[5][i][0], p[1] - history[5][i][1]) < size * 0.012));
-  msg.textContent = (ok ? (steady ? 'Got it' : 'Hold still…') : kind === 'spine' ? 'Fill the frame with the spine, top to bottom' : 'Looking for the cover…') + `  ·  ${Math.round(ms)} ms`;
+  msg.textContent = (ok ? (steady ? 'Got it' : 'Hold still…') : kind === 'spine' ? 'Fill the frame with the spine, top to bottom. Hold the book by its middle, not its ends' : 'Looking for the cover…') + `  ·  ${Math.round(ms)} ms`;
   drawLive(q, ok ? 'rgb(43,212,99)' : 'rgb(227,178,79)', steady ? 1 : history.filter(Boolean).length / 6);
   if (steady) capture();
 }
@@ -277,7 +298,7 @@ function capture(fromPhoto) {
   if (!fromPhoto) { const f = $('flash'); f.classList.add('on'); setTimeout(() => f.classList.remove('on'), 60); if (navigator.vibrate) navigator.vibrate(40); }
   const guide = !fromPhoto && kind === 'spine' ? guideVideo() : undefined;
   const t0 = performance.now();
-  const r = find(frame, kind, { guide });
+  const r = find(frame, kind, { guide, fromCamera: !fromPhoto });
   const e = enhance(frame, r.quad || [[0, 0], [frame.width, 0], [frame.width, frame.height], [0, frame.height]], outH(kind), settings);
   const total = Math.round(performance.now() - t0);
   const box = $('camResult');

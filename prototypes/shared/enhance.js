@@ -2,10 +2,12 @@
 // one light, without changing the book's real colors.
 //
 // Steps, each with a strength from 0 (off) to 1 (full):
-//   whiteBalance  Use the surface around the book (a mat, a bedspread) as a
-//                 neutral grey reference, so a lamp's yellow or a window's
-//                 blue is removed. On a colored surface (wood), a cautious
-//                 estimate from the whole scene is used instead.
+//   whiteBalance  Use a light surface around the book (the white side of a
+//                 mat, a bedspread) as the white reference, so a lamp's yellow
+//                 or a window's blue is removed. On a darker surface (wood, the
+//                 dark side of a mat) a cautious estimate from the book itself
+//                 is used instead, because dark wood and a dark grey mat under
+//                 warm light cannot be told apart.
 //   exposure      Bring a light reference to the same brightness every time
 //                 (or, with a dark reference, the book's highlights).
 //   evenLight     Fit a smooth lighting surface to the background around the
@@ -19,7 +21,7 @@
 import { homography, straighten } from './autocrop.js';
 import { pixels } from './refine.js';
 
-export const DEFAULTS = { whiteBalance: 1, exposure: 1, evenLight: 0.8, levels: 0.6, contrast: 0.15, glare: 0.4, sharpen: 0.35 };
+export const DEFAULTS = { whiteBalance: 1, exposure: 1, evenLight: 0.5, levels: 0.6, contrast: 0.15, glare: 0.4, sharpen: 0.35 };
 
 const TO_LIN = new Float32Array(256);
 for (let i = 0; i < 256; i++) TO_LIN[i] = Math.pow(i / 255, 2.2);
@@ -43,11 +45,15 @@ function surroundSamples(source, quad, W, H) {
     const a = q[e], b = q[(e + 1) % 4], len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
     let nx = -(b[1] - a[1]) / len, ny = (b[0] - a[0]) / len;
     if (nx * ((a[0] + b[0]) / 2 - cx) + ny * ((a[1] + b[1]) / 2 - cy) < 0) { nx = -nx; ny = -ny; }
-    for (let t = 0.1; t <= 0.9; t += 0.1) for (const off of [0.06, 0.12, 0.2]) {
+    for (let t = 0.1; t <= 0.9; t += 0.1) for (const off of [0.12, 0.22, 0.34]) { // away from the book's own shadow
       const d = Math.max(6, short * off), x = a[0] + (b[0] - a[0]) * t + nx * d, y = a[1] + (b[1] - a[1]) * t + ny * d;
       if (x < 2 || y < 2 || x > P.w - 3 || y > P.h - 3) continue;
       const i = ((y | 0) * P.w + (x | 0)) * 4;
-      out.push({ pos: flat(x, y), c: [TO_LIN[P.data[i]], TO_LIN[P.data[i + 1]], TO_LIN[P.data[i + 2]]] });
+      // Texture: how much the brightness changes over a few pixels. Wood grain
+      // and patterned cloth are textured; a mat or a bedspread is smooth.
+      const g = (xx, yy) => { const j = ((Math.max(0, Math.min(P.h - 1, yy)) | 0) * P.w + (Math.max(0, Math.min(P.w - 1, xx)) | 0)) * 4; return 0.3 * P.data[j] + 0.59 * P.data[j + 1] + 0.11 * P.data[j + 2]; };
+      const tex = (Math.abs(g(x + 3, y) - g(x - 3, y)) + Math.abs(g(x, y + 3) - g(x, y - 3))) / (g(x, y) + 10);
+      out.push({ pos: flat(x, y), c: [TO_LIN[P.data[i]], TO_LIN[P.data[i + 1]], TO_LIN[P.data[i + 2]]], tex });
     }
   }
   // Drop outliers (a hand, another book): keep samples near the median brightness.
@@ -105,8 +111,15 @@ export function enhance(source, quad, height, settings = {}) {
   const refL = ref ? lum(...ref) : 0;
   const refDisp = ref ? ref.map(toDisp) : null;
   const sat = refDisp ? (Math.max(...refDisp) - Math.min(...refDisp)) / Math.max(1, Math.max(...refDisp)) : 1;
-  const neutral = ref && sat < 0.28 && toDisp(refL) > 25;
-  info.reference = !ref ? 'none found' : neutral ? (toDisp(refL) > 120 ? 'light surface' : 'dark surface') : 'colored surface (estimated from the scene)';
+  const texture = samples.length ? median(samples.map(s2 => s2.tex)) : 1;
+  info.refColor = refDisp ? refDisp.map(v => Math.round(v)) : null;
+  info.saturation = +sat.toFixed(2); info.texture = +texture.toFixed(3);
+  // Only a light, near-grey surface (a white mat, a bedspread) is trusted as
+  // white. A dark surface cannot be told apart from brown wood by color or
+  // texture (measured on real photos), so then the color is estimated from
+  // the scene instead.
+  const neutral = ref && sat < 0.28 && toDisp(refL) > 150;
+  info.reference = !ref ? 'none found' : neutral ? 'light surface, used as white' : 'surface not trusted as white: color estimated from the scene';
 
   // 1. White balance.
   let gains = [1, 1, 1];
@@ -144,7 +157,7 @@ export function enhance(source, quad, height, settings = {}) {
   let light = null;
   if (S.evenLight > 0 && surface) {
     const f = surface, centre = f(0.5, 0.5);
-    light = (x, y) => Math.max(0.6, Math.min(1.7, Math.exp(-(f(x / W, y / H) - centre) * S.evenLight)));
+    light = (x, y) => Math.max(0.74, Math.min(1.35, Math.exp(-(f(x / W, y / H) - centre) * S.evenLight)));
     let lo = Infinity, hi = 0;
     for (const [u, v] of [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]]) { const c = light(u * W, v * H); lo = Math.min(lo, c); hi = Math.max(hi, c); }
     info.lightingCorrected = `${Math.round((hi / lo - 1) * 100)}% across the book`;

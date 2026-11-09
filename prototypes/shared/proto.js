@@ -135,6 +135,11 @@ const seriesLabel = b => (b.series && b.seriesNo ? `${b.series} ${b.seriesNo}` :
 const isGone = b => b.status === 'gone';
 
 function coverTile(b, size = 'm') {
+  if (b.photo) {
+    // A real photo: shown at its own shape, never cropped to fit.
+    const src = '../' + (size === 's' ? b.photo.coverThumb : b.photo.cover);
+    return `<img class="cover cover-${size} cover-photo${isGone(b) ? ' is-gone' : ''}" src="${src}" alt="" loading="lazy">`;
+  }
   const c = b.cover || { bg: '#555', fg: '#fff', accent: '#ccc' };
   const series = b.seriesNo ? `${b.series.replace('Loeb Classical Library', 'Loeb').replace('Word Biblical Commentary', 'WBC')} ${b.seriesNo}`
     : b.setTitle && b.volume ? `Vol. ${b.volume}` : b.format === 'logos' ? 'Logos' : '';
@@ -157,7 +162,7 @@ function badges(b) {
 
 function tile(b) {
   return `<a class="tile${isGone(b) ? ' is-gone' : ''}" href="#/book/${b.id}">
-    ${coverTile(b, 'm')}
+    <span class="tile-cover">${coverTile(b, 'm')}</span>
     <span class="tile-caption">
       <span class="tile-title">${esc(b.title)}${b.subtitle && b.setTitle ? `<span class="tile-sub">, ${esc(b.subtitle)}</span>` : ''}</span>
       <span class="tile-author">${esc(authorLine(b))}</span>

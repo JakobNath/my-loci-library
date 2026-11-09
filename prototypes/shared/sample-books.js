@@ -359,6 +359,40 @@ export const books = [
     notes: 'Want the CPH hardcover, not the paperback reprint. New about $50; watch for used copies around $30.',
     cover: { bg: '#20402f', fg: '#efe3c4', accent: '#cfa64e' },
   },
+  // Books from our own shelves with real photos (taken 9 Nov 2026), cropped,
+  // straightened and enhanced by the photo prototype. Only what is printed on
+  // the books is filled in; original dates are left for a person to add.
+  ...[
+    ['twotowers', 'The Two Towers', 'Being the second part of The Lord of the Rings', ['J. R. R. Tolkien'], 'William Morrow', 115, { bg: '#e9e1c8', fg: '#7a3b22', accent: '#a65a3f' }],
+    ['graff', 'A History of the Dissolution of Ancient Liturgical Forms in the Lutheran Church of Germany', '', ['Paul Graff'], '', 216, { bg: '#9a9a9e', fg: '#222', accent: '#444' }, [['translator', 'Matthew Carver']]],
+    ['ctq', 'Concordia Theological Quarterly', 'Volume 90, Number 3–4, July/October 2026', [], '', 49, { bg: '#1c2a44', fg: '#e9eef5', accent: '#9fb3d6' }],
+    ['hebrew', 'Basics of Biblical Hebrew Grammar', 'Third Edition', ['Gary D. Pratico', 'Miles V. Van Pelt'], 'Zondervan Academic', 102, { bg: '#f1ece4', fg: '#7a2630', accent: '#7a2630' }],
+    ['prince', 'The Prince', '', ['Niccolò Machiavelli'], 'Oxford University Press', 42, { bg: '#2c3c5c', fg: '#f3efe6', accent: '#b03a3a' }],
+    ['ubs', 'Greek New Testament', "A Reader's Edition (UBS 6)", [], 'Deutsche Bibelgesellschaft', 133, { bg: '#4a2233', fg: '#efe6d6', accent: '#efe6d6' }],
+    ['dangers', 'The Dangers of Christian Practice', 'On Wayward Gifts, Characteristic Damage, and Sin', ['Lauren F. Winner'], 'Yale University Press', 112, { bg: '#cfe1e3', fg: '#4a3a44', accent: '#b0843a' }],
+    ['frw', 'Finding the Right Words', "Offering Care & Comfort When You Don't Know What to Say", ['Wilfred Bockelman'], 'Augsburg', 0, { bg: '#eef2e8', fg: '#6a4a8a', accent: '#2a9a9a' }],
+    ['timeout', 'Time Out', 'Daily Devotions for Workaholics', ['Hurst', 'Kachura', 'Sides'], 'Thomas Nelson', 0, { bg: '#b9cde0', fg: '#1d3557', accent: '#8a5a3a' }],
+    ['twenty', '20 Something Essays by 20 Something Writers', '', [], '', 0, { bg: '#b8262b', fg: '#f0c64a', accent: '#f0c64a' }],
+    ['wbc20', 'Psalms 51–100', '', ['Marvin E. Tate'], 'Word Books', 0, { bg: '#2e4057', fg: '#eef1f5', accent: '#9fb3d6' }, null, ['Word Biblical Commentary', '20']],
+    ['culture', "The Culture of God's Word", '', [], '', 0, { bg: '#d8c27a', fg: '#2e2a20', accent: '#7a5a2a' }],
+    ['bente', 'Historical Introductions to the Book of Concord', '', ['F. Bente'], '', 0, { bg: '#8a2230', fg: '#f3e6d0', accent: '#f3e6d0' }],
+    ['confessions', 'The Lutheran Confessions', '', [], '', 0, { bg: '#1f3a2c', fg: '#eef0ea', accent: '#c9b27a' }],
+    ['discord', 'Discord, Dialogue, and Concord', '', [], '', 0, { bg: '#3a4fa0', fg: '#ffffff', accent: '#e05a7a' }],
+    ['formula', 'Getting into the Formula of Concord', '', [], '', 0, { bg: '#d9792a', fg: '#ffffff', accent: '#ffffff' }],
+    ['gospel', 'One in the Gospel', 'The Formula of Concord for Our Day', ['Friedemann Hebart'], '', 0, { bg: '#8a86c8', fg: '#ffffff', accent: '#d06aa0' }],
+  ].map(([key, title, subtitle, authors, publisher, spineW, cover, contributors, series]) => ({
+    id: 'real-' + key, n: 0, kind: 'owned', format: 'physical', real: true,
+    title, subtitle: subtitle || undefined, authors: authors.length ? authors : undefined, authorLine: authors.length ? undefined : '',
+    contributors: contributors || undefined, publisher: publisher || undefined,
+    series: series ? series[0] : undefined, seriesNo: series ? series[1] : undefined, languages: ['English'],
+    copies: [{ binding: '', location: [], added: '2026-11-09' }],
+    notes: 'Photographed on 9 November 2026 for the photo prototype.',
+    cover,
+    photo: {
+      cover: `photos/real/v-${key}-cover.jpg`, coverThumb: `photos/real/v-${key}-cover-thumb.jpg`,
+      ...(spineW ? { spine: `photos/real/v-${key}-spine.jpg`, spineThumb: `photos/real/v-${key}-spine-thumb.jpg`, spineRatio: spineW / 900 } : {}),
+    },
+  })),
   // Two extra wishlist items so the Wishlist tab has more than one entry.
   {
     id: 'loeb-26-wish', n: 0, kind: 'wish', work: 'confessions',

@@ -101,6 +101,10 @@ main { padding: var(--space-3) var(--space-3) calc(84px + env(safe-area-inset-bo
 .cover.is-generated::after { content: ""; position: absolute; inset: 5%; border: 1px solid var(--c-ac); pointer-events: none; }
 .cover.is-gone { opacity: var(--gone-opacity); filter: grayscale(0.7); }
 .cover-s { width: 44px; flex: none; }
+/* Real photos keep their own shape; tiles line them up along the bottom. */
+.cover-photo { display: block; container-type: normal; padding: 0; aspect-ratio: auto; height: auto; background: none; object-fit: contain; }
+.tile-cover { display: flex; align-items: flex-end; aspect-ratio: 0.62; width: 100%; }
+.tile-cover .cover { width: 100%; }
 .cover-s .cover-series, .cover-s .cover-author { display: none; }
 .cover-empty { background: var(--surface-2); color: var(--muted); border: 1px dashed var(--line); box-shadow: none; font: var(--fs-small) var(--font-ui); }
 

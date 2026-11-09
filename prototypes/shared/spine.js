@@ -175,7 +175,52 @@ export function findSpine(source, opts = {}) {
   lap('refine');
   const quad = R.quad.map(p => [p[0] / k, p[1] / k]);
   const errPx = R.errPx / k, widthPx = R.widthPx / k;
-  return { ...result, quad, errPx, widthPx, relErr: errPx / widthPx, support: R.support, edgeSupport: R.edges.map(e => e.support), cornerErr: R.cornerErr.map(e => e / k), steps, ms: ms() };
+  const ends = endsClear(source, quad);
+  return { ...result, quad, endsClear: ends, errPx, widthPx, relErr: errPx / widthPx, support: R.support, edgeSupport: R.edges.map(e => e.support), cornerErr: R.cornerErr.map(e => e / k), steps, ms: ms() };
+}
+
+/**
+ * Is each end of the spine really its end? Just beyond a true end lies the
+ * same surface as beside the spine's long sides. If something else is there
+ * (a hand, a sleeve, the edge of the photo), the end may be hidden, and the
+ * spine could be cut short. Returns [topClear, bottomClear].
+ */
+export function endsClear(source, quad) {
+  const P = pixels(source, 640), k = P.scale;
+  const q = quad.map(p => [p[0] * k, p[1] * k]);
+  const med = pts => {
+    const ok = pts.filter(([x, y]) => x >= 0 && y >= 0 && x < P.w && y < P.h);
+    if (ok.length < 4) return null;
+    const ch = [0, 1, 2].map(c => ok.map(([x, y]) => P.data[((y | 0) * P.w + (x | 0)) * 4 + c]).sort((a, b) => a - b)[ok.length >> 1]);
+    return { c: ch, share: ok.length / pts.length };
+  };
+  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const width = (Math.hypot(q[1][0] - q[0][0], q[1][1] - q[0][1]) + Math.hypot(q[2][0] - q[3][0], q[2][1] - q[3][1])) / 2;
+  const length = (Math.hypot(q[3][0] - q[0][0], q[3][1] - q[0][1]) + Math.hypot(q[2][0] - q[1][0], q[2][1] - q[1][1])) / 2;
+  const res = [];
+  for (const end of ['top', 'bottom']) {
+    const [a, b] = end === 'top' ? [q[0], q[1]] : [q[3], q[2]];
+    const [ia, ib] = end === 'top' ? [q[3], q[2]] : [q[0], q[1]]; // the opposite end, for direction
+    const ux = (a[0] - ia[0]) / length, uy = (a[1] - ia[1]) / length; // pointing out of this end
+    const nx = -uy, ny = ux;
+    const beyond = [], beside = [];
+    for (let t = 0.2; t <= 0.8; t += 0.15) for (const d of [0.03, 0.05, 0.08]) {
+      const p = lerp(a, b, t); beyond.push([p[0] + ux * d * length, p[1] + uy * d * length]);
+    }
+    for (const t of [0.02, 0.06, 0.1]) for (const side of [-1, 1]) for (const off of [0.8, 1.4]) {
+      const base = side < 0 ? lerp(a, ia, t) : lerp(b, ib, t);
+      const sx = side < 0 ? -nx : nx, sy = side < 0 ? -ny : ny;
+      // Step outwards from the spine's side by a multiple of its width.
+      const mid = lerp(a, b, 0.5), dirx = Math.sign((base[0] - mid[0]) * nx + (base[1] - mid[1]) * ny) || side;
+      beside.push([base[0] + nx * dirx * off * width, base[1] + ny * dirx * off * width]);
+      void sx; void sy;
+    }
+    const B = med(beyond), S = med(beside);
+    if (!B || !S || B.share < 0.8) { res.push(false); continue; }
+    const d = Math.hypot(B.c[0] - S.c[0], B.c[1] - S.c[1], B.c[2] - S.c[2]);
+    res.push(d < 45);
+  }
+  return res;
 }
 
 /** Is a detected spine good enough to save without asking? Stricter than covers. */
@@ -183,6 +228,7 @@ export function spineVerdict(r) {
   if (!r.found) return { auto: false, reason: 'No spine found' };
   if (r.ambiguity > 0.8) return { auto: false, reason: 'Two possible spines' };
   if (r.endsFromGuide) return { auto: false, reason: 'An end is hidden' };
+  if (r.endsClear && !(r.endsClear[0] && r.endsClear[1])) return { auto: false, reason: 'An end may be hidden (a hand?)' };
   // Edges in order: top, right, bottom, left. The long sides must be clearly
   // seen along most of their length; the short ends have fewer samples.
   const es = r.edgeSupport || [0, 0, 0, 0];

@@ -45,15 +45,18 @@ const author = b => (b.authors ? b.authors.join(', ') : (b.authorLine || '').rep
 const ratioOf = b => b.photo && b.photo.spineRatio ? b.photo.spineRatio : Math.min(0.24, Math.max(0.07, ((b.pages || 380) * 0.06 + 7) / 235));
 const styleVars = c => `--c-bg:${c.bg};--c-fg:${c.fg};--c-ac:${c.accent}`;
 
+// Photos of the sample books live under prototypes/photos/real/.
+const src = p => (p.startsWith('photos/') ? '../' + p : p);
+
 function cover(b, thumb) {
-  if (b.photo) return `<img class="cover" src="${thumb ? b.photo.coverThumb : b.photo.cover}" alt="">`;
+  if (b.photo) return `<img class="cover${b.real ? ' cover-real' : ''}" src="${src(thumb ? b.photo.coverThumb : b.photo.cover)}" alt="">`;
   const c = b.cover || { bg: '#555', fg: '#fff', accent: '#ccc' };
   return `<div class="cover drawn" style="${styleVars(c)}"><span class="t">${esc(b.shortTitle || b.title)}</span><span class="r"></span><span class="a">${esc(author(b))}</span></div>`;
 }
 
 function spine(b, h, thumb) {
   const w = Math.round(h * ratioOf(b));
-  if (b.photo) return `<img class="spine-photo" src="${thumb || h <= 160 ? b.photo.spineThumb : b.photo.spine}" style="height:${h}px;width:${w}px" alt="">`;
+  if (b.photo && b.photo.spine) return `<img class="spine-photo" src="${src(thumb || h <= 160 ? b.photo.spineThumb : b.photo.spine)}" style="height:${h}px;width:${w}px" alt="">`;
   const c = b.cover || { bg: '#555', fg: '#fff', accent: '#ccc' };
   if (b.lw) {
     const fs = Math.max(5, Math.round(w * 0.17));
@@ -141,7 +144,8 @@ function renderViews() {
   let body = '';
   if (viewMode === 'covers' || viewMode === 'best') {
     // Luther's Works 4 (the real photos) first, then a mix of plain and designed covers.
-    const firstIds = ['lw-4', 'apostolic-fathers', 'triglotta', 'loeb-36', 'pieper-1', 'confessions-chadwick', 'republic-easton', 'na28'];
+    // Real photos first: Luther's Works 4 and the books photographed on 9 Nov 2026.
+    const firstIds = ['lw-4', ...library.filter(b => b.real).map(b => b.id)];
     const ordered = [...firstIds.map(byId), ...list.filter(b => !firstIds.includes(b.id))];
     body = `<div class="grid2">${ordered.slice(0, 14).map(b => `<div class="tile">${face(b, viewMode)}<div class="tt">${esc(b.title)}${b.vol ? ' ' + b.vol : ''}</div><div class="ta">${esc(author(b))}</div></div>`).join('')}</div>`;
   } else if (viewMode === 'spines') {
