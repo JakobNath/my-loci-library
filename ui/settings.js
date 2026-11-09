@@ -4,7 +4,7 @@
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
 
-export const APP_VERSION = '0.5.2';
+export const APP_VERSION = '0.5.3';
 
 const CHOICES = [
   ['theme', 'Theme', [['device', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']]],
@@ -16,7 +16,8 @@ export function render(container, state, actions) {
   const choicesHtml = CHOICES.map(([key, label, options]) => `<div class="field">${escapeHtml(label)}<div class="chips">`
     + options.map(([value, text]) => `<button class="chip${state.device[key] === value ? ' is-on' : ''}" data-key="${key}" data-value="${value}">${escapeHtml(text)}</button>`).join('')
     + '</div></div>').join('');
-  const storageHtml = escapeHtml(state.storageNote || '');
+  const offline = state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use; it is stored on the first visit with a connection.';
+  const storageHtml = escapeHtml(`${offline} ${state.storageNote || ''}`);
   container.innerHTML = `<div class="page-head"><h1 class="page-title">Settings</h1></div>
     <section class="block"><h2 class="block-title">This device</h2><div class="form">${choicesHtml}</div><p class="page-meta">${storageHtml}</p></section>
     <section class="block"><h2 class="block-title">About</h2><dl class="facts">

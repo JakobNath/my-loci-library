@@ -6,7 +6,7 @@
 // used is shown on each line. Open this page on a phone to check the phone.
 
 import { newRecord } from '../core/records.js';
-import { buildLibrary, viewEntries, searchEntries } from '../core/library.js';
+import { buildLibrary, withSearchText, viewEntries, searchEntries } from '../core/library.js';
 import { openStorage, deleteStorage } from '../edges/storage.js';
 import * as libraryScreen from '../ui/library.js';
 import * as bookScreen from '../ui/book.js';
@@ -86,7 +86,7 @@ export const tests = [
       await storage.replaceRecords(catalog);
       const start = performance.now();
       const records = await storage.allRecords();
-      library = buildLibrary(records);
+      library = buildLibrary(records, { searchText: false }); // as the app does: search text comes after the first screen
       const box = hiddenBox();
       const stop = libraryScreen.render(box, fakeState(library), { setDevice() {} });
       const ms = performance.now() - start;
@@ -98,9 +98,9 @@ export const tests = [
   {
     name: 'searching 10,000 books, per keystroke (10 ms laptop, 100 ms phone)',
     fn() {
-      library = library || buildLibrary(catalog);
+      library = withSearchText(library || buildLibrary(catalog));
       const queries = ['g', 'gr', 'gra', 'grace', 'grace ps', 'logos', 'volume 9999', 'author 12'];
-      const slowest = Math.max(...queries.map(query => time(() => searchEntries(library.entries, query)).ms));
+      const slowest = Math.max(...queries.map(query => time(() => searchEntries(library, query)).ms));
       return check(slowest, BUDGET.search, 'the slowest search');
     },
   },

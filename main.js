@@ -5,7 +5,7 @@
 
 import { openStorage, askForPersistentStorage } from './edges/storage.js';
 import { readDeviceSettings, saveDeviceSettings } from './edges/device.js';
-import { buildLibrary } from './core/library.js';
+import { buildLibrary, withSearchText } from './core/library.js';
 import { makeId } from './core/ids.js';
 import { withField } from './core/records.js';
 import { escapeHtml } from './core/html.js';
@@ -32,6 +32,7 @@ const state = {
   route: { name: 'library', id: '' },
   query: '',
   storageNote: '',
+  offlineReady: false,
 };
 let storage = null;
 let stopScreen = () => {};
@@ -163,7 +164,7 @@ async function start() {
     storage = await openStorage();
     const records = await storage.allRecords();
     for (const record of records) state.records.set(record.id, record);
-    state.library = buildLibrary(records);
+    state.library = buildLibrary(records, { searchText: false });
     const shared = await storage.meta('settings');
     if (shared) state.settings = { ...SHARED_DEFAULTS, ...shared };
   } catch (error) {
@@ -171,6 +172,9 @@ async function start() {
     showNote(error.message);
   }
   render();
+  // The search text is built just after the first screen appears; a search
+  // typed before then still works, only a little more slowly.
+  setTimeout(() => { state.library = withSearchText(state.library); }, 0);
   // Once the screen is up, fold many separate changes into the snapshot,
   // so the next start stays fast (edges/storage.js).
   if (storage) setTimeout(async () => {
@@ -193,6 +197,16 @@ function registerServiceWorker() {
   // While developing on this computer, cached files would hide each edit;
   // add ?sw to the address to test offline use locally.
   if (['localhost', '127.0.0.1'].includes(location.hostname) && !location.search.includes('sw')) return;
+  // Tell the person once the app is stored on this device, so they know it
+  // will open with no connection.
+  navigator.serviceWorker.ready.then(() => {
+    state.offlineReady = true;
+    if (!state.device.offlineNoticeShown) {
+      showNote('Ready to use offline');
+      state.device = { ...state.device, offlineNoticeShown: true };
+      saveDeviceSettings(state.device);
+    }
+  });
   navigator.serviceWorker.register('sw.js').then(registration => {
     const offer = worker => showNote('New version', 'Reload', () => worker.postMessage('activate'));
     if (registration.waiting && navigator.serviceWorker.controller) offer(registration.waiting);

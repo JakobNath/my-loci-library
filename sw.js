@@ -6,7 +6,7 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v0.5.2';
+const VERSION = 'v0.5.3';
 const FILES = [
   './', 'index.html', 'main.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
@@ -21,7 +21,11 @@ self.addEventListener('install', event => {
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(names => Promise.all(names.filter(name => name !== VERSION).map(name => caches.delete(name)))));
+  // Remove older versions, and look after open pages at once, so even the
+  // first visit can go offline without a second reload.
+  event.waitUntil(caches.keys()
+    .then(names => Promise.all(names.filter(name => name !== VERSION).map(name => caches.delete(name))))
+    .then(() => self.clients.claim()));
 });
 
 // The page asks the waiting version to take over when "Reload" is tapped.
@@ -36,5 +40,10 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET' || url.origin !== location.origin) return;
   const path = url.pathname.slice(new URL(self.registration.scope).pathname.length);
   if (!FILES.includes(path || './')) return;
-  event.respondWith(caches.match(event.request, { ignoreSearch: true }).then(hit => hit || fetch(event.request)));
+  // ignoreVary: GitHub Pages marks files "Vary: Accept-Encoding", and some
+  // browsers (Firefox) would otherwise refuse a stored copy when a page
+  // load's headers differ from those used when it was stored.
+  event.respondWith(caches.open(VERSION)
+    .then(cache => cache.match(path || './', { ignoreSearch: true, ignoreVary: true }))
+    .then(hit => hit || fetch(event.request)));
 });

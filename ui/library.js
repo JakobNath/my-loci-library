@@ -74,7 +74,7 @@ export function render(container, state, actions) {
 
 /** Search results, drawn in place of the screen while the search box has text. */
 export function renderSearch(container, state) {
-  const results = searchEntries(state.library.entries, state.query);
+  const results = searchEntries(state.library, state.query);
   const wishes = state.library.wishlist.filter(wish => matchesSearch(wish.searchText, state.query)).map(wish => wish.item);
   const total = results.length + wishes.length;
   const countHtml = escapeHtml(`${total ? `${total} found` : 'Nothing found'}${results.length >= 50 ? ' · showing the first 50' : ''}`);
