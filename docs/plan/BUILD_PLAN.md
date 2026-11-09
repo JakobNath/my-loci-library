@@ -89,10 +89,10 @@ During the stop, iterate on the designs until a direction is chosen. Then:
   - how trash, value history (one entry per day or session), partial acquired dates, original dates and disputed datings, anthology contents and Logos extra columns are stored
   - one complete example of each record type, including an anthology (NA28) and a disputed date (Didache)
   **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
-- [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping.
+- [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
   **Check:** the core imports cleanly in the browser test page and in `node --test`.
-- [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος".
-  **Check:** all pass in both the browser and Node.
+- [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος"; `escapeHtml`. Add the architecture tests from `CODE_STYLE.md` section 8, as short scans of the source files: `core/` imports nothing outside `core/` and uses no browser or Node globals; only `edges/sync-github.js` mentions `api.github.com`, and only each lookup edge mentions its service; no file outside `edges/storage.js` uses `indexedDB`; every `innerHTML` assignment uses `escapeHtml` for data; the app's own files stay within the size budget. Folders that don't exist yet pass trivially, so the tests are already in place when phase 5 creates them.
+  **Check:** all pass in both the browser and Node, and each architecture test fails when a deliberate violation is added.
 - [ ] **3.4 Test data.** Turn all 21 sample books into valid records in `my-loci-library-test-data`, following `DATA_FORMAT.md`, and generate `catalog.json`. Add a 66-book Bible contents list to the docs for pasting.
   **Check:** every record validates, and the counts match `SAMPLE_BOOKS.md`.
 - [ ] **3.5 Share the core with the tools repo.** Run `update-core`, and add a tools test that fails if the two copies differ.
@@ -119,6 +119,10 @@ Each check is a small throwaway script or page. Write each result and any fallba
 
 ## Phase 5: App skeleton
 
+Prototype code, including the photo detection and enhancement, must be rewritten to `CODE_STYLE.md` before it enters the app. Nothing is copied from `prototypes/` as it is.
+
+- [ ] **5.0 Folder layout.** Set up the layout from `CODE_STYLE.md` section 2: `core/` (already there), `edges/` (one module per outside system: `storage.js`, `sync-github.js`, `lookup-openlibrary.js`, `lookup-googlebooks.js`, `camera.js`, `photo.js`, `device.js`, each created when its step needs it), `ui/` (one file per screen exporting `render(container, state, actions)`), and `main.js`, which holds the app's top-level state and wires the rest together.
+  **Check:** the architecture tests from step 3.3 run against the new folders and pass.
 - [ ] **5.1 App shell:** `index.html`, a web app manifest with the chosen icon, a simple service worker (offline app files, background version check, a "New version, reload" note), and hash routes (`#/book/<id>`, `#/wishlist`, `#/settings`). Uses `styles/tokens.css`.
   **Check:** it works offline after one visit, and a new deploy shows the reload note.
 - [ ] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
