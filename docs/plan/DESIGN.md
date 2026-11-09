@@ -70,3 +70,16 @@ Each mode uses two greens: **accent** fills things (top bar, buttons, selected c
 ## Light and dark
 
 Both modes follow the device by default. The settings page (phase 8) offers "follow device", "light" and "dark", which set `data-theme` on the page; `styles/tokens.css` already handles all three.
+
+## Drawn spines
+
+Chosen on 9 November 2026 after five rounds in `prototypes/spines/`. When a book has no spine photo, the shelf view draws its spine:
+
+- An outline: the paper color inside (`--surface`) and a dashed edge.
+- The edge is the plain gray (`--muted`, 1 px) when the book has no cover image, and a softened version of the cover's color (1.5 px) when it has one. Online covers and our own photos both count. Softened means little saturation (at most 22%) and middle lightness (38–72%), so drawn spines sit back and photographed spines stand out.
+- The title in the book serif, one weight (400) for everything, set small like a printed spine (about 8.5–11 px), as large as the spine allows, in one line or two on a wide spine, shortened with "…" only as a last resort. No line ever crosses the text.
+- At the foot: the volume or series number when there is one (as on a real set), otherwise the author's surname, left off if it does not fit.
+- The same drawing for every binding. Height and thickness follow the "Book sizes" rules in `PLAN.md`; a drawn spine is at least 16 px wide so its lettering stays readable.
+- The cover color is worked out once, when a cover is saved (the most common color in a 24 × 36 px copy of it, about 0.1 ms), and stored with the record. Drawing a shelf does no image work. Measured: 10,000 spines with and without colored edges rendered in the same time, within measuring noise.
+
+Rejected along the way: styles per binding (cloth, leather, jacket and so on), full-color and washed spines (too loud next to the photos), and house colors.

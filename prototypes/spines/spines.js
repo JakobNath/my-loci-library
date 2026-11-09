@@ -131,10 +131,13 @@ function vblock(text, w, h, { top, bottom, color, maxFs = 11, minFs = 8.5 }) {
   const t = layout(text, w, h * (100 - top - bottom) / 100 - 4, maxFs, minFs, weight);
   return { fits: !t.shortened, html: `<span class="vbox" style="top:${top}%;bottom:${bottom}%"><span class="vt" style="font-family:${FONTS.serif};font-size:${t.fs}px;font-weight:${weight};color:${color}">${t.lines.map(esc).join('<br>')}</span></span>` };
 }
+// The foot shows a volume or series number when there is one (as on a
+// real set), otherwise the author's surname.
+const footOf = b => b.volume || b.seriesNo || surname(b);
 function words(b, w, h, { top = 5, bottom = 5, color, authorColor }) {
-  if (surname(b)) {
+  if (footOf(b)) {
     const title = vblock(b.title, w, h, { top, bottom: bottom + 21, color });
-    const author = vblock(surname(b), w, h, { top: 100 - bottom - 18, bottom, color: authorColor || color, maxFs: 9.5, minFs: 8 });
+    const author = vblock(String(footOf(b)), w, h, { top: 100 - bottom - 18, bottom, color: authorColor || color, maxFs: 9.5, minFs: 8 });
     if (title.fits) return title.html + (author.fits ? author.html : '');
   }
   return vblock(b.title, w, h, { top, bottom, color }).html;
