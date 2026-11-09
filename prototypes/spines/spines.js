@@ -125,14 +125,16 @@ function layout(text, w, length, maxFs, minFs, weight) {
   while (cut.length > 1 && textLength(cut + '…', floor, weight) > length) cut = cut.slice(0, -1);
   return { fs: floor, lines: [cut.trimEnd() + '…'], shortened: true };
 }
-function vblock(text, w, h, { top, bottom, color, weight = 500, maxFs = 15, minFs = 10 }) {
+const WEIGHT = 400; // one weight for all spine lettering
+function vblock(text, w, h, { top, bottom, color, maxFs = 11, minFs = 8.5 }) {
+  const weight = WEIGHT;
   const t = layout(text, w, h * (100 - top - bottom) / 100 - 4, maxFs, minFs, weight);
   return { fits: !t.shortened, html: `<span class="vbox" style="top:${top}%;bottom:${bottom}%"><span class="vt" style="font-family:${FONTS.serif};font-size:${t.fs}px;font-weight:${weight};color:${color}">${t.lines.map(esc).join('<br>')}</span></span>` };
 }
 function words(b, w, h, { top = 5, bottom = 5, color, authorColor }) {
   if (surname(b)) {
     const title = vblock(b.title, w, h, { top, bottom: bottom + 21, color });
-    const author = vblock(surname(b), w, h, { top: 100 - bottom - 18, bottom, color: authorColor || color, weight: 400, maxFs: 12, minFs: 9 });
+    const author = vblock(surname(b), w, h, { top: 100 - bottom - 18, bottom, color: authorColor || color, maxFs: 9.5, minFs: 8 });
     if (title.fits) return title.html + (author.fits ? author.html : '');
   }
   return vblock(b.title, w, h, { top, bottom, color }).html;
@@ -142,22 +144,17 @@ function words(b, w, h, { top = 5, bottom = 5, color, authorColor }) {
 // All keep the outline style: a dashed edge, the title, nothing else.
 
 const box = css => `<span style="position:absolute;${css}"></span>`;
+// The chosen design: the plain outline (A), with the dashed edge in the
+// softened cover color (B) only when the book has a cover image.
+const hasCoverImage = b => coverColor.has(b.id);
+function drawChosen(b, w, h) {
+  const edge = hasCoverImage(b) ? `1.5px dashed ${colorOf(b)}` : '1px dashed var(--muted)';
+  return { bg: 'var(--surface)', border: edge, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) };
+}
 const VARIANTS = [
-  { key: 'plain', name: 'Outline only (as before)',
-    about: 'No cover color: ivory inside, a dashed edge in the app\'s gray. For comparison.',
-    draw: (b, w, h) => ({ bg: 'var(--surface)', border: '1px dashed var(--muted)', html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }) },
-  { key: 'edge', name: 'Colored edge',
-    about: 'Ivory inside; only the dashed edge takes a softened version of the cover\'s color. The lightest touch.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: `1.5px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'whisper', name: 'Whisper wash',
-    about: 'A very faint wash of the softened cover color, about one part in ten, with a matching dashed edge. Reads as paper first, color second.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: `color-mix(in srgb, ${c} 12%, var(--surface))`, border: `1px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'wash', name: 'Soft wash',
-    about: 'A stronger but still soft wash, about one part in four. Each spine is clearly its cover\'s color, yet quieter than any photo.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: `color-mix(in srgb, ${c} 26%, var(--surface))`, border: `1px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'cap', name: 'Small color cap',
-    about: 'Ivory with a dashed edge and a narrow band of the softened cover color at the head. Most of the spine stays paper.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: '1px dashed var(--muted)', html: box(`left:0;right:0;top:0;height:6%;background:${c}`) + words(b, w, h, { top: 9, color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
+  { key: 'chosen', name: 'Outline, with a colored edge when there is a cover image',
+    about: 'Ivory inside with the title. A book with a cover image gets its dashed edge in a softened version of the cover\'s color; a book without one keeps the plain gray edge. One weight of type throughout, set small like a printed spine.',
+    draw: drawChosen },
 ];
 
 // ---------- the books on the shelves ----------
@@ -223,8 +220,7 @@ function renderCompare() {
   $('compare').innerHTML = VARIANTS.map((v, i) => `
     <article class="option">
       <div class="option-head">
-        <h2>${String.fromCharCode(65 + i)}. ${esc(v.name)}</h2>
-        <button class="btn like" type="button" data-like="${v.key}" aria-pressed="${!!likes[v.key]}">${likes[v.key] ? 'Liked' : 'Like'}</button>
+        <h2>${esc(v.name)}</h2>
         <button class="btn" type="button" data-closer="${v.key}">Look closer</button>
         <p>${esc(v.about)}</p>
       </div>
@@ -249,6 +245,7 @@ function renderCloser() {
 }
 
 function renderSummary() {
+  if (!$('summary')) return;
   const liked = VARIANTS.filter(v => likes[v.key]).map(v => v.name);
   $('summary').textContent = liked.length ? 'Liked: ' + liked.join(', ') + '.' : 'None yet. Tap "Like" on any variant.';
 }
@@ -272,7 +269,7 @@ document.addEventListener('click', e => {
   if (closer) { state.closer = closer; render(); scrollTo({ top: $('closer').offsetTop - 60 }); }
 });
 $('backToAll').addEventListener('click', () => { state.closer = null; render(); });
-$('copy').addEventListener('click', async () => {
+$('copy') && $('copy').addEventListener('click', async () => {
   const liked = VARIANTS.filter(v => likes[v.key]).map(v => v.name).join(', ') || 'none';
   const report = `Drawn spines, round 4. Liked: ${liked}. Heights: ${state.heights}.`;
   try { await navigator.clipboard.writeText(report); $('copy').textContent = 'Copied'; } catch { prompt('Copy this:', report); }
