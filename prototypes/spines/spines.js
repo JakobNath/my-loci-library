@@ -185,18 +185,39 @@ function shelfBooks(count) {
     .sort((x, y) => rand(x.b.id, 11) - rand(y.b.id, 11));
 }
 
+// Sizes follow the plan's "Book sizes" rules: the best source first, and a
+// believable estimate when nothing better is known.
+// Heights from Library of Congress records for sample ISBNs (checked 9 Nov 2026).
+const CATALOG_CM = { '9780199537822': 20, '9780809128389': 23, '9780674990401': 17, '9780758615404': 24 };
+const binding = b => ((b.copies && b.copies[0] && b.copies[0].binding) || '').toLowerCase();
+const isPaperback = b => binding(b).includes('paperback');
+
+function heightMm(b) {
+  if (CATALOG_CM[b.isbn]) return { mm: CATALOG_CM[b.isbn] * 10, source: 'catalog' };
+  const sibling = b.series && physical.find(x => x !== b && x.series === b.series && CATALOG_CM[x.isbn]);
+  if (sibling) return { mm: CATALOG_CM[sibling.isbn] * 10, source: 'same series' };
+  const sameSet = b.setTitle && physical.find(x => x !== b && x.setTitle === b.setTitle && CATALOG_CM[x.isbn]);
+  if (sameSet) return { mm: CATALOG_CM[sameSet.isbn] * 10, source: 'same set' };
+  return { mm: isPaperback(b) ? 215 : binding(b) ? 235 : 225, source: 'guess' };
+}
+
+function thicknessMm(b, height, photo) {
+  if (photo) return { mm: height * b.photo.spineRatio, source: 'photo' };
+  const pages = b.pages || 250;
+  return { mm: pages * 0.06 + (isPaperback(b) ? 0.5 : 5.5), source: b.pages ? 'pages' : 'guess' };
+}
+
 function size(b, shelfH, photo) {
-  const h = Math.round(shelfH * (state.heights === 'even' ? 0.94 : 0.8 + 0.2 * rand(b.id, 13)));
-  if (photo) return { w: Math.max(8, Math.round(h * b.photo.spineRatio)), h };
-  // Thickness from the page count: boards plus about 0.06 mm a page, on a
-  // book about 235 mm tall. Unknown page counts get a believable guess.
-  const pages = b.pages || Math.round(160 + 420 * rand(b.id, 17));
-  return { w: Math.max(14, Math.round(h * (5 + pages * 0.06) / 235)), h };
+  const scale = (shelfH * 0.92) / 260; // pixels per millimeter: a 26 cm book nearly fills the shelf
+  const hgt = heightMm(b), thick = thicknessMm(b, hgt.mm, photo);
+  const h = Math.round(state.heights === 'even' ? shelfH * 0.8 : hgt.mm * scale);
+  const w = Math.max(photo ? 6 : 12, Math.round(thick.mm * (state.heights === 'even' ? h / hgt.mm : scale)));
+  return { w, h, note: `${Math.round(hgt.mm / 10)} cm tall (${hgt.source}), ${Math.round(thick.mm)} mm thick (${thick.source})` };
 }
 
 function spineHtml(style, item, shelfH) {
-  const { b, photo } = item, { w, h } = size(b, shelfH, photo);
-  const label = esc(b.title + (b.authors ? ' · ' + b.authors.join(', ') : '') + (photo ? ' (photo)' : ' (drawn)'));
+  const { b, photo } = item, { w, h, note } = size(b, shelfH, photo);
+  const label = esc(b.title + (b.authors ? ' · ' + b.authors.join(', ') : '') + (photo ? ' (photo)' : ' (drawn)') + ' · ' + note);
   if (photo) return `<span class="spine photo" title="${label}" style="width:${w}px;height:${h}px"><img src="../${esc(b.photo.spineThumb || b.photo.spine)}" alt="${label}" loading="lazy"></span>`;
   const d = style.draw(b, w, h, colors(b));
   return `<span class="spine" title="${label}" style="width:${w}px;height:${h}px;background:${d.bg};${d.border ? 'border:' + d.border : ''}">${d.html}</span>`;
