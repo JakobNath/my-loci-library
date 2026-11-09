@@ -13,3 +13,7 @@ Things that can only be checked on a real phone or a particular browser. Work th
 ## Phase 5
 
 - [ ] iPhone: once the real app exists, add it to the home screen, open it from there, and check on the self-test page that persistent storage is reported as granted (it was not granted in an ordinary Safari tab).
+
+## Photo prototype
+
+- [ ] iPhone and Android: open `prototypes/photos/capture.html`, choose Cover, start the camera and hold a book still on a plain surface. The green outline should follow the book and take the photo by itself; the straightened result should look right. Repeat with Spine. Note how many milliseconds are shown while tracking.
