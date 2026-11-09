@@ -63,7 +63,22 @@ async function loadCoverColors() {
     try { coverColor.set(b.id, await dominantColor('../' + b.photo.coverThumb)); } catch { /* keep the sample color */ }
   }));
 }
-const colorOf = b => coverColor.get(b.id) || (b.cover && b.cover.bg) || '#8a8378';
+const coverColorOf = b => coverColor.get(b.id) || (b.cover && b.cover.bg) || '#8a8378';
+
+// Drawn spines should sit back so the photographed ones stand out: the cover
+// color is softened (little saturation, middle lightness) before it is used.
+function quiet(hexColor, maxSat = 0.22) {
+  let [r, g, b] = rgb(hexColor).map(v => v / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  let h = 0, s = d === 0 ? 0 : d / (1 - Math.abs(2 * l - 1));
+  if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  s = Math.min(s, maxSat);
+  const L = Math.min(0.72, Math.max(0.38, l));
+  const C = (1 - Math.abs(2 * L - 1)) * s, X = C * (1 - Math.abs((h % 2) - 1)), m = L - C / 2;
+  [r, g, b] = h < 1 ? [C, X, 0] : h < 2 ? [X, C, 0] : h < 3 ? [0, C, X] : h < 4 ? [0, X, C] : h < 5 ? [X, 0, C] : [C, 0, X];
+  return hex([(r + m) * 255, (g + m) * 255, (b + m) * 255]);
+}
+const colorOf = b => quiet(coverColorOf(b));
 // Dark lettering on light colors, ivory on dark ones.
 const inkOn = bg => (lum(bg) > 0.55 ? '#1f1b16' : '#f6f1e6');
 
@@ -132,17 +147,17 @@ const VARIANTS = [
     about: 'No cover color: ivory inside, a dashed edge in the app\'s gray. For comparison.',
     draw: (b, w, h) => ({ bg: 'var(--surface)', border: '1px dashed var(--muted)', html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }) },
   { key: 'edge', name: 'Colored edge',
-    about: 'Ivory inside; only the dashed edge takes the cover\'s color, slightly heavier. The lightest touch.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: `1.5px dashed color-mix(in srgb, ${c} 80%, var(--ink))`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'wash', name: 'Washed',
-    about: 'A light wash of the cover\'s color inside, the dashed edge in the same color. A hint of the real shelf, still calm. Adjusts to dark mode.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: `color-mix(in srgb, ${c} 22%, var(--surface))`, border: `1px dashed color-mix(in srgb, ${c} 75%, var(--ink))`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'cap', name: 'Color cap',
-    about: 'Ivory with a dashed edge, and a block of the cover\'s color at the head, like a label. Easy to scan along a shelf.',
-    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: `1px dashed color-mix(in srgb, ${c} 75%, var(--ink))`, html: box(`left:0;right:0;top:0;height:10%;background:${c}`) + words(b, w, h, { top: 13, color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
-  { key: 'full', name: 'Full color',
-    about: 'The spine filled with the cover\'s color, lettering in ivory or near-black to suit, and a fine dashed line just inside the edge. Closest to the real shelf.',
-    draw: (b, w, h) => { const c = colorOf(b), ink = inkOn(c); return { bg: c, html: box(`inset:2px;border:1px dashed ${ink};opacity:.35;border-radius:1px`) + words(b, w, h, { color: ink }) }; } },
+    about: 'Ivory inside; only the dashed edge takes a softened version of the cover\'s color. The lightest touch.',
+    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: `1.5px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
+  { key: 'whisper', name: 'Whisper wash',
+    about: 'A very faint wash of the softened cover color, about one part in ten, with a matching dashed edge. Reads as paper first, color second.',
+    draw: (b, w, h) => { const c = colorOf(b); return { bg: `color-mix(in srgb, ${c} 12%, var(--surface))`, border: `1px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
+  { key: 'wash', name: 'Soft wash',
+    about: 'A stronger but still soft wash, about one part in four. Each spine is clearly its cover\'s color, yet quieter than any photo.',
+    draw: (b, w, h) => { const c = colorOf(b); return { bg: `color-mix(in srgb, ${c} 26%, var(--surface))`, border: `1px dashed ${c}`, html: words(b, w, h, { color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
+  { key: 'cap', name: 'Small color cap',
+    about: 'Ivory with a dashed edge and a narrow band of the softened cover color at the head. Most of the spine stays paper.',
+    draw: (b, w, h) => { const c = colorOf(b); return { bg: 'var(--surface)', border: '1px dashed var(--muted)', html: box(`left:0;right:0;top:0;height:6%;background:${c}`) + words(b, w, h, { top: 9, color: 'var(--ink)', authorColor: 'var(--ink-2)' }) }; } },
 ];
 
 // ---------- the books on the shelves ----------
@@ -230,7 +245,7 @@ function renderCloser() {
   // Photographed books: the cover, the color taken from it, and the drawn spine.
   $('large').innerHTML = physical.filter(b => coverColor.has(b.id) && !(b.photo && b.photo.spine)).slice(0, 6).map(b => `
     <div class="large-item"><img class="cover-ref" src="../${esc(b.photo.coverThumb)}" alt="">
-      <span class="swatch" style="background:${coverColor.get(b.id)}"></span>${spineHtml(v, { b }, Math.round(H * 1.2))}</div>`).join('');
+      <span class="swatch" title="taken from the cover" style="background:${coverColor.get(b.id)}"></span><span class="swatch" title="softened for the spine" style="background:${colorOf(b)}"></span>${spineHtml(v, { b }, Math.round(H * 1.2))}</div>`).join('');
 }
 
 function renderSummary() {
