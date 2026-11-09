@@ -1,0 +1,102 @@
+/* Option 9: Playground. Option 7's look, plus the shelf styles and layouts the
+   Adjust panel switches between (data-shelf, data-nav on <html>). */
+
+/* Shelves under each row of covers */
+.grid { gap: var(--grid-gap-y) var(--grid-gap-x); }
+.tile { gap: 0; }
+.tile .cover { width: 86%; margin: 0 auto; }
+.tile-caption { margin: 0 calc(var(--grid-gap-x) / -2); padding: var(--space-3) calc(var(--grid-gap-x) / 2) 0; }
+:root[data-shelf="slim"] .tile-caption { border-top: 4px solid var(--shelf); box-shadow: inset 0 8px 8px -8px var(--shelf-shadow); }
+:root[data-shelf="wood"] .tile-caption {
+  border-top: 10px solid var(--shelf);
+  border-image: linear-gradient(180deg, var(--shelf), color-mix(in srgb, var(--shelf) 70%, var(--ink))) 1;
+  box-shadow: inset 0 10px 10px -10px var(--shelf-shadow);
+}
+:root[data-shelf="line"] .tile-caption { border-top: 1px solid var(--line); }
+:root[data-shelf="none"] .tile { gap: var(--space-2); }
+:root[data-shelf="none"] .tile .cover { width: 100%; }
+:root[data-shelf="none"] .tile-caption { margin: 0; padding: 0; }
+
+.tile-date { color: var(--pop-ink); }
+.chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.seg-btn.is-on { background: var(--accent-soft); color: var(--accent); }
+.list .row { padding: var(--space-3) var(--space-2); border-radius: var(--radius); }
+.list .row:hover { background: var(--surface); }
+.detail-body .block { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: var(--space-4); }
+.detail-body .block .h2 { color: var(--accent); }
+.detail-body .block .list .row { padding-left: 0; }
+.copy:first-of-type { border-top: 0; padding-top: 0; }
+.date-chip { background: var(--pop-soft); color: var(--pop-ink); }
+.notes { background: var(--surface); border: 1px solid var(--card-line); border-left: 3px solid var(--pop); }
+.notes p { font-size: 16px; font-style: italic; }
+:root[data-type="modern"] .notes p, :root[data-type="rounded"] .notes p { font-style: normal; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tab-add .icon { color: var(--pop); }
+.brand-mark { width: 32px; height: 32px; }
+
+@media (min-width: 900px) {
+  .tabs { padding-top: var(--space-5); }
+  .tab { font-family: var(--font-display); font-size: 17px; }
+  .tab.is-on { background: var(--surface); color: var(--accent); box-shadow: 0 0 0 1px var(--card-line); }
+
+  /* Navigation across the top instead of down the side */
+  :root[data-nav="top"] .app { grid-template-columns: 1fr auto; }
+  :root[data-nav="top"] .topbar { grid-column: 1; }
+  :root[data-nav="top"] main { grid-column: 1 / -1; }
+  :root[data-nav="top"] .tabs {
+    grid-column: 2; grid-row: 1; position: sticky; top: 0; align-self: stretch; align-items: center; z-index: 6;
+    flex-direction: row; gap: var(--space-1); padding: 0 var(--space-5) 0 0;
+    background: var(--bar-bg); border-bottom: 1px solid var(--bar-line);
+  }
+  :root[data-nav="top"] .tab { font-size: 15px; color: var(--bar-ink); }
+  :root[data-nav="top"] .tab.is-on { background: transparent; box-shadow: inset 0 -2px 0 var(--pop); border-radius: 0; color: var(--bar-ink); }
+}
+
+/* ---------- Adjust panel (not part of the design itself) ---------- */
+.adjust-btn {
+  position: fixed; right: 14px; bottom: calc(76px + env(safe-area-inset-bottom)); z-index: 20;
+  display: flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--panel-on); color: var(--panel-on-ink); font: 600 14px/1 var(--sans-modern);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+.adjust-btn .icon { width: 18px; height: 18px; }
+.adjust {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 62vh; overflow-y: auto;
+  background: var(--panel-bg); color: var(--panel-ink); border-top: 1px solid var(--panel-line);
+  border-radius: 16px 16px 0 0; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25);
+  font: 14px/1.4 var(--sans-modern); padding: 0 16px calc(20px + env(safe-area-inset-bottom));
+  transform: translateY(105%); transition: transform 0.22s ease; visibility: hidden;
+}
+.adjust.is-open { transform: none; visibility: visible; }
+.adjust-head { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 0 10px; background: var(--panel-bg); z-index: 1; }
+.adjust-head strong { font-size: 16px; }
+.adjust-close { border: 0; background: none; color: var(--panel-ink); font-size: 24px; line-height: 1; cursor: pointer; padding: 4px 8px; }
+.adjust-group { padding: 10px 0; border-top: 1px solid var(--panel-line); }
+.adjust-label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--panel-muted); margin-bottom: 8px; }
+.adjust-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.adjust-opt {
+  border: 1px solid var(--panel-line); background: transparent; color: var(--panel-ink);
+  padding: 6px 12px; border-radius: 999px; font: 13px/1.3 var(--sans-modern); cursor: pointer;
+}
+.adjust-opt.is-on { background: var(--panel-on); border-color: var(--panel-on); color: var(--panel-on-ink); }
+.adjust-swatch { width: 34px; height: 34px; padding: 0; border-radius: 50%; border: 2px solid var(--panel-line); cursor: pointer; position: relative; }
+.adjust-swatch.is-on { border-color: var(--panel-on); box-shadow: 0 0 0 2px var(--panel-bg) inset; }
+.adjust-swatch span { position: absolute; inset: auto 0 -18px; font-size: 10px; color: var(--panel-muted); white-space: nowrap; text-align: center; }
+.adjust-row-swatches { gap: 12px; padding-bottom: 16px; }
+.adjust-look { text-align: left; border-radius: 10px; padding: 8px 10px; min-width: 128px; }
+.adjust-look small { display: block; color: inherit; opacity: 0.7; font-size: 11px; }
+.adjust-logo { width: 54px; height: 54px; padding: 8px; border-radius: 12px; border: 1px solid var(--panel-line); background: transparent; color: var(--panel-ink); cursor: pointer; --logo-pop: #a65a3f; --logo-bg: var(--panel-bg); }
+.adjust-logo svg { width: 100%; height: 100%; display: block; }
+.adjust-logo.is-on { border: 2px solid var(--panel-on); }
+.adjust-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 12px; border-top: 1px solid var(--panel-line); }
+.adjust-note { color: var(--panel-muted); font-size: 12px; margin: 8px 0 0; }
+
+@media (min-width: 900px) {
+  .adjust-btn { bottom: 20px; right: 20px; }
+  .adjust {
+    left: auto; top: 0; width: 360px; max-height: none; border-radius: 0; border-top: 0; border-left: 1px solid var(--panel-line);
+    transform: translateX(105%);
+  }
+  .adjust.is-open { transform: none; }
+  body.adjust-open .app { margin-right: 360px; }
+}

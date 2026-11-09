@@ -549,7 +549,7 @@ function shell() {
   <div class="protobar">
     <a href="../">All options</a>
     <span class="protobar-name">${esc(cfg.round || 'Round 1')} · Option ${n} · ${esc(cfg.name)}</span>
-    <span class="protobar-nav"><a href="../option-${prev}/" aria-label="Previous option">‹</a><a href="../option-${next}/" aria-label="Next option">›</a></span>
+    <span class="protobar-nav">${ring.length > 1 ? `<a href="../option-${prev}/" aria-label="Previous option">‹</a><a href="../option-${next}/" aria-label="Next option">›</a>` : ''}</span>
   </div>
   <div class="app">
     <header class="topbar">

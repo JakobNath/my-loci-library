@@ -51,6 +51,19 @@
   a { color: var(--accent); }
   .muted { color: var(--muted); font-size: 14px; }
   footer { margin-top: calc(var(--space) * 3); color: var(--muted); font-size: 14px; }
+  .looks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .look { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 14px; }
+  .look:hover { border-color: var(--accent); }
+  .look i { display: inline-flex; width: 26px; height: 18px; border-radius: 999px; overflow: hidden; }
+  .look i b { flex: 1; }
+  .mood { font: 600 13px/1 var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+  .l-grid { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); }
+  .l-card .logo-row { flex-wrap: nowrap; gap: 10px; }
+  .l-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
+  .l-card .mark { color: #2e4a3d; --logo-pop: #a65a3f; }
+  .l-card p { color: var(--muted); font-size: 14px; }
+  .l-try { font-size: 14px; }
+  @media (prefers-color-scheme: dark) { .l-card .mark { color: #9cc0ab; --logo-pop: #d79a7f; } }
 </style>
 </head>
 <body>
@@ -58,6 +71,22 @@
   <h1>My Loci Library: designs</h1>
   <p class="lede">Clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
   <p class="lede">Worth trying in each: search for <em>phaedo</em> or <em>politeia</em>; open <em>The Apostolic Fathers</em> (an anthology with a disputed date for the Didache); turn on "No longer owned" and open the Penguin <em>Confessions</em>; and go through "Add books" with each of the three pretend scans.</p>
+
+  <h2>Round 3: the playground</h2>
+  <p class="lede">Option 7 was the favorite, so round 3 is option 7 with an <strong>Adjust</strong> button. It changes the main color, the little pop of color, the paper, the title type, shelves, cover size and shadow, corners, spacing, the top bar, the laptop menu and the logo, all live. When you find a look you like, press "Copy link to this look" and send it to each other.</p>
+  <div class="options">
+    <a class="opt" href="option-9/?adjust=1">
+      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#d8cdbb"></span><span style="background:#2e4a3d"></span><span style="background:#a65a3f"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 9 · from option 7</div><div class="opt-name">Playground</div>
+      <p>Opens with the Adjust panel showing. Start from any of the looks below and change one thing at a time.</p></div>
+    </a>
+  </div>
+  <p class="muted" style="margin-top:14px">Starting looks:</p>
+  <div class="looks" id="looks"></div>
+
+  <h2>Round 3: new L logos</h2>
+  <p class="lede">Ten ideas in three moods. Each is shown large, at 48 and 24 pixels, and as a home-screen icon in two colorways. "Try it" opens the playground with that logo in the top bar.</p>
+  <div id="l-logos"></div>
 
   <h2>Round 2: quieter and more modern</h2>
   <p class="lede">From the first feedback: options 1 and 3 were the favorites, but they needed a more timeless, modern feel with fewer bright digital colors. These three keep warm neutrals and let the covers carry the color.</p>
@@ -109,7 +138,7 @@
   </div>
   <p class="muted">Covers are drawn as simple title tiles for now. The real app shows your own cover photos in their place.</p>
 
-  <h2>Logo and app icon ideas</h2>
+  <h2>Round 1: first logo ideas</h2>
   <div class="logos" id="logos"></div>
   <p class="muted">Each is shown large, at 48 and 24 pixels, and as a home-screen icon at 96 and 48 pixels. Colors can follow whichever design is chosen.</p>
 
@@ -123,6 +152,27 @@
 </main>
 <script type="module">
   import { logos } from './shared/logos.js';
+  import { lLogos } from './shared/l-logos.js';
+  import { looks } from './option-9/panel.js';
+
+  const swatch = { forest: '#2e4a3d', sage: '#56705d', navy: '#2c3e57', oxblood: '#7a2630', plum: '#5b3a5a', ink: '#23201b',
+    clay: '#a65a3f', rose: '#b35f6c', honey: '#b0843a', brass: '#8c7246', none: '#8a8378',
+    ivory: '#f6f2ea', white: '#fafaf8', linen: '#efe6d8', blush: '#f8f0eb', stone: '#efefec' };
+  document.getElementById('looks').innerHTML = looks.map(l => {
+    const slug = l.name.toLowerCase().replace(/\s+/g, '-');
+    return `<a class="look" href="option-9/?look=${slug}"><i><b style="background:${swatch[l.set.paper]}"></b><b style="background:${swatch[l.set.accent]}"></b><b style="background:${swatch[l.set.pop]}"></b></i>${l.name}</a>`;
+  }).join('');
+
+  const lIcon = (l, size, bg, ink, popc, border) => `<span class="icon i${size}" style="background:${bg};${border ? 'box-shadow:inset 0 0 0 1px #ddd5c7' : ''}"><span class="mark" style="color:${ink};--logo-pop:${popc};--logo-bg:${bg}">${l.mark}</span></span>`;
+  document.getElementById('l-logos').innerHTML = ['Modern', 'Cute', 'Classic'].map(mood => `
+    <p class="mood">${mood}</p>
+    <div class="l-grid">${lLogos.filter(l => l.mood === mood).map(l => `
+      <div class="l-card">
+        <div class="logo-row"><span class="mark m96" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m48" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m24" style="--logo-bg:var(--surface)">${l.mark}</span></div>
+        <div class="logo-row">${lIcon(l, 96, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#f6f2ea', '#2e4a3d', '#a65a3f', true)}</div>
+        <p class="logo-name">${l.name}</p><p>${l.idea}</p>
+        <a class="l-try" href="option-9/?logo=${l.id}">Try it in the playground</a>
+      </div>`).join('')}</div>`).join('');
   const iconColors = [
     { bg: '#1f1e1c', ink: '#f4f2ee', pop: '#c9a46a' },
     { bg: '#2e4a3d', ink: '#f6f2ea', pop: '#d79a7f' },
