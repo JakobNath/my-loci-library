@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Loci Library self-tests</title>
+<link rel="stylesheet" href="../styles/tokens.css">
+<style>
+  body { margin: 0; padding: var(--space-3); background: var(--color-bg); color: var(--color-text); font: 14px/1.5 ui-monospace, Consolas, monospace; }
+  .pass { color: green; } .fail { color: #c00; font-weight: bold; }
+  #total { margin-top: var(--space-3); font-weight: bold; }
+</style>
+</head>
+<body>
+<h1>Self-tests</h1>
+<p>Each line is one check. Red lines need fixing. The list of test files is in <code>tests/run.js</code>.</p>
+<div id="out"></div>
+<p id="total">Running...</p>
+<script type="module" src="run.js"></script>
+</body>
+</html>
