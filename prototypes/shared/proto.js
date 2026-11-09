@@ -542,11 +542,14 @@ function themeIcon() {
 
 function shell() {
   const n = cfg.number;
+  const ring = cfg.ring || [1, 2, 3, 4, 5];
+  const i = ring.indexOf(n);
+  const prev = ring[(i + ring.length - 1) % ring.length], next = ring[(i + 1) % ring.length];
   return `
   <div class="protobar">
     <a href="../">All options</a>
-    <span class="protobar-name">Option ${n} of 5 · ${esc(cfg.name)}</span>
-    <span class="protobar-nav"><a href="../option-${n === 1 ? 5 : n - 1}/" aria-label="Previous option">‹</a><a href="../option-${n === 5 ? 1 : n + 1}/" aria-label="Next option">›</a></span>
+    <span class="protobar-name">${esc(cfg.round || 'Round 1')} · Option ${n} · ${esc(cfg.name)}</span>
+    <span class="protobar-nav"><a href="../option-${prev}/" aria-label="Previous option">‹</a><a href="../option-${next}/" aria-label="Next option">›</a></span>
   </div>
   <div class="app">
     <header class="topbar">

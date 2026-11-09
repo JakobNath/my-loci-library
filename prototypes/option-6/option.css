@@ -1,0 +1,48 @@
+/* Option 6: Catalog, refined. The index card survives as a thin red rule and
+   faint ruled lines on the book page; everything else is plain and quiet. */
+
+.page-title { font-weight: 500; }
+.page-meta, .eyebrow, .detail-series, .badge { letter-spacing: 0.06em; }
+.chip { border-color: var(--line); color: var(--ink-2); }
+.chip.is-on { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.seg-btn.is-on { background: var(--surface-2); color: var(--ink); }
+
+/* Tiles: a short red rule above the caption, like the top line of a card */
+.tile-caption { padding-top: var(--space-2); border-top: 1px solid var(--line); position: relative; }
+.tile-caption::before { content: ""; position: absolute; top: -1px; left: 0; width: 28px; height: 2px; background: var(--accent); }
+.tile-date { color: var(--muted); }
+
+/* List rows as clean index cards */
+.list { gap: var(--space-2); }
+.row, .result-piece {
+  background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg);
+  padding: var(--space-3); box-shadow: inset 0 2px 0 var(--accent);
+}
+.group { border: 0; }
+.group .row, .group .result-piece { margin-bottom: var(--space-2); }
+
+/* Book page: the edition facts sit on a faintly ruled card */
+.detail-body .block { padding-top: var(--space-2); }
+.detail-body .h2 { font-family: var(--font-ui); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.detail-body .h2 .muted { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.facts {
+  background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); box-shadow: inset 0 2px 0 var(--accent);
+  padding: var(--space-3) var(--space-4); line-height: 28px; gap: 0 var(--space-4);
+  background-image: repeating-linear-gradient(transparent 0 27px, var(--line) 27px 28px); background-origin: content-box;
+}
+.facts-copy { background: none; border: 0; box-shadow: none; padding: 0; line-height: 1.6; }
+.copy { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-2); }
+.copy-value { color: var(--ink); }
+.date-chip { background: transparent; border: 1px solid var(--line); color: var(--ink-2); }
+.notes { background: var(--surface); border: 1px solid var(--card-line); border-left: 2px solid var(--accent); }
+.notes p { font-size: 16px; }
+.dating.is-working { background: var(--surface); box-shadow: inset 2px 0 0 var(--accent); }
+.btn-primary { background: var(--ink); border-color: var(--ink); color: var(--bg); }
+.tab-add .icon { color: var(--accent); }
+
+@media (min-width: 900px) {
+  .topbar { padding-top: var(--space-4); padding-bottom: var(--space-4); }
+  .tabs { padding-top: var(--space-5); }
+  .tab { border-radius: 0; padding-left: var(--space-3); box-shadow: inset 2px 0 0 transparent; color: var(--ink-2); }
+  .tab.is-on { background: transparent; color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+}

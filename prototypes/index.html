@@ -9,12 +9,12 @@
   /* The index page stands apart from the five options, so it keeps its own
      small set of neutral tokens. */
   :root {
-    --bg: #f5f4f1; --surface: #ffffff; --ink: #1c1c1c; --muted: #6e6b66; --line: #e2dfd9; --accent: #1f6f8b;
+    --bg: #f5f4f1; --surface: #ffffff; --ink: #1c1c1c; --muted: #6e6b66; --line: #e2dfd9; --accent: #8f2a24;
     --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-    --space: 16px; --radius: 12px; --logo-pop: #d4572a;
+    --space: 16px; --radius: 12px; --logo-pop: #a3362e;
   }
   @media (prefers-color-scheme: dark) {
-    :root { --bg: #151515; --surface: #1f1f1f; --ink: #ececec; --muted: #a09d97; --line: #333; --accent: #6cc1dd; --logo-pop: #f07a4f; }
+    :root { --bg: #151515; --surface: #1f1f1f; --ink: #ececec; --muted: #a09d97; --line: #333; --accent: #d9897f; --logo-pop: #d9897f; }
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); }
@@ -40,7 +40,7 @@
   .m96 { width: 96px; height: 96px; }
   .m48 { width: 48px; height: 48px; }
   .m24 { width: 24px; height: 24px; }
-  .icon { border-radius: 22%; display: flex; align-items: center; justify-content: center; }
+  .icon { border-radius: 22%; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px var(--line); }
   .icon .mark { width: 64%; height: 64%; }
   .i96 { width: 96px; height: 96px; }
   .i48 { width: 48px; height: 48px; }
@@ -55,11 +55,31 @@
 </head>
 <body>
 <main>
-  <h1>My Loci Library: five designs</h1>
-  <p class="lede">Five clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
+  <h1>My Loci Library: designs</h1>
+  <p class="lede">Clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
   <p class="lede">Worth trying in each: search for <em>phaedo</em> or <em>politeia</em>; open <em>The Apostolic Fathers</em> (an anthology with a disputed date for the Didache); turn on "No longer owned" and open the Penguin <em>Confessions</em>; and go through "Add books" with each of the three pretend scans.</p>
 
-  <h2>The five options</h2>
+  <h2>Round 2: quieter and more modern</h2>
+  <p class="lede">From the first feedback: options 1 and 3 were the favorites, but they needed a more timeless, modern feel with fewer bright digital colors. These three keep warm neutrals and let the covers carry the color.</p>
+  <div class="options">
+    <a class="opt" href="option-6/">
+      <div class="swatch"><span style="background:#faf8f4"></span><span style="background:#ffffff"></span><span style="background:#1d1b18"></span><span style="background:#8f2a24"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 6 · from option 1</div><div class="opt-name">Catalog, refined</div>
+      <p>Paper white and charcoal with serif book titles. The index card survives as a thin red rule and faintly ruled lines on the book page.</p></div>
+    </a>
+    <a class="opt" href="option-7/">
+      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#d8cdbb"></span><span style="background:#2e4a3d"></span><span style="background:#a65a3f"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 7 · from option 3</div><div class="opt-name">Bookshop, refined</div>
+      <p>Warm ivory and deep green, with the covers on slim shelves and a muted clay for small touches.</p></div>
+    </a>
+    <a class="opt" href="option-8/">
+      <div class="swatch"><span style="background:#f4f2ee"></span><span style="background:#e0dcd4"></span><span style="background:#1f1e1c"></span><span style="background:#9c7a45"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 8 · a blend of 1 and 3</div><div class="opt-name">Quiet modern</div>
+      <p>Stone and charcoal, larger covers, hairlines instead of boxes, and a single bronze accent.</p></div>
+    </a>
+  </div>
+
+  <h2>Round 1: the first five</h2>
   <div class="options">
     <a class="opt" href="option-1/">
       <div class="swatch"><span style="background:#efe7d6"></span><span style="background:#5a3b26"></span><span style="background:#fbf6ea"></span><span style="background:#a3302b"></span></div>
@@ -104,9 +124,9 @@
 <script type="module">
   import { logos } from './shared/logos.js';
   const iconColors = [
-    { bg: '#0e7c7e', ink: '#ffffff', pop: '#ff8a6b' },
-    { bg: '#2f5d46', ink: '#fbf6ec', pop: '#f08a6a' },
-    { bg: '#7b1e2b', ink: '#fbf3e4', pop: '#f2c14e' },
+    { bg: '#1f1e1c', ink: '#f4f2ee', pop: '#c9a46a' },
+    { bg: '#2e4a3d', ink: '#f6f2ea', pop: '#d79a7f' },
+    { bg: '#faf8f4', ink: '#1d1b18', pop: '#a3362e' },
   ];
   document.getElementById('logos').innerHTML = logos.map((l, i) => {
     const c = iconColors[i];
