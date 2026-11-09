@@ -38,9 +38,9 @@ There is exactly one stop, at the end of phase 2. After Jakob says "go", phases 
 
 Goal: show Jakob and his wife five real, clickable directions on their own phones, quickly. Prototypes are throwaway pages. They don't need the real data format, only realistic content.
 
-- [ ] **2.1 Prototype content.** Build `prototypes/shared/sample-books.js` from `SAMPLE_BOOKS.md`: all 21 books with titles, authors, editions, original dates, anthology contents, locations, values and statuses. For covers, draw simple generated tiles (title and author in clean type) rather than fetching real images.
+- [x] **2.1 Prototype content.** Build `prototypes/shared/sample-books.js` from `SAMPLE_BOOKS.md`: all 21 books with titles, authors, editions, original dates, anthology contents, locations, values and statuses. For covers, draw simple generated tiles (title and author in clean type) rather than fetching real images.
   **Check:** every sample book appears in the data, including the anthology contents for #6, #8 and #9.
-- [ ] **2.2 Five design directions.** In `prototypes/option-1/` through `option-5/`, build five clearly different looks. Suggested starting points, which can be changed: classic library card catalog; minimal and modern (Libib-like); warm bookshop; scholarly and typographic; gallery of covers. Each option includes:
+- [x] **2.2 Five design directions.** In `prototypes/option-1/` through `option-5/`, build five clearly different looks. Suggested starting points, which can be changed: classic library card catalog; minimal and modern (Libib-like); warm bookshop; scholarly and typographic; gallery of covers. Each option includes:
   - the Library tab (cover grid and list), the Wishlist tab, and search
   - a book detail page, shown for an anthology with a disputed date and for a "no longer owned" copy
   - the batch-add flow with a pretend scan, the missing-data prompts and the corner-crop cover step
@@ -49,9 +49,9 @@ Goal: show Jakob and his wife five real, clickable directions on their own phone
 
   Each option uses its own `tokens.css` and stays within the size budget.
   **Check:** all five work at 375 px and 1280 px widths in light and dark mode, with no console errors.
-- [ ] **2.3 Logo and icon.** Three simple SVG logo and app-icon ideas for "My Loci Library", shown on the index page.
+- [x] **2.3 Logo and icon.** Three simple SVG logo and app-icon ideas for "My Loci Library", shown on the index page.
   **Check:** each icon reads clearly at 48 px.
-- [ ] **2.4 Phone test page.** `prototypes/phone-test.html` with two tests:
+- [x] **2.4 Phone test page.** `prototypes/phone-test.html` with two tests:
   - **Barcode scan:** uses `BarcodeDetector` where available, otherwise the bundled decoder. Pick the smallest reliable open-source ISBN decoder, vendor it with its license, and display the decoded ISBN.
   - **Offline storage:** request persistent storage, write and read back about 50 MB of dummy data in IndexedDB, and report `navigator.storage.estimate()`.
 
