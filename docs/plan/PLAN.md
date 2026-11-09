@@ -1,6 +1,6 @@
 # My Loci Library — Master Plan
 
-Nov 8, 2026 · Jakob Nath
+Nov 8, 2026, revised Nov 9, 2026 · Jakob Nath
 
 ## Purpose and principles
 
@@ -27,6 +27,7 @@ My Loci Library is a lightweight, open-source catalog of our physical books and 
 - **External services are optional.** Open Library and Google Books only speed up entry. Manual entry always works.
 - **Exports are the guarantee.** CSV, JSON, CSL-JSON, BibTeX, and a self-contained HTML catalog are always available.
 - **Extras live outside the app.** Logos import, Zotero sync, price estimating, and anything AI-related are separate laptop tools or done by hand. They never add weight to the main app.
+- **The phone app stays small and fast.** It reads, searches, adds and edits. Anything heavy (bulk cover processing, re-cropping from masters, the HTML catalog, building `catalog.json`) happens on the laptop, in a tool or in a separate laptop page the phone never loads. Speed is a main design goal: no lag, and search that feels instant.
 - **Human-made feel.** Documentation is plain text written for people. There are no AI attributions anywhere, including commit messages, and credit goes only to Jakob Nath.
 - **Open source from day one,** under the MIT license, so colleagues can use it.
 
@@ -36,7 +37,7 @@ Three GitHub repositories keep code, data and laptop tools separate. The private
 
 | Repository | Visibility | Holds |
 | --- | --- | --- |
-| `my-loci-library` | Public, MIT | The app: static HTML/CSS/JS served free on GitHub Pages, plus docs, self-tests and `CLAUDE.md` |
+| `my-loci-library` | Public, MIT | The app: static HTML/CSS/JS served free on GitHub Pages, plus the laptop pages (`laptop/`), docs, self-tests, `CLAUDE.md` and `CODE_STYLE.md` |
 | `my-loci-library-data` | Private | The catalog: one text file per record, covers, a generated combined file for fast loading |
 | `my-loci-library-tools` | Public, MIT | Laptop tools, one folder each: Logos importer, Zotero companion, backup, price estimator |
 
@@ -47,9 +48,9 @@ Three GitHub repositories keep code, data and laptop tools separate. The private
 
 **Sync**
 
-- Each device keeps a full offline copy of the catalog and the grid thumbnails.
+- Each device keeps a full offline copy of the catalog and the grid thumbnails of physical books. Logos thumbnails are cached once seen, which keeps a phone's first download near 10 MB instead of 50 MB.
 - When online, the app reads and writes the private data repo through GitHub. Saving a batch (say, 30 books) makes one commit, not hundreds.
-- Devices load the combined catalog file plus any records newer than it, so startup stays fast as the library grows.
+- Devices load the combined catalog file plus any records newer than it, so startup stays fast as the library grows. Only the laptop builds the combined file (daily, through `loci-backup`, or on demand). Phones write single records and never rebuild it.
 - Access is one key per device (laptop, Jakob's phone, wife's phone), all on Jakob's GitHub account. Losing a phone means cancelling one key.
 - When a key expires, the app shows a plain message and a link to the renewal steps. It never fails silently.
 - Conflicts: if both of us edit the same record offline, the newest edit wins per field. Git history keeps every older version.
@@ -63,7 +64,7 @@ Three GitHub repositories keep code, data and laptop tools separate. The private
 - **Monthly:** the same tool saves a dated snapshot of the exports (CSV, JSON, BibTeX, HTML catalog), which are small.
 - **Yearly:** the app reminds us to save a full dated archive, including covers, to an external drive.
 - The laptop's own copy of the data repo is one more complete backup.
-- The HTML catalog embeds only thumbnails, keeping it roughly 15–60 MB.
+- The HTML catalog embeds only thumbnails, keeping it roughly 15–60 MB. It is built on the laptop by `loci-backup`, not in the app.
 
 **Language decisions**
 
@@ -200,17 +201,25 @@ Every cover is a JPEG in two sizes, made by one shared piece of code. JPEG was c
 | Detail image | 600 px tall | about 40–60 KB | Loaded when a book is opened; cached once seen |
 
 - A tiny blurred placeholder shows while images load.
-- Original full-resolution photos are thrown away after compression. The phone's photo library already keeps them.
-- **Cover inbox:** laptop tools save downloaded covers (for example, from the Logos importer) into an inbox folder. The next time the app opens on the laptop, it compresses them with the same code used for phone photos. One image pipeline, no extra dependencies.
+- **Masters:** photos taken from the app are not saved to the phone's photo library, so a straightened master (1,600 px on the long side, high-quality JPEG) is kept in the data repo. Phones never download masters. The laptop page uses them to re-make covers later.
+- **Found covers are imported automatically.** After a scan, a cover from Open Library (then Google Books) is downloaded and saved with no question. A cover under 400 px tall counts as not found. The review card shows it, with "Wrong cover? Take a photo".
+- **Cover inbox:** laptop tools save downloaded covers (for example, from the Logos importer) into an inbox folder. A separate laptop page (`laptop/covers.html`, opened in a desktop browser, never loaded by phones) compresses them with the same code used for phone photos. Node cannot decode images without packages, which is why this is a browser page and not a Node tool. One image pipeline, no extra dependencies.
 - **Generated tiles:** when no cover can be found, the tools create a clean, citation-style tile showing the title, subtitle and author, at the same size as other covers.
 - Sizes and quality settings live in one clearly labeled settings block, so they are easy to tune later. Sharpness and beauty take priority over file size.
 - Expected size: about 50–70 MB per 1,000 books with both sizes.
 
-**Taking cover photos**
+**Taking photos**
 
-After a photo is taken, four corner handles straighten a book shot at an angle, and a button rotates it. The result goes through the same compression. This is a small amount of plain code, with no outside library.
+Most books need no photo: the online cover is used. Photos are for books with no findable cover (old, rare, custom) and for spines, which are almost never online.
 
-With about 4,000 Logos books, total cover storage should land near 300 MB, comfortable for GitHub. Phones keep only thumbnails offline, about 50 MB.
+- Photos come from the phone's own camera, opened from the app, or from the photo library. This gives full resolution and needs no camera permission. The app's live camera is used only for barcode scanning.
+- No particular background is needed, and the book can be held in the hand.
+- The editor opens at once with the outline already placed: four corners for a cover; two edge lines and two end bars for a spine. Each handle snaps to a strong edge within a few pixels (never further), a magnifier shows under the finger, and the photo can be rotated in 90° steps and fine-straightened.
+- Nothing is detected or saved automatically: every photo gets one look, usually one to three drags.
+- No enhancement (white balance, lighting) in the app. If it is ever wanted, it belongs on the laptop page, working from masters.
+- The result goes through the same compression. This is about 400 lines of plain code, loaded only when a photo is taken, with no outside library.
+
+With about 4,000 Logos books, total cover storage should land near 300 MB, plus about 0.2 MB per photographed book for its master, comfortable for GitHub. Phones keep physical-book thumbnails offline (about 10 MB) and cache the rest once seen.
 
 ## App features and screens
 
@@ -244,7 +253,7 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 2. The book is looked up in Open Library, falling back to Google Books. If neither finds it, manual entry opens.
 3. The app suggests a matching existing work ("Same work as *Confessions*?"), which we confirm with one tap. It never links automatically.
 4. Missing critical fields are highlighted, each skippable: title, subtitle, author, original date, binding, publisher and edition year.
-5. Take or choose a cover photo if none was found, then straighten it with the corner handles.
+5. A found cover is saved automatically. If none was found, or it is wrong, take or choose a photo and line it up in the editor. Cover downloads and syncing run in the background and never hold up the next scan.
 6. Next book, or finish.
 
 If a scanned ISBN is already in the catalog, the screen warns before adding: "You already have this edition. Add another copy?" Phone cameras are the main way to scan, including for the first 1,000+ books. A USB barcode scanner would also work on the laptop if one is ever bought, since it types the ISBN like a keyboard. No extra code is needed for that.
@@ -264,7 +273,7 @@ Settings stay short, and every setting must earn its place. The defaults are cho
 - Anthologies in shelf lists: once at the earliest date, or under each contained work.
 - Which empty fields batch-add prompts for (default: title, subtitle, author, original date, binding, publisher, edition year).
 - Default sort for Library and Wishlist.
-- Lookup sources: Open Library and Google Books, each on or off.
+- Lookup sources: Open Library and Google Books, each on or off. Google Books may need a free API key per device; without one it can refuse requests, and the app carries on with Open Library and manual entry.
 - Lists: rename or merge categories, tags, series, bindings and locations.
 
 *This device*
@@ -277,7 +286,7 @@ Settings stay short, and every setting must earn its place. The defaults are cho
 
 *Data and care*
 
-- Exports: CSV, JSON, CSL-JSON, BibTeX, HTML catalog.
+- Exports: CSV, JSON, CSL-JSON, BibTeX. The HTML catalog is made on the laptop by `loci-backup`.
 - Backups: date of the last daily mirror (reported by the laptop tool) and the yearly archive reminder.
 - Trash, with restore.
 - Self-test page.
@@ -381,7 +390,7 @@ These rules keep the app fast on any phone and working through years of iOS, And
 
 **Small and fast**
 
-- Size budget: the app itself (HTML, CSS, JS) stays under about 150 KB. The barcode decoder (about 2 MB) is the one large file. It loads only when the scan screen opens, and is then cached.
+- Size budget: the app itself (HTML, CSS, JS) stays under about 100 KB. The barcode decoder (about 2 MB) is the one large file. It, the photo editor and the export code load only when used, and are then cached.
 - System fonts by default, with at most one self-hosted typeface if the chosen design needs it.
 - Long lists draw only the rows on screen, so 5,000 books scroll as smoothly as 50.
 - Search uses a prebuilt, accent-free index kept with the offline copy, so results appear as you type.
@@ -425,9 +434,14 @@ The software won't wear out, but browsers, phones, GitHub and lookup services wi
 
 **Speed targets** (checked by the tests)
 
-- Open the app and search in under about 2 seconds on a 5-year-old phone with 10,000 records.
-- Save a scanned book in under about 5 seconds.
+- Search results update within about 50 ms of each keystroke with 10,000 records on a recent phone (100 ms on a 5-year-old one).
+- Tapping a book opens its page within about 100 ms.
+- The app opens and is usable within about 1 second on a recent phone (2 seconds on a 5-year-old one).
+- Scrolling 10,000 books never stalls a frame for more than about 50 ms.
+- After tapping Save on a scanned book, the next scan is ready within about 200 ms; a lookup shows within about 1.5 seconds on a good connection.
 - Add one newly marked book to Zotero in under about 10 seconds.
+
+The tests check these on the laptop against tighter budgets (search 10 ms, book page 16 ms, start 300 ms), leaving room for a phone about five times slower. The self-test page also runs on a phone, so the same timing lines are checked on the real devices through `DEVICE_CHECKS.md`.
 
 **Documentation**
 
@@ -436,6 +450,7 @@ The software won't wear out, but browsers, phones, GitHub and lookup services wi
 - `HOW_IT_WORKS.md`: a plain-English guide to the parts and how to fix each one, written for a future reader who remembers nothing.
 - `SETUP_FOR_COLLEAGUES.md`: a roughly 10-minute guide for non-programmers (create a private data repo, open the app, add a key).
 - `CLAUDE.md`: rules every Claude Code session must follow (see below).
+- `CODE_STYLE.md`: how code is written, so any file can be understood and safely changed in five minutes.
 - All of it reads as written by and for people, in a plain style with no AI tone.
 
 **Rules in `CLAUDE.md`**
@@ -445,7 +460,7 @@ The software won't wear out, but browsers, phones, GitHub and lookup services wi
 - Run the self-tests before and after every change.
 - The app never talks to Zotero, Obsidian, or any AI service.
 - No AI attribution in code, docs, or commit messages. Credit goes only to Jakob Nath.
-- Prefer the simplest working solution, and ask before adding anything new.
+- Prefer the simplest working solution, and record anything new under "Decisions" in `HOW_IT_WORKS.md`.
 
 **Credits and license**
 
@@ -461,7 +476,7 @@ The software won't wear out, but browsers, phones, GitHub and lookup services wi
 - Title-page photo recognition for books without an ISBN.
 - Lending, read/unread, and whose book it is (the format allows adding these).
 - Colleague setup polish and announcing the project.
-- Recompressing covers with better tools on the laptop.
+- Recompressing or enhancing covers on the laptop page, from masters.
 
 **Never in the app**
 
@@ -481,7 +496,7 @@ The design prototypes come right after the foundations, so the look is chosen ea
 3. **Data format and core:** write `DATA_FORMAT.md`, turn the sample books into test data, and build the shared core module (record format, validation, date parser, anthology date ranges) with tests.
 4. **Prove the remaining risky parts:** multi-file commits from a browser, compressing online covers in the browser, Zotero local writes and citekey pinning, and the columns in Jakob's Logos export. If one fails, Claude Code switches to the documented fallback and notes it in `HOW_IT_WORKS.md` instead of stopping.
 5. **App skeleton:** storage built ready for sync, Library view (grid and list) in the chosen design, book detail, manual entry including anthology contents, and offline search.
-6. **Batch add:** barcode scanning (camera, plus USB scanner input), Open Library and Google Books lookup, work matching, missing-data prompts, duplicate warning, cover photos with corner cropping and compression.
+6. **Batch add:** barcode scanning (camera, plus USB scanner input), Open Library and Google Books lookup with automatic cover import, work matching, missing-data prompts, duplicate warning, cover and spine photos with the manual editor and compression, and the laptop covers page.
 7. **Sync:** against the test-data repo. Per-device keys, first-launch setup, conflict handling, expiry messages.
 8. **Organizing:** locations, sorting, saved views, status rules, wishlist tab, trash, managed lists, settings.
 9. **Value and exports:** value view, CSV, JSON, CSL-JSON, BibTeX, and the HTML catalog.

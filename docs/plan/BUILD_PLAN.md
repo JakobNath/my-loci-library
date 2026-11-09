@@ -84,14 +84,16 @@ During the stop, iterate on the designs until a direction is chosen. Then:
 - [ ] **3.1 Write `DATA_FORMAT.md`.** Cover:
   - every record type: work, edition, copy, author, wishlist item, shared settings
   - every field with its type, whether it's required, and its meaning in plain words
-  - the data repo layout (for example `works/`, `editions/`, `copies/`, `authors/`, `wishlist/`, `settings.json`, `covers/thumb/`, `covers/detail/`, `covers/inbox/`, `catalog.json`, `integrations/zotero-links.json`)
+  - the data repo layout (for example `works/`, `editions/`, `copies/`, `authors/`, `wishlist/`, `settings.json`, `covers/thumb/`, `covers/detail/`, `covers/master/`, `covers/inbox/`, `catalog.json`, `integrations/zotero-links.json`)
   - the ID format, the format version, and the per-field timestamps used for newest-wins merging
   - how trash, value history (one entry per day or session), partial acquired dates, original dates and disputed datings, anthology contents and Logos extra columns are stored
   - one complete example of each record type, including an anthology (NA28) and a disputed date (Didache)
+  - a "Words" section defining each term in the vocabulary of `CODE_STYLE.md` section 4, used the same way in data, code, screens and docs
+  - covers, spines and masters: where each image lives and its size
   **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
 - [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
   **Check:** the core imports cleanly in the browser test page and in `node --test`.
-- [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος"; `escapeHtml`. Add the architecture tests from `CODE_STYLE.md` section 8, as short scans of the source files: `core/` imports nothing outside `core/` and uses no browser or Node globals; only `edges/sync-github.js` mentions `api.github.com`, and only each lookup edge mentions its service; no file outside `edges/storage.js` uses `indexedDB`; every `innerHTML` assignment uses `escapeHtml` for data; the app's own files stay within the size budget. Folders that don't exist yet pass trivially, so the tests are already in place when phase 5 creates them.
+- [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος"; `escapeHtml`. Core takes random bytes and the current time as arguments; it never reads them itself. Replace the hard-coded colors and font in `tests/index.html` with tokens. Add the architecture tests from `CODE_STYLE.md` section 8, as short scans of the source files: `core/` imports nothing outside `core/` and uses no browser or Node globals; only `edges/sync-github.js` mentions `api.github.com`, and only each lookup edge mentions its service; no file outside `edges/storage.js` uses `indexedDB`; every `${...}` inside an `innerHTML` template is `escapeHtml(...)`, a number, or a call to a function whose name ends in `Html`; `core/` uses no `Math.random`, `Date.now` or `crypto`; the app's own files stay under 100 KB. Folders that don't exist yet pass trivially, so the tests are already in place when phase 5 creates them.
   **Check:** all pass in both the browser and Node, and each architecture test fails when a deliberate violation is added.
 - [ ] **3.4 Test data.** Turn all 21 sample books into valid records in `my-loci-library-test-data`, following `DATA_FORMAT.md`, and generate `catalog.json`. Add a 66-book Bible contents list to the docs for pasting.
   **Check:** every record validates, and the counts match `SAMPLE_BOOKS.md`.
@@ -121,20 +123,20 @@ Each check is a small throwaway script or page. Write each result and any fallba
 
 Prototype code, including the photo detection and enhancement, must be rewritten to `CODE_STYLE.md` before it enters the app. Nothing is copied from `prototypes/` as it is.
 
-- [ ] **5.0 Folder layout.** Set up the layout from `CODE_STYLE.md` section 2: `core/` (already there), `edges/` (one module per outside system: `storage.js`, `sync-github.js`, `lookup-openlibrary.js`, `lookup-googlebooks.js`, `camera.js`, `photo.js`, `device.js`, each created when its step needs it), `ui/` (one file per screen exporting `render(container, state, actions)`), and `main.js`, which holds the app's top-level state and wires the rest together.
+- [ ] **5.0 Folder layout.** Set up the layout from `CODE_STYLE.md` section 2: `core/` (already there), `edges/` (one module per outside system: `storage.js`, `sync-github.js`, `lookup-openlibrary.js`, `lookup-googlebooks.js`, `camera.js`, `photo.js`, `device.js`, each created when its step needs it), `ui/` (one file per screen exporting `render(container, state, actions)`), and `main.js`, which holds the app's top-level state and wires the rest together. All sit at the repo root next to `core/`. Move the icons from `app/icons/` to `icons/` and remove `app/`. `edges/device.js` keeps device settings and the sync key in localStorage. Lookup edges also fetch cover image bytes and hand them to `edges/photo.js`.
   **Check:** the architecture tests from step 3.3 run against the new folders and pass.
 - [ ] **5.1 App shell:** `index.html`, a web app manifest with the chosen icon, a simple service worker (offline app files, background version check, a "New version, reload" note), and hash routes (`#/book/<id>`, `#/wishlist`, `#/settings`). Uses `styles/tokens.css`.
   **Check:** it works offline after one visit, and a new deploy shows the reload note.
 - [ ] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
   **Check:** storage tests pass, including a simulated full disk.
 - [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
-  **Check:** 10,000 generated records scroll smoothly in a phone-sized window.
+  **Check:** with 10,000 generated records, a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
 - [ ] **5.4 Book detail page:** every field, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
-  **Check:** each sample book displays correctly.
+  **Check:** each sample book displays correctly, and the largest anthology (the Bible, 66 works) renders in 16 ms or less on the laptop.
 - [ ] **5.5 Entry and editing:** work, edition and copy forms; contributors with roles; contents with table-of-contents paste; the date field with a live preview; autocomplete from managed lists; one notes box.
   **Check:** #6, #8 and #20 can be entered from scratch.
-- [ ] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded.
-  **Check:** opening and searching takes under 2 seconds with 10,000 records in a throttled phone-sized test.
+- [ ] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded. The search box is never re-rendered while typing; only the result list redraws, showing the first 50 results.
+  **Check:** one search over 10,000 records takes 10 ms or less on the laptop. A `DEVICE_CHECKS.md` item: open the self-tests on each phone, and every timing line is green.
 - [ ] **5.7 Development data:** a development-only loader that fills IndexedDB from the test-data records.
   **Check:** the loader can't run against the real data repo.
 
@@ -144,16 +146,18 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 - [ ] **6.1 Scanning:** camera scan (`BarcodeDetector` or the vendored decoder, loaded only on this screen), USB scanner input (an ISBN typed and followed by Enter), plus typed ISBN or title search.
   **Check:** desktop tests pass; a phone camera check is added to `DEVICE_CHECKS.md`.
-- [ ] **6.2 Lookups:** Open Library first, then Google Books, mapped to edition fields, including page count. Never fill original dates.
+- [ ] **6.2 Lookups:** Open Library first, then Google Books, mapped to edition fields, including page count. Never fill original dates. A found cover of at least 400 px tall is imported automatically in the background. Google Books takes an optional per-device API key; a refused request falls back quietly to Open Library and manual entry, with a plain note.
   **Check:** tests with recorded responses pass, and the app still works with both lookups off.
 - [ ] **6.3 Matching and duplicates:** suggest an existing work for confirmation (never link automatically), and warn when the ISBN already exists ("Add another copy?").
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
 - [ ] **6.4 Missing-data prompts** for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
-- [ ] **6.5 Covers:** a found cover or a camera photo; four-corner straightening and rotate; compression to the two JPEG sizes; a blurred placeholder. Sizes and quality sit in one settings block.
+- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder. Sizes and quality sit in one settings block. Loaded only when a photo is taken. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
-- [ ] **6.6 Speed:** a scanned book is saved in under 5 seconds.
-  **Check:** the timing test passes.
+- [ ] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
+  **Check:** an inbox of sample covers is processed into both sizes.
+- [ ] **6.6 Speed:** after Save, the next scan is ready within 200 ms; cover downloads and sync never block it.
+  **Check:** the timing test passes with recorded lookup responses.
 
 ---
 
@@ -161,7 +165,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 - [ ] **7.1 Sync module and setup:** the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
   **Check:** a fresh browser profile sets up and loads the test data.
-- [ ] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field and `catalog.json` refreshed.
+- [ ] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field. Devices never rebuild `catalog.json`; the laptop does (step 10.1).
   **Check:** two simulated devices editing the same record offline merge correctly.
 - [ ] **7.3 Errors and status:** plain messages for expired keys (with renewal steps), going offline, and rate limits; an "unsynced changes" badge.
   **Check:** each error case is tested.
@@ -185,14 +189,14 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 - [ ] **9.1 Value view:** total value of owned physical books, totals by location, count of books with no value, a separate Logos total, and CSV export. Value history: same-day changes collapse into one entry, and history can be deleted.
   **Check:** totals for the sample data are right.
-- [ ] **9.2 Exports:** CSV, JSON, CSL-JSON, BibTeX, and the self-contained HTML catalog (thumbnails embedded, opens with no internet).
+- [ ] **9.2 Exports:** CSV, JSON, CSL-JSON and BibTeX in the app, loaded only when used. The self-contained HTML catalog (thumbnails embedded, opens with no internet) is built by `loci-backup` on the laptop.
   **Check:** each export opens correctly and keeps titles, authors, editions and original dates.
 
 ---
 
 ## Phase 10: Backups
 
-- [ ] **10.1 `loci-backup` tool:** pulls the data repo, mirrors it to the Google Drive folder named in a small config file (changed files only), saves a dated export snapshot monthly, and writes a last-backup status file the app can show.
+- [ ] **10.1 `loci-backup` tool:** pulls the data repo, mirrors it to the Google Drive folder named in a small config file (changed files only), saves a dated export snapshot monthly (including the HTML catalog), rebuilds `catalog.json` and its search text, and writes a last-backup status file the app can show.
   **Check:** tests with a temporary folder pass; the `.cmd` and `.sh` launchers work.
 - [ ] **10.2 Scheduling and reminder:** Task Scheduler and cron instructions in the tools README; the yearly full-archive reminder in the app.
   **Check:** the instructions are written, and the reminder appears after a simulated year.
@@ -206,7 +210,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [ ] **11.1 Import:** reads the Logos CSV, matches rows by resource ID, adds new books, keeps unmapped columns as extra Logos data, never overwrites fields edited in Loci, and writes a change report.
 - [ ] **11.2 Removals:** a full export marks missing digital books "no longer owned"; a filtered export never removes anything.
 - [ ] **11.3 Linking:** suggests links between digital editions and existing works, for confirmation.
-- [ ] **11.4 Covers:** fetches covers into `covers/inbox/` or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
+- [ ] **11.4 Covers:** fetches covers into `covers/inbox/` (compressed by the laptop covers page) or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
   **Check for 11.1–11.4:** tests using `inputs/logos-sample.csv` pass, and a second run changes nothing.
 
 ---
