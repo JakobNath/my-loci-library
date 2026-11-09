@@ -12,6 +12,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 ## Phase 5
 
+- [ ] Both phones: open `https://jakobnath.github.io/my-loci-library/tests/`. Every line should be green, including the five speed lines, which should say "phone targets". Note the opening time shown on the first speed line.
+- [ ] Both phones: open the app (`https://jakobnath.github.io/my-loci-library/`), then turn on airplane mode and reload. The app should still open (it will be empty until the test data or sync is loaded).
+- [ ] Desktop: open `tests/load-test-data.html` on the local server, choose `catalog.json` from the test-data repository, then open the app: 19 books should be on the shelves, and Settings should show the app version.
 - [ ] iPhone: once the real app exists, add it to the home screen, open it from there, and check on the self-test page that persistent storage is reported as granted (it was not granted in an ordinary Safari tab).
 
 ## Photo prototype

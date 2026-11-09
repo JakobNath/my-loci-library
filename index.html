@@ -2,20 +2,34 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#2e4a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Loci">
 <title>My Loci Library</title>
-<link rel="icon" href="app/icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles/tokens.css">
-<style>
-  body { margin: 0; padding: var(--space-5); background: var(--bg); color: var(--ink); font-family: var(--font-body); line-height: 1.5; }
-  a { color: var(--accent-ink); }
-  h1 { font-family: var(--font-display); }
-</style>
+<link rel="stylesheet" href="styles/app.css">
 </head>
 <body>
-<h1>My Loci Library</h1>
-<p>A catalog of our books, under construction.</p>
-<p><a href="prototypes/">Design prototypes</a> · <a href="tests/">Self-tests</a></p>
-<p>Created by Jakob Nath.</p>
+<div class="app">
+  <header class="topbar">
+    <a class="brand" href="#/" aria-label="My Loci Library, home">
+      <span class="brand-mark" id="brandMark"></span><span class="brand-name">My Loci Library</span>
+    </a>
+    <label class="search">
+      <span class="visually-hidden">Search the library</span>
+      <input id="search" type="search" placeholder="Search titles, authors, notes" autocomplete="off" enterkeyhint="search">
+    </label>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="Main"></nav>
+  <main id="screen" tabindex="-1"></main>
+</div>
+<p class="note" id="note" hidden></p>
+<noscript><p class="note">My Loci Library needs JavaScript turned on.</p></noscript>
+<script type="module" src="main.js"></script>
 </body>
 </html>

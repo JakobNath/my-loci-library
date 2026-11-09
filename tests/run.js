@@ -7,6 +7,8 @@ const testFiles = [
   '../core/tests/dating.tests.js',
   '../core/tests/catalog.tests.js',
   '../core/tests/records.tests.js',
+  '../core/tests/entry.tests.js',
+  './speed.tests.js',
 ];
 
 const out = document.getElementById('out');
@@ -34,8 +36,8 @@ for (const file of testFiles) {
   for (const t of mod.tests || []) {
     count++;
     try {
-      await t.fn();
-      line('pass  ' + file + ' > ' + t.name, 'pass');
+      const detail = await t.fn();
+      line('pass  ' + file + ' > ' + t.name + (detail ? ' (' + detail + ')' : ''), 'pass');
     } catch (err) {
       failures++;
       line('FAIL  ' + file + ' > ' + t.name + ': ' + err.message, 'fail');

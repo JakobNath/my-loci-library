@@ -60,7 +60,7 @@ export function serviceProblems(file, text) {
   return SERVICES.filter(([word, owner]) => file !== owner && text.includes(word)).map(([word, owner]) => `${file} mentions ${word}; only ${owner} may`);
 }
 
-/** Every ${...} in a template assigned to innerHTML must be escaped, a number, or another *Html piece. */
+/** Every ${...} in a template assigned to innerHTML must be escaped, a number, or a piece named *Html (a variable or a call). */
 export function innerHtmlProblems(file, text) {
   const problems = [];
   for (const match of text.matchAll(/\.innerHTML\s*[+]?=\s*`/g)) {
@@ -73,7 +73,9 @@ export function innerHtmlProblems(file, text) {
       else if (text[end] === '}' && depth > 0) depth--;
     }
     for (const [, inside] of text.slice(start, end).matchAll(/\$\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}/g)) {
-      const safe = /^\s*escapeHtml\(/.test(inside) || /^\s*[\w.]*Html\(/.test(inside) || /^\s*-?\d+(\.\d+)?\s*$/.test(inside);
+      // A choice between two fixed words ("x ? ' checked' : ''") puts no data in the page.
+      const fixedChoice = /^[^?]*\?\s*'[^'$]*'\s*:\s*'[^'$]*'\s*$/.test(inside);
+      const safe = fixedChoice || /^\s*escapeHtml\(/.test(inside) || /^\s*[\w.]*Html\b/.test(inside) || /^\s*-?\d+(\.\d+)?\s*$/.test(inside);
       if (!safe) problems.push(`${file}: innerHTML uses \${${inside.trim()}} without escapeHtml`);
     }
   }
@@ -95,9 +97,36 @@ test('every innerHTML assignment escapes its data', () => {
   assert.deepEqual(appFiles().filter(file => /\.m?js$/.test(file)).flatMap(file => innerHtmlProblems(file, read(file))), []);
 });
 
-test('the app\'s own files stay within the size budget', () => {
-  const total = appFiles().reduce((sum, file) => sum + statSync(join(root, file)).size, 0);
-  assert.ok(total <= SIZE_BUDGET, `the app's own files are ${Math.round(total / 1024)} KB; the budget is ${SIZE_BUDGET / 1024} KB`);
+// What a phone loads to open the app: index.html, its stylesheets, and main.js
+// with every module it imports. Comments are not counted, so explaining the
+// code never costs budget (decision of 2026-11-09 in HOW_IT_WORKS.md).
+export function loadedFiles(start = 'index.html') {
+  const found = new Set([start]);
+  for (const [, path] of read(start).matchAll(/(?:href|src)="([^"]+\.(?:css|js))"/g)) found.add(path);
+  const queue = [...found].filter(file => file.endsWith('.js'));
+  while (queue.length) {
+    const file = queue.shift();
+    for (const [, path] of read(file).matchAll(/\bimport\s[^'"]*['"](\.[^'"]+)['"]/g)) {
+      const target = join(dirname(file), path).split(sep).join('/');
+      if (!found.has(target)) { found.add(target); queue.push(target); }
+    }
+  }
+  return [...found];
+}
+
+export function codeSize(text) {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"\\])\/\/.*$/gm, '$1').replace(/^\s*\n/gm, '').length;
+}
+
+test('the files a phone loads stay within the size budget', () => {
+  const total = loadedFiles().reduce((sum, file) => sum + codeSize(read(file)), 0);
+  assert.ok(total <= SIZE_BUDGET, `the app's code is ${Math.round(total / 1024)} KB without comments; the budget is ${SIZE_BUDGET / 1024} KB`);
+});
+
+test('the size check counts code, not comments, and follows imports', () => {
+  assert.equal(codeSize('// a note\nconst a = 1; // why\n/* more */\n'), 'const a = 1; \n'.length);
+  assert.equal(codeSize("const url = 'https://example.org';"), "const url = 'https://example.org';".length);
+  assert.ok(loadedFiles().includes('core/library.js'), 'modules imported by main.js are counted');
 });
 
 test('the rule folders, once they exist, sit at the repository root', () => {
@@ -122,4 +151,6 @@ test('the service rule catches GitHub named outside the sync module', () => {
 test('the innerHTML rule catches unescaped data', () => {
   assert.equal(innerHtmlProblems('ui/x.js', 'box.innerHTML = `<h1>${book.title}</h1>`;').length, 1);
   assert.equal(innerHtmlProblems('ui/x.js', 'box.innerHTML = `<h1>${escapeHtml(book.title)}</h1>${coverHtml(book)}${2}`;').length, 0);
+  assert.equal(innerHtmlProblems('ui/x.js', "box.innerHTML = `<input${on ? ' checked' : ''}>`;").length, 0);
+  assert.equal(innerHtmlProblems('ui/x.js', "box.innerHTML = `<b>${on ? book.title : ''}</b>`;").length, 1);
 });

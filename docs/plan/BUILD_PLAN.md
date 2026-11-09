@@ -128,23 +128,23 @@ Each check is a small throwaway script or page. Write each result and any fallba
 
 Prototype code, including the photo detection and enhancement, must be rewritten to `CODE_STYLE.md` before it enters the app. Nothing is copied from `prototypes/` as it is.
 
-- [ ] **5.0 Folder layout.** Set up the layout from `CODE_STYLE.md` section 2: `core/` (already there), `edges/` (one module per outside system: `storage.js`, `sync-github.js`, `lookup-openlibrary.js`, `lookup-googlebooks.js`, `camera.js`, `photo.js`, `device.js`, each created when its step needs it), `ui/` (one file per screen exporting `render(container, state, actions)`), and `main.js`, which holds the app's top-level state and wires the rest together. All sit at the repo root next to `core/`. Move the icons from `app/icons/` to `icons/` and remove `app/`. `edges/device.js` keeps device settings and the sync key in localStorage. Lookup edges also fetch cover image bytes and hand them to `edges/photo.js`.
+- [x] **5.0 Folder layout.** Set up the layout from `CODE_STYLE.md` section 2: `core/` (already there), `edges/` (one module per outside system: `storage.js`, `sync-github.js`, `lookup-openlibrary.js`, `lookup-googlebooks.js`, `camera.js`, `photo.js`, `device.js`, each created when its step needs it), `ui/` (one file per screen exporting `render(container, state, actions)`), and `main.js`, which holds the app's top-level state and wires the rest together. All sit at the repo root next to `core/`. Move the icons from `icons/` to `icons/` and remove `app/`. `edges/device.js` keeps device settings and the sync key in localStorage. Lookup edges also fetch cover image bytes and hand them to `edges/photo.js`.
   **Check:** the architecture tests from step 3.3 run against the new folders and pass.
 - [ ] **5.1 App shell:** `index.html`, a web app manifest with the chosen icon, a simple service worker (offline app files, background version check, a "New version, reload" note), and hash routes (`#/book/<id>`, `#/wishlist`, `#/settings`). Uses `styles/tokens.css`.
   **Check:** it works offline after one visit, and a new deploy shows the reload note.
-- [ ] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
+- [x] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
   **Check:** storage tests pass, including a simulated full disk.
-- [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
+- [x] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
   **Check:** with 10,000 generated books (6,000 physical, 4,000 Logos, with works, copies and authors), a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
-- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the drawn spine in `docs/plan/DESIGN.md` for books without one. Heights and thicknesses come from the core size estimates.
+- [x] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the drawn spine in `docs/plan/DESIGN.md` for books without one. Heights and thicknesses come from the core size estimates.
   **Check:** a sample shelf mixing photographed and drawn spines matches the approved design, and scrolling stays within the speed target.
-- [ ] **5.4 Book detail page:** every field, the spine beside the cover when there is one, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
+- [x] **5.4 Book detail page:** every field, the spine beside the cover when there is one, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
   **Check:** each sample book displays correctly, and the largest anthology (the Bible, 66 works) renders in 16 ms or less on the laptop.
-- [ ] **5.5 Entry and editing:** work, edition and copy forms; contributors with roles; contents with table-of-contents paste; the date field with a live preview; autocomplete from managed lists; one notes box.
+- [x] **5.5 Entry and editing:** work, edition and copy forms; contributors with roles; contents with table-of-contents paste; the date field with a live preview; autocomplete from managed lists; one notes box.
   **Check:** #6, #8 and #20 can be entered from scratch.
-- [ ] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded. The search box is never re-rendered while typing; only the result list redraws, showing the first 50 results.
+- [x] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded. The search box is never re-rendered while typing; only the result list redraws, showing the first 50 results.
   **Check:** one search over 10,000 books takes 10 ms or less on the laptop. A `DEVICE_CHECKS.md` item: open the self-tests on each phone, and every timing line is green.
-- [ ] **5.7 Development data:** a development-only loader that fills IndexedDB from the test-data records.
+- [x] **5.7 Development data:** a development-only loader that fills IndexedDB from the test-data records.
   **Check:** the loader can't run against the real data repo.
 
 ---

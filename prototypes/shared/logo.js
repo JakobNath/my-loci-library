@@ -1,7 +1,7 @@
 // The My Loci Library logo: an open book with a capital L on the left page
 // and lines of text on the right ("ex libris"). Drawn on a 48 by 48 grid.
 // `currentColor` draws the book and the L; `--logo-pop` colors the lines of
-// text. The same drawing is saved as app/icons/logo.svg and app/icons/icon.svg.
+// text. The same drawing is saved as icons/logo.svg and icons/icon.svg.
 
 export const mark = `<svg viewBox="0 0 48 48" aria-hidden="true">
   <path d="M3.5 12.5c7-3 14-3 20.5 1.2 6.5-4.2 13.5-4.2 20.5-1.2v25c-7-3-14-3-20.5 1.2-6.5-4.2-13.5-4.2-20.5-1.2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>

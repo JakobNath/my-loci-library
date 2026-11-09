@@ -271,7 +271,7 @@ All records in one file, so a device can load the catalog with one download:
 { "format": 1, "built": "2026-11-09T22:00:00Z", "works": [], "editions": [], "copies": [], "authors": [], "wishlist": [] }
 ```
 
-It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
+It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
 
 ## Merging
 

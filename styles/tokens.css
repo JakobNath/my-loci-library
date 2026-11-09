@@ -59,6 +59,12 @@
   --shadow-cover: 1px 0 0 rgba(0, 0, 0, 0.10), 2px 3px 8px rgba(50, 35, 15, 0.22);
   --shadow-cover-l: 1px 0 0 rgba(0, 0, 0, 0.10), 6px 16px 34px rgba(50, 35, 15, 0.26);
   --cover-sheen: linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0 2%, rgba(255, 255, 255, 0.10) 3% 4.5%, transparent 7.5%);
+
+  /* Drawn cover tiles, for books with no cover image yet: six quiet
+     book-cloth colors with ivory lettering. The same in light and dark
+     mode, as real covers are. */
+  --cloth-1: #5b2a2a; --cloth-2: #2e4a3d; --cloth-3: #26364f; --cloth-4: #4f4a2e; --cloth-5: #4a3346; --cloth-6: #3d4a52;
+  --cloth-ink: #f1ebdf; --cloth-line: rgba(241, 235, 223, 0.4);
 }
 
 /* Dark colors: a deep forest green for the bar and buttons on a green-black

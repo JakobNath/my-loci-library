@@ -1,0 +1,15 @@
+{
+  "name": "My Loci Library",
+  "short_name": "Loci",
+  "description": "A catalog of our books. Created by Jakob Nath.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f2ea",
+  "theme_color": "#2e4a3d",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

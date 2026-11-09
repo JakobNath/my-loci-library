@@ -62,8 +62,8 @@ Each mode uses two greens: **accent** fills things (top bar, buttons, selected c
 ## Logo and icon
 
 - The mark: an open book with a capital L on the left page and four lines of text on the right, after the old "ex libris" bookplates. The book and the L are drawn in the main color; the lines of text are honey.
-- `app/icons/logo.svg`: the mark on a clear background, in forest and honey.
-- `app/icons/icon.svg`: the home-screen icon, the mark in ivory and honey on a forest-green rounded square.
+- `icons/logo.svg`: the mark on a clear background, in forest and honey.
+- `icons/icon.svg`: the home-screen icon, the mark in ivory and honey on a forest-green rounded square.
 - In the app's top bar the mark is drawn in ivory with honey lines, from `prototypes/shared/logo.js` for now.
 - iPhones need PNG copies of the icon for the home screen; these are made from `icon.svg` in phase 5.
 
