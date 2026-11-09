@@ -99,7 +99,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
   **Check:** all pass in both the browser and Node, and each architecture test fails when a deliberate violation is added.
 - [ ] **3.4 Test data.** Turn all 21 sample books into valid records in `my-loci-library-test-data`, following `DATA_FORMAT.md`, and generate `catalog.json`. Add a 66-book Bible contents list to the docs for pasting.
   **Check:** every record validates, and the counts match `SAMPLE_BOOKS.md`.
-- [ ] **3.5 Share the core with the tools repo.** Run `update-core`, and add a tools test that fails if the two copies differ.
+- [x] **3.5 Share the core with the tools repo.** Run `update-core`, and add a tools test that fails if the two copies differ.
   **Check:** the test passes, and fails if a core file is edited in only one place.
 
 ---
