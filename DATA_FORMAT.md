@@ -196,6 +196,7 @@ Each entry:
 | `source` | text | `photo` (ours), `openlibrary`, `googlebooks`, `logos`, or `generated` (a citation-style tile). |
 | `color` | text or null | For a cover: its main color as `#rrggbb`, worked out once when it was saved. Used for the edge of a drawn spine. |
 | `master` | true or false | Whether a master file exists. |
+| `waiting` | text or null | The address of a cover the app could not download itself (Google Books covers), for a laptop tool to fetch into `images/inbox/`. Null once the image files exist. |
 
 The first cover in the list is the one shown.
 
@@ -346,7 +347,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "logosExtra": {},
   "cite": false,
   "images": [
-    { "id": "g8c0na28cvr1", "kind": "cover", "source": "openlibrary", "color": "#2c3f6b", "master": false }
+    { "id": "g8c0na28cvr1", "kind": "cover", "source": "openlibrary", "color": "#2c3f6b", "master": false, "waiting": null }
   ],
   "trashed": null,
   "created": "2026-11-09T14:00:00Z",
