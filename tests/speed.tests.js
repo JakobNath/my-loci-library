@@ -58,14 +58,18 @@ function hiddenBox() {
 }
 
 // How fast is this device? Ten million additions take about 10 ms on a
-// current laptop; more than 40 ms means a phone or a slowed browser.
+// current laptop; more than 40 ms means a slow phone or a slowed browser.
 function deviceIsSlow() {
   const start = performance.now();
   let sum = 0;
   for (let i = 0; i < 1e7; i++) sum += i % 7;
   return performance.now() - start + (sum < 0 ? 1 : 0) > 40;
 }
-const SLOW = deviceIsSlow();
+// A phone's processor can be as quick as a laptop's while its storage is
+// much slower, so any touch-screen device gets the phone targets
+// (found on Jakob's phone, 2026-11-09: laptop-fast loop, 485 ms to open).
+const IS_PHONE = matchMedia('(pointer: coarse)').matches;
+const SLOW = IS_PHONE || deviceIsSlow();
 const BUDGET = SLOW
   ? { label: 'phone targets', start: 1000, search: 100, book: 100, sort: 500, scroll: 50 }
   : { label: 'laptop budgets', start: 300, search: 10, book: 16, sort: 100, scroll: 16 };
