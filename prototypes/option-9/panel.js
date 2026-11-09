@@ -29,6 +29,7 @@ export const knobs = [
 ];
 
 export const looks = [
+  { name: 'Favorite', note: 'Chosen 9 Nov 2026', set: { accent: 'forest', pop: 'honey', paper: 'ivory', type: 'book', shelf: 'none', covers: 'large', depth: 'soft', corners: 'round', density: 'cozy', header: 'tinted', nav: 'side', logo: 'bookplate' } },
   { name: 'Bookshop', note: 'Option 7 as it was', set: { accent: 'forest', pop: 'clay', paper: 'ivory', type: 'book', shelf: 'slim', covers: 'medium', depth: 'soft', corners: 'soft', density: 'airy', header: 'plain', nav: 'side', logo: 'two-books' } },
   { name: 'Garden library', note: 'Sage, rose, linen', set: { accent: 'sage', pop: 'rose', paper: 'linen', type: 'sturdy', shelf: 'slim', covers: 'medium', depth: 'soft', corners: 'round', density: 'airy', header: 'tinted', nav: 'side', logo: 'sprout' } },
   { name: 'Sunday morning', note: 'Soft and cute', set: { accent: 'forest', pop: 'rose', paper: 'blush', type: 'rounded', shelf: 'slim', covers: 'medium', depth: 'soft', corners: 'round', density: 'cozy', header: 'plain', nav: 'side', logo: 'heart' } },

@@ -63,6 +63,9 @@
   .l-card .mark { color: #2e4a3d; --logo-pop: #a65a3f; }
   .l-card p { color: var(--muted); font-size: 14px; }
   .l-try { font-size: 14px; }
+  .l-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0; padding: 8px 12px; border-radius: 8px; background: #2e4a3d; color: #fdfbf7; font: 600 15px/1 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .l-bar .mark { width: 28px; height: 28px; color: #fdfbf7; --logo-pop: #f5ecd9; --logo-bg: #2e4a3d; }
+  #classic-logos .l-card .mark:not(.l-bar .mark) { --logo-pop: #b0843a; }
   @media (prefers-color-scheme: dark) { .l-card .mark { color: #9cc0ab; --logo-pop: #d79a7f; } }
 </style>
 </head>
@@ -71,6 +74,18 @@
   <h1>My Loci Library: designs</h1>
   <p class="lede">Clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
   <p class="lede">Worth trying in each: search for <em>phaedo</em> or <em>politeia</em>; open <em>The Apostolic Fathers</em> (an anthology with a disputed date for the Didache); turn on "No longer owned" and open the Penguin <em>Confessions</em>; and go through "Add books" with each of the three pretend scans.</p>
+
+  <h2>Round 4: the favorite, and more classic logos</h2>
+  <p class="lede">The favorite from the playground: forest green, a honey pop, ivory paper, book serif titles, no shelves, large covers, soft shadows, round corners, cozy spacing, a colored top bar, the menu at the side, and the bookplate logo. It is now the playground's first starting look.</p>
+  <div class="options">
+    <a class="opt" href="option-9/?look=favorite">
+      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#fdfbf7"></span><span style="background:#2e4a3d"></span><span style="background:#b0843a"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 9 · Favorite</div><div class="opt-name">Forest, honey and ivory</div>
+      <p>Open the favorite look. The Adjust button is still there for small changes.</p></div>
+    </a>
+  </div>
+  <p class="lede" style="margin-top:22px">All the classic logos, shown in the favorite colors: large, small, in the green top bar, and as home-screen icons. "Try it" opens the favorite look with that logo.</p>
+  <div class="l-grid" id="classic-logos"></div>
 
   <h2>Round 3: the playground</h2>
   <p class="lede">Option 7 was the favorite, so round 3 is option 7 with an <strong>Adjust</strong> button. It changes the main color, the little pop of color, the paper, the title type, shelves, cover size and shadow, corners, spacing, the top bar, the laptop menu and the logo, all live. When you find a look you like, press "Copy link to this look" and send it to each other.</p>
@@ -166,13 +181,22 @@
   const lIcon = (l, size, bg, ink, popc, border) => `<span class="icon i${size}" style="background:${bg};${border ? 'box-shadow:inset 0 0 0 1px #ddd5c7' : ''}"><span class="mark" style="color:${ink};--logo-pop:${popc};--logo-bg:${bg}">${l.mark}</span></span>`;
   document.getElementById('l-logos').innerHTML = ['Modern', 'Cute', 'Classic'].map(mood => `
     <p class="mood">${mood}</p>
-    <div class="l-grid">${lLogos.filter(l => l.mood === mood).map(l => `
+    <div class="l-grid">${lLogos.filter(l => l.mood === mood && !l.round).map(l => `
       <div class="l-card">
         <div class="logo-row"><span class="mark m96" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m48" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m24" style="--logo-bg:var(--surface)">${l.mark}</span></div>
         <div class="logo-row">${lIcon(l, 96, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#f6f2ea', '#2e4a3d', '#a65a3f', true)}</div>
         <p class="logo-name">${l.name}</p><p>${l.idea}</p>
         <a class="l-try" href="option-9/?logo=${l.id}">Try it in the playground</a>
       </div>`).join('')}</div>`).join('');
+  document.getElementById('classic-logos').innerHTML = lLogos.filter(l => l.mood === 'Classic').map(l => `
+    <div class="l-card">
+      <div class="logo-row"><span class="mark m96" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m48" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m24" style="--logo-bg:var(--surface)">${l.mark}</span></div>
+      <div class="l-bar"><span class="mark">${l.mark}</span>My Loci Library</div>
+      <div class="logo-row">${lIcon(l, 96, '#2e4a3d', '#f6f2ea', '#dcb76f')}${lIcon(l, 48, '#2e4a3d', '#f6f2ea', '#dcb76f')}${lIcon(l, 48, '#f6f2ea', '#2e4a3d', '#b0843a', true)}</div>
+      <p class="logo-name">${l.name}${l.round ? ' <span class="muted">· new</span>' : ''}</p><p>${l.idea}</p>
+      <a class="l-try" href="option-9/?look=favorite&amp;logo=${l.id}">Try it with the favorite look</a>
+    </div>`).join('');
+
   const iconColors = [
     { bg: '#1f1e1c', ink: '#f4f2ee', pop: '#c9a46a' },
     { bg: '#2e4a3d', ink: '#f6f2ea', pop: '#d79a7f' },
