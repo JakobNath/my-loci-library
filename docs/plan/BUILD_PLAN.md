@@ -74,6 +74,8 @@ Tell Jakob, in a short message:
 
 During the stop, iterate on the designs until a direction is chosen. Then:
 
+- [ ] **2.6a Drawn spine design.** In the prototypes, show several options for the drawn spine that stands in for a book with no spine photo (type, color, ornament, how width follows page count). Show each one on a shelf mixed with real spine photos from `prototypes/photos/real/` and with other drawn spines. Iterate with Jakob and his wife until one is approved, then record it in `docs/plan/DESIGN.md`.
+  **Check:** Jakob has approved one option.
 - [ ] **2.6 Lock the design.** Write the chosen look into `styles/tokens.css` and record it in `docs/plan/DESIGN.md` (direction, colors, type, spacing, icon). Record the phone test results in `HOW_IT_WORKS.md`. If the iPhone barcode test failed, choose a different decoder and retest before continuing.
   **Check:** Jakob has said "go".
 
@@ -89,7 +91,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
   - how trash, value history (one entry per day or session), partial acquired dates, original dates and disputed datings, anthology contents and Logos extra columns are stored
   - one complete example of each record type, including an anthology (NA28) and a disputed date (Didache)
   - a "Words" section defining each term in the vocabulary of `CODE_STYLE.md` section 4, used the same way in data, code, screens and docs
-  - covers, spines and masters: where each image lives and its size
+  - covers, spines and masters: where each image lives and its size. Images are a list on the record, each with a kind (`cover`, `spine`), so later kinds need no format change
   **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
 - [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
   **Check:** the core imports cleanly in the browser test page and in `node --test`.
@@ -130,13 +132,15 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [ ] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
   **Check:** storage tests pass, including a simulated full disk.
 - [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
-  **Check:** with 10,000 generated records, a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
-- [ ] **5.4 Book detail page:** every field, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
+  **Check:** with 10,000 generated books (6,000 physical, 4,000 Logos, with works, copies and authors), a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
+- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the approved drawn spine for books without one.
+  **Check:** a sample shelf mixing photographed and drawn spines matches the approved design, and scrolling stays within the speed target.
+- [ ] **5.4 Book detail page:** every field, the spine beside the cover when there is one, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
   **Check:** each sample book displays correctly, and the largest anthology (the Bible, 66 works) renders in 16 ms or less on the laptop.
 - [ ] **5.5 Entry and editing:** work, edition and copy forms; contributors with roles; contents with table-of-contents paste; the date field with a live preview; autocomplete from managed lists; one notes box.
   **Check:** #6, #8 and #20 can be entered from scratch.
 - [ ] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded. The search box is never re-rendered while typing; only the result list redraws, showing the first 50 results.
-  **Check:** one search over 10,000 records takes 10 ms or less on the laptop. A `DEVICE_CHECKS.md` item: open the self-tests on each phone, and every timing line is green.
+  **Check:** one search over 10,000 books takes 10 ms or less on the laptop. A `DEVICE_CHECKS.md` item: open the self-tests on each phone, and every timing line is green.
 - [ ] **5.7 Development data:** a development-only loader that fills IndexedDB from the test-data records.
   **Check:** the loader can't run against the real data repo.
 
@@ -150,7 +154,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** tests with recorded responses pass, and the app still works with both lookups off.
 - [ ] **6.3 Matching and duplicates:** suggest an existing work for confirmation (never link automatically), and warn when the ISBN already exists ("Add another copy?").
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
-- [ ] **6.4 Missing-data prompts** for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
+- [ ] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
 - [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder. Sizes and quality sit in one settings block. Loaded only when a photo is taken. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.

@@ -210,7 +210,9 @@ Every cover is a JPEG in two sizes, made by one shared piece of code. JPEG was c
 
 **Taking photos**
 
-Most books need no photo: the online cover is used. Photos are for books with no findable cover (old, rare, custom) and for spines, which are almost never online.
+Most books need no photo: the online cover is used. Photos are for books with no findable cover (old, rare, custom), for a wrong online cover, and for spines, which are almost never online. Any book can always be given its own cover photo instead.
+
+**Spines** are optional: any book can have a spine photo, and none is ever asked for. A spine shows on the book's page beside the cover and in the shelf view. Images are stored as a list, each marked with its kind (cover, spine), so another kind (a title page, say) can be added later without changing the format.
 
 - Photos come from the phone's own camera, opened from the app, or from the photo library. This gives full resolution and needs no camera permission. The app's live camera is used only for barcode scanning.
 - No particular background is needed, and the book can be held in the hand.
@@ -228,6 +230,7 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 **Library and Wishlist views**
 
 - A cover grid and a dense list view.
+- **Shelf view:** for a location, spines stand side by side like the real shelf. A book with no spine photo gets a drawn spine (title and author set vertically in the design's colors, its width taken from the page count). The drawn spine's look is chosen by Jakob and his wife from several options, shown among real spine photos, before it is built.
 - Sort by any field: title, subtitle, author, original date, edition year, binding, series, category, location, value, date added, and more.
 - Filters by format (physical or Logos), location, category, tags, status, and "needs original date".
 - **Saved views,** such as "Office shelves by original date" or "Greek texts by author".
@@ -247,7 +250,7 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 - Other editions of the same work, physical and Logos, listed together. An anthology lists its contents with each work's date, and any work lists the anthologies that contain it.
 - The "cite" toggle on Logos books, plus a "No longer in library" banner when relevant.
 
-**Batch add** (one screen for a whole stack or a single book)
+**Batch add** (one screen for a whole stack or a single book; each book is reviewed as it is scanned, before the next scan)
 
 1. Scan a barcode, or type an ISBN or title.
 2. The book is looked up in Open Library, falling back to Google Books. If neither finds it, manual entry opens.
@@ -434,10 +437,12 @@ The software won't wear out, but browsers, phones, GitHub and lookup services wi
 
 **Speed targets** (checked by the tests)
 
-- Search results update within about 50 ms of each keystroke with 10,000 records on a recent phone (100 ms on a 5-year-old one).
+Targets are set for 10,000 books: up to about 6,000 physical (under 2,000 today) and about 4,000 Logos, with their works, copies and authors.
+
+- Search results update within about 50 ms of each keystroke on a recent phone (100 ms on a 5-year-old one).
 - Tapping a book opens its page within about 100 ms.
 - The app opens and is usable within about 1 second on a recent phone (2 seconds on a 5-year-old one).
-- Scrolling 10,000 books never stalls a frame for more than about 50 ms.
+- Scrolling the whole library never stalls a frame for more than about 50 ms.
 - After tapping Save on a scanned book, the next scan is ready within about 200 ms; a lookup shows within about 1.5 seconds on a good connection.
 - Add one newly marked book to Zotero in under about 10 seconds.
 
