@@ -17,11 +17,11 @@ There is exactly one stop, at the end of phase 2. After Jakob says "go", phases 
 
 ## Phase 1: Foundations
 
-- [ ] **1.1 Check the tools.** Confirm `git`, `gh` (signed in as JakobNath) and `node` are available. If one is missing, say exactly what to install and wait. This is the only allowed early stop.
+- [x] **1.1 Check the tools.** Confirm `git`, `gh` (signed in as JakobNath) and `node` are available. If one is missing, say exactly what to install and wait. This is the only allowed early stop.
   **Check:** all three report a version, and `gh auth status` shows JakobNath.
 - [x] **1.2 Turn off AI attribution.** In the workspace's `.claude/settings.json`, set `"includeCoAuthoredBy": false` (or the current equivalent setting if it has been renamed), and set Git's user name to "Jakob Nath" for these repos.
   **Check:** a test commit message in a scratch repo contains no co-author line.
-- [ ] **1.3 Create the repos** with `gh`: `my-loci-library` (public), `my-loci-library-tools` (public), `my-loci-library-test-data` (private), `my-loci-library-data` (private, holding only a README saying it holds the real catalog). Clone them into the workspace.
+- [x] **1.3 Create the repos** with `gh`: `my-loci-library` (public), `my-loci-library-tools` (public), `my-loci-library-test-data` (private), `my-loci-library-data` (private, holding only a README saying it holds the real catalog). Clone them into the workspace.
   **Check:** all four folders exist and push to GitHub.
 - [x] **1.4 App repo skeleton.** Create the folders `app/`, `core/`, `styles/` (with `tokens.css`), `vendor/`, `tests/`, `prototypes/`, `docs/plan/`. Move `PLAN.md`, `SAMPLE_BOOKS.md` and `BUILD_PLAN.md` into `docs/plan/`, leaving pointer files in the workspace that say where they went. Copy `CLAUDE.md` in. Add `LICENSE` (MIT, "Copyright (c) 2026 Jakob Nath"), and skeletons for `README.md`, `DATA_FORMAT.md`, `HOW_IT_WORKS.md` (with a "Decisions" section), `DEVICE_CHECKS.md` and `SETUP_FOR_COLLEAGUES.md`. Every README says "Created by Jakob Nath".
   **Check:** the files exist and contain no AI attribution.
@@ -29,7 +29,7 @@ There is exactly one stop, at the end of phase 2. After Jakob says "go", phases 
   **Check:** `node --test` runs (zero tests is fine).
 - [x] **1.6 Test page.** `tests/index.html` loads test files as ES modules, runs them, and prints plain pass/fail lines with a total.
   **Check:** it opens in a browser and reports "0 tests, 0 failures".
-- [ ] **1.7 GitHub Pages.** Turn on Pages for `my-loci-library` (main branch, root) with a placeholder `index.html`.
+- [x] **1.7 GitHub Pages.** Turn on Pages for `my-loci-library` (main branch, root) with a placeholder `index.html`.
   **Check:** `https://jakobnath.github.io/my-loci-library/` loads the placeholder.
 
 ---
@@ -57,7 +57,7 @@ Goal: show Jakob and his wife five real, clickable directions on their own phone
 
   A "Copy results" button copies a plain-text report.
   **Check:** both tests run in desktop Chrome and Firefox; real-phone results come from Jakob at the stop.
-- [ ] **2.5 Prototype index.** `prototypes/index.html` links the five options, the icons and the phone test page, with one sentence describing each option. Publish to Pages.
+- [x] **2.5 Prototype index.** `prototypes/index.html` links the five options, the icons and the phone test page, with one sentence describing each option. Publish to Pages.
   **Check:** `https://jakobnath.github.io/my-loci-library/prototypes/` works on a phone-sized screen.
 
 ### STOP
