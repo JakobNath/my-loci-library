@@ -1,0 +1,30 @@
+/* The chosen design: the details that sit on top of shared/base.css.
+   All values come from styles/tokens.css. */
+
+/* Large covers with no shelves */
+.tile { gap: var(--space-2); }
+.tile-date { color: var(--pop-ink); }
+
+.chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.seg-btn.is-on { background: var(--accent-soft); color: var(--accent-ink); }
+.list .row { padding: var(--space-3) var(--space-2); border-radius: var(--radius); }
+.list .row:hover { background: var(--surface); }
+
+/* Book page */
+.detail-body .block { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: var(--space-4); }
+.detail-body .block .h2 { color: var(--accent-ink); }
+.detail-body .block .list .row { padding-left: 0; }
+.copy:first-of-type { border-top: 0; padding-top: 0; }
+.date-chip { background: var(--date-bg); color: var(--date-ink); }
+.notes { background: var(--surface); border: 1px solid var(--card-line); border-left: 3px solid var(--pop); }
+.notes p { font-size: 16px; font-style: italic; }
+
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tab-add .icon { color: var(--pop); }
+.brand-mark { width: 32px; height: 32px; }
+
+@media (min-width: 900px) {
+  .tabs { padding-top: var(--space-5); }
+  .tab { font-family: var(--font-display); font-size: 17px; }
+  .tab.is-on { background: var(--surface); color: var(--accent-ink); box-shadow: 0 0 0 1px var(--card-line); }
+}

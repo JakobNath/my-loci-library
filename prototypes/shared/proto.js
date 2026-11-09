@@ -1,10 +1,10 @@
-// Shared behaviour for the five design prototypes. Each option page calls
-// start({ ... }) with its name and a few layout choices; everything visual
-// comes from that option's tokens.css and option.css.
+// Behaviour for the design prototype. The page calls
+// start({ name, defaultView }); everything visual comes from
+// styles/tokens.css, shared/base.css and design/design.css.
 // Throwaway prototype code: the real app is written from scratch in phase 5.
 
 import { books as sampleBooks, scanSamples } from './sample-books.js';
-import { logos } from './logos.js';
+import { mark } from './logo.js';
 
 const books = sampleBooks.map(b => ({ ...b }));
 const byId = id => books.find(b => b.id === id);
@@ -541,19 +541,14 @@ function themeIcon() {
 }
 
 function shell() {
-  const n = cfg.number;
-  const ring = cfg.ring || [1, 2, 3, 4, 5];
-  const i = ring.indexOf(n);
-  const prev = ring[(i + ring.length - 1) % ring.length], next = ring[(i + 1) % ring.length];
   return `
   <div class="protobar">
-    <a href="../">All options</a>
-    <span class="protobar-name">${esc(cfg.round || 'Round 1')} · Option ${n} · ${esc(cfg.name)}</span>
-    <span class="protobar-nav">${ring.length > 1 ? `<a href="../option-${prev}/" aria-label="Previous option">‹</a><a href="../option-${next}/" aria-label="Next option">›</a>` : ''}</span>
+    <a href="../">Prototypes</a>
+    <span class="protobar-name">${esc(cfg.name)} · sample books, nothing is saved</span>
   </div>
   <div class="app">
     <header class="topbar">
-      <a class="brand" href="#/library"><span class="brand-mark">${logos[cfg.logo || 0].mark}</span><span class="brand-name">My Loci Library</span></a>
+      <a class="brand" href="#/library"><span class="brand-mark">${mark}</span><span class="brand-name">My Loci Library</span></a>
       <label class="search">${icon('search')}<input type="search" id="q" placeholder="Search everything" autocomplete="off" aria-label="Search"></label>
       <button class="theme-btn" data-act="theme" aria-label="Theme: follow device, light or dark" title="Theme">${themeIcon()}</button>
     </header>
@@ -668,7 +663,6 @@ export function start(config) {
     if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
   } catch { /* storage may be blocked */ }
   document.body.innerHTML = shell();
-  document.body.dataset.option = config.number;
   document.addEventListener('click', onClick);
   document.addEventListener('change', e => {
     if (e.target.matches('select[data-act="sort"]')) { state.sort = e.target.value; render(); }

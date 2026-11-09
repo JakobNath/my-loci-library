@@ -1,23 +1,103 @@
 /* Design tokens for My Loci Library.
-   Every color, font and spacing value used by the app is defined here and
-   nowhere else. The final values are chosen at the end of the design phase. */
+
+   Every color, font, size and spacing value in the app comes from this file.
+   To change the look, change it here and nowhere else. The chosen design is
+   described in docs/plan/DESIGN.md.
+
+   The look: forest green with a honey accent on ivory paper, book serif
+   titles, large covers with soft shadows, round corners, cozy spacing, and a
+   green top bar. Light and dark mode follow the device unless the page sets
+   data-theme="light" or data-theme="dark" on <html>.
+
+   Two greens are used in each mode: --accent fills things (the top bar,
+   buttons, selected chips) and --accent-ink colors text and icons, so both
+   stay readable. All text pairs below meet a contrast ratio of at least 4.5:1. */
+
 :root {
-  --color-bg: #ffffff;
-  --color-text: #1d1d1f;
-  --color-muted: #6b6b70;
-  --color-accent: #2f5d8a;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 16px;
-  --space-4: 24px;
-  --radius: 6px;
+  /* Type. System fonts only: book serif for titles, the device's own sans
+     serif for everything else. */
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --font-cover: var(--font-display);
+  --font-notes: var(--font-display);
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-ui: var(--font-body);
+  --fs-base: 15px; --fs-small: 13px; --fs-tile: 15px; --fs-brand: 19px;
+  --fs-h1: 26px; --fs-h1-wide: 34px; --fs-h2: 18px; --fs-detail: 30px;
+  --h1-weight: 600; --h2-weight: 600; --tile-title-weight: 600; --cover-title-weight: 500; --brand-weight: 600;
+  --h1-tracking: -0.01em; --h2-tracking: 0; --brand-tracking: 0;
+
+  /* Spacing (cozy) */
+  --space-1: 4px; --space-2: 8px; --space-3: 10px; --space-4: 16px; --space-5: 24px; --space-6: 48px;
+  --grid-gap-x: 14px; --grid-gap-y: 22px;
+
+  /* Shape (round corners) */
+  --radius: 12px; --radius-lg: 18px; --radius-btn: 999px; --radius-pill: 999px;
+  --cover-radius: 4px 9px 9px 4px; --cover-ratio: 2 / 3;
+
+  /* Layout (large covers, menu at the side on wide screens) */
+  --tile-min: 150px; --tile-min-wide: 200px; --page-max: 1160px; --side-w: 210px;
+  --gone-opacity: 0.45;
+
+  /* Light colors */
+  --bg: #f6f2ea; --surface: #fdfbf7; --surface-2: #efe9de; --line: #e4ddd0; --card-line: #e4ddd0;
+  --ink: #23201b; --ink-2: #4b453c; --muted: #6e665a;
+  --accent: #2e4a3d; --accent-ink: #2e4a3d; --accent-soft: #e4ebe5; --on-accent: #fdfbf7;
+  --pop: #b0843a; --pop-ink: #84601f; --pop-soft: #f5ecd9;
+  --date-bg: #f5ecd9; --date-ink: #84601f;
+  --digital-bg: #e9ecec; --digital-ink: #45525a;
+  --gone-bg: #efe9de; --gone-ink: #5d564b;
+  --warn-bg: #f5ecdb; --warn-ink: #77581b; --warn-line: #e6d6b4;
+  --notes-bg: #fdfbf7; --chip-bg: #fdfbf7; --tabs-bg: #fdfbf7;
+  --bar-bg: #2e4a3d; --bar-ink: #fdfbf7; --bar-line: transparent; --brand-ink: #fdfbf7;
+  --search-bg: #fdfbf7; --search-line: transparent;
+  --logo-pop: #dcb76f; --logo-bg: #2e4a3d;
+  --scan-bg: #1d2620; --scan-ink: #f6f2ea; --crop-fill: rgba(176, 132, 58, 0.14);
+  --protobar-bg: #1b2a22; --protobar-ink: #dfe6e0;
+  --shadow: 0 1px 2px rgba(50, 40, 25, 0.05);
+  --shadow-cover: 1px 0 0 rgba(0, 0, 0, 0.10), 2px 3px 8px rgba(50, 35, 15, 0.22);
+  --shadow-cover-l: 1px 0 0 rgba(0, 0, 0, 0.10), 6px 16px 34px rgba(50, 35, 15, 0.26);
+  --cover-sheen: linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0 2%, rgba(255, 255, 255, 0.10) 3% 4.5%, transparent 7.5%);
 }
+
+/* Dark colors: a deep forest green for the bar and buttons on a green-black
+   page, a lighter green for green text, and a warmer honey. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-bg: #161618;
-    --color-text: #ececee;
-    --color-muted: #9a9aa0;
-    --color-accent: #7fb0e0;
+  :root:not([data-theme="light"]) {
+    --bg: #111411; --surface: #191d19; --surface-2: #222722; --line: #2d332d; --card-line: #2d332d;
+    --ink: #ece8df; --ink-2: #c9c3b6; --muted: #9b9588;
+    --accent: #2d5240; --accent-ink: #8fbf9f; --accent-soft: #1b2a20; --on-accent: #f1efe8;
+    --pop: #d4ad62; --pop-ink: #d9b36a; --pop-soft: #2c2517;
+    --date-bg: #2c2517; --date-ink: #d9b36a;
+    --digital-bg: #1f2a30; --digital-ink: #a9bfcc;
+    --gone-bg: #262a25; --gone-ink: #c2bcb0;
+    --warn-bg: #33291a; --warn-ink: #e3c27f; --warn-line: #514228;
+    --notes-bg: #191d19; --chip-bg: #191d19; --tabs-bg: #151915;
+    --bar-bg: #1d3a2b; --bar-ink: #eef0ea; --bar-line: transparent; --brand-ink: #eef0ea;
+    --search-bg: #16241b; --search-line: #2c4636;
+    --logo-pop: #d4ad62; --logo-bg: #1d3a2b;
+    --scan-bg: #0a0c0a; --scan-ink: #ece8df;
+    --protobar-bg: #0a0c0a; --protobar-ink: #c9c3b6;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-cover: 1px 0 0 rgba(0, 0, 0, 0.3), 2px 3px 8px rgba(0, 0, 0, 0.45);
+    --shadow-cover-l: 1px 0 0 rgba(0, 0, 0, 0.3), 6px 16px 34px rgba(0, 0, 0, 0.55);
   }
+}
+:root[data-theme="dark"] {
+  --bg: #111411; --surface: #191d19; --surface-2: #222722; --line: #2d332d; --card-line: #2d332d;
+  --ink: #ece8df; --ink-2: #c9c3b6; --muted: #9b9588;
+  --accent: #2d5240; --accent-ink: #8fbf9f; --accent-soft: #1b2a20; --on-accent: #f1efe8;
+  --pop: #d4ad62; --pop-ink: #d9b36a; --pop-soft: #2c2517;
+  --date-bg: #2c2517; --date-ink: #d9b36a;
+  --digital-bg: #1f2a30; --digital-ink: #a9bfcc;
+  --gone-bg: #262a25; --gone-ink: #c2bcb0;
+  --warn-bg: #33291a; --warn-ink: #e3c27f; --warn-line: #514228;
+  --notes-bg: #191d19; --chip-bg: #191d19; --tabs-bg: #151915;
+  --bar-bg: #1d3a2b; --bar-ink: #eef0ea; --bar-line: transparent; --brand-ink: #eef0ea;
+  --search-bg: #16241b; --search-line: #2c4636;
+  --logo-pop: #d4ad62; --logo-bg: #1d3a2b;
+  --scan-bg: #0a0c0a; --scan-ink: #ece8df;
+  --protobar-bg: #0a0c0a; --protobar-ink: #c9c3b6;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-cover: 1px 0 0 rgba(0, 0, 0, 0.3), 2px 3px 8px rgba(0, 0, 0, 0.45);
+  --shadow-cover-l: 1px 0 0 rgba(0, 0, 0, 0.3), 6px 16px 34px rgba(0, 0, 0, 0.55);
 }

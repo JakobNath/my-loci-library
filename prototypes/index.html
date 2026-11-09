@@ -4,213 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>My Loci Library · Design prototypes</title>
+<title>My Loci Library · Prototypes</title>
+<link rel="icon" href="../app/icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles/tokens.css">
 <style>
-  /* The index page stands apart from the five options, so it keeps its own
-     small set of neutral tokens. */
-  :root {
-    --bg: #f5f4f1; --surface: #ffffff; --ink: #1c1c1c; --muted: #6e6b66; --line: #e2dfd9; --accent: #8f2a24;
-    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
-    --space: 16px; --radius: 12px; --logo-pop: #a3362e;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #151515; --surface: #1f1f1f; --ink: #ececec; --muted: #a09d97; --line: #333; --accent: #d9897f; --logo-pop: #d9897f; }
-  }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); }
-  main { max-width: 980px; margin: 0 auto; padding: calc(var(--space) * 2) var(--space) calc(var(--space) * 4); }
-  h1 { font: 600 34px/1.1 var(--serif); margin: 0 0 8px; }
-  h2 { font: 600 22px/1.2 var(--serif); margin: calc(var(--space) * 2.5) 0 var(--space); }
-  p { margin: 6px 0; }
-  .lede { color: var(--muted); max-width: 40em; }
-  .options { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-  .opt { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; color: inherit; text-decoration: none; }
-  .opt:hover { border-color: var(--accent); }
-  .swatch { display: flex; height: 64px; }
-  .swatch span { flex: 1; }
-  .opt-body { padding: var(--space); }
-  .opt-name { font: 600 19px/1.25 var(--serif); }
-  .opt-num { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
-  .opt p { color: var(--muted); font-size: 15px; }
-  .logos { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-  .logo { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
-  .logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
-  .mark { color: var(--ink); --logo-bg: var(--surface); display: block; }
-  .mark svg { width: 100%; height: 100%; display: block; }
-  .m96 { width: 96px; height: 96px; }
-  .m48 { width: 48px; height: 48px; }
-  .m24 { width: 24px; height: 24px; }
-  .icon { border-radius: 22%; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 0 0 1px var(--line); }
-  .icon .mark { width: 64%; height: 64%; }
-  .i96 { width: 96px; height: 96px; }
-  .i48 { width: 48px; height: 48px; }
-  .logo-name { font: 600 17px var(--serif); margin: 0; }
-  .logo p { color: var(--muted); font-size: 14px; }
-  .links { display: grid; gap: 10px; }
-  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
-  a { color: var(--accent); }
-  .muted { color: var(--muted); font-size: 14px; }
-  footer { margin-top: calc(var(--space) * 3); color: var(--muted); font-size: 14px; }
-  .looks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-  .look { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px 7px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-size: 14px; }
-  .look:hover { border-color: var(--accent); }
-  .look i { display: inline-flex; width: 26px; height: 18px; border-radius: 999px; overflow: hidden; }
-  .look i b { flex: 1; }
-  .mood { font: 600 13px/1 var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
-  .l-grid { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(236px, 1fr)); }
-  .l-card .logo-row { flex-wrap: nowrap; gap: 10px; }
-  .l-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
-  .l-card .mark { color: #2e4a3d; --logo-pop: #a65a3f; }
-  .l-card p { color: var(--muted); font-size: 14px; }
-  .l-try { font-size: 14px; }
-  .l-bar { display: flex; align-items: center; gap: 8px; margin: 10px 0; padding: 8px 12px; border-radius: 8px; background: #2e4a3d; color: #fdfbf7; font: 600 15px/1 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
-  .l-bar .mark { width: 28px; height: 28px; color: #fdfbf7; --logo-pop: #f5ecd9; --logo-bg: #2e4a3d; }
-  #classic-logos .l-card .mark:not(.l-bar .mark) { --logo-pop: #b0843a; }
-  @media (prefers-color-scheme: dark) { .l-card .mark { color: #9cc0ab; --logo-pop: #d79a7f; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: var(--fs-base)/1.55 var(--font-body); }
+  main { max-width: 760px; margin: 0 auto; padding: var(--space-6) var(--space-4); }
+  h1 { font: var(--h1-weight) var(--fs-h1-wide)/1.15 var(--font-display); margin: 0 0 var(--space-2); }
+  h2 { font: var(--h2-weight) var(--fs-h2)/1.3 var(--font-display); margin: 0 0 var(--space-1); }
+  p { margin: var(--space-2) 0; }
+  a { color: var(--accent-ink); }
+  .lede { color: var(--ink-2); }
+  .card { display: flex; gap: var(--space-4); align-items: center; background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-4); color: inherit; text-decoration: none; }
+  a.card:hover { border-color: var(--accent-ink); }
+  .card p { color: var(--muted); font-size: var(--fs-small); margin: 0; }
+  .icon { width: 64px; height: 64px; flex: none; }
+  .logo { width: 64px; height: 64px; flex: none; color: var(--accent-ink); --logo-pop: var(--pop); }
+  .logo svg, .icon { display: block; }
+  footer { margin-top: var(--space-6); color: var(--muted); font-size: var(--fs-small); }
 </style>
 </head>
 <body>
 <main>
-  <h1>My Loci Library: designs</h1>
-  <p class="lede">Clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
-  <p class="lede">Worth trying in each: search for <em>phaedo</em> or <em>politeia</em>; open <em>The Apostolic Fathers</em> (an anthology with a disputed date for the Didache); turn on "No longer owned" and open the Penguin <em>Confessions</em>; and go through "Add books" with each of the three pretend scans.</p>
+  <h1>My Loci Library</h1>
+  <p class="lede">The chosen design, as a clickable prototype with the 21 sample books, plus the phone test page. Earlier design rounds are kept in the repository's history.</p>
 
-  <h2>Round 4: the favorite, and more classic logos</h2>
-  <p class="lede">The favorite from the playground: forest green, a honey pop, ivory paper, book serif titles, no shelves, large covers, soft shadows, round corners, cozy spacing, a colored top bar, the menu at the side, and the bookplate logo. It is now the playground's first starting look.</p>
-  <div class="options">
-    <a class="opt" href="option-9/?look=favorite">
-      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#fdfbf7"></span><span style="background:#2e4a3d"></span><span style="background:#b0843a"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 9 · Favorite</div><div class="opt-name">Forest, honey and ivory</div>
-      <p>Open the favorite look. The Adjust button is still there for small changes.</p></div>
-    </a>
+  <a class="card" href="design/">
+    <img class="icon" src="../app/icons/icon.svg" alt="">
+    <div><h2>The chosen design</h2>
+    <p>Forest green with a honey accent on ivory paper, book serif titles, large covers and the ex libris logo. Light and dark mode follow the device; the button in the top bar switches them by hand.</p></div>
+  </a>
+  <div class="card">
+    <span class="logo" id="logo"></span>
+    <div><h2>The logo</h2>
+    <p>An open book with a capital L on the left page and lines of text on the right, after the old "ex libris" bookplates. Saved as <code>app/icons/logo.svg</code> and, as the home-screen icon, <code>app/icons/icon.svg</code>.</p></div>
   </div>
-  <p class="lede" style="margin-top:22px">All the classic logos, shown in the favorite colors: large, small, in the green top bar, and as home-screen icons. "Try it" opens the favorite look with that logo.</p>
-  <div class="l-grid" id="classic-logos"></div>
-
-  <h2>Round 3: the playground</h2>
-  <p class="lede">Option 7 was the favorite, so round 3 is option 7 with an <strong>Adjust</strong> button. It changes the main color, the little pop of color, the paper, the title type, shelves, cover size and shadow, corners, spacing, the top bar, the laptop menu and the logo, all live. When you find a look you like, press "Copy link to this look" and send it to each other.</p>
-  <div class="options">
-    <a class="opt" href="option-9/?adjust=1">
-      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#d8cdbb"></span><span style="background:#2e4a3d"></span><span style="background:#a65a3f"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 9 · from option 7</div><div class="opt-name">Playground</div>
-      <p>Opens with the Adjust panel showing. Start from any of the looks below and change one thing at a time.</p></div>
-    </a>
-  </div>
-  <p class="muted" style="margin-top:14px">Starting looks:</p>
-  <div class="looks" id="looks"></div>
-
-  <h2>Round 3: new L logos</h2>
-  <p class="lede">Ten ideas in three moods. Each is shown large, at 48 and 24 pixels, and as a home-screen icon in two colorways. "Try it" opens the playground with that logo in the top bar.</p>
-  <div id="l-logos"></div>
-
-  <h2>Round 2: quieter and more modern</h2>
-  <p class="lede">From the first feedback: options 1 and 3 were the favorites, but they needed a more timeless, modern feel with fewer bright digital colors. These three keep warm neutrals and let the covers carry the color.</p>
-  <div class="options">
-    <a class="opt" href="option-6/">
-      <div class="swatch"><span style="background:#faf8f4"></span><span style="background:#ffffff"></span><span style="background:#1d1b18"></span><span style="background:#8f2a24"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 6 · from option 1</div><div class="opt-name">Catalog, refined</div>
-      <p>Paper white and charcoal with serif book titles. The index card survives as a thin red rule and faintly ruled lines on the book page.</p></div>
-    </a>
-    <a class="opt" href="option-7/">
-      <div class="swatch"><span style="background:#f6f2ea"></span><span style="background:#d8cdbb"></span><span style="background:#2e4a3d"></span><span style="background:#a65a3f"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 7 · from option 3</div><div class="opt-name">Bookshop, refined</div>
-      <p>Warm ivory and deep green, with the covers on slim shelves and a muted clay for small touches.</p></div>
-    </a>
-    <a class="opt" href="option-8/">
-      <div class="swatch"><span style="background:#f4f2ee"></span><span style="background:#e0dcd4"></span><span style="background:#1f1e1c"></span><span style="background:#9c7a45"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 8 · a blend of 1 and 3</div><div class="opt-name">Quiet modern</div>
-      <p>Stone and charcoal, larger covers, hairlines instead of boxes, and a single bronze accent.</p></div>
-    </a>
-  </div>
-
-  <h2>Round 1: the first five</h2>
-  <div class="options">
-    <a class="opt" href="option-1/">
-      <div class="swatch"><span style="background:#efe7d6"></span><span style="background:#5a3b26"></span><span style="background:#fbf6ea"></span><span style="background:#a3302b"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 1</div><div class="opt-name">Card catalog</div>
-      <p>Cream index cards, typed labels and a library-red rule, with drawer-label navigation on the laptop.</p></div>
-    </a>
-    <a class="opt" href="option-2/">
-      <div class="swatch"><span style="background:#f6f7f9"></span><span style="background:#ffffff"></span><span style="background:#0e8a8c"></span><span style="background:#ff6a4d"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 2</div><div class="opt-name">Clean modern</div>
-      <p>The closest to Libib: white space, rounded cards, a teal accent and a coral pop.</p></div>
-    </a>
-    <a class="opt" href="option-3/">
-      <div class="swatch"><span style="background:#f3ebdd"></span><span style="background:#9b6b42"></span><span style="background:#2f5d46"></span><span style="background:#c8553d"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 3</div><div class="opt-name">Warm bookshop</div>
-      <p>Linen and oak, forest green with terracotta, and the covers standing on wooden shelves.</p></div>
-    </a>
-    <a class="opt" href="option-4/">
-      <div class="swatch"><span style="background:#fbfaf6"></span><span style="background:#ddd8cd"></span><span style="background:#1c1a17"></span><span style="background:#8c1d2a"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 4</div><div class="opt-name">Scholarly</div>
-      <p>Like a well-set book page: serif type, small capitals, one rubric red, and a list that reads as a shelf list with dates in the margin.</p></div>
-    </a>
-    <a class="opt" href="option-5/">
-      <div class="swatch"><span style="background:#ebe8e3"></span><span style="background:#0e0e10"></span><span style="background:#f7f5f1"></span><span style="background:#f2b705"></span></div>
-      <div class="opt-body"><div class="opt-num">Option 5</div><div class="opt-name">Gallery</div>
-      <p>The covers hung large like prints on a wall, very little else on screen, and a touch of saffron yellow.</p></div>
-    </a>
-  </div>
-  <p class="muted">Covers are drawn as simple title tiles for now. The real app shows your own cover photos in their place.</p>
-
-  <h2>Round 1: first logo ideas</h2>
-  <div class="logos" id="logos"></div>
-  <p class="muted">Each is shown large, at 48 and 24 pixels, and as a home-screen icon at 96 and 48 pixels. Colors can follow whichever design is chosen.</p>
-
-  <h2>Phone test</h2>
-  <div class="links">
-    <div class="card"><a href="phone-test.html"><strong>Phone test page</strong></a>
-      <p class="muted">Run this on each phone: it tries the camera barcode scan and stores about 50 MB offline, then gives a short report to copy and paste back.</p></div>
-  </div>
+  <a class="card" href="phone-test.html">
+    <div><h2>Phone test</h2>
+    <p>Checks the camera barcode scan and offline storage on a phone, and gives a short report to copy.</p></div>
+  </a>
 
   <footer>My Loci Library. Created by Jakob Nath. <a href="../">Home</a></footer>
 </main>
 <script type="module">
-  import { logos } from './shared/logos.js';
-  import { lLogos } from './shared/l-logos.js';
-  import { looks } from './option-9/panel.js';
-
-  const swatch = { forest: '#2e4a3d', sage: '#56705d', navy: '#2c3e57', oxblood: '#7a2630', plum: '#5b3a5a', ink: '#23201b',
-    clay: '#a65a3f', rose: '#b35f6c', honey: '#b0843a', brass: '#8c7246', none: '#8a8378',
-    ivory: '#f6f2ea', white: '#fafaf8', linen: '#efe6d8', blush: '#f8f0eb', stone: '#efefec' };
-  document.getElementById('looks').innerHTML = looks.map(l => {
-    const slug = l.name.toLowerCase().replace(/\s+/g, '-');
-    return `<a class="look" href="option-9/?look=${slug}"><i><b style="background:${swatch[l.set.paper]}"></b><b style="background:${swatch[l.set.accent]}"></b><b style="background:${swatch[l.set.pop]}"></b></i>${l.name}</a>`;
-  }).join('');
-
-  const lIcon = (l, size, bg, ink, popc, border) => `<span class="icon i${size}" style="background:${bg};${border ? 'box-shadow:inset 0 0 0 1px #ddd5c7' : ''}"><span class="mark" style="color:${ink};--logo-pop:${popc};--logo-bg:${bg}">${l.mark}</span></span>`;
-  document.getElementById('l-logos').innerHTML = ['Modern', 'Cute', 'Classic'].map(mood => `
-    <p class="mood">${mood}</p>
-    <div class="l-grid">${lLogos.filter(l => l.mood === mood && !l.round).map(l => `
-      <div class="l-card">
-        <div class="logo-row"><span class="mark m96" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m48" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m24" style="--logo-bg:var(--surface)">${l.mark}</span></div>
-        <div class="logo-row">${lIcon(l, 96, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#2e4a3d', '#f6f2ea', '#e0a587')}${lIcon(l, 48, '#f6f2ea', '#2e4a3d', '#a65a3f', true)}</div>
-        <p class="logo-name">${l.name}</p><p>${l.idea}</p>
-        <a class="l-try" href="option-9/?logo=${l.id}">Try it in the playground</a>
-      </div>`).join('')}</div>`).join('');
-  document.getElementById('classic-logos').innerHTML = lLogos.filter(l => l.mood === 'Classic').map(l => `
-    <div class="l-card">
-      <div class="logo-row"><span class="mark m96" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m48" style="--logo-bg:var(--surface)">${l.mark}</span><span class="mark m24" style="--logo-bg:var(--surface)">${l.mark}</span></div>
-      <div class="l-bar"><span class="mark">${l.mark}</span>My Loci Library</div>
-      <div class="logo-row">${lIcon(l, 96, '#2e4a3d', '#f6f2ea', '#dcb76f')}${lIcon(l, 48, '#2e4a3d', '#f6f2ea', '#dcb76f')}${lIcon(l, 48, '#f6f2ea', '#2e4a3d', '#b0843a', true)}</div>
-      <p class="logo-name">${l.name}${l.round ? ' <span class="muted">· new</span>' : ''}</p><p>${l.idea}</p>
-      <a class="l-try" href="option-9/?look=favorite&amp;logo=${l.id}">Try it with the favorite look</a>
-    </div>`).join('');
-
-  const iconColors = [
-    { bg: '#1f1e1c', ink: '#f4f2ee', pop: '#c9a46a' },
-    { bg: '#2e4a3d', ink: '#f6f2ea', pop: '#d79a7f' },
-    { bg: '#faf8f4', ink: '#1d1b18', pop: '#a3362e' },
-  ];
-  document.getElementById('logos').innerHTML = logos.map((l, i) => {
-    const c = iconColors[i];
-    const icon = size => `<span class="icon i${size}" style="background:${c.bg}"><span class="mark" style="color:${c.ink};--logo-pop:${c.pop};--logo-bg:${c.bg}">${l.mark}</span></span>`;
-    return `<div class="logo">
-      <div class="logo-row"><span class="mark m96">${l.mark}</span><span class="mark m48">${l.mark}</span><span class="mark m24">${l.mark}</span></div>
-      <div class="logo-row">${icon(96)}${icon(48)}</div>
-      <p class="logo-name">${i + 1}. ${l.name}</p><p>${l.idea}</p>
-    </div>`;
-  }).join('');
+  import { mark } from './shared/logo.js';
+  document.getElementById('logo').innerHTML = mark;
 </script>
 </body>
 </html>
