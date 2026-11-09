@@ -16,16 +16,9 @@
 </header>
 <main>
   <h1>Drawn spines</h1>
-  <p class="lede">When a book has no spine photo, the shelf view draws one. Round 3: the four styles you kept, with the lettering reworked so every title is set as large as its spine allows, measured to fit, in two lines on wide spines, and never crossed by a line. Hold a finger on a spine, or point at it, to see its title, its binding, and where its height and thickness came from.</p>
+  <p class="lede">Round 4: the outline style you chose, with color taken from each book's front cover, in five strengths from none to full. The photographed books get their color from their real cover photo, taken the way the app would do it; the other sample books use colors from the sample data. Hold a finger on a spine, or point at it, to see its title, where its color came from, and where its size came from.</p>
 
   <div class="controls" role="group" aria-label="Settings">
-    <div class="ctl"><span class="ctl-label">Color</span>
-      <div class="seg" id="color">
-        <button type="button" data-v="cover" aria-pressed="true">From the cover</button>
-        <button type="button" data-v="palette" aria-pressed="false">Cloth palette</button>
-        <button type="button" data-v="house" aria-pressed="false">One house color</button>
-      </div>
-    </div>
     <div class="ctl"><span class="ctl-label">Heights</span>
       <div class="seg" id="heights">
         <button type="button" data-v="varied" aria-pressed="true">From the data</button>
@@ -40,13 +33,6 @@
       </div>
     </div>
   </div>
-  <p class="small muted" id="colorNote"></p>
-
-  <section id="galleryWrap">
-    <h2>Every binding, in each style</h2>
-    <p class="small muted">One sample book per kind of binding. Scroll sideways on a phone.</p>
-    <div id="gallery"></div>
-  </section>
 
   <section id="compare"></section>
 
@@ -54,14 +40,14 @@
     <h2 id="closerTitle"></h2>
     <p class="small muted" id="closerText"></p>
     <div id="bookcase"></div>
-    <h3>One spine, larger</h3>
+    <h3>Cover photo, the color taken from it, and the drawn spine</h3>
     <div id="large"></div>
-    <p><button class="btn" type="button" id="backToAll">Back to all styles</button></p>
+    <p><button class="btn" type="button" id="backToAll">Back to all variants</button></p>
   </section>
 
   <section class="summary">
     <h2>Your marks</h2>
-    <p class="small" id="summary">None yet. Tap "Like" on any style.</p>
+    <p class="small" id="summary">None yet. Tap "Like" on any variant.</p>
     <button class="btn" type="button" id="copy">Copy marks</button>
   </section>
 
