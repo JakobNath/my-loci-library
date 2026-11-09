@@ -10,6 +10,15 @@ To be written as the parts are built.
 
 Results of the phase 4 experiments go here.
 
+## Phone test results
+
+Results from `prototypes/phone-test.html`, run on real phones during the design stop.
+
+- **Android 16, Firefox 159 (2026-11-09).** Firefox has no built-in barcode detector, so the bundled decoder was used. It loaded in 345 ms the first time and 65 ms once cached. It read ISBN 9780802867339 correctly in 9.5 s on the first try, including the time spent aiming, and in 2.0 s on the second try. Storage passed: persistent storage was granted, the quota was about 56 GB, 50 MB was written in 1.1 s and read back intact in 0.3 s.
+- **iPhone, iOS 18.7, Safari (2026-11-09).** Safari has no built-in barcode detector switched on, so the bundled decoder was used. It loaded in 18 ms and read ISBN 9780802867339 correctly in 1.1 s. Storage passed: the quota was about 39 GB, 50 MB was written in 1.0 s and read back intact in 0.04 s. Persistent storage was not granted in an ordinary Safari tab, which is normal; the plan relies on the home-screen app, which Safari exempts from its seven-day clearing of site data. No change of decoder is needed.
+
+Note for phase 6: the first scan took a while. Things to try then are asking the camera for continuous focus where supported and decoding only the middle band of the frame, where the barcode sits.
+
 ## Decisions
 
 Choices made during the build that the plan did not settle, with the reason for each.
