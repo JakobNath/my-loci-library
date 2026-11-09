@@ -76,7 +76,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
 
 - [x] **2.6a Drawn spine design.** In the prototypes, show several options for the drawn spine that stands in for a book with no spine photo (type, color, ornament, how width follows page count). Show each one on a shelf mixed with real spine photos from `prototypes/photos/real/` and with other drawn spines. Iterate with Jakob and his wife until one is approved, then record it in `docs/plan/DESIGN.md`.
   **Check:** Jakob has approved one option.
-- [ ] **2.6 Lock the design.** Write the chosen look into `styles/tokens.css` and record it in `docs/plan/DESIGN.md` (direction, colors, type, spacing, icon). Record the phone test results in `HOW_IT_WORKS.md`. If the iPhone barcode test failed, choose a different decoder and retest before continuing.
+- [x] **2.6 Lock the design.** Write the chosen look into `styles/tokens.css` and record it in `docs/plan/DESIGN.md` (direction, colors, type, spacing, icon). Record the phone test results in `HOW_IT_WORKS.md`. If the iPhone barcode test failed, choose a different decoder and retest before continuing.
   **Check:** Jakob has said "go".
 
 ---

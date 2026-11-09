@@ -100,6 +100,7 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 
 - Binding from a pick list we extend (hardcover, paperback, leather, bonded leather, cloth…). Physical only.
 - Location path: Place › Room › Case › Shelf. Only the parts we know are filled. Physical only.
+- Shelf order (optional): where the copy stands along its shelf, kept as a short sort key so that placing one book never renumbers the others. Batch add fills it automatically when a shelf is scanned left to right. Without it, a shelf is shown in the library's sort order.
 - A "writing or markings when acquired" checkbox.
 - Added to catalog: set automatically. Acquired: optional, and accepts partial answers ("2019", "before 2015", blank).
 - Purchase price (optional).
@@ -496,6 +497,7 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 - The price estimator script.
 - Title-page photo recognition for books without an ISBN.
 - Shelf photos: one photo of a whole shelf giving every book's relative size, and perhaps its spine image.
+- A laptop shelf planner: suggests ways to arrange the library by chosen criteria (author, original date, subject), fits books to shelves using their thicknesses and each shelf's width, lists the moves, and records the new locations and shelf order once the books are moved.
 - Lending, read/unread, and whose book it is (the format allows adding these).
 - Colleague setup polish and announcing the project.
 - Recompressing or enhancing covers on the laptop page, from masters.
