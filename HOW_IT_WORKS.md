@@ -8,7 +8,11 @@ To be written as the parts are built.
 
 ## Verified approaches
 
-Results of the phase 4 experiments go here.
+Results of the phase 4 experiments.
+
+- **4.2 Online covers in the browser (2026-11-09).** Open Library: works. A cover fetched by ISBN (`covers.openlibrary.org/b/isbn/<isbn>-L.jpg?default=false`, which answers "not found" instead of a blank image) could be read into a canvas and saved as JPEG in the browser: 320 × 500 px, 56 KB in, 45 KB out, about 1.3 s including the download. Open Library's large covers are often only about 500 px tall, so the detail image is never enlarged beyond the source. Google Books: blocked. Its cover images do not allow web pages from other sites to read them, so the app cannot compress them. Fallback, as the plan names: when only Google Books has a cover, the app records the cover's address on the edition as waiting, and a laptop tool downloads it into `images/inbox/`, where the laptop covers page compresses it like any other inbox cover. Until then the book shows its drawn cover tile.
+- **4.4b Catalog heights (2026-11-09).** From Node, the Library of Congress catalog's SRU service (`http://lx2.loc.gov:210/LCDB`, query `bath.isbn=<isbn>`, MARC XML, field 300) gave a height for 6 of 8 sample ISBNs, to the whole centimeter rounded up ("ix, 312 p. ; 23 cm."), in about 0.2 s each. The same service cannot be reached from a web page (no encrypted connection, no cross-site permission), which is why `loci-sizes` is a laptop tool. Its newer JSON search at loc.gov found none of the sample books.
+- **4.1, 4.3 and 4.4: waiting.** 4.1 (many files in one commit from a browser) needs a GitHub key made by Jakob for the test-data repository; 4.3 needs Zotero open; 4.4 needs `inputs/logos-sample.csv`. None of them blocks phase 5.
 
 ## Phone test results
 
