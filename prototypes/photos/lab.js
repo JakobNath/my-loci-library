@@ -149,28 +149,33 @@ function renderRates() {
   });
   const cropped = items.filter(i => i.cropped), keptWhole = cropped.filter(i => i.r.wholeImage && i.r.auto).length;
   const pct = (a, b) => (b ? Math.round(a / b * 100) + '%' : '—');
+  const calib = items.filter(i => !i.sample && !i.cropped && truth[i.file]).map(i => {
+    const ev = errVsTruth({ ...i, quad: i.r.quad }), ok = ev.rel <= BARS[i.kind];
+    return { title: i.title || i.file, kind: i.kind, est: i.r.relErr != null ? (i.r.relErr * 100).toFixed(1) + '%' : '—', act: (ev.rel * 100).toFixed(1) + '%',
+      dec: i.r.auto ? (ok ? 'Saved, right' : '<b>Saved, wrong</b>') : (ok ? 'Asked, was right' : 'Asked, needed fixing') };
+  });
   $('rates').innerHTML = `
   <h3>Measured against your review</h3>
   <table class="tbl-num">
     <tr><th>Uncropped photos</th><th>Photos</th><th>Reviewed</th><th>Saved by itself, right</th><th>Saved by itself, wrong</th><th>Asked (would have been right)</th><th>Asked (needed fixing)</th><th>Success rate</th></tr>
     ${rows.map(r => `<tr><td>${r.kind === 'cover' ? 'Covers' : 'Spines'}</td><td>${r.n}</td><td>${r.rev}</td><td>${r.autoRight}</td><td>${r.autoWrong}</td><td>${r.askedRight}</td><td>${r.askedWrong}</td><td><b>${pct(r.autoRight, r.rev)}</b></td></tr>`).join('')}
   </table>
-  <p class="small muted">Success rate: the share of reviewed photos that were saved without asking <em>and</em> were right. "Saved by itself, wrong" must stay at zero; if it does not, the bar is tightened. ${rows.some(r => r.rev) ? '' : '<span class="pending">Fills in after the review below.</span>'}</p>
+  <p class="small muted">Success rate: the share of reviewed photos that were saved without asking <em>and</em> were right. A wrong save is the worst outcome, so the rules lean toward asking. ${rows.some(r => r.rev) ? '' : '<span class="pending">Fills in after the review below.</span>'}</p>
   <p class="small">Already-cropped photos (from the phone's editor): <b>${keptWhole} of ${cropped.length}</b> recognised and kept whole without asking.</p>
-  <h3>Provisional, checked by eye (9 Nov 2026)</h3>
-  <p class="small">Before your review, every automatic result was checked by eye on magnified corners (good to about 2 to 3 pixels, not 1). These are the numbers after the two fixes described below.</p>
+  <h3>Estimated against actual error</h3>
+  <p class="small">For each uncropped photo: the error the app estimated before deciding, and the error measured against your review (both as a share of the book's width).</p>
   <table class="tbl-num">
-    <tr><th>Uncropped photos</th><th>Photos</th><th>Saved by itself, right</th><th>Saved by itself, wrong</th><th>Asked</th><th>Success rate</th></tr>
-    <tr><td>Covers</td><td>14</td><td>12</td><td>0</td><td>2 (a book far from the camera; one right at the edge-clarity limit, which saves in some browsers)</td><td><b>86%</b></td></tr>
-    <tr><td>Spines</td><td>15</td><td>1</td><td>0</td><td>14 (13 because a hand may hide an end)</td><td><b>7%</b></td></tr>
+    <tr><th>Photo</th><th>Kind</th><th>Estimated</th><th>Actual</th><th>Decision</th></tr>
+    ${calib.map(c => `<tr><td>${esc(c.title)}</td><td>${c.kind}</td><td>${c.est}</td><td>${c.act}</td><td>${c.dec}</td></tr>`).join('')}
   </table>
-  <p class="small"><b>What the real photos taught, and what changed:</b></p>
+  <p class="small"><b>What your review showed (9 Nov 2026):</b></p>
   <ul class="pros" style="max-width:46em">
-    <li><b>Hands hide spine ends.</b> In 11 of the 15 spine photos a hand holds one end. Before the fix, three spines were saved without asking but cut short where the hand began: the edges were measured precisely, they just stopped at the hand. Now the app checks that the surface just beyond each end matches the surface beside the spine; if something else is there, it asks. In the camera flow the advice is: lay the book on its back cover, or hold it by the middle, never by the ends.</li>
-    <li><b>Already-cropped photos.</b> Two photos cropped in the phone's editor were cropped a second time. Now a photo that does not have a camera's exact shape (3 : 4, 9 : 16 and so on) is used as it is. Photos from the app's own camera are always treated as uncropped.</li>
-    <li><b>White balance on wood.</b> On the wood table, the old rule took the brown wood for a grey mat and would have turned books blue. Measured on these photos, a dark grey surface cannot be told from brown wood by color or texture, so only a light surface (the duvet, the light side of a mat) is now used as white. Everything else gets a cautious estimate from the book itself. None of the test photos were taken on a mat, so the mat path is still untested on real photos.</li>
-    <li><b>Lighting correction was too strong</b> on wood (the book's own shadow looked like dim light). It is now gentler by default and samples the surface further from the book.</li>
-  </ul>`;
+    <li><b>Covers: 11 of 14 right without asking (79%), one wrong.</b> The wrong one is the blue cloth library book in a clear plastic jacket. The outline followed the plastic, which sticks out past the board by up to 42 pixels (7.6% of the width). The estimate said 0.2%, because that edge is sharp and straight: it is simply the wrong edge. A check for a second edge just inside the first was tried and dropped, because the groove along a hardcover's hinge looks the same, and 5 of the 11 good covers would have started asking. The result thumbnail shows every save, so this is one tap to fix. Plastic jackets are mostly on library books, which will rarely be catalogued.</li>
+    <li><b>Spines: none saved without asking.</b> 11 of the 15 spine photos were taken holding the book by one end. The checks did their job there: all six spines that needed fixing asked first, most of them cut short by a hand. But it also made 8 spines ask that were right. No measure available here tells them apart: the end edge is just as sharp and straight on a right spine (the plain blue cloth book) as on one stopped by a hand (Word Biblical Commentary 20). The only spine with free ends was the plastic-jacket book, the one wrong spine save.</li>
+    <li><b>The estimate catches blurred or broken edges, not wrong edges.</b> Where it was large, the photo asked, and several of those were in fact right. Where it was small and the save was wrong, the edge found was real but belonged to something else (plastic, a hand). Tightening the bar would not have caught either case.</li>
+    <li><b>Still to measure:</b> spines photographed the way the camera screen asks, lying on a surface with nothing touching the ends. None of the test photos were taken that way.</li>
+  </ul>
+  <p class="small"><b>Earlier fixes from the same photos:</b> already-cropped photos are used as they are (two were being cropped twice); brown wood is no longer taken for a grey mat (it would have turned books blue); the lighting correction is gentler and samples the surface further from the book.</p>`;
 }
 
 // ---------- review: confirm or correct the true edges ----------
