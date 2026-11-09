@@ -1,0 +1,54 @@
+/* Option 1: Card catalog. Cream index cards, typed labels, a library-red rule. */
+:root {
+  --font-body: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-ui: "Courier Prime", "Courier New", ui-monospace, monospace;
+  --font-cover: Georgia, "Times New Roman", serif;
+  --font-notes: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --fs-base: 16px; --fs-small: 13px; --fs-h1: 28px; --fs-h1-wide: 34px; --fs-h2: 18px; --fs-detail: 28px; --fs-tile: 15px; --fs-brand: 19px;
+  --h1-weight: 600; --h2-weight: 600; --h1-tracking: 0; --h2-tracking: 0; --brand-weight: 600; --brand-tracking: 0.01em;
+  --tile-title-weight: 600; --cover-title-weight: 400;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 18px; --space-5: 28px; --space-6: 48px;
+  --radius: 3px; --radius-lg: 4px; --radius-btn: 3px; --radius-pill: 3px; --cover-radius: 2px; --cover-ratio: 2 / 3;
+  --tile-min: 128px; --tile-min-wide: 160px; --grid-gap-x: 18px; --grid-gap-y: 28px; --page-max: 1180px; --side-w: 210px;
+  --gone-opacity: 0.5;
+
+  --bg: #efe7d6; --surface: #fbf6ea; --surface-2: #f2ead8; --ink: #2b2420; --ink-2: #4d423a; --muted: #7b6d60;
+  --line: #ddd1ba; --card-line: #d8cbb0; --accent: #a3302b; --accent-soft: #f3dcd5; --on-accent: #fff8ee;
+  --pop: #c4372f; --pop-soft: #f6d9d3; --pop-ink: #a3302b; --date-bg: #e8ddc6; --date-ink: #6a4a1f;
+  --digital-bg: #dfe6ec; --digital-ink: #2f4b63; --gone-bg: #e6dccb; --gone-ink: #5d4e40;
+  --warn-bg: #f7e6c4; --warn-ink: #84560c; --warn-line: #e5c98d; --notes-bg: #f6efdd;
+  --bar-bg: #5a3b26; --bar-ink: #f6ecd8; --bar-line: #3f2918; --brand-ink: #f6ecd8; --tabs-bg: #fbf6ea;
+  --search-bg: #f6ecd8; --search-line: transparent; --chip-bg: #fbf6ea;
+  --scan-bg: #2b2420; --scan-ink: #f6ecd8; --crop-fill: rgba(196, 55, 47, 0.12);
+  --protobar-bg: #2b2420; --protobar-ink: #e9dfcb; --logo-pop: #e0675d;
+  --rule-red: #d9534a; --rule-blue: #a9bfd3; --drawer: #7a5435; --brass: #c79a4a;
+  --shadow: 0 1px 0 #d8cbb0, 0 2px 6px rgba(60, 40, 20, 0.08);
+  --shadow-cover: 0 1px 2px rgba(40, 25, 10, 0.25), 0 6px 14px rgba(40, 25, 10, 0.18);
+  --shadow-cover-l: 0 2px 4px rgba(40, 25, 10, 0.25), 0 18px 40px rgba(40, 25, 10, 0.25);
+  --cover-sheen: linear-gradient(90deg, rgba(0,0,0,0.18) 0 3%, rgba(255,255,255,0.08) 4% 6%, transparent 9%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1d1814; --surface: #29221c; --surface-2: #322a22; --ink: #f0e6d3; --ink-2: #d4c6af; --muted: #a8977f;
+    --line: #43382d; --card-line: #4a3e32; --accent: #e8766b; --accent-soft: #4a2723; --on-accent: #1d1814;
+    --pop: #ef7e72; --pop-soft: #4a2723; --pop-ink: #f09185; --date-bg: #3b3024; --date-ink: #e3c48d;
+    --digital-bg: #263544; --digital-ink: #a9c7e2; --gone-bg: #3a3129; --gone-ink: #cbbba5;
+    --warn-bg: #45351a; --warn-ink: #f0c97a; --warn-line: #6a5226; --notes-bg: #2f2720;
+    --bar-bg: #2a1d13; --bar-ink: #f0e3cb; --bar-line: #120c08; --brand-ink: #f0e3cb; --tabs-bg: #29221c;
+    --search-bg: #3a2b1f; --chip-bg: #29221c; --scan-bg: #0f0c0a; --scan-ink: #f0e3cb;
+    --protobar-bg: #0f0c0a; --rule-red: #a5463f; --rule-blue: #3c4c5c; --drawer: #3a291b; --brass: #b08a45;
+    --shadow: 0 1px 0 #120c08, 0 2px 8px rgba(0, 0, 0, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1d1814; --surface: #29221c; --surface-2: #322a22; --ink: #f0e6d3; --ink-2: #d4c6af; --muted: #a8977f;
+  --line: #43382d; --card-line: #4a3e32; --accent: #e8766b; --accent-soft: #4a2723; --on-accent: #1d1814;
+  --pop: #ef7e72; --pop-soft: #4a2723; --pop-ink: #f09185; --date-bg: #3b3024; --date-ink: #e3c48d;
+  --digital-bg: #263544; --digital-ink: #a9c7e2; --gone-bg: #3a3129; --gone-ink: #cbbba5;
+  --warn-bg: #45351a; --warn-ink: #f0c97a; --warn-line: #6a5226; --notes-bg: #2f2720;
+  --bar-bg: #2a1d13; --bar-ink: #f0e3cb; --bar-line: #120c08; --brand-ink: #f0e3cb; --tabs-bg: #29221c;
+  --search-bg: #3a2b1f; --chip-bg: #29221c; --scan-bg: #0f0c0a; --scan-ink: #f0e3cb;
+  --protobar-bg: #0f0c0a; --rule-red: #a5463f; --rule-blue: #3c4c5c; --drawer: #3a291b; --brass: #b08a45;
+  --shadow: 0 1px 0 #120c08, 0 2px 8px rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,57 @@
+/* Option 1: Card catalog. Rows and facts are drawn as index cards with a red
+   headline rule and faint blue lines; the side navigation looks like drawer
+   labels in brass holders. */
+
+.topbar { border-bottom: 4px solid var(--drawer); }
+.search input { font-family: var(--font-ui); }
+.page-title { font-style: italic; }
+
+/* Tile captions as small typed cards */
+.tile-caption {
+  background: var(--surface); padding: var(--space-2) var(--space-2) var(--space-2);
+  border-top: 2px solid var(--rule-red); box-shadow: var(--shadow);
+}
+.tile-title { font-size: 14px; }
+.tile-author, .tile-date { font-size: 12px; }
+
+/* List rows as catalog cards */
+.list { gap: var(--space-3); }
+.row, .result-piece {
+  position: relative; background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-3) var(--space-4);
+  background-image: linear-gradient(var(--rule-red), var(--rule-red)), repeating-linear-gradient(transparent 0 21px, var(--rule-blue) 21px 22px);
+  background-size: 100% 1px, 100% 100%; background-position: 0 34px, 0 34px; background-repeat: no-repeat, no-repeat;
+  box-shadow: var(--shadow);
+}
+.row::after, .result-piece::after {
+  content: ""; position: absolute; bottom: 5px; left: 50%; width: 10px; height: 10px; margin-left: -5px;
+  border-radius: 50%; background: var(--bg); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.row-title { font-size: 16px; }
+.row-date { font-family: var(--font-ui); }
+.group .row, .group .result-piece { margin: 0 0 var(--space-2) var(--space-3); }
+.group { border: 0; }
+
+/* Detail facts as a large card */
+.detail-body .block:has(.facts:not(.facts-copy)), .copy {
+  background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); box-shadow: var(--shadow);
+  padding: var(--space-4);
+  background-image: repeating-linear-gradient(transparent 0 23px, var(--rule-blue) 23px 24px);
+  background-position: 0 50px;
+}
+.copy { margin-bottom: var(--space-3); border-top: 2px solid var(--rule-red); }
+.facts { font-family: var(--font-ui); line-height: 24px; gap: 0 var(--space-4); }
+.detail-title { font-style: italic; }
+.date-chip { font-family: var(--font-ui); border: 1px solid var(--date-ink); background: transparent; }
+.notes { font-style: italic; }
+
+/* Drawer-label navigation on wide screens */
+@media (min-width: 900px) {
+  .tabs { gap: var(--space-3); }
+  .tab {
+    justify-content: center; background: var(--drawer); color: var(--bar-ink); border-radius: var(--radius);
+    padding: var(--space-3); box-shadow: inset 0 0 0 3px var(--brass), inset 0 0 0 5px var(--drawer), inset 0 0 0 6px var(--brass);
+    font-family: var(--font-ui);
+  }
+  .tab.is-on { background: var(--surface); color: var(--accent); }
+}

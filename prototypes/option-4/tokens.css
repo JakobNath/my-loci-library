@@ -1,0 +1,50 @@
+/* Option 4: Scholarly and typographic. A book-page look: serif type, small
+   capitals, hairline rules, and one rubric red. */
+:root {
+  --font-body: "Palatino Linotype", "Book Antiqua", Palatino, "Iowan Old Style", Georgia, serif;
+  --font-display: "Palatino Linotype", "Book Antiqua", Palatino, "Iowan Old Style", Georgia, serif;
+  --font-ui: "Palatino Linotype", "Book Antiqua", Palatino, "Iowan Old Style", Georgia, serif;
+  --font-cover: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --font-notes: "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+  --fs-base: 16px; --fs-small: 14px; --fs-h1: 30px; --fs-h1-wide: 38px; --fs-h2: 15px; --fs-detail: 32px; --fs-tile: 15px; --fs-brand: 19px;
+  --h1-weight: 400; --h2-weight: 400; --h1-tracking: 0.01em; --h2-tracking: 0.12em; --brand-weight: 400; --brand-tracking: 0.08em;
+  --tile-title-weight: 400; --cover-title-weight: 400;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 20px; --space-5: 36px; --space-6: 64px;
+  --radius: 0; --radius-lg: 0; --radius-btn: 0; --radius-pill: 0; --cover-radius: 0; --cover-ratio: 2 / 3;
+  --tile-min: 116px; --tile-min-wide: 150px; --grid-gap-x: 24px; --grid-gap-y: 32px; --page-max: 980px; --side-w: 0px;
+  --gone-opacity: 0.45;
+
+  --bg: #fbfaf6; --surface: #fbfaf6; --surface-2: #f2efe7; --ink: #1c1a17; --ink-2: #3d3934; --muted: #7a736a;
+  --line: #ddd8cd; --card-line: #ddd8cd; --accent: #8c1d2a; --accent-soft: #f4e4e3; --on-accent: #fbfaf6;
+  --pop: #b9262f; --pop-soft: #f6e0df; --pop-ink: #a2202a; --date-bg: transparent; --date-ink: #8c1d2a;
+  --digital-bg: transparent; --digital-ink: #2f557a; --gone-bg: #efebe3; --gone-ink: #5f584f;
+  --warn-bg: #f7ecd5; --warn-ink: #7f5410; --warn-line: #e3cfa2; --notes-bg: transparent;
+  --bar-bg: #fbfaf6; --bar-ink: #1c1a17; --bar-line: #1c1a17; --brand-ink: #1c1a17; --tabs-bg: #fbfaf6;
+  --search-bg: transparent; --search-line: #ddd8cd; --chip-bg: transparent;
+  --scan-bg: #1c1a17; --scan-ink: #fbfaf6; --crop-fill: rgba(185, 38, 47, 0.1);
+  --protobar-bg: #1c1a17; --protobar-ink: #e3ded3; --logo-pop: #b9262f;
+  --shadow: none;
+  --shadow-cover: 0 1px 2px rgba(0, 0, 0, 0.18), 0 4px 10px rgba(0, 0, 0, 0.1);
+  --shadow-cover-l: 0 2px 4px rgba(0, 0, 0, 0.18), 0 14px 30px rgba(0, 0, 0, 0.16);
+  --cover-sheen: linear-gradient(90deg, rgba(0,0,0,0.1) 0 2%, transparent 5%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161513; --surface: #161513; --surface-2: #211f1c; --ink: #ebe6dc; --ink-2: #cfc8bb; --muted: #958c7f;
+    --line: #36322d; --card-line: #36322d; --accent: #e08389; --accent-soft: #3a2224; --on-accent: #161513;
+    --pop: #ec7078; --pop-soft: #3d2124; --pop-ink: #ef8a90; --date-ink: #e08389;
+    --digital-ink: #93b6da; --gone-bg: #26231f; --gone-ink: #c2b9ab;
+    --warn-bg: #3b301b; --warn-ink: #ecc77d; --warn-line: #5e4c27;
+    --bar-bg: #161513; --bar-ink: #ebe6dc; --bar-line: #ebe6dc; --brand-ink: #ebe6dc; --tabs-bg: #161513;
+    --search-line: #36322d; --scan-bg: #0b0a09; --protobar-bg: #0b0a09;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161513; --surface: #161513; --surface-2: #211f1c; --ink: #ebe6dc; --ink-2: #cfc8bb; --muted: #958c7f;
+  --line: #36322d; --card-line: #36322d; --accent: #e08389; --accent-soft: #3a2224; --on-accent: #161513;
+  --pop: #ec7078; --pop-soft: #3d2124; --pop-ink: #ef8a90; --date-ink: #e08389;
+  --digital-ink: #93b6da; --gone-bg: #26231f; --gone-ink: #c2b9ab;
+  --warn-bg: #3b301b; --warn-ink: #ecc77d; --warn-line: #5e4c27;
+  --bar-bg: #161513; --bar-ink: #ebe6dc; --bar-line: #ebe6dc; --brand-ink: #ebe6dc; --tabs-bg: #161513;
+  --search-line: #36322d; --scan-bg: #0b0a09; --protobar-bg: #0b0a09;
+}

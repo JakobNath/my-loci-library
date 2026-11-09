@@ -1,0 +1,54 @@
+/* Option 2: Clean modern. White space, system type, rounded cards, a teal
+   accent with a coral pop. Closest to Libib. */
+:root {
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-cover: Georgia, "Times New Roman", serif;
+  --font-notes: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --fs-base: 15px; --fs-small: 13px; --fs-h1: 26px; --fs-h1-wide: 30px; --fs-h2: 17px; --fs-detail: 26px; --fs-tile: 14px; --fs-brand: 17px;
+  --h1-weight: 700; --h2-weight: 650; --h1-tracking: -0.02em; --h2-tracking: -0.01em; --brand-weight: 700; --brand-tracking: -0.01em;
+  --tile-title-weight: 600; --cover-title-weight: 400;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 20px; --space-5: 32px; --space-6: 56px;
+  --radius: 10px; --radius-lg: 16px; --radius-btn: 999px; --radius-pill: 999px; --cover-radius: 6px; --cover-ratio: 2 / 3;
+  --tile-min: 104px; --tile-min-wide: 150px; --grid-gap-x: 16px; --grid-gap-y: 22px; --page-max: 1200px; --side-w: 0px;
+  --gone-opacity: 0.45;
+
+  --bg: #f6f7f9; --surface: #ffffff; --surface-2: #f0f2f5; --ink: #15181e; --ink-2: #3b4250; --muted: #737b8a;
+  --line: #e3e6eb; --card-line: #eceef2; --accent: #0e8a8c; --accent-soft: #e0f3f3; --on-accent: #ffffff;
+  --pop: #ff6a4d; --pop-soft: #ffe7e1; --pop-ink: #d9472b; --date-bg: #eef1f5; --date-ink: #3b4250;
+  --digital-bg: #e7ecfb; --digital-ink: #3550b0; --gone-bg: #f0f0f2; --gone-ink: #5c616c;
+  --warn-bg: #fff4dc; --warn-ink: #946200; --warn-line: #f2dca5; --notes-bg: #f8f9fb;
+  --bar-bg: rgba(255, 255, 255, 0.92); --bar-ink: #15181e; --bar-line: #e9ebef; --brand-ink: #0e8a8c; --tabs-bg: rgba(255, 255, 255, 0.96);
+  --search-bg: #f0f2f5; --search-line: transparent; --chip-bg: #ffffff;
+  --scan-bg: #15181e; --scan-ink: #ffffff; --crop-fill: rgba(255, 106, 77, 0.12);
+  --protobar-bg: #15181e; --protobar-ink: #d6dae2; --logo-pop: #ff6a4d;
+  --shadow: 0 1px 2px rgba(20, 24, 30, 0.04), 0 4px 16px rgba(20, 24, 30, 0.06);
+  --shadow-cover: 0 1px 2px rgba(20, 24, 30, 0.12), 0 6px 16px rgba(20, 24, 30, 0.14);
+  --shadow-cover-l: 0 2px 6px rgba(20, 24, 30, 0.12), 0 24px 48px rgba(20, 24, 30, 0.2);
+  --cover-sheen: linear-gradient(90deg, rgba(0,0,0,0.12) 0 2%, rgba(255,255,255,0.10) 3% 4%, transparent 7%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1114; --surface: #181b20; --surface-2: #20242a; --ink: #eef0f3; --ink-2: #c3c8d1; --muted: #8b93a1;
+    --line: #2a2f37; --card-line: #252a31; --accent: #3cc8c9; --accent-soft: #123536; --on-accent: #06201f;
+    --pop: #ff8a70; --pop-soft: #3d221c; --pop-ink: #ff9c86; --date-bg: #232830; --date-ink: #d0d5dd;
+    --digital-bg: #1f2a4a; --digital-ink: #9fb3f5; --gone-bg: #262a30; --gone-ink: #b5bbc5;
+    --warn-bg: #3a2f14; --warn-ink: #f2c55c; --warn-line: #5a4719; --notes-bg: #1c2026;
+    --bar-bg: rgba(15, 17, 20, 0.9); --bar-ink: #eef0f3; --bar-line: #23272e; --brand-ink: #3cc8c9; --tabs-bg: rgba(20, 23, 27, 0.96);
+    --search-bg: #20242a; --chip-bg: #181b20; --scan-bg: #000000;
+    --protobar-bg: #000000;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1114; --surface: #181b20; --surface-2: #20242a; --ink: #eef0f3; --ink-2: #c3c8d1; --muted: #8b93a1;
+  --line: #2a2f37; --card-line: #252a31; --accent: #3cc8c9; --accent-soft: #123536; --on-accent: #06201f;
+  --pop: #ff8a70; --pop-soft: #3d221c; --pop-ink: #ff9c86; --date-bg: #232830; --date-ink: #d0d5dd;
+  --digital-bg: #1f2a4a; --digital-ink: #9fb3f5; --gone-bg: #262a30; --gone-ink: #b5bbc5;
+  --warn-bg: #3a2f14; --warn-ink: #f2c55c; --warn-line: #5a4719; --notes-bg: #1c2026;
+  --bar-bg: rgba(15, 17, 20, 0.9); --bar-ink: #eef0f3; --bar-line: #23272e; --brand-ink: #3cc8c9; --tabs-bg: rgba(20, 23, 27, 0.96);
+  --search-bg: #20242a; --chip-bg: #181b20; --scan-bg: #000000;
+  --protobar-bg: #000000;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px rgba(0, 0, 0, 0.25);
+}

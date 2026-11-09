@@ -1,0 +1,60 @@
+/* Option 4: Scholarly and typographic. Opens on the list, which reads like a
+   chronological shelf list with dates in the margin. Labels are small
+   capitals; headings are rubricated. */
+
+.topbar { border-bottom-width: 1px; box-shadow: 0 3px 0 -2px var(--bar-line); }
+.brand-name { font-variant: small-caps; text-transform: lowercase; font-size: 22px; }
+.page-title { font-style: italic; }
+.page-title::first-letter { color: var(--pop); }
+.page-meta, .chip, .sort, .tab, .badge, .h2, .facts dt, .eyebrow, .detail-series, .steps, .btn, .back, .tile-date, .row-date, .piece-date {
+  font-variant: small-caps; letter-spacing: 0.06em;
+}
+.badge, .h2, .eyebrow, .detail-series { text-transform: lowercase; font-size: 15px; }
+.badge { padding: 0; font-weight: 400; }
+.badge-gone, .badge-wish { background: transparent; }
+.chip { border: 0; border-bottom: 1px solid transparent; padding: 2px 4px; text-transform: lowercase; font-size: 15px; }
+.chip.is-on { background: transparent; color: var(--accent); border-bottom-color: var(--accent); }
+.btn { text-transform: lowercase; font-size: 16px; }
+.h2 { border-bottom: 1px solid var(--line); padding-bottom: var(--space-1); color: var(--pop-ink); }
+
+/* Shelf-list rows: date in the margin */
+.row, .result-piece { grid-template-columns: 5.5em 36px 1fr; }
+.row .cover-s, .result-piece .cover-s { width: 36px; }
+.row-date { order: -1; text-align: left; font-size: 14px; }
+.result-piece .cover-s { grid-column: 2; }
+.result-piece .row-main { grid-column: 3; }
+.row-title { font-size: 17px; }
+.row-title, .tile-title { font-style: italic; }
+.row-sub { font-style: normal; }
+@media (min-width: 700px) {
+  .row, .result-piece { grid-template-columns: 9em 36px 1fr 13em; }
+}
+
+.tile-title { font-size: 15px; }
+.detail-head { text-align: center; }
+.detail-title { font-style: italic; }
+.detail-date, .detail-badges { justify-content: center; }
+.date-chip { padding: 0; font-size: 16px; font-variant: small-caps; letter-spacing: 0.06em; }
+.notes { border-left: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: var(--space-3) 0; text-align: left; }
+.notes p { font-style: italic; }
+.dating, .dating.is-working { background: transparent; border-left: 2px solid var(--line); border-radius: 0; }
+.dating.is-working { border-left-color: var(--pop); }
+.card { border: 1px solid var(--line); }
+.piece-title::before { font-variant: oldstyle-nums; }
+
+@media (min-width: 900px) {
+  .app { grid-template-columns: 1fr auto; }
+  .topbar { grid-column: 1; }
+  main { grid-column: 1 / -1; }
+  .tabs {
+    grid-column: 2; grid-row: 1; position: sticky; top: 0; align-self: stretch; align-items: center; z-index: 6;
+    flex-direction: row; gap: var(--space-2); padding: 0 var(--space-5) 0 0;
+    background: var(--bar-bg); border-bottom: 1px solid var(--bar-line); box-shadow: 0 3px 0 -2px var(--bar-line);
+  }
+  .tab .icon { display: none; }
+  .tab { font-size: 17px; text-transform: lowercase; }
+  .tab.is-on { background: transparent; color: var(--pop); }
+  .detail { grid-template-columns: 260px 1fr; }
+  .detail-head { text-align: left; }
+  .detail-date, .detail-badges { justify-content: flex-start; }
+}
