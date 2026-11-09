@@ -74,7 +74,7 @@ Tell Jakob, in a short message:
 
 During the stop, iterate on the designs until a direction is chosen. Then:
 
-- [ ] **2.6a Drawn spine design.** In the prototypes, show several options for the drawn spine that stands in for a book with no spine photo (type, color, ornament, how width follows page count). Show each one on a shelf mixed with real spine photos from `prototypes/photos/real/` and with other drawn spines. Iterate with Jakob and his wife until one is approved, then record it in `docs/plan/DESIGN.md`.
+- [x] **2.6a Drawn spine design.** In the prototypes, show several options for the drawn spine that stands in for a book with no spine photo (type, color, ornament, how width follows page count). Show each one on a shelf mixed with real spine photos from `prototypes/photos/real/` and with other drawn spines. Iterate with Jakob and his wife until one is approved, then record it in `docs/plan/DESIGN.md`.
   **Check:** Jakob has approved one option.
 - [ ] **2.6 Lock the design.** Write the chosen look into `styles/tokens.css` and record it in `docs/plan/DESIGN.md` (direction, colors, type, spacing, icon). Record the phone test results in `HOW_IT_WORKS.md`. If the iPhone barcode test failed, choose a different decoder and retest before continuing.
   **Check:** Jakob has said "go".
@@ -91,7 +91,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
   - how trash, value history (one entry per day or session), partial acquired dates, original dates and disputed datings, anthology contents and Logos extra columns are stored
   - one complete example of each record type, including an anthology (NA28) and a disputed date (Didache)
   - a "Words" section defining each term in the vocabulary of `CODE_STYLE.md` section 4, used the same way in data, code, screens and docs
-  - covers, spines and masters: where each image lives and its size. Images are a list on the record, each with a kind (`cover`, `spine`), so later kinds need no format change
+  - covers, spines and masters: where each image lives and its size. Images are a list on the record, each with a kind (`cover`, `spine`), so later kinds need no format change; a cover image also stores its main color
   **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
 - [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; pages as printed to a page count ("xxviii, 311" is 339, "89–132" is 44, "4 v." gives no count); size estimates (height and thickness from the best available source, in the order in `PLAN.md`, with the source named); search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
   **Check:** the core imports cleanly in the browser test page and in `node --test`.
@@ -136,7 +136,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** storage tests pass, including a simulated full disk.
 - [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
   **Check:** with 10,000 generated books (6,000 physical, 4,000 Logos, with works, copies and authors), a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
-- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the approved drawn spine for books without one. Heights and thicknesses come from the core size estimates.
+- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the drawn spine in `docs/plan/DESIGN.md` for books without one. Heights and thicknesses come from the core size estimates.
   **Check:** a sample shelf mixing photographed and drawn spines matches the approved design, and scrolling stays within the speed target.
 - [ ] **5.4 Book detail page:** every field, the spine beside the cover when there is one, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
   **Check:** each sample book displays correctly, and the largest anthology (the Bible, 66 works) renders in 16 ms or less on the laptop.
@@ -159,7 +159,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
 - [ ] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
-- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
+- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder; the cover's main color worked out once and stored. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
 - [ ] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
   **Check:** an inbox of sample covers is processed into both sizes.

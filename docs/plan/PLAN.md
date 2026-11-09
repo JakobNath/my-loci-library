@@ -213,7 +213,7 @@ Every cover is a JPEG in two sizes, made by one shared piece of code. JPEG was c
 
 Most books need no photo: the online cover is used. Photos are for books with no findable cover (old, rare, custom), for a wrong online cover, and for spines, which are almost never online. Any book can always be given its own cover photo instead.
 
-**Spines** are optional: any book can have a spine photo, and none is ever asked for. A spine shows on the book's page beside the cover and in the shelf view. Images are stored as a list, each marked with its kind (cover, spine), so another kind (a title page, say) can be added later without changing the format.
+**Spines** are optional: any book can have a spine photo, and none is ever asked for. A spine shows on the book's page beside the cover and in the shelf view. Images are stored as a list, each marked with its kind (cover, spine), so another kind (a title page, say) can be added later without changing the format. When a cover is saved, its main color is worked out once and stored with it, for the drawn spine's edge.
 
 - Photos come from the phone's own camera, opened from the app, or from the photo library. This gives full resolution and needs no camera permission. The app's live camera is used only for barcode scanning.
 - No particular background is needed, and the book can be held in the hand.
@@ -242,7 +242,7 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 **Library and Wishlist views**
 
 - A cover grid and a dense list view.
-- **Shelf view:** for a location, spines stand side by side like the real shelf. A book with no spine photo gets a drawn spine (title and author set vertically in the design's colors, its width taken from the page count). The drawn spine's look is chosen by Jakob and his wife from several options, shown among real spine photos, before it is built.
+- **Shelf view:** for a location, spines stand side by side like the real shelf. A book with no spine photo gets a drawn spine: an outline with a dashed edge and the title, with the volume or series number (or else the author's surname) at the foot. When the book has a cover image, online or our own, the edge takes a softened version of the cover's color; otherwise it stays plain gray. Sizes follow "Book sizes". The details are in `docs/plan/DESIGN.md`.
 - Sort by any field: title, subtitle, author, original date, edition year, binding, series, category, location, value, date added, and more.
 - Filters by format (physical or Logos), location, category, tags, status, and "needs original date".
 - **Saved views,** such as "Office shelves by original date" or "Greek texts by author".
