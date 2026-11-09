@@ -68,3 +68,9 @@ footer { margin-top: var(--space-6); color: var(--muted); font-size: var(--fs-sm
 .gallery td .spine { display: inline-block; }
 .group-title { margin-top: var(--space-6); color: var(--ink-2); }
 .option.old { opacity: 0.92; }
+
+/* Lettering: a centered box per text; the text runs top to bottom, in one
+   or two columns, and is sized by the script to fit without clipping. */
+.vbox { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.vt { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; text-align: center; line-height: 1.12; -webkit-font-smoothing: antialiased; font-variant-ligatures: none; }
+
