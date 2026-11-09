@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>My Loci Library · Design prototypes</title>
+<style>
+  /* The index page stands apart from the five options, so it keeps its own
+     small set of neutral tokens. */
+  :root {
+    --bg: #f5f4f1; --surface: #ffffff; --ink: #1c1c1c; --muted: #6e6b66; --line: #e2dfd9; --accent: #1f6f8b;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --serif: "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+    --space: 16px; --radius: 12px; --logo-pop: #d4572a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151515; --surface: #1f1f1f; --ink: #ececec; --muted: #a09d97; --line: #333; --accent: #6cc1dd; --logo-pop: #f07a4f; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font); }
+  main { max-width: 980px; margin: 0 auto; padding: calc(var(--space) * 2) var(--space) calc(var(--space) * 4); }
+  h1 { font: 600 34px/1.1 var(--serif); margin: 0 0 8px; }
+  h2 { font: 600 22px/1.2 var(--serif); margin: calc(var(--space) * 2.5) 0 var(--space); }
+  p { margin: 6px 0; }
+  .lede { color: var(--muted); max-width: 40em; }
+  .options { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .opt { display: block; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; color: inherit; text-decoration: none; }
+  .opt:hover { border-color: var(--accent); }
+  .swatch { display: flex; height: 64px; }
+  .swatch span { flex: 1; }
+  .opt-body { padding: var(--space); }
+  .opt-name { font: 600 19px/1.25 var(--serif); }
+  .opt-num { color: var(--muted); font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .opt p { color: var(--muted); font-size: 15px; }
+  .logos { display: grid; gap: var(--space); grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .logo { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
+  .logo-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 10px; }
+  .mark { color: var(--ink); --logo-bg: var(--surface); display: block; }
+  .mark svg { width: 100%; height: 100%; display: block; }
+  .m96 { width: 96px; height: 96px; }
+  .m48 { width: 48px; height: 48px; }
+  .m24 { width: 24px; height: 24px; }
+  .icon { border-radius: 22%; display: flex; align-items: center; justify-content: center; }
+  .icon .mark { width: 64%; height: 64%; }
+  .i96 { width: 96px; height: 96px; }
+  .i48 { width: 48px; height: 48px; }
+  .logo-name { font: 600 17px var(--serif); margin: 0; }
+  .logo p { color: var(--muted); font-size: 14px; }
+  .links { display: grid; gap: 10px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space); }
+  a { color: var(--accent); }
+  .muted { color: var(--muted); font-size: 14px; }
+  footer { margin-top: calc(var(--space) * 3); color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>My Loci Library: five designs</h1>
+  <p class="lede">Five clickable directions for the catalog, all using the same 21 sample books. Each one has the Library (grid and list), the Wishlist, search, a book page, and the batch-add flow with a pretend scan. Open them on a phone and on the laptop. The sun and moon button in each one switches between light, dark and following the device.</p>
+  <p class="lede">Worth trying in each: search for <em>phaedo</em> or <em>politeia</em>; open <em>The Apostolic Fathers</em> (an anthology with a disputed date for the Didache); turn on "No longer owned" and open the Penguin <em>Confessions</em>; and go through "Add books" with each of the three pretend scans.</p>
+
+  <h2>The five options</h2>
+  <div class="options">
+    <a class="opt" href="option-1/">
+      <div class="swatch"><span style="background:#efe7d6"></span><span style="background:#5a3b26"></span><span style="background:#fbf6ea"></span><span style="background:#a3302b"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 1</div><div class="opt-name">Card catalog</div>
+      <p>Cream index cards, typed labels and a library-red rule, with drawer-label navigation on the laptop.</p></div>
+    </a>
+    <a class="opt" href="option-2/">
+      <div class="swatch"><span style="background:#f6f7f9"></span><span style="background:#ffffff"></span><span style="background:#0e8a8c"></span><span style="background:#ff6a4d"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 2</div><div class="opt-name">Clean modern</div>
+      <p>The closest to Libib: white space, rounded cards, a teal accent and a coral pop.</p></div>
+    </a>
+    <a class="opt" href="option-3/">
+      <div class="swatch"><span style="background:#f3ebdd"></span><span style="background:#9b6b42"></span><span style="background:#2f5d46"></span><span style="background:#c8553d"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 3</div><div class="opt-name">Warm bookshop</div>
+      <p>Linen and oak, forest green with terracotta, and the covers standing on wooden shelves.</p></div>
+    </a>
+    <a class="opt" href="option-4/">
+      <div class="swatch"><span style="background:#fbfaf6"></span><span style="background:#ddd8cd"></span><span style="background:#1c1a17"></span><span style="background:#8c1d2a"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 4</div><div class="opt-name">Scholarly</div>
+      <p>Like a well-set book page: serif type, small capitals, one rubric red, and a list that reads as a shelf list with dates in the margin.</p></div>
+    </a>
+    <a class="opt" href="option-5/">
+      <div class="swatch"><span style="background:#ebe8e3"></span><span style="background:#0e0e10"></span><span style="background:#f7f5f1"></span><span style="background:#f2b705"></span></div>
+      <div class="opt-body"><div class="opt-num">Option 5</div><div class="opt-name">Gallery</div>
+      <p>The covers hung large like prints on a wall, very little else on screen, and a touch of saffron yellow.</p></div>
+    </a>
+  </div>
+  <p class="muted">Covers are drawn as simple title tiles for now. The real app shows your own cover photos in their place.</p>
+
+  <h2>Logo and app icon ideas</h2>
+  <div class="logos" id="logos"></div>
+  <p class="muted">Each is shown large, at 48 and 24 pixels, and as a home-screen icon at 96 and 48 pixels. Colors can follow whichever design is chosen.</p>
+
+  <h2>Phone test</h2>
+  <div class="links">
+    <div class="card"><a href="phone-test.html"><strong>Phone test page</strong></a>
+      <p class="muted">Run this on each phone: it tries the camera barcode scan and stores about 50 MB offline, then gives a short report to copy and paste back.</p></div>
+  </div>
+
+  <footer>My Loci Library. Created by Jakob Nath. <a href="../">Home</a></footer>
+</main>
+<script type="module">
+  import { logos } from './shared/logos.js';
+  const iconColors = [
+    { bg: '#0e7c7e', ink: '#ffffff', pop: '#ff8a6b' },
+    { bg: '#2f5d46', ink: '#fbf6ec', pop: '#f08a6a' },
+    { bg: '#7b1e2b', ink: '#fbf3e4', pop: '#f2c14e' },
+  ];
+  document.getElementById('logos').innerHTML = logos.map((l, i) => {
+    const c = iconColors[i];
+    const icon = size => `<span class="icon i${size}" style="background:${c.bg}"><span class="mark" style="color:${c.ink};--logo-pop:${c.pop};--logo-bg:${c.bg}">${l.mark}</span></span>`;
+    return `<div class="logo">
+      <div class="logo-row"><span class="mark m96">${l.mark}</span><span class="mark m48">${l.mark}</span><span class="mark m24">${l.mark}</span></div>
+      <div class="logo-row">${icon(96)}${icon(48)}</div>
+      <p class="logo-name">${i + 1}. ${l.name}</p><p>${l.idea}</p>
+    </div>`;
+  }).join('');
+</script>
+</body>
+</html>
