@@ -134,6 +134,7 @@ How typed dates are read (the app shows its reading before saving):
 | 4th–5th c. | 301 | 500 | century |
 | after 1517 | 1517 | null | open |
 | before 1517 | null | 1517 | open |
+| 1554– | 1554 | null | open |
 | c. 1200 BC | −1200 | −1200 | circa |
 | fl. 1150 | 1150 | 1150 | circa |
 
