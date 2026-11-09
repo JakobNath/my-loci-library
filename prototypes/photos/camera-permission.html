@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Camera test">
+<link rel="manifest" href="camera-permission.webmanifest">
+<link rel="icon" href="../../app/icons/icon.svg" type="image/svg+xml">
+<title>Loci camera permission test</title>
+<link rel="stylesheet" href="../../styles/tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font-body); padding: 16px 16px 40px; }
+  main { max-width: 560px; margin: 0 auto; }
+  h1 { font: 600 24px/1.2 var(--font-display); margin: 4px 0 8px; }
+  p { margin: 8px 0; }
+  .muted { color: var(--muted); font-size: 13px; }
+  .card { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: 14px; margin: 12px 0; }
+  .btn { display: inline-flex; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 600 14px var(--font-body); margin: 4px 6px 4px 0; cursor: pointer; }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+  video { width: 100%; max-height: 30vh; object-fit: cover; border-radius: 12px; background: #000; display: block; margin-top: 8px; }
+  .count { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .count b { font-size: 22px; min-width: 2ch; text-align: center; }
+  pre { white-space: pre-wrap; background: var(--surface-2); padding: 10px; border-radius: 10px; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; }
+  a { color: var(--accent-ink); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Camera permission test</h1>
+  <p id="mode" class="muted"></p>
+  <div class="card">
+    <p><b>How to run it:</b> on the iPhone, open this page in Safari, tap Share, then <b>Add to Home Screen</b>. Open <b>Camera test</b> from the home screen, run each test below, and each time a camera permission question appears, answer Allow and tap <b>+1 prompt</b> here. Then tap <b>Copy report</b> and paste it back.</p>
+  </div>
+
+  <div class="card">
+    <p><b>Prompts seen</b> (tap after each one)</p>
+    <div class="count"><button class="btn" id="minus">−1</button><b id="prompts">0</b><button class="btn btn-primary" id="plus">+1 prompt</button></div>
+    <p class="muted" id="state"></p>
+  </div>
+
+  <div class="card">
+    <p><b>A. One camera for the whole stack</b> (how the app will work): the camera opens once and stays open for 30 books × 3 steps, about a minute and a half.</p>
+    <button class="btn btn-primary" data-test="keep">Run test A</button>
+    <p><b>B. Camera reopened for every step</b>: closed and opened again 30 times.</p>
+    <button class="btn" data-test="reopen">Run test B</button>
+    <p><b>C. Page address changed for every step</b>, with the camera kept open (the "#" part, as our app's screens do).</p>
+    <button class="btn" data-test="hash">Run test C</button>
+    <p><b>D. A two-minute pause</b>, then the camera is opened again.</p>
+    <button class="btn" data-test="pause">Run test D</button>
+    <video id="video" playsinline muted></video>
+    <p id="status" class="muted">Not started.</p>
+  </div>
+
+  <div class="card">
+    <pre id="report"></pre>
+    <button class="btn btn-primary" id="copy">Copy report</button>
+  </div>
+  <p class="muted"><a href="lab.html">Back to the photo lab</a>. My Loci Library. Created by Jakob Nath.</p>
+</main>
+<script type="module">
+const $ = id => document.getElementById(id);
+const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+$('mode').textContent = standalone ? 'Running as a home-screen app.' : 'Running in the browser, not as a home-screen app. Add it to the home screen for the real test.';
+let prompts = 0, stream = null;
+const log = [];
+const results = {};
+const say = t => { $('status').textContent = t; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const show = () => { $('prompts').textContent = prompts; report(); };
+$('plus').onclick = () => { prompts++; log.push(`${new Date().toLocaleTimeString()} prompt seen (${current || 'no test running'})`); show(); };
+$('minus').onclick = () => { prompts = Math.max(0, prompts - 1); show(); };
+
+async function permState() {
+  try { return (await navigator.permissions.query({ name: 'camera' })).state; } catch { return 'unknown'; }
+}
+async function open() {
+  const t0 = performance.now();
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+  $('video').srcObject = stream; await $('video').play();
+  return Math.round(performance.now() - t0);
+}
+function close() { if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; }
+const alive = () => !!stream && stream.getVideoTracks().every(t => t.readyState === 'live');
+
+let current = '';
+async function run(test) {
+  current = test; const before = prompts, opens = [];
+  let stopped = 0;
+  try {
+    if (test === 'keep' || test === 'hash') {
+      opens.push(await open());
+      for (let i = 1; i <= 90; i++) {
+        if (test === 'hash') location.hash = '#/step-' + i;
+        await sleep(1000);
+        if (!alive()) { stopped++; opens.push(await open()); }
+        say(`Test ${test === 'keep' ? 'A' : 'C'}: step ${i} of 90 (book ${Math.ceil(i / 3)})`);
+      }
+      if (test === 'hash') history.replaceState(null, '', location.pathname);
+    } else if (test === 'reopen') {
+      for (let i = 1; i <= 30; i++) { opens.push(await open()); await sleep(800); close(); await sleep(300); say(`Test B: reopened ${i} of 30`); }
+    } else if (test === 'pause') {
+      opens.push(await open()); close();
+      for (let s = 120; s > 0; s -= 5) { say(`Test D: waiting ${s} s…`); await sleep(5000); }
+      opens.push(await open());
+    }
+  } catch (e) { log.push(`${test}: error ${e.name}: ${e.message}`); }
+  close();
+  results[test] = { promptsSeen: prompts - before, cameraOpens: opens.length, slowOpens: opens.filter(ms => ms > 1500).length, cameraStoppedBySystem: stopped, permission: await permState() };
+  say(`Test finished.`); current = ''; report();
+}
+document.querySelectorAll('[data-test]').forEach(b => b.onclick = () => { if (!current) run(b.dataset.test); });
+
+async function report() {
+  const lines = ['Loci camera permission test', new Date().toISOString(), navigator.userAgent, standalone ? 'Home-screen app: yes' : 'Home-screen app: NO (browser tab)', ''];
+  const names = { keep: 'A one camera, whole stack', reopen: 'B reopened per step', hash: 'C address change per step', pause: 'D two-minute pause' };
+  for (const k of Object.keys(names)) {
+    const r = results[k];
+    lines.push(`${names[k]}: ${r ? `prompts seen ${r.promptsSeen}, camera opened ${r.cameraOpens}×, slow opens (likely a prompt) ${r.slowOpens}, stopped by system ${r.cameraStoppedBySystem}, permission now "${r.permission}"` : 'not run'}`);
+  }
+  lines.push('', `Total prompts seen: ${prompts}`, ...log);
+  $('report').textContent = lines.join('\n');
+  $('state').textContent = `Permission state the browser reports: ${await permState()}`;
+}
+$('copy').onclick = async () => { try { await navigator.clipboard.writeText($('report').textContent); $('copy').textContent = 'Copied'; } catch { $('copy').textContent = 'Select the text above and copy it'; } };
+report();
+</script>
+</body>
+</html>

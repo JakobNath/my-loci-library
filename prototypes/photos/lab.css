@@ -1,0 +1,36 @@
+/* Photo lab page, on top of photos.css and capture.css. Values from styles/tokens.css. */
+.sliders { position: sticky; top: 0; z-index: 4; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 16px; }
+.sliders label { display: flex; flex-direction: column; font: 600 12px var(--font-body); color: var(--ink-2); }
+.sliders input[type=range] { width: 100%; accent-color: var(--accent-ink); }
+.sliders .val { font-weight: 400; color: var(--muted); }
+.sliders .acts { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
+.results { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+.res { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: 12px; }
+.res h4 { margin: 0; font: 600 15px var(--font-display); }
+.res .row2 { display: flex; gap: 10px; align-items: flex-end; margin: 8px 0; }
+.res canvas.src { width: 150px; height: 200px; border-radius: 6px; display: block; background: #222; }
+.res .outbox { display: flex; gap: 6px; align-items: flex-end; }
+.res .outbox canvas { max-height: 200px; max-width: 130px; display: block; box-shadow: var(--shadow-cover); border-radius: 2px; }
+.res .ctrl { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 6px; }
+.res .ctrl label { font-size: 12px; display: inline-flex; gap: 4px; align-items: center; }
+.tbl-num td:not(:first-child), .tbl-num th:not(:first-child) { text-align: right; }
+.pending { color: var(--muted); font-style: italic; }
+.editbox { margin-top: 10px; }
+.edit { position: relative; display: inline-block; touch-action: none; max-width: 100%; }
+.edit canvas { display: block; max-width: 100%; max-height: 70vh; width: auto; border-radius: 8px; }
+.edit svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.edit .hdl { fill: #fff; stroke: var(--pop); cursor: grab; }
+.edit .hdl.rot { fill: var(--pop); stroke: #fff; }
+.edit .poly { fill: rgba(176, 132, 58, 0.10); stroke: var(--pop); }
+.edit .eline { stroke: #2bd463; opacity: 0.9; cursor: ew-resize; }
+.edit .ebar { stroke: #2bd463; opacity: 0.9; cursor: ns-resize; }
+.edit .stem { stroke: var(--pop); }
+.review { background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: var(--space-4); margin-top: var(--space-3); }
+.guide-frame { position: absolute; border: 2px solid rgba(255, 255, 255, 0.95); border-radius: 6px; box-shadow: 0 0 0 999px rgba(0, 0, 0, 0.45); pointer-events: none; }
+.saved { display: flex; gap: 10px; align-items: center; background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); padding: 8px 10px; margin-top: 10px; }
+.saved canvas { max-height: 90px; max-width: 70px; display: block; border-radius: 2px; box-shadow: var(--shadow-cover); }
+.saved .grow { flex: 1; font-size: 13px; }
+.camstats { font: 12px var(--font-body); color: var(--muted); margin-top: 6px; }
+.lines { font: 13px ui-monospace, Menlo, Consolas, monospace; }
+/* Wide tables scroll inside their own box on phones rather than widening the page. */
+#rates, #masters, #lines { overflow-x: auto; }

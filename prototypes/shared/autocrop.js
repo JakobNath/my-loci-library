@@ -259,8 +259,18 @@ const apply = (H, x, y) => { const d = H[6] * x + H[7] * y + 1; return [(H[0] * 
  * Width follows the shape of the quad. Returns a canvas.
  */
 export function straighten(source, quad, height) {
-  const { ctx, scale, canvas } = toCanvas(source, 2400);
-  const q = quad.map(p => [p[0] * scale, p[1] * scale]);
+  // Read only the book's area, at about 1.5 times the output's size.
+  const xs = quad.map(p => p[0]), ys = quad.map(p => p[1]);
+  const bx0 = Math.max(0, Math.floor(Math.min(...xs)) - 2), by0 = Math.max(0, Math.floor(Math.min(...ys)) - 2);
+  const sw0 = source.videoWidth || source.naturalWidth || source.width, sh0 = source.videoHeight || source.naturalHeight || source.height;
+  const bx1 = Math.min(sw0, Math.ceil(Math.max(...xs)) + 2), by1 = Math.min(sh0, Math.ceil(Math.max(...ys)) + 2);
+  const quadH = (dist(quad[0], quad[3]) + dist(quad[1], quad[2])) / 2;
+  const scale = Math.min(1, (height * 1.5) / Math.max(1, quadH));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round((bx1 - bx0) * scale)); canvas.height = Math.max(1, Math.round((by1 - by0) * scale));
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(source, bx0, by0, bx1 - bx0, by1 - by0, 0, 0, canvas.width, canvas.height);
+  const q = quad.map(p => [(p[0] - bx0) * scale, (p[1] - by0) * scale]);
   const aspect = ((dist(q[0], q[1]) + dist(q[3], q[2])) / 2) / ((dist(q[0], q[3]) + dist(q[1], q[2])) / 2);
   const H = height, W = Math.max(1, Math.round(H * aspect));
   const out = document.createElement('canvas'); out.width = W; out.height = H;

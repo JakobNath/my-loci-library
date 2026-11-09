@@ -17,3 +17,5 @@ Things that can only be checked on a real phone or a particular browser. Work th
 ## Photo prototype
 
 - [ ] iPhone and Android: open `prototypes/photos/capture.html`, choose Cover, start the camera and hold a book still on a plain surface. The green outline should follow the book and take the photo by itself; the straightened result should look right. Repeat with Spine. Note how many milliseconds are shown while tracking.
+- [ ] iPhone and Android: open `prototypes/photos/lab.html`, choose Spine, start the camera and fill the tall frame with a spine. Note the camera resolution shown under the viewer, whether it saves by itself or opens the editor, and the milliseconds shown with each result (budget: under 500 ms per photo).
+- [ ] iPhone: open `prototypes/photos/camera-permission.html` in Safari, add it to the home screen, open it from there, run tests A to D, and paste back the report (how often the camera permission is asked).

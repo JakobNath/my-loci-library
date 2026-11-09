@@ -1,0 +1,10 @@
+{
+  "name": "Loci camera test",
+  "short_name": "Camera test",
+  "start_url": "camera-permission.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6f2ea",
+  "theme_color": "#2e4a3d",
+  "icons": [{ "src": "../../app/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
