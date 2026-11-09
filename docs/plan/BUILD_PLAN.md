@@ -93,7 +93,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
   - a "Words" section defining each term in the vocabulary of `CODE_STYLE.md` section 4, used the same way in data, code, screens and docs
   - covers, spines and masters: where each image lives and its size. Images are a list on the record, each with a kind (`cover`, `spine`), so later kinds need no format change
   **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
-- [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
+- [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; pages as printed to a page count ("xxviii, 311" is 339, "89–132" is 44, "4 v." gives no count); size estimates (height and thickness from the best available source, in the order in `PLAN.md`, with the source named); search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping; `escapeHtml`, the single helper that escapes all text from data before it goes into HTML (`CODE_STYLE.md` section 6).
   **Check:** the core imports cleanly in the browser test page and in `node --test`.
 - [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος"; `escapeHtml`. Core takes random bytes and the current time as arguments; it never reads them itself. Replace the hard-coded colors and font in `tests/index.html` with tokens. Add the architecture tests from `CODE_STYLE.md` section 8, as short scans of the source files: `core/` imports nothing outside `core/` and uses no browser or Node globals; only `edges/sync-github.js` mentions `api.github.com`, and only each lookup edge mentions its service; no file outside `edges/storage.js` uses `indexedDB`; every `${...}` inside an `innerHTML` template is `escapeHtml(...)`, a number, or a call to a function whose name ends in `Html`; `core/` uses no `Math.random`, `Date.now` or `crypto`; the app's own files stay under 100 KB. Folders that don't exist yet pass trivially, so the tests are already in place when phase 5 creates them.
   **Check:** all pass in both the browser and Node, and each architecture test fails when a deliberate violation is added.
@@ -116,6 +116,9 @@ Each check is a small throwaway script or page. Write each result and any fallba
 - [ ] **4.3 Zotero.** With Zotero open, create a test item in a "Loci test" collection through the local connection, set `original-date`, pin a Better BibTeX citekey using the method Better BibTeX documents, then delete the test item.
   **Fallback:** Zotero's web API.
   **Check:** the method that worked recorded, with no test items left behind.
+- [ ] **4.4b Catalog heights.** From Node, look up the sample books' ISBNs in the Library of Congress catalog (its SRU service, MARC field 300) and read the height in centimeters.
+  **Fallback:** another free library catalog; if none works, sizes stay estimated and `loci-sizes` is left out.
+  **Check:** the share of sample books with a height, and the method, recorded.
 - [ ] **4.4 Logos export.** Read `inputs/logos-sample.csv`, list its columns, and write the column-to-field mapping into the tools README.
   **Check:** every column is either mapped or marked "kept as extra Logos data".
 
@@ -133,7 +136,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** storage tests pass, including a simulated full disk.
 - [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
   **Check:** with 10,000 generated books (6,000 physical, 4,000 Logos, with works, copies and authors), a scripted scroll never leaves more than 50 ms between frames, and the app starts in 300 ms or less on the laptop.
-- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the approved drawn spine for books without one.
+- [ ] **5.3b Shelf view:** for a location, spines side by side in shelf order, using spine photos and the approved drawn spine for books without one. Heights and thicknesses come from the core size estimates.
   **Check:** a sample shelf mixing photographed and drawn spines matches the approved design, and scrolling stays within the speed target.
 - [ ] **5.4 Book detail page:** every field, the spine beside the cover when there is one, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
   **Check:** each sample book displays correctly, and the largest anthology (the Bible, 66 works) renders in 16 ms or less on the laptop.
@@ -156,7 +159,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
 - [ ] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
-- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder. Sizes and quality sit in one settings block. Loaded only when a photo is taken. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
+- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
 - [ ] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
   **Check:** an inbox of sample covers is processed into both sizes.
@@ -204,6 +207,8 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** tests with a temporary folder pass; the `.cmd` and `.sh` launchers work.
 - [ ] **10.2 Scheduling and reminder:** Task Scheduler and cron instructions in the tools README; the yearly full-archive reminder in the app.
   **Check:** the instructions are written, and the reminder appears after a simulated year.
+- [ ] **10.2b `loci-sizes` tool:** fills catalog heights for books without one, never overwrites a measured height, reports what it filled, commits once. `loci-backup` runs it daily; `.cmd` and `.sh` launchers run it by hand.
+  **Check:** tests with recorded catalog responses pass, and a second run changes nothing.
 - [ ] **10.3 Ready for real data:** document in the README how to point the app at `my-loci-library-data`. Real cataloging can begin after this phase. Don't point the app at it yourself.
   **Check:** the documentation exists.
 

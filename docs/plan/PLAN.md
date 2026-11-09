@@ -39,7 +39,7 @@ Three GitHub repositories keep code, data and laptop tools separate. The private
 | --- | --- | --- |
 | `my-loci-library` | Public, MIT | The app: static HTML/CSS/JS served free on GitHub Pages, plus the laptop pages (`laptop/`), docs, self-tests, `CLAUDE.md` and `CODE_STYLE.md` |
 | `my-loci-library-data` | Private | The catalog: one text file per record, covers, a generated combined file for fast loading |
-| `my-loci-library-tools` | Public, MIT | Laptop tools, one folder each: Logos importer, Zotero companion, backup, price estimator |
+| `my-loci-library-tools` | Public, MIT | Laptop tools, one folder each: Logos importer, Zotero companion, backup, catalog sizes, price estimator |
 
 **Devices**
 
@@ -87,7 +87,8 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 
 - Title and subtitle as printed (can differ from the work's).
 - Contributors with roles: translator, editor, introduction, and others. Authors come from the work or works the edition contains.
-- Publisher, place, edition publication year, and page count (filled from lookups when available).
+- Publisher, place, edition publication year, and pages as printed (filled from lookups when available). Pages are kept exactly as printed ("xxviii, 311", or "89–132" for a journal issue), and the app works out the real count from them (339, 44).
+- Size: height and thickness in millimeters, both optional, each marked with where it came from: *measured* (a person), *catalog* (a library record) or *photo* (thickness worked out from a spine photo and the height). See "Book sizes" below.
 - Translation first published (for reprints of older translations).
 - Series and series number (Loeb Classical Library 36), and set title plus volume label (*Church Dogmatics* I/1). Both optional.
 - ISBN, and a languages list ("Greek, English" marks a diglot; three languages, a triglot).
@@ -223,6 +224,17 @@ Most books need no photo: the online cover is used. Photos are for books with no
 
 With about 4,000 Logos books, total cover storage should land near 300 MB, plus about 0.2 MB per photographed book for its master, comfortable for GitHub. Phones keep physical-book thumbnails offline (about 10 MB) and cache the rest once seen.
 
+**Book sizes**
+
+The shelf view draws every book at a believable size from the first day, and the sizes get more exact as data arrives. Only real values are stored; estimates are worked out each time from the current data, so better data replaces them by itself.
+
+- **Height**, best source first: measured, catalog, the same series or set as a book whose height is known, then a typical height for its binding (about 17.5 cm for a mass-market paperback, 21.5 cm for a trade paperback, 23.5 cm for a hardback).
+- **Thickness**, best source first: measured, a spine photo's shape times the height, a catalog value, then the page count times about 0.06 mm a page plus the covers (about 0.5 mm for a paperback, 5–6 mm for a hardback). Thin Bible paper comes out about twice too thick by page count; a spine photo corrects it.
+- **Measuring is optional and never asked for.** When a spine photo is taken, a height box shows the current value with a small label saying where it came from ("23 cm · catalog", "~22 cm · guess"). A ruler is worth it only for a guess, usually an old or rare book. A height typed by a person is never overwritten.
+- **Catalog heights** come from library records (the Library of Congress lists most books' heights, rounded up to the whole centimeter). A phone app cannot reach that service, which allows neither encrypted connections nor calls from web pages, so the laptop tool `loci-sizes` fetches them. It runs daily with the backup, and can be run by hand at any time.
+- **No reference object** (such as a sheet of paper) is needed in photos. It would sit at a different depth from the spine, limit the book size, and add a step to every photo.
+- **Later, if wanted:** one photo of a whole shelf would give the relative sizes of every book on it at once.
+
 ## App features and screens
 
 The app has two tabs, **Library** and **Wishlist**, built from the same components. The look is modeled on Libib: minimal and modern on the surface, with full detail one tap away. The Library's main view shows physical books, with Logos books one tap away.
@@ -335,7 +347,11 @@ The tool never reads Logos's internal database, which would break whenever Logos
 
 **loci-backup**
 
-Runs daily through Windows Task Scheduler (or cron on Linux). It handles the daily mirror and the monthly export snapshot described under Backups in the architecture section.
+Runs daily through Windows Task Scheduler (or cron on Linux). It handles the daily mirror and the monthly export snapshot described under Backups in the architecture section, and then runs `loci-sizes`.
+
+**loci-sizes**
+
+Fills in catalog heights for books that have none, from library records found by ISBN (the Library of Congress first). It never overwrites a height a person typed, writes a short report of what it filled, and commits the changes to the data repo. It runs daily after `loci-backup` and from a one-click shortcut on Windows and a matching command on Linux. If the library service ever changes or disappears, nothing else depends on it: sizes simply stay estimated.
 
 **Price estimator** (later)
 
@@ -479,6 +495,7 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 
 - The price estimator script.
 - Title-page photo recognition for books without an ISBN.
+- Shelf photos: one photo of a whole shelf giving every book's relative size, and perhaps its spine image.
 - Lending, read/unread, and whose book it is (the format allows adding these).
 - Colleague setup polish and announcing the project.
 - Recompressing or enhancing covers on the laptop page, from masters.
