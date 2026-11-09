@@ -1,0 +1,23 @@
+/* Design tokens for My Loci Library.
+   Every color, font and spacing value used by the app is defined here and
+   nowhere else. The final values are chosen at the end of the design phase. */
+:root {
+  --color-bg: #ffffff;
+  --color-text: #1d1d1f;
+  --color-muted: #6b6b70;
+  --color-accent: #2f5d8a;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --radius: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #161618;
+    --color-text: #ececee;
+    --color-muted: #9a9aa0;
+    --color-accent: #7fb0e0;
+  }
+}

@@ -1,0 +1,233 @@
+# My Loci Library: build plan
+
+This file turns `PLAN.md` into ordered steps. Work through it top to bottom. Each step ends with a **Check**; tick the step (`- [x]`) only when its check passes, then commit. `CLAUDE.md` says how to handle anything unexpected.
+
+There is exactly one stop, at the end of phase 2. After Jakob says "go", phases 3 to 13 run without stopping.
+
+---
+
+## Before starting (Jakob)
+
+1. Make an empty folder named `My Loci Library`.
+2. Put these four files in it: `CLAUDE.md`, `BUILD_PLAN.md`, `PLAN.md` (the master plan's first tab, exported as Markdown) and `SAMPLE_BOOKS.md` (its Sample books tab, exported as Markdown).
+3. Make sure Git, the GitHub command line (`gh`, signed in with `gh auth login`) and Node (current LTS version) are installed. Claude Code checks this in step 1.1.
+4. Open Claude Code in the `My Loci Library` folder and say: *"Read CLAUDE.md, then start BUILD_PLAN.md at phase 1. Run until the STOP at the end of phase 2."*
+
+---
+
+## Phase 1: Foundations
+
+- [ ] **1.1 Check the tools.** Confirm `git`, `gh` (signed in as JakobNath) and `node` are available. If one is missing, say exactly what to install and wait. This is the only allowed early stop.
+  **Check:** all three report a version, and `gh auth status` shows JakobNath.
+- [x] **1.2 Turn off AI attribution.** In the workspace's `.claude/settings.json`, set `"includeCoAuthoredBy": false` (or the current equivalent setting if it has been renamed), and set Git's user name to "Jakob Nath" for these repos.
+  **Check:** a test commit message in a scratch repo contains no co-author line.
+- [ ] **1.3 Create the repos** with `gh`: `my-loci-library` (public), `my-loci-library-tools` (public), `my-loci-library-test-data` (private), `my-loci-library-data` (private, holding only a README saying it holds the real catalog). Clone them into the workspace.
+  **Check:** all four folders exist and push to GitHub.
+- [x] **1.4 App repo skeleton.** Create the folders `app/`, `core/`, `styles/` (with `tokens.css`), `vendor/`, `tests/`, `prototypes/`, `docs/plan/`. Move `PLAN.md`, `SAMPLE_BOOKS.md` and `BUILD_PLAN.md` into `docs/plan/`, leaving pointer files in the workspace that say where they went. Copy `CLAUDE.md` in. Add `LICENSE` (MIT, "Copyright (c) 2026 Jakob Nath"), and skeletons for `README.md`, `DATA_FORMAT.md`, `HOW_IT_WORKS.md` (with a "Decisions" section), `DEVICE_CHECKS.md` and `SETUP_FOR_COLLEAGUES.md`. Every README says "Created by Jakob Nath".
+  **Check:** the files exist and contain no AI attribution.
+- [x] **1.5 Tools repo skeleton.** Folders `core/` (copy of the app's core, empty for now), `logos-to-my-loci-library/`, `my-loci-library-to-zotero/`, `loci-backup/`. Add `LICENSE`, `README.md`, a copy of `CLAUDE.md`, and a small `update-core` script (`.cmd` and `.sh`) that copies `core/` from the app repo.
+  **Check:** `node --test` runs (zero tests is fine).
+- [x] **1.6 Test page.** `tests/index.html` loads test files as ES modules, runs them, and prints plain pass/fail lines with a total.
+  **Check:** it opens in a browser and reports "0 tests, 0 failures".
+- [ ] **1.7 GitHub Pages.** Turn on Pages for `my-loci-library` (main branch, root) with a placeholder `index.html`.
+  **Check:** `https://jakobnath.github.io/my-loci-library/` loads the placeholder.
+
+---
+
+## Phase 2: Design prototypes (as soon as possible)
+
+Goal: show Jakob and his wife five real, clickable directions on their own phones, quickly. Prototypes are throwaway pages. They don't need the real data format, only realistic content.
+
+- [ ] **2.1 Prototype content.** Build `prototypes/shared/sample-books.js` from `SAMPLE_BOOKS.md`: all 21 books with titles, authors, editions, original dates, anthology contents, locations, values and statuses. For covers, draw simple generated tiles (title and author in clean type) rather than fetching real images.
+  **Check:** every sample book appears in the data, including the anthology contents for #6, #8 and #9.
+- [ ] **2.2 Five design directions.** In `prototypes/option-1/` through `option-5/`, build five clearly different looks. Suggested starting points, which can be changed: classic library card catalog; minimal and modern (Libib-like); warm bookshop; scholarly and typographic; gallery of covers. Each option includes:
+  - the Library tab (cover grid and list), the Wishlist tab, and search
+  - a book detail page, shown for an anthology with a disputed date and for a "no longer owned" copy
+  - the batch-add flow with a pretend scan, the missing-data prompts and the corner-crop cover step
+  - phone and desktop layouts, light and dark mode
+  - "a little color, just a little pop", and covers shown generously
+
+  Each option uses its own `tokens.css` and stays within the size budget.
+  **Check:** all five work at 375 px and 1280 px widths in light and dark mode, with no console errors.
+- [ ] **2.3 Logo and icon.** Three simple SVG logo and app-icon ideas for "My Loci Library", shown on the index page.
+  **Check:** each icon reads clearly at 48 px.
+- [ ] **2.4 Phone test page.** `prototypes/phone-test.html` with two tests:
+  - **Barcode scan:** uses `BarcodeDetector` where available, otherwise the bundled decoder. Pick the smallest reliable open-source ISBN decoder, vendor it with its license, and display the decoded ISBN.
+  - **Offline storage:** request persistent storage, write and read back about 50 MB of dummy data in IndexedDB, and report `navigator.storage.estimate()`.
+
+  A "Copy results" button copies a plain-text report.
+  **Check:** both tests run in desktop Chrome and Firefox; real-phone results come from Jakob at the stop.
+- [ ] **2.5 Prototype index.** `prototypes/index.html` links the five options, the icons and the phone test page, with one sentence describing each option. Publish to Pages.
+  **Check:** `https://jakobnath.github.io/my-loci-library/prototypes/` works on a phone-sized screen.
+
+### STOP
+
+Tell Jakob, in a short message:
+
+- the prototypes link
+- what's needed from him:
+  1. look through the five options with his wife and talk through choices here
+  2. run the phone test page on both phones (iPhone and Android) and paste the results
+  3. put a small Logos Library spreadsheet export (CSV, filtered to a few dozen books) in `inputs/logos-sample.csv`
+  4. leave Zotero open on the laptop during the rest of the build (phase 4 and phase 12 use it)
+- that after the design is chosen, saying "go" starts phases 3 to 13 without stopping
+
+During the stop, iterate on the designs until a direction is chosen. Then:
+
+- [ ] **2.6 Lock the design.** Write the chosen look into `styles/tokens.css` and record it in `docs/plan/DESIGN.md` (direction, colors, type, spacing, icon). Record the phone test results in `HOW_IT_WORKS.md`. If the iPhone barcode test failed, choose a different decoder and retest before continuing.
+  **Check:** Jakob has said "go".
+
+---
+
+## Phase 3: Data format and core
+
+- [ ] **3.1 Write `DATA_FORMAT.md`.** Cover:
+  - every record type: work, edition, copy, author, wishlist item, shared settings
+  - every field with its type, whether it's required, and its meaning in plain words
+  - the data repo layout (for example `works/`, `editions/`, `copies/`, `authors/`, `wishlist/`, `settings.json`, `covers/thumb/`, `covers/detail/`, `covers/inbox/`, `catalog.json`, `integrations/zotero-links.json`)
+  - the ID format, the format version, and the per-field timestamps used for newest-wins merging
+  - how trash, value history (one entry per day or session), partial acquired dates, original dates and disputed datings, anthology contents and Logos extra columns are stored
+  - one complete example of each record type, including an anthology (NA28) and a disputed date (Didache)
+  **Check:** every field named in `PLAN.md` appears in `DATA_FORMAT.md`.
+- [ ] **3.2 Core module** in `core/`, plain ES modules that run unchanged in browsers and Node: IDs; record creation and validation; the date parser and formatter (every form in `PLAN.md`, historical century convention, AD/BC or CE/BCE output); anthology date ranges; search normalization (accent folding, Greek transliteration); field-level merge; Zotero and CSL field mapping.
+  **Check:** the core imports cleanly in the browser test page and in `node --test`.
+- [ ] **3.3 Core tests.** Cover every row of the date table in `PLAN.md` plus the extra forms; centuries (2nd c. = 101–200, no year 0); disputed datings and sort overrides; anthology ranges (#6, #8, #9); validation errors; merge conflicts; "logos" matching "λόγος".
+  **Check:** all pass in both the browser and Node.
+- [ ] **3.4 Test data.** Turn all 21 sample books into valid records in `my-loci-library-test-data`, following `DATA_FORMAT.md`, and generate `catalog.json`. Add a 66-book Bible contents list to the docs for pasting.
+  **Check:** every record validates, and the counts match `SAMPLE_BOOKS.md`.
+- [ ] **3.5 Share the core with the tools repo.** Run `update-core`, and add a tools test that fails if the two copies differ.
+  **Check:** the test passes, and fails if a core file is edited in only one place.
+
+---
+
+## Phase 4: Prove the remaining risky parts
+
+Each check is a small throwaway script or page. Write each result and any fallback chosen into `HOW_IT_WORKS.md` under "Verified approaches". Never stop here; switch to the fallback and continue.
+
+- [ ] **4.1 Many files, one commit.** From a browser page, commit 30 test records to `my-loci-library-test-data` in a single commit using GitHub's Git Data API (blobs, tree, commit, ref update).
+  **Check:** one commit containing 30 files, and the time it took, recorded.
+- [ ] **4.2 Online covers in the browser.** Try compressing an Open Library cover and a Google Books cover in the browser.
+  **Fallback** if blocked: the laptop tool downloads covers into `covers/inbox/` in the data repo, and the app compresses them from there.
+  **Check:** the result and the chosen approach recorded.
+- [ ] **4.3 Zotero.** With Zotero open, create a test item in a "Loci test" collection through the local connection, set `original-date`, pin a Better BibTeX citekey using the method Better BibTeX documents, then delete the test item.
+  **Fallback:** Zotero's web API.
+  **Check:** the method that worked recorded, with no test items left behind.
+- [ ] **4.4 Logos export.** Read `inputs/logos-sample.csv`, list its columns, and write the column-to-field mapping into the tools README.
+  **Check:** every column is either mapped or marked "kept as extra Logos data".
+
+---
+
+## Phase 5: App skeleton
+
+- [ ] **5.1 App shell:** `index.html`, a web app manifest with the chosen icon, a simple service worker (offline app files, background version check, a "New version, reload" note), and hash routes (`#/book/<id>`, `#/wishlist`, `#/settings`). Uses `styles/tokens.css`.
+  **Check:** it works offline after one visit, and a new deploy shows the reload note.
+- [ ] **5.2 Storage:** IndexedDB for records, thumbnails and an outbox of unsynced changes. Request persistent storage, handle "storage full" with a plain message, and keep the interface ready for the sync module.
+  **Check:** storage tests pass, including a simulated full disk.
+- [ ] **5.3 Library view:** grid and list that draw only visible rows, physical books by default with Logos one tap away, and sorting by the fields in `PLAN.md`.
+  **Check:** 10,000 generated records scroll smoothly in a phone-sized window.
+- [ ] **5.4 Book detail page:** every field, all datings, anthology contents with dates, anthologies containing a work, other editions (physical and Logos together), value history, the cite toggle on Logos books, and the "No longer in library" banner.
+  **Check:** each sample book displays correctly.
+- [ ] **5.5 Entry and editing:** work, edition and copy forms; contributors with roles; contents with table-of-contents paste; the date field with a live preview; autocomplete from managed lists; one notes box.
+  **Check:** #6, #8 and #20 can be entered from scratch.
+- [ ] **5.6 Offline search:** a prebuilt index, results grouped by work, owned and wishlist together and labeled, Logos labeled "digital", no-longer-owned copies faded.
+  **Check:** opening and searching takes under 2 seconds with 10,000 records in a throttled phone-sized test.
+- [ ] **5.7 Development data:** a development-only loader that fills IndexedDB from the test-data records.
+  **Check:** the loader can't run against the real data repo.
+
+---
+
+## Phase 6: Batch add
+
+- [ ] **6.1 Scanning:** camera scan (`BarcodeDetector` or the vendored decoder, loaded only on this screen), USB scanner input (an ISBN typed and followed by Enter), plus typed ISBN or title search.
+  **Check:** desktop tests pass; a phone camera check is added to `DEVICE_CHECKS.md`.
+- [ ] **6.2 Lookups:** Open Library first, then Google Books, mapped to edition fields, including page count. Never fill original dates.
+  **Check:** tests with recorded responses pass, and the app still works with both lookups off.
+- [ ] **6.3 Matching and duplicates:** suggest an existing work for confirmation (never link automatically), and warn when the ISBN already exists ("Add another copy?").
+  **Check:** #12 and #13 group under one work; #16 triggers the warning.
+- [ ] **6.4 Missing-data prompts** for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
+  **Check:** the prompts follow the settings.
+- [ ] **6.5 Covers:** a found cover or a camera photo; four-corner straightening and rotate; compression to the two JPEG sizes; a blurred placeholder. Sizes and quality sit in one settings block.
+  **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
+- [ ] **6.6 Speed:** a scanned book is saved in under 5 seconds.
+  **Check:** the timing test passes.
+
+---
+
+## Phase 7: Sync (against the test-data repo)
+
+- [ ] **7.1 Sync module and setup:** the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
+  **Check:** a fresh browser profile sets up and loads the test data.
+- [ ] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field and `catalog.json` refreshed.
+  **Check:** two simulated devices editing the same record offline merge correctly.
+- [ ] **7.3 Errors and status:** plain messages for expired keys (with renewal steps), going offline, and rate limits; an "unsynced changes" badge.
+  **Check:** each error case is tested.
+- [ ] **7.4 Version safety:** an older app meeting newer-format data asks for a refresh and writes nothing.
+  **Check:** tested.
+
+---
+
+## Phase 8: Organizing
+
+- [ ] **8.1** Location paths, sorting by every field in `PLAN.md`, filters, and saved views.
+- [ ] **8.2** Status rules: no longer owned (banner, faded, excluded from counts, shelf lists and totals); trash with restore.
+- [ ] **8.3** Wishlist tab: standalone records, and "I bought it" opening a prefilled entry form that keeps the note.
+- [ ] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
+- [ ] **8.5** Settings page exactly as listed in `PLAN.md`: shared settings saved in the data repo's `settings.json`, device settings kept on the device.
+  **Check for 8.1–8.5:** a test for each item, and the sample books behave as their "What it tests" column says.
+
+---
+
+## Phase 9: Value and exports
+
+- [ ] **9.1 Value view:** total value of owned physical books, totals by location, count of books with no value, a separate Logos total, and CSV export. Value history: same-day changes collapse into one entry, and history can be deleted.
+  **Check:** totals for the sample data are right.
+- [ ] **9.2 Exports:** CSV, JSON, CSL-JSON, BibTeX, and the self-contained HTML catalog (thumbnails embedded, opens with no internet).
+  **Check:** each export opens correctly and keeps titles, authors, editions and original dates.
+
+---
+
+## Phase 10: Backups
+
+- [ ] **10.1 `loci-backup` tool:** pulls the data repo, mirrors it to the Google Drive folder named in a small config file (changed files only), saves a dated export snapshot monthly, and writes a last-backup status file the app can show.
+  **Check:** tests with a temporary folder pass; the `.cmd` and `.sh` launchers work.
+- [ ] **10.2 Scheduling and reminder:** Task Scheduler and cron instructions in the tools README; the yearly full-archive reminder in the app.
+  **Check:** the instructions are written, and the reminder appears after a simulated year.
+- [ ] **10.3 Ready for real data:** document in the README how to point the app at `my-loci-library-data`. Real cataloging can begin after this phase. Don't point the app at it yourself.
+  **Check:** the documentation exists.
+
+---
+
+## Phase 11: Logos importer
+
+- [ ] **11.1 Import:** reads the Logos CSV, matches rows by resource ID, adds new books, keeps unmapped columns as extra Logos data, never overwrites fields edited in Loci, and writes a change report.
+- [ ] **11.2 Removals:** a full export marks missing digital books "no longer owned"; a filtered export never removes anything.
+- [ ] **11.3 Linking:** suggests links between digital editions and existing works, for confirmation.
+- [ ] **11.4 Covers:** fetches covers into `covers/inbox/` or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
+  **Check for 11.1–11.4:** tests using `inputs/logos-sample.csv` pass, and a second run changes nothing.
+
+---
+
+## Phase 12: Zotero companion
+
+- [ ] **12.1 One-way sync** into a "My Loci Library" collection: every physical edition, Logos editions marked "cite", book sections for the contents of anthologies that are sent, and `original-date` set. Wishlist items are never sent.
+- [ ] **12.2 Fields:** shelf location and a permanent Loci link (fixed pattern, record ID only), refreshed every run; a link file in `integrations/zotero-links.json`; pinned Better BibTeX keys in the existing author + year pattern.
+- [ ] **12.3 Safety:** never deletes Zotero items (tags them "Loci: no longer owned" or "Loci: removed"); the first run links existing items and writes a report of every difference it overwrote; uses the web API as a fallback.
+- [ ] **12.4 Speed and launchers:** only changed books are processed; one new book arrives in under 10 seconds; one-click `.cmd` and `.sh` launchers; README notes on optional scheduling.
+  **Check for 12.1–12.4:** against a "Loci test" collection, the sample books arrive correctly, a second run changes nothing, and the timing test passes. Remove the test collection afterward.
+
+---
+
+## Phase 13: Release
+
+- [ ] **13.1** Finish `README.md`, `HOW_IT_WORKS.md` (including the yearly ten-minute check and how to rewrite Zotero links if the app's address ever changes), and `SETUP_FOR_COLLEAGUES.md`.
+- [ ] **13.2** About screen: app version, data format version, MIT license, "Created by Jakob Nath".
+- [ ] **13.3** Run every test in both repos, confirm the size budget, and search both repos for any AI attribution.
+- [ ] **13.4** Tag version 1.0 in both public repos.
+- [ ] **13.5** Write a short summary for Jakob: what was built, the decisions recorded, and the open items in `DEVICE_CHECKS.md`.
+  **Check:** all tests pass, nothing attributes AI, and the tags exist.
+
+---
+
+## Phase 14: Later (not part of this run)
+
+Price estimator, title-page photo recognition, and the other deferred items in `PLAN.md`.
