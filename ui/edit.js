@@ -7,9 +7,9 @@
 import { escapeHtml } from '../core/html.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
 import { contentsLine } from '../core/contents.js';
-import { recordsFromForm } from '../core/entry.js';
+import { recordsFromForm, formFromWish } from '../core/entry.js';
 import { STATUSES, ROLES } from '../core/records.js';
-import { trashBook } from '../core/trash.js';
+import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 
 const attr = value => escapeHtml(value ?? '');
@@ -51,21 +51,27 @@ function contributorRowHtml(person) {
     + `<label class="field">Name<input name="contributorName" value="${attr(person.name)}"></label></div>`;
 }
 
-/** Draw the form for a new book (#/add) or an existing one (#/edit/<edition id>). */
+/**
+ * Draw the form for a new book (#/new), one bought from the wishlist
+ * (#/new/<wishlist item id>), or an existing one (#/edit/<edition id>).
+ */
 export function render(container, state, actions) {
   const entry = state.route.name === 'edit' ? state.library.entries.find(item => item.id === state.route.id) : null;
-  const edition = entry ? entry.edition : { title: '', subtitle: '', contributors: [], languages: [], medium: 'physical' };
-  const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: '', location: [], acquired: '', price: null, value: null, markings: false, notes: '', status: 'owned' };
+  const wishRecord = state.route.name === 'new' ? state.records.get(state.route.id) : null;
+  const wish = wishRecord && wishRecord.type === 'wishlist' ? formFromWish(wishRecord) : null;
+  const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], medium: 'physical' };
+  const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: '', location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
   const isAnthology = entry ? entry.works.length > 1 : false;
   const work = entry && entry.works.length === 1 ? entry.works[0] : { title: '', originalTitle: '', originalLanguage: '', datings: [], category: '', tags: [] };
-  const authorsText = entry && !isAnthology ? entry.authors.map(author => author.name).join('; ') : '';
+  const authorsText = entry && !isAnthology ? entry.authors.map(author => author.name).join('; ') : wish ? wish.authorsText : '';
   const contentsText = isAnthology ? entry.works.map(w => contentsLine(w, w.authors.map(id => state.library.authorsById.get(id)?.name || ''))).join('\n') : '';
   const datingsHtml = [...work.datings, { text: '', note: '', working: false }].map(datingRowHtml).join('');
   const contributorsHtml = [...edition.contributors, { name: '', role: 'translator' }].map(contributorRowHtml).join('');
   const statusHtml = STATUSES.map(status => `<option${status === copy.status ? ' selected' : ''}>${status}</option>`).join('');
   const locationHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'location', copy.location[i], { list: `location${i}` })).join('');
-  const backHtml = entry ? `<a class="back" href="#/book/${attr(entry.id)}">${iconHtml('back')} Back to the book</a>` : '';
-  const titleHtml = entry ? 'Edit book' : 'Add a book';
+  const backHtml = entry ? `<a class="back" href="#/book/${attr(entry.id)}">${iconHtml('back')} Back to the book</a>`
+    : wish ? `<a class="back" href="#/wishlist">${iconHtml('back')} Wishlist</a>` : '';
+  const titleHtml = entry ? 'Edit book' : wish ? 'Add the book you bought' : 'Add a book';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   container.innerHTML = `${backHtml}
     <div class="page-head"><h1 class="page-title">${titleHtml}</h1><p class="page-meta">Fill in what you know; everything but the title can wait.</p></div>
@@ -130,8 +136,10 @@ export function render(container, state, actions) {
       problems.scrollIntoView({ block: 'center' });
       return;
     }
+    // A wishlist item just bought leaves the wishlist (to the trash, so nothing is lost).
+    if (wishRecord && wish) result.records.push(trashRecord(wishRecord, actions.today(), actions.now()));
     if (await actions.saveRecords(result.records)) {
-      actions.showNote('Saved');
+      actions.showNote(wish ? 'Added to the library, and taken off the wishlist' : 'Saved');
       actions.go(`#/book/${result.editionId}`);
     }
   };

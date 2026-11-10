@@ -5,7 +5,7 @@ import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
 import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 
-export const APP_VERSION = '0.8.1';
+export const APP_VERSION = '0.8.2';
 
 const CHOICES = [
   ['theme', 'Theme', [['device', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']]],
