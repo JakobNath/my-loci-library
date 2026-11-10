@@ -170,13 +170,13 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 7: Sync (against the test-data repo)
 
-- [ ] **7.1 Sync module and setup:** the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
+- [ ] **7.1 Sync module and setup:** (built and tested against a fake GitHub; the live check waits for Jakob's key, see `DEVICE_CHECKS.md`) the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
   **Check:** a fresh browser profile sets up and loads the test data.
-- [ ] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field. Devices never rebuild `catalog.json`; the laptop does (step 10.1).
+- [x] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field. Devices never rebuild `catalog.json`; the laptop does (step 10.1).
   **Check:** two simulated devices editing the same record offline merge correctly.
-- [ ] **7.3 Errors and status:** plain messages for expired keys (with renewal steps), going offline, and rate limits; an "unsynced changes" badge.
+- [x] **7.3 Errors and status:** plain messages for expired keys (with renewal steps), going offline, and rate limits; an "unsynced changes" badge.
   **Check:** each error case is tested.
-- [ ] **7.4 Version safety:** an older app meeting newer-format data asks for a refresh and writes nothing.
+- [x] **7.4 Version safety:** an older app meeting newer-format data asks for a refresh and writes nothing.
   **Check:** tested.
 
 ---

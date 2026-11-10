@@ -33,6 +33,8 @@ const state = {
   storageNote: '',
   offlineReady: false,
   batchLocation: [], // the shelf being filled in batch add, kept while the app is open
+  syncStatus: '', // what the last sync did, in words
+  unsent: 0, // changes made here and not yet sent to GitHub
 };
 const imageUrls = new Map(); // image file key → address of the picture held in memory
 let storage = null;
@@ -154,6 +156,7 @@ const actions = {
     const rebuild = () => { state.library = withSearchText(buildLibrary([...state.records.values()])); };
     if (soon) setTimeout(rebuild, 0);
     else rebuild();
+    syncSoon();
     return true;
   },
 
@@ -163,6 +166,7 @@ const actions = {
       await storage.saveImage(`${id}/thumb`, files.thumb);
       await storage.saveImage(`${id}/detail`, files.detail);
       if (files.master) await storage.saveImage(`${id}/master`, files.master);
+      await storage.saveMeta('imageOutbox', [...((await storage.meta('imageOutbox')) || []), id]);
     } catch (error) {
       showNote(error.message);
     }
@@ -179,11 +183,33 @@ const actions = {
   /** The address of a stored picture ("<image id>/thumb"), or null if this device does not have it. */
   async imageUrl(key) {
     if (!imageUrls.has(key)) {
-      const blob = storage ? await storage.image(key) : null;
+      let blob = storage ? await storage.image(key) : null;
+      // Not on this device yet: fetch it from the data repository once, and keep it.
+      const github = !blob && navigator.onLine ? await syncConnection() : null;
+      if (github) {
+        const [id, size] = key.split('/');
+        blob = await github.image(`images/${size}/${id}.jpg`).catch(() => null);
+        if (blob) await storage.saveImage(key, blob).catch(() => {});
+      }
       imageUrls.set(key, blob ? URL.createObjectURL(blob) : null);
     }
     return imageUrls.get(key);
   },
+
+  /** Connect this device to a data repository, then download it (Settings › Sync). */
+  async connectSync(repo, key) {
+    state.device = { ...state.device, syncRepo: repo.trim(), syncKey: key.trim() };
+    saveDeviceSettings(state.device);
+    try {
+      await (await syncConnection()).check();
+    } catch (error) {
+      state.syncStatus = error.message;
+      render();
+      return;
+    }
+    await syncNow({ quiet: false });
+  },
+  syncNow: () => syncNow({ quiet: false }),
 
   setBatchLocation(parts) {
     state.batchLocation = parts;
@@ -201,6 +227,119 @@ const actions = {
     location.hash = hash;
   },
 };
+
+// ---------- sync with GitHub (PLAN.md, "Sync") ----------
+
+let syncing = false;
+let syncTimer = null;
+
+// The sync module loads just after the first screen appears, the first time
+// it is needed, so opening the app stays fast (HOW_IT_WORKS.md, "Decisions").
+async function syncConnection() {
+  const { syncRepo, syncKey } = state.device;
+  if (!syncRepo || !syncKey) return null;
+  const { connectToGitHub } = await import('./edges/sync-github.js');
+  return connectToGitHub({ repo: syncRepo, key: syncKey });
+}
+
+// A sync a few seconds after the last save, so a stack of books goes up as one commit.
+function syncSoon() {
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncNow(), 5000);
+  showUnsent();
+}
+
+async function showUnsent() {
+  if (!storage) return;
+  state.unsent = (await storage.outbox()).length;
+  const badge = document.getElementById('syncBadge');
+  badge.textContent = syncing ? 'Syncing…' : `${state.unsent} unsent`;
+  badge.hidden = !syncing && !state.unsent;
+}
+
+async function base64Of(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  let text = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) text += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(text);
+}
+
+/**
+ * Bring this device and GitHub up to date: download what changed, merge it
+ * with changes made here, then send this device's changes as one commit.
+ * If another device committed in between, try again (at most three times).
+ */
+async function syncNow({ quiet = true } = {}) {
+  const github = await syncConnection();
+  if (!github || !storage || syncing) return;
+  if (!navigator.onLine) { state.syncStatus = 'Offline: changes are kept on this device and sent later.'; return; }
+  syncing = true;
+  showUnsent();
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const outboxIds = (await storage.outbox()).map(item => item.id);
+      const pulled = await github.pull({
+        known: new Map((await storage.meta('known')) || []), local: state.records, outbox: new Set(outboxIds),
+        onProgress: (done, total) => { if (!quiet) showNote(`Downloading ${done} of ${total}…`); },
+      });
+      await storage.saveRecords(pulled.records);
+      for (const record of pulled.records) state.records.set(record.id, record);
+      if (pulled.settings) { await storage.saveMeta('settings', pulled.settings); state.settings = { ...SHARED_DEFAULTS, ...pulled.settings }; }
+      await storage.saveMeta('known', [...pulled.known]);
+      const records = outboxIds.map(id => state.records.get(id)).filter(Boolean);
+      const imageIds = (await storage.meta('imageOutbox')) || [];
+      if (!records.length && !imageIds.length) break;
+      const images = [];
+      for (const id of imageIds) {
+        for (const size of ['thumb', 'detail', 'master']) {
+          const blob = await storage.image(`${id}/${size}`);
+          if (blob) images.push({ path: `images/${size}/${id}.jpg`, base64: await base64Of(blob) });
+        }
+      }
+      try {
+        const sent = await github.push({ records, images, base: pulled.commit, message: `Save ${records.length} changed records${images.length ? ` and ${imageIds.length} pictures` : ''}` });
+        await storage.clearOutbox(outboxIds);
+        await storage.saveMeta('imageOutbox', []);
+        await storage.saveMeta('known', [...pulled.known, ...sent.known]);
+        break;
+      } catch (error) {
+        if (!error.conflict) throw error; // another device saved first: go round again, merging its changes
+      }
+    }
+    state.library = withSearchText(buildLibrary([...state.records.values()]));
+    state.syncStatus = `Synced at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`;
+    keepThumbnails(github);
+    // Batch add and the entry form are never redrawn under the person's hands.
+    if (!['add', 'new', 'edit'].includes(state.route.name)) render();
+  } catch (error) {
+    state.syncStatus = error.message;
+    if (!quiet) showNote(error.message);
+    if (state.route.name === 'settings') render();
+  } finally {
+    syncing = false;
+    showUnsent();
+  }
+}
+
+// Physical books' thumbnails are kept on every device, so the grid works
+// offline (PLAN.md, "Sync"); Logos thumbnails only once seen. Fetched a few
+// at a time after a sync, in the background.
+async function keepThumbnails(github) {
+  const keys = state.library.entries.filter(entry => !entry.isDigital)
+    .flatMap(entry => entry.edition.images.filter(image => image.kind === 'cover' && !image.waiting).map(image => `${image.id}/thumb`));
+  const queue = [];
+  for (const key of keys) if (!(await storage.image(key))) queue.push(key);
+  const worker = async () => {
+    while (queue.length && navigator.onLine) {
+      const key = queue.shift();
+      const blob = await github.image(`images/thumb/${key.split('/')[0]}.jpg`).catch(() => null);
+      if (blob) await storage.saveImage(key, blob).catch(() => {});
+    }
+  };
+  await Promise.all([worker(), worker(), worker()]);
+}
+
+addEventListener('online', () => syncNow());
 
 // ---------- starting up ----------
 
@@ -250,6 +389,8 @@ async function start() {
     state.storageNote = kept ? 'This device keeps the catalog even when space runs low.' : 'The browser may clear the catalog if space runs low; it is downloaded again from GitHub if so.';
   });
   registerServiceWorker();
+  showUnsent();
+  syncNow();
 }
 
 // The service worker keeps the app working offline and fetches new versions

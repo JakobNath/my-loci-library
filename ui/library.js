@@ -62,7 +62,7 @@ export function render(container, state, actions) {
   };
   const books = container.querySelector('#books');
   if (!entries.length) {
-    books.innerHTML = '<p class="empty">No books here yet. Add one with the + tab.</p>';
+    books.innerHTML = '<p class="empty">No books here yet. Add one with the Add tab, or <a class="link" href="#/settings">connect this device to your catalog</a> in Settings › Sync.</p>';
     return () => {};
   }
   const grid = device.view === 'grid';

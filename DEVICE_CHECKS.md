@@ -31,3 +31,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Both phones: with Google Books' free key typed in Settings, scan a book Open Library does not know. Without the key, the app should say that Google Books refused, and still open the review card.
 - [ ] Desktop with a USB barcode scanner (if one is ever bought): click the "ISBN or title" box and scan; the book should be looked up as if typed.
 - [ ] Both phones: scan a barcode with the camera. There should be a beep, a green glow with "✓ Read" and the ISBN, and (Android only) a short buzz. Turn the beep off in Settings and scan again: glow and buzz only.
+
+## Phase 7
+
+- [ ] Laptop (the first live sync, which is also build step 4.1): make a fine-grained key for `my-loci-library-test-data` (Contents: read and write), then in the app's Settings › Sync type `JakobNath/my-loci-library-test-data`, paste the key, and tap "Connect and download". The 21 sample books (190 records) should appear, with nothing downloaded file by file (they all match `catalog.json`). Then add a book; within a few seconds the "unsent" badge should clear, and the test-data repository on GitHub should show one new commit with the new records and pictures.
+- [ ] Phone: connect to the same repository with a second key (one key per device). The laptop's new book should appear, with its cover. Edit its notes on the phone and its value on the laptop, both offline; reconnect both: the book should end up with both changes.
+- [ ] Either device: cancel a key on GitHub, then tap "Sync now": the app should say the key has expired or was cancelled, and keep the changes.
