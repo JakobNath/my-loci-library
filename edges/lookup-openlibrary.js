@@ -2,7 +2,7 @@
 // cover. The only file that talks to Open Library. Answers are read by
 // core/lookup.js. Open Library is free and needs no key.
 
-import { fromOpenLibrary, candidatesFromSearch, workFromOpenLibrary } from '../core/lookup.js';
+import { fromOpenLibrary, candidatesFromSearch, searchQueries, workFromOpenLibrary } from '../core/lookup.js';
 
 const BASE = 'https://openlibrary.org';
 const TIMEOUT = 8000; // milliseconds before giving up, so a slow answer never holds up scanning
@@ -53,9 +53,13 @@ export async function lookUpWork(isbn, fetchFn = fetch) {
  * @returns {Promise<{ title: string, authors: string[], year: string, isbn: string }[]>}
  */
 export async function searchOpenLibrary(text, fetchFn = fetch) {
-  const fields = 'title,subtitle,author_name,first_publish_year,isbn,cover_i';
-  const answer = await getJson(`${BASE}/search.json?q=${encodeURIComponent(text)}&limit=10&fields=${fields}`, fetchFn);
-  return candidatesFromSearch(answer);
+  // Each work comes with its edition that best matches the search (English titles preferred).
+  const fields = 'key,title,subtitle,author_name,author_alternative_name,first_publish_year,isbn,cover_i,editions,editions.title,editions.publisher,editions.publish_date,editions.isbn,editions.cover_i';
+  const ask = query => getJson(`${BASE}/search.json?q=${encodeURIComponent(query)}&limit=20&lang=en&fields=${fields}`, fetchFn).catch(() => null);
+  const [asTyped, ...withPublisher] = await Promise.all(searchQueries(text).map(ask));
+  if (!asTyped && withPublisher.every(answer => !answer)) throw new Error('Open Library did not answer.');
+  // A search naming a publisher finds that publisher's edition: those come first.
+  return candidatesFromSearch([...withPublisher.reverse(), asTyped], text);
 }
 
 /**

@@ -99,7 +99,7 @@ export function render(container, state, actions) {
     showMessage('Searching Open Library…');
     try {
       const candidates = await searchOpenLibrary(text);
-      const listHtml = candidates.map((candidate, i) => choiceHtml('pick', candidate.title, [candidate.authors.join(', '), candidate.year].filter(Boolean).join(' · '), String(i))).join('');
+      const listHtml = candidates.map((candidate, i) => choiceHtml('pick', candidate.title, [candidate.authors.slice(0, 2).join(', '), [candidate.publisher, candidate.year].filter(Boolean).join(', ')].filter(Boolean).join(' · '), String(i))).join('');
       stepArea.innerHTML = `<h2 class="step-title">Which book?</h2><p class="step-hint">Matches on Open Library for "${escapeHtml(text)}".</p>
         <div class="choices">${listHtml}${choiceHtml('pick', 'None of these', 'Enter it by hand', 'none')}</div>${backHtml()}`;
       stepArea.onclick = event => {

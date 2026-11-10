@@ -109,7 +109,7 @@ export function render(container, state, actions) {
     box.innerHTML = candidates.map((candidate, i) => {
       const pictureHtml = candidate.cover ? `<img class="result-cover" src="${escapeHtml(openLibraryCoverUrlById(candidate.cover, 'S'))}" alt="" loading="lazy">` : '<span class="result-cover"></span>';
       const authors = candidate.authors.slice(0, 2).join(', ') + (candidate.authors.length > 2 ? ' and others' : '');
-      const detailHtml = escapeHtml([authors, candidate.year && `first published ${candidate.year}`].filter(Boolean).join(' · '));
+      const detailHtml = escapeHtml([authors, [candidate.publisher, candidate.year].filter(Boolean).join(', ')].filter(Boolean).join(' · '));
       return `<button type="button" class="choice-button result" data-action="pick" data-value="${i}">${pictureHtml}<span><span>${escapeHtml(candidate.title)}</span><small>${detailHtml}</small></span></button>`;
     }).join('');
   }
@@ -201,8 +201,8 @@ export function render(container, state, actions) {
     if (action === 'sort') { actions.setDevice({ wishSort: value }); return; }
     if (action === 'pick') {
       const candidate = candidates[Number(value)];
-      // A title search finds the work, not one edition, so no edition details (ISBN, publisher) are taken from it.
-      useBook({ title: candidate.title, authors: candidate.authors, cover: candidate.cover });
+      // Each result is one edition: with its ISBN, its full details and cover are looked up.
+      useBook({ isbn: candidate.isbn || undefined, title: candidate.title, authors: candidate.authors, cover: candidate.cover });
       return;
     }
     if (action === 'remove') {
