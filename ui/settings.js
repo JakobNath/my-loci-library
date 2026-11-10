@@ -13,7 +13,7 @@ import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 
-export const APP_VERSION = '1.0.2';
+export const APP_VERSION = '1.0.3';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
