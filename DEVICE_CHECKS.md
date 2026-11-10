@@ -45,3 +45,8 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: in Settings › Lists, rename a place (a shelf, say). The books on it should show the new name on their pages and in the Library's location filter.
 - [ ] Phone (0.8.4 or later): add a book with a spine photo. On its page, tap the small cover: the cover and spine should open full size, and the spine's lettering should be readable. Tap anywhere to close.
 - [ ] Phone (0.8.5 or later): in the Wishlist, tap "Add to wishlist", share or copy a book's link from the Amazon app or site, and paste it. The book's details and cover should fill in. Then try typing a title: small covers should appear as you type.
+
+## Phase 9
+
+- [ ] Phone: Settings › Value should show the total, the rooms and the count with no value. "Download for an insurance agent" should save a CSV that opens in Numbers, Excel or Google Sheets with one row per book and the totals at the end.
+- [ ] Laptop: Settings › Export › each of the four. The CSV should open in a spreadsheet with accents intact; the BibTeX file should load in a reference manager (or Zotero's import) with titles, authors and original dates.

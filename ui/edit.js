@@ -72,6 +72,8 @@ export function render(container, state, actions) {
   const backHtml = entry ? `<a class="back" href="#/book/${attr(entry.id)}">${iconHtml('back')} Back to the book</a>`
     : wish ? `<a class="back" href="#/wishlist">${iconHtml('back')} Wishlist</a>` : '';
   const titleHtml = entry ? 'Edit book' : wish ? 'Add the book you bought' : 'Add a book';
+  const historyRowsHtml = (copy.valueHistory || []).map(point => `<label class="check"><input type="checkbox" name="dropHistory" value="${attr(point.date)}"> Delete ${escapeHtml(`${point.date}: ${point.value}`)}</label>`).join('');
+  const historyHtml = historyRowsHtml ? `<details class="small"><summary>Value history</summary>${historyRowsHtml}</details>` : '';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   container.innerHTML = `${backHtml}
     <div class="page-head"><h1 class="page-title">${titleHtml}</h1><p class="page-meta">Fill in what you know; everything but the title can wait.</p></div>
@@ -104,6 +106,7 @@ export function render(container, state, actions) {
         <div class="field-row">${locationHtml}</div>
         <div class="field-row">${fieldHtml('Price paid', 'price', copy.price, { type: 'number' })}${fieldHtml('Estimated value', 'value', copy.value, { type: 'number' })}
           <label class="field">Status<select name="status">${statusHtml}</select></label></div>
+        ${historyHtml}
         <label class="check"><input type="checkbox" name="markings"${copy.markings ? ' checked' : ''}> Writing or markings when acquired</label>
         <label class="field">Notes<textarea name="notes" rows="4">${escapeHtml(copy.notes)}</textarea></label>
       </fieldset>
@@ -189,6 +192,7 @@ function readForm(form) {
     copy: {
       binding: text('binding'), location: data.getAll('location').map(part => part.toString().trim()), acquired: text('acquired'),
       price: text('price'), value: text('value'), status: text('status') || 'owned', markings: !!data.get('markings'), notes: (data.get('notes') || '').toString(),
+      dropHistory: data.getAll('dropHistory').map(String),
     },
   };
 }

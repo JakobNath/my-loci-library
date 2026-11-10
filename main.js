@@ -38,16 +38,28 @@ const note = document.getElementById('note');
 
 // ---------- routes ----------
 
-// Screens used only when adding or editing books (batch add with the scan
-// camera and lookups, and the full entry form) load the first time they are
-// opened, so opening the app stays fast (PLAN.md, "Small and fast"; the
-// exception to the code style is recorded in HOW_IT_WORKS.md).
+// Screens other than the Library and a book's page (Add, the entry form, the
+// shelf view, Wishlist, Settings, Value) load the first time they are opened,
+// with their stylesheet, so opening the app stays fast (PLAN.md, "Small and
+// fast"; the exception to the code style is recorded in HOW_IT_WORKS.md).
+let screenStyles = null;
+function loadScreenStyles() {
+  screenStyles = screenStyles || new Promise(resolve => {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'styles/screens.css';
+    link.onload = link.onerror = resolve; // a missing stylesheet never stops the screen
+    document.head.append(link);
+  });
+  return screenStyles;
+}
+
 function screenLoadedWhenOpened(load) {
   return (container, current, given) => {
     let stop = () => {};
     let left = false;
     container.innerHTML = '<p class="empty">Opening…</p>';
-    load().then(screenModule => {
+    Promise.all([load(), loadScreenStyles()]).then(([screenModule]) => {
       if (!left) stop = screenModule.render(container, current, given) || stop;
     }).catch(error => {
       container.innerHTML = '';
@@ -61,6 +73,7 @@ const renderEditScreen = screenLoadedWhenOpened(() => import('./ui/edit.js'));
 const renderShelfScreen = screenLoadedWhenOpened(() => import('./ui/shelf.js'));
 const renderWishlistScreen = screenLoadedWhenOpened(() => import('./ui/wishlist.js'));
 const renderSettingsScreen = screenLoadedWhenOpened(() => import('./ui/settings.js'));
+const renderValueScreen = screenLoadedWhenOpened(() => import('./ui/value.js'));
 
 const ROUTES = {
   '': libraryScreen.render,
@@ -69,6 +82,7 @@ const ROUTES = {
   shelf: renderShelfScreen,
   wishlist: renderWishlistScreen,
   settings: renderSettingsScreen,
+  value: renderValueScreen,
   add: renderAddScreen,
   new: renderEditScreen,
   edit: renderEditScreen,
@@ -83,7 +97,7 @@ function readRoute() {
 const TABS = [['', 'library', 'Library'], ['wishlist', 'wishlist', 'Wishlist'], ['add', 'add', 'Add'], ['settings', 'settings', 'Settings']];
 
 function tabsHtml(current) {
-  const section = current === 'book' || current === 'shelves' || current === 'shelf' ? '' : current === 'edit' || current === 'new' ? 'add' : current;
+  const section = current === 'book' || current === 'shelves' || current === 'shelf' ? '' : current === 'edit' || current === 'new' ? 'add' : current === 'value' ? 'settings' : current;
   return TABS.map(([name, icon, label]) => `<a class="tab${name === 'add' ? ' tab-add' : ''}${name === section ? ' is-on' : ''}" href="#/${name}"${name === section ? ' aria-current="page"' : ''}>${iconHtml(icon)}<span>${escapeHtml(label)}</span></a>`).join('');
 }
 

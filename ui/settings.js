@@ -10,8 +10,9 @@ import { SORTS } from '../core/library.js';
 import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 import { renderLists } from './lists.js';
 import { iconHtml } from './icons.js';
+import { saveFile } from './save-file.js';
 
-export const APP_VERSION = '0.8.6';
+export const APP_VERSION = '0.9.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -99,6 +100,8 @@ function mainHtml(state) {
   const syncButtonHtml = device.syncRepo ? '<button class="btn" type="button" data-sync-now>Sync now</button>' : '';
   const trashCount = trashedItems(state.records).length;
   const menuHtml = menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
+    + menuRowHtml('#/value', 'Value', 'what the books are worth, for insurance')
+    + menuRowHtml('#/settings/export', 'Export', 'CSV, JSON, CSL-JSON, BibTeX')
     + menuRowHtml('#/settings/lists', 'Rename and merge', 'categories, tags, series, bindings, places')
     + menuRowHtml('#/settings/advanced', 'Advanced', 'shared settings, scanning, sync setup, about');
   const offline = state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use.';
@@ -136,6 +139,9 @@ export function render(container, state, actions) {
     container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Rename and merge</h1><p class="page-meta">Tap a name to rename it on every book that uses it. Choosing a name already in the list merges the two.</p></div><section class="block"><div data-lists></div></section>`;
     renderLists(container.querySelector('[data-lists]'), state, actions);
   } else if (page === 'advanced') container.innerHTML = advancedHtml(state);
+  else if (page === 'export') container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Export</h1><p class="page-meta">The whole catalog, every book owned or not, as a file on this device.</p></div>
+    <nav class="menu">${exportsMenuHtml()}</nav>
+    <p class="page-meta">A catalog that opens in any browser, with covers and no internet, is made on the laptop by loci-backup.</p>`;
   else container.innerHTML = mainHtml(state);
 
   container.onsubmit = event => {
@@ -151,6 +157,8 @@ export function render(container, state, actions) {
     else if ('currency' in event.target.dataset) actions.saveSettings({ currency: event.target.value.trim() || '$' });
   };
   container.onclick = event => {
+    const exportButton = event.target.closest('[data-export]');
+    if (exportButton) { exportCatalog(exportButton.dataset.export, state); return; }
     const target = event.target.closest('[data-sync-now], [data-restore], [data-key], [data-shared], [data-lookup], [data-prompt]');
     if (!target) return;
     const { restore, key, shared, lookup, prompt } = target.dataset;
@@ -176,4 +184,27 @@ async function restoreItem(id, container, state, actions) {
     actions.showNote(`Restored: ${record.title}`);
     render(container, state, actions);
   }
+}
+
+const exportsMenuHtml = () => EXPORTS.map(([kind, label, detail]) => `<button type="button" class="menu-row" data-export="${escapeHtml(kind)}"><span>${escapeHtml(label)}</span><span class="page-meta">${escapeHtml(detail)}</span></button>`).join('');
+
+const EXPORTS = [
+  ['csv', 'Spreadsheet (CSV)', 'one row per copy, for Excel, Numbers or Google Sheets'],
+  ['json', 'All records (JSON)', 'everything, exactly as stored'],
+  ['csl', 'Citations (CSL-JSON)', 'for Zotero and other citation managers'],
+  ['bibtex', 'BibTeX', 'for LaTeX, with original dates as origdate'],
+];
+
+// The export code is loaded only when an export is chosen.
+async function exportCatalog(kind, state) {
+  const exports = await import('../core/exports.js');
+  const { library } = state;
+  const day = new Date().toISOString().slice(0, 10);
+  const files = {
+    csv: () => [`my-loci-library-${day}.csv`, exports.catalogCsv(library.entries, { dateStyle: state.settings.dateStyle }), 'text/csv'],
+    json: () => [`my-loci-library-${day}.json`, exports.catalogJson([...state.records.values()], new Date().toISOString().slice(0, 19) + 'Z'), 'application/json'],
+    csl: () => [`my-loci-library-${day}.csl.json`, exports.cslJson(library.entries, library.worksById, library.authorsById), 'application/json'],
+    bibtex: () => [`my-loci-library-${day}.bib`, exports.bibtex(library.entries, library.worksById, library.authorsById), 'application/x-bibtex'],
+  };
+  saveFile(...files[kind]());
 }

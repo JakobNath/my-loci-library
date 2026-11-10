@@ -195,9 +195,9 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 9: Value and exports
 
-- [ ] **9.1 Value view:** total value of owned physical books, totals by location, count of books with no value, a separate Logos total, and CSV export. Value history: same-day changes collapse into one entry, and history can be deleted.
+- [x] **9.1 Value view:** total value of owned physical books, totals by location, count of books with no value, a separate Logos total, and CSV export. Value history: same-day changes collapse into one entry, and history can be deleted.
   **Check:** totals for the sample data are right.
-- [ ] **9.2 Exports:** CSV, JSON, CSL-JSON and BibTeX in the app, loaded only when used. The self-contained HTML catalog (thumbnails embedded, opens with no internet) is built by `loci-backup` on the laptop.
+- [x] **9.2 Exports:** CSV, JSON, CSL-JSON and BibTeX in the app, loaded only when used. The self-contained HTML catalog (thumbnails embedded, opens with no internet) is built by `loci-backup` on the laptop.
   **Check:** each export opens correctly and keeps titles, authors, editions and original dates.
 
 ---
