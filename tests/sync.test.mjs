@@ -62,6 +62,14 @@ test('a first download takes catalog.json and downloads only files changed since
   assert.equal(github.calls.filter(call => call.includes('/git/blobs/')).length, 1, 'only the changed file was downloaded');
 });
 
+test('backup-status.json from the laptop comes down with a sync, once', async () => {
+  const github = fakeGitHub();
+  github.commitFiles({ 'backup-status.json': '{ "format": 1, "lastMirror": "2026-11-10T03:00:00Z" }\n' });
+  const phone = device(github);
+  assert.equal((await phone.pull()).backupStatus.lastMirror, '2026-11-10T03:00:00Z');
+  assert.equal((await phone.pull()).backupStatus, null, 'unchanged: not downloaded again');
+});
+
 test('thirty records go up as one commit', async () => {
   const github = fakeGitHub();
   github.commitFiles({ 'README.md': 'Test data\n' });

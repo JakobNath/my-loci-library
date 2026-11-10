@@ -50,3 +50,8 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 - [ ] Phone: Settings › Value should show the total, the rooms and the count with no value. "Download for an insurance agent" should save a CSV that opens in Numbers, Excel or Google Sheets with one row per book and the totals at the end.
 - [ ] Laptop: Settings › Export › each of the four. The CSV should open in a spreadsheet with accents intact; the BibTeX file should load in a reference manager (or Zotero's import) with titles, authors and original dates.
+
+## Phase 10
+
+- [ ] Laptop: copy `config.example.json` to `config.json` in the tools, pointing `dataRepo` at the test data and `backupFolder` at a folder in Google Drive. Run `loci-backup.cmd`. The Drive folder should get `data/` and `snapshots/<month>/`; `catalog.html` should open with no internet and find books as you type. Then schedule it in Task Scheduler as the tools README says.
+- [ ] Phone: after the next sync, Settings should say "Last backup to the backup folder: <date>".

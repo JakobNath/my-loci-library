@@ -23,6 +23,7 @@ const state = {
   route: { name: 'library', id: '' },
   query: '',
   storageNote: '',
+  backupStatus: null, // backup-status.json from the laptop's loci-backup, once synced
   offlineReady: false,
   batchLocation: [], // the shelf being filled in batch add, kept while the app is open
   syncStatus: '', // what the last sync did, in words
@@ -308,6 +309,7 @@ async function syncNow({ quiet = true } = {}) {
       for (const record of pulled.records) state.records.set(record.id, record);
       // Settings changed here win over the other device's: the file is small and changed rarely.
       const settingsUnsent = await storage.meta('settingsUnsent');
+      if (pulled.backupStatus) { await storage.saveMeta('backupStatus', pulled.backupStatus); state.backupStatus = pulled.backupStatus; }
       if (pulled.settings && !settingsUnsent) { await storage.saveMeta('settings', pulled.settings); state.settings = withDefaults(pulled.settings); }
       await storage.saveMeta('known', [...pulled.known]);
       const records = outboxIds.map(id => state.records.get(id)).filter(Boolean);
@@ -394,6 +396,7 @@ async function start() {
     state.library = buildLibrary(records, { searchText: false });
     const shared = await storage.meta('settings');
     if (shared) state.settings = withDefaults(shared);
+    state.backupStatus = await storage.meta('backupStatus');
   } catch (error) {
     state.storageNote = error.message;
     showNote(error.message);
@@ -417,6 +420,19 @@ async function start() {
   registerServiceWorker();
   showUnsent();
   syncNow();
+  remindAboutArchive();
+}
+
+// The yearly reminder to save a full archive (PLAN.md, "Backups"), at most
+// once a week until it is done. Its code loads only when there is a status.
+async function remindAboutArchive() {
+  const shown = storage && await storage.meta('archiveReminderShown');
+  if (!state.backupStatus || (shown && Date.parse(actions.today()) - Date.parse(shown) < 7 * 86400000)) return;
+  const { archiveReminder } = await import('./core/backup-status.js');
+  const text = archiveReminder(state.backupStatus, actions.today());
+  if (!text) return;
+  showNote(text, 'Got it', () => { note.hidden = true; });
+  storage.saveMeta('archiveReminderShown', actions.today());
 }
 
 // The service worker keeps the app working offline and fetches new versions

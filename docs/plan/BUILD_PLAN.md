@@ -204,13 +204,13 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 10: Backups
 
-- [ ] **10.1 `loci-backup` tool:** pulls the data repo, mirrors it to the Google Drive folder named in a small config file (changed files only), saves a dated export snapshot monthly (including the HTML catalog), rebuilds `catalog.json` and its search text, and writes a last-backup status file the app can show.
+- [x] **10.1 `loci-backup` tool:** pulls the data repo, mirrors it to the Google Drive folder named in a small config file (changed files only), saves a dated export snapshot monthly (including the HTML catalog), rebuilds `catalog.json` and its search text, and writes a last-backup status file the app can show.
   **Check:** tests with a temporary folder pass; the `.cmd` and `.sh` launchers work.
-- [ ] **10.2 Scheduling and reminder:** Task Scheduler and cron instructions in the tools README; the yearly full-archive reminder in the app.
+- [x] **10.2 Scheduling and reminder:** Task Scheduler and cron instructions in the tools README; the yearly full-archive reminder in the app.
   **Check:** the instructions are written, and the reminder appears after a simulated year.
-- [ ] **10.2b `loci-sizes` tool:** fills catalog heights for books without one, never overwrites a measured height, reports what it filled, commits once. `loci-backup` runs it daily; `.cmd` and `.sh` launchers run it by hand.
+- [x] **10.2b `loci-sizes` tool:** fills catalog heights for books without one, never overwrites a measured height, reports what it filled, commits once. `loci-backup` runs it daily; `.cmd` and `.sh` launchers run it by hand.
   **Check:** tests with recorded catalog responses pass, and a second run changes nothing.
-- [ ] **10.3 Ready for real data:** document in the README how to point the app at `my-loci-library-data`. Real cataloging can begin after this phase. Don't point the app at it yourself.
+- [x] **10.3 Ready for real data:** document in the README how to point the app at `my-loci-library-data`. Real cataloging can begin after this phase. Don't point the app at it yourself.
   **Check:** the documentation exists.
 
 ---

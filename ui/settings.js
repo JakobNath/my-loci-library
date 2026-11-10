@@ -11,8 +11,9 @@ import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 import { renderLists } from './lists.js';
 import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
+import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 
-export const APP_VERSION = '0.9.0';
+export const APP_VERSION = '0.10.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -98,6 +99,9 @@ function mainHtml(state) {
   const syncLine = !device.syncRepo ? 'Not connected yet. Advanced › Sync sets it up.'
     : `${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Everything is sent.'}`;
   const syncButtonHtml = device.syncRepo ? '<button class="btn" type="button" data-sync-now>Sync now</button>' : '';
+  const backupLine = lastBackupLine(state.backupStatus) || 'No backup from the laptop yet (loci-backup, in the tools).';
+  const reminder = archiveReminder(state.backupStatus, new Date().toISOString().slice(0, 10));
+  const backupHtml = `<p class="page-meta">${escapeHtml(backupLine)}</p>${reminder ? `<p class="step-hint is-missing">${escapeHtml(reminder)}</p>` : ''}`;
   const trashCount = trashedItems(state.records).length;
   const menuHtml = menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
     + menuRowHtml('#/value', 'Value', 'what the books are worth, for insurance')
@@ -107,7 +111,7 @@ function mainHtml(state) {
   const offline = state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use.';
   return `<div class="page-head"><h1 class="page-title">Settings</h1></div>
     <section class="block"><h2 class="block-title">Look</h2><div class="form">${lookHtml}</div></section>
-    <section class="block"><h2 class="block-title">Sync</h2><p class="page-meta">${escapeHtml(syncLine)}</p>${syncButtonHtml}</section>
+    <section class="block"><h2 class="block-title">Sync and backup</h2><p class="page-meta">${escapeHtml(syncLine)}</p>${backupHtml}${syncButtonHtml}</section>
     <nav class="menu" aria-label="More settings">${menuHtml}</nav>
     <p class="page-meta settings-foot">${escapeHtml(`My Loci Library ${APP_VERSION} · ${offline} ${state.storageNote || ''}`)}<br>Created by Jakob Nath.</p>`;
 }

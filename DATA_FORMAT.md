@@ -56,6 +56,7 @@ my-loci-library-data/
   images/master/<id>.jpg    1,600 px on the long side; only for our own photos
   images/inbox/             covers left by laptop tools, waiting to be processed
   catalog.json              all records in one file, built on the laptop for fast loading
+  backup-status.json        when the laptop last backed up, kept by loci-backup
   integrations/zotero-links.json   kept by the Zotero tool; the app never reads it
 ```
 
@@ -278,6 +279,19 @@ All records in one file, so a device can load the catalog with one download:
 ```
 
 It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
+
+## backup-status.json
+
+Written by the laptop tool `loci-backup`, read by the app to show the last backup and the yearly archive reminder. No person edits it.
+
+```json
+{ "format": 1, "firstBackup": "2026-11-10T03:00:00Z", "lastMirror": "2026-11-12T03:00:00Z", "lastSnapshot": "2026-11", "lastArchive": null }
+```
+
+- `firstBackup`: the first daily backup ever made; the yearly reminder counts from it until there is an archive.
+- `lastMirror`: the last copy of the data repository into the backup folder.
+- `lastSnapshot`: the month of the last saved exports and HTML catalog.
+- `lastArchive`: the last full archive to an external drive, or null.
 
 ## Merging
 

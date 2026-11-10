@@ -118,7 +118,8 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
      * @param {{ known: Map<string, string>, local: Map<string, object>, outbox: Set<string>, onProgress?: (done: number, total: number) => void }} device
      *   known: path → fingerprint of each file this device holds; local: its records by ID;
      *   outbox: IDs changed here and not yet sent
-     * @returns {Promise<{ records: object[], known: Map<string, string>, commit: string, settings: object|null }>}
+     * @returns {Promise<{ records: object[], known: Map<string, string>, commit: string, settings: object|null, backupStatus: object|null }>}
+     *   settings, backupStatus: settings.json and backup-status.json, when they changed
      *   records: new or changed records to save (already merged with local changes)
      */
     async pull({ known, local, outbox, onProgress = () => {} }) {
@@ -151,8 +152,12 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
       const settings = files.has('settings.json') && fingerprints.get('settings.json') !== files.get('settings.json')
         ? JSON.parse(await call('GET', `/contents/settings.json?ref=${commit}`, null, 'downloading the settings', 'application/vnd.github.raw+json')) : null;
       if (settings) fingerprints.set('settings.json', files.get('settings.json'));
+      // Written by the laptop's loci-backup: when the last backup and archive were made.
+      const backupStatus = files.has('backup-status.json') && fingerprints.get('backup-status.json') !== files.get('backup-status.json')
+        ? JSON.parse(await call('GET', `/contents/backup-status.json?ref=${commit}`, null, 'downloading the backup status', 'application/vnd.github.raw+json')) : null;
+      if (backupStatus) fingerprints.set('backup-status.json', files.get('backup-status.json'));
       fingerprints = new Map([...fingerprints].filter(([path]) => files.has(path)));
-      return { records, known: fingerprints, commit, settings };
+      return { records, known: fingerprints, commit, settings, backupStatus };
     },
 
     /**
