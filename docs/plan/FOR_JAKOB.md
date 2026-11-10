@@ -13,7 +13,14 @@ Every build phase is done. The one build step left is the shelf view review (13.
 
 All tests pass: 109 in the app, 119 in the tools.
 
-## What comes next, in order
+## The next build phase: better book data (phase 14)
+
+Planned on 10 November 2026: the Library of Congress, Open Library and Google Books used together, so each book's first entry holds as much as possible (pages as printed, size, edition, series, translators and editors, original title and language, contents of anthologies, and later catalogue numbers and subjects). The design is in `docs/plan/PLAN.md`, "Book data"; the steps are phase 14 in `docs/plan/BUILD_PLAN.md`.
+
+- [ ] **Optional, before starting: a Google Books key.** It lets the phase record Google's real answers. In a browser signed in to your Google account: open https://console.cloud.google.com/apis/library/books.googleapis.com, make a project if asked (any name, such as "My Loci Library"), and click **Enable**. Then open https://console.cloud.google.com/apis/credentials, click **Create credentials › API key**, then **Edit API key**, and under "API restrictions" choose **Restrict key › Books API**; save, and copy the key. Paste it into the tools' `config.json` as `"googleBooksKey": "..."` (the file never leaves the laptop). Without a key the phase still runs; Google's part is then built from its documentation, and the key can be added later. The phase itself adds an easy guide and a "Test the key" button to the app.
+- [ ] **To start:** open a new chat in the `My Loci Library` folder and say: **"Go: continue the build plan with phase 14."** It runs on its own and stops only to ask what is truly yours to decide. It can run alongside your tour of the app below; both lead to the same app.
+
+## What comes next for you, in order
 
 ### 1. Tour the app and note what needs work (next; 30–45 minutes, on your phone)
 
@@ -46,7 +53,7 @@ All tests pass: 109 in the app, 119 in the tools.
 
 - [ ] Once a few dozen real books are on a shelf, go through the shelf view at the bookcase: can you find a book from the screen, do the sizes and drawn spines look like the real shelf, is the way there quick enough.
 
-### 5. Later, when wanted
+### 5. Later, when wanted (phase 15)
 
 The extras the plan set aside: the price estimator, and recognising a book from a photo of its title page.
 

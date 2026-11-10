@@ -141,7 +141,7 @@ A wishlist item is a small standalone record, not linked to any existing work. I
 
 - Every record gets a random permanent ID that is never changed or reused. Each book also has its own address in the app, which Zotero items link to.
 - Every record carries a format version. An older copy of the app that meets newer data asks to be refreshed instead of changing anything.
-- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1.
+- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1. Version 2 adds each edition's catalogue numbers and subject headings (see "Book data").
 
 ## Original dates
 
@@ -232,9 +232,32 @@ The shelf view draws every book at a believable size from the first day, and the
 - **Height**, best source first: measured, catalog, the same series or set as a book whose height is known, then a typical height for its binding (about 17.5 cm for a mass-market paperback, 21.5 cm for a trade paperback, 23.5 cm for a hardback).
 - **Thickness**, best source first: measured, a spine photo's shape times the height, a catalog value, then the page count times about 0.06 mm a page plus the covers (about 0.5 mm for a paperback, 5–6 mm for a hardback). Thin Bible paper comes out about twice too thick by page count; a spine photo corrects it.
 - **Measuring is optional and never asked for.** When a spine photo is taken, a height box shows the current value with a small label saying where it came from ("23 cm · catalog", "~22 cm · guess"). A ruler is worth it only for a guess, usually an old or rare book. A height typed by a person is never overwritten.
-- **Catalog heights** come from library records (the Library of Congress lists most books' heights, rounded up to the whole centimeter). A phone app cannot reach that service, which allows neither encrypted connections nor calls from web pages, so the laptop tool `loci-sizes` fetches them. It runs daily with the backup, and can be run by hand at any time.
+- **Catalog heights** come from library records (the Library of Congress lists most books' heights, rounded up to the whole centimeter) and, with thickness, sometimes from Open Library or Google Books (see "Book data"). A phone app cannot reach the Library of Congress, which allows neither encrypted connections nor calls from web pages, so the laptop tool `loci-enrich` (formerly `loci-sizes`) fetches them. It runs daily with the backup, and can be run by hand at any time.
 - **No reference object** (such as a sheet of paper) is needed in photos. It would sit at a different depth from the spine, limit the book size, and add a step to every photo.
 - **Later, if wanted:** one photo of a whole shelf would give the relative sizes of every book on it at once.
+
+## Book data
+
+Decided with Jakob on 10 November 2026, after testing all three sources against books from the sample shelf. The goal is that a book's first entry already holds everything worth knowing, as exact as the best source allows, without slowing down scanning.
+
+**Three sources, each used for what it does best**
+
+| Source | Best for | Limits |
+| --- | --- | --- |
+| **Library of Congress** | The most exact cataloguing: pages as printed ("xxx, 1808 p."), height, translators and editors with their roles, edition, series and number, original title and language of a translation, contents of anthologies, subjects, call numbers | Laptop only: its service has no encrypted connection and refuses calls from web pages. Covers US-catalogued and academic books best; misses many others |
+| **Open Library** | The widest free coverage, covers, pages as printed (often copied from the Library of Congress), series, edition, binding ("Paperback"), sometimes height and a table of contents | Uneven: titles in the original language, duplicates, gaps |
+| **Google Books** | Newer books, better covers, thickness and height, a total page count | Needs a free key on each device (without one it is refused); gives no roles for translators or editors, and no pages as printed |
+
+**When they run**
+
+- **At scan time, on the phone:** Open Library's full edition record and, with a key, Google Books, both asked at the same moment as the lookups already made, so adding a book is no slower. They fill pages as printed, edition, series and number, place, height and thickness when given, and pre-select the binding when the record names one. When an anthology's contents are listed, the contents step offers them already filled in, to correct or accept; never for a Bible, whose books are cited by chapter and verse.
+- **Every night, on the laptop:** `loci-enrich` (which replaces `loci-sizes`) asks the Library of Congress, then Open Library and Google Books, for every book, and fills **empty fields only**: pages as printed, height, thickness, edition, series and number, place, translators and editors, original title and original language. It never changes a field a person has edited (it keeps what it last wrote, as the Logos importer does), never fills an original date, and only suggests the contents of anthologies. It writes a short report of what it filled, and commits once.
+
+**When sources disagree:** for bibliographic facts the Library of Congress comes first, then Open Library, then Google Books; for thickness, height and covers, whichever source has them. A value is taken only from a record that lists the book's own ISBN.
+
+**Google Books key:** one free key, made once in Google Cloud by following the steps in the app (Settings › Advanced) and in the tools README, and pasted into each device and into the laptop's `config.json`. It stays on those devices and is never committed.
+
+**New fields (data format version 2):** each edition gains its catalogue numbers (Library of Congress control number, OCLC number, Library of Congress and Dewey call numbers) and its subject headings, filled by the same sources. The Zotero companion sends the Library of Congress call number as Zotero's Call Number (which Chicago does not print). Older records stay readable and are upgraded by the core module, with tests.
 
 ## App features and screens
 
@@ -348,11 +371,11 @@ The tool never reads Logos's internal database, which would break whenever Logos
 
 **loci-backup**
 
-Runs daily through Windows Task Scheduler (or cron on Linux). It handles the daily mirror and the monthly export snapshot described under Backups in the architecture section, and then runs `loci-sizes`.
+Runs daily through Windows Task Scheduler (or cron on Linux). It handles the daily mirror and the monthly export snapshot described under Backups in the architecture section, and then runs `loci-enrich`.
 
-**loci-sizes**
+**loci-enrich** (formerly `loci-sizes`)
 
-Fills in catalog heights for books that have none, from library records found by ISBN (the Library of Congress first). It never overwrites a height a person typed, writes a short report of what it filled, and commits the changes to the data repo. It runs daily after `loci-backup` and from a one-click shortcut on Windows and a matching command on Linux. If the library service ever changes or disappears, nothing else depends on it: sizes simply stay estimated.
+Fills empty fields of every book from the Library of Congress, then Open Library and Google Books, found by ISBN (see "Book data"): pages as printed, height and thickness, edition, series, place, translators and editors, original title and language, and, from format version 2, catalogue numbers and subject headings. It never overwrites a field a person edited, never fills an original date, only suggests anthology contents, writes a short report of what it filled, and commits the changes to the data repo once. It runs daily after `loci-backup` and from a one-click shortcut on Windows and a matching command on Linux. If a source ever changes or disappears, nothing else depends on it: those fields simply stay as they are.
 
 **Price estimator** (later)
 
@@ -528,6 +551,7 @@ The design prototypes come right after the foundations, so the look is chosen ea
 11. **Logos importer.**
 12. **Zotero companion.**
 13. **Release:** finish the docs, write the colleague setup guide, and tag version 1.0. The app and tools repos are public from phase 1, since GitHub Pages and open source both need that.
-14. **Later:** price estimator and other deferred items.
+14. **Better book data** (added 10 November 2026): the three sources together, fuller entries at scan time, `loci-enrich` on the laptop, an easy Google Books key, and data format version 2 with catalogue numbers and subjects. See "Book data".
+15. **Later:** price estimator and other deferred items.
 
 Sample books for phases 2 and 4: see `SAMPLE_BOOKS.md`.
