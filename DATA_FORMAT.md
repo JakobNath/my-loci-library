@@ -256,12 +256,17 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
   "batchAddPrompts": ["title", "subtitle", "authors", "datings", "binding", "publisher", "year"],
   "defaultSort": { "library": "title", "wishlist": "added" },
   "lookups": { "openLibrary": true, "googleBooks": true },
-  "bindings": ["Hardcover", "Hardcover with dust jacket", "Paperback", "Mass-market paperback", "Leather", "Bonded leather", "Cloth", "Library binding", "Journal issue"]
+  "bindings": ["Hardcover", "Hardcover with dust jacket", "Paperback", "Mass-market paperback", "Leather", "Bonded leather", "Cloth", "Library binding", "Journal issue"],
+  "views": [
+    { "name": "Office by original date", "medium": "physical", "sort": "originalDate", "status": "owned", "location": ["Home", "Office"], "category": "", "tag": "", "needsDate": false }
+  ]
 }
 ```
 
 - `dateStyle`: `AD` (AD/BC) or `CE` (CE/BCE).
 - `anthologiesInShelfLists`: `once` (at the earliest date) or `each` (under each contained work).
+- `views`: the saved views, in the order they are shown. `medium` is `physical`, `logos` or `all`; `sort` names a sort (`title`, `subtitle`, `author`, `originalDate`, `year`, `added`, `value`, `location`, `binding`, `category`, `publisher`, `pages`, `series`); `status` is `owned`, `gone` (any status but owned), `all`, or one copy status; `location` is a place path and includes everything inside it; an empty `category` or `tag` means any.
+- Keys are written in the order shown. A key missing from the file takes the value shown here.
 - Categories, tags, series, places and the like are not stored here: they are the values found on the records, and renaming one edits those records.
 
 ## catalog.json

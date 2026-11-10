@@ -4,7 +4,7 @@
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
 
-export const APP_VERSION = '0.7.0';
+export const APP_VERSION = '0.8.0';
 
 const CHOICES = [
   ['theme', 'Theme', [['device', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']]],

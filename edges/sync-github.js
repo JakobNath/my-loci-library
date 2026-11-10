@@ -162,10 +162,11 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
      * which merges the other device's changes, and sends again. Basing the
      * commit on `base`, never simply on the newest commit, is what keeps one
      * device from silently overwriting another's changes.
-     * @param {{ records: object[], images?: { path: string, base64: string }[], message?: string, base: string }} change
+     * @param {{ records: object[], files?: { path: string, text: string }[], images?: { path: string, base64: string }[], message?: string, base: string }} change
+     *   files: other text files, such as settings.json
      * @returns {Promise<{ commit: string, known: [string, string][] }>} the new commit and the sent files' fingerprints
      */
-    async push({ records, images = [], message = 'Update the catalog', base }) {
+    async push({ records, files = [], images = [], message = 'Update the catalog', base }) {
       const head = await call('GET', `/git/commits/${base}`, null, 'reading the version this device has');
       const entries = [];
       const known = [];
@@ -173,6 +174,10 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
         const text = recordToFileText(record);
         entries.push({ path: recordPath(record), mode: '100644', type: 'blob', content: text });
         known.push([recordPath(record), await blobSha(text)]);
+      }
+      for (const file of files) {
+        entries.push({ path: file.path, mode: '100644', type: 'blob', content: file.text });
+        known.push([file.path, await blobSha(file.text)]);
       }
       for (const image of images) {
         const blob = await call('POST', '/git/blobs', { content: image.base64, encoding: 'base64' }, `uploading ${image.path}`);

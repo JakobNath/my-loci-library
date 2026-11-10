@@ -9,19 +9,11 @@ import { buildLibrary, withSearchText } from './core/library.js';
 import { makeId } from './core/ids.js';
 import { withField } from './core/records.js';
 import { escapeHtml } from './core/html.js';
+import { SHARED_DEFAULTS, withDefaults, settingsToFileText } from './core/settings.js';
 import { iconHtml, LOGO_HTML } from './ui/icons.js';
 import * as libraryScreen from './ui/library.js';
 import * as bookScreen from './ui/book.js';
-import * as shelfScreen from './ui/shelf.js';
-import * as wishlistScreen from './ui/wishlist.js';
-import * as settingsScreen from './ui/settings.js';
 
-// Shared settings until sync brings settings.json (DATA_FORMAT.md, "settings.json").
-const SHARED_DEFAULTS = {
-  dateStyle: 'AD',
-  currency: '$',
-  bindings: ['Hardcover', 'Hardcover with dust jacket', 'Paperback', 'Mass-market paperback', 'Leather', 'Bonded leather', 'Cloth', 'Library binding', 'Journal issue'],
-};
 
 const state = {
   records: new Map(), // every record on this device, by ID
@@ -66,14 +58,17 @@ function screenLoadedWhenOpened(load) {
 }
 const renderAddScreen = screenLoadedWhenOpened(() => import('./ui/add.js'));
 const renderEditScreen = screenLoadedWhenOpened(() => import('./ui/edit.js'));
+const renderShelfScreen = screenLoadedWhenOpened(() => import('./ui/shelf.js'));
+const renderWishlistScreen = screenLoadedWhenOpened(() => import('./ui/wishlist.js'));
+const renderSettingsScreen = screenLoadedWhenOpened(() => import('./ui/settings.js'));
 
 const ROUTES = {
   '': libraryScreen.render,
   book: bookScreen.render,
-  shelves: shelfScreen.render,
-  shelf: shelfScreen.render,
-  wishlist: wishlistScreen.render,
-  settings: settingsScreen.render,
+  shelves: renderShelfScreen,
+  shelf: renderShelfScreen,
+  wishlist: renderWishlistScreen,
+  settings: renderSettingsScreen,
   add: renderAddScreen,
   new: renderEditScreen,
   edit: renderEditScreen,
@@ -133,6 +128,16 @@ const actions = {
   now,
   today: () => now().slice(0, 10),
   newId: () => makeId(crypto.getRandomValues(new Uint8Array(12))),
+
+  /** Change shared settings (PLAN.md, "Settings", "Shared"); they go to the data repository's settings.json. */
+  async saveSettings(changes) {
+    state.settings = { ...state.settings, ...changes };
+    render();
+    if (!storage) return;
+    await storage.saveMeta('settings', state.settings);
+    await storage.saveMeta('settingsUnsent', true);
+    syncSoon();
+  },
 
   setDevice(changes) {
     state.device = { ...state.device, ...changes };
@@ -284,11 +289,13 @@ async function syncNow({ quiet = true } = {}) {
       });
       await storage.saveRecords(pulled.records);
       for (const record of pulled.records) state.records.set(record.id, record);
-      if (pulled.settings) { await storage.saveMeta('settings', pulled.settings); state.settings = { ...SHARED_DEFAULTS, ...pulled.settings }; }
+      // Settings changed here win over the other device's: the file is small and changed rarely.
+      const settingsUnsent = await storage.meta('settingsUnsent');
+      if (pulled.settings && !settingsUnsent) { await storage.saveMeta('settings', pulled.settings); state.settings = withDefaults(pulled.settings); }
       await storage.saveMeta('known', [...pulled.known]);
       const records = outboxIds.map(id => state.records.get(id)).filter(Boolean);
       const imageIds = (await storage.meta('imageOutbox')) || [];
-      if (!records.length && !imageIds.length) break;
+      if (!records.length && !imageIds.length && !settingsUnsent) break;
       const images = [];
       for (const id of imageIds) {
         for (const size of ['thumb', 'detail', 'master']) {
@@ -297,9 +304,11 @@ async function syncNow({ quiet = true } = {}) {
         }
       }
       try {
-        const sent = await github.push({ records, images, base: pulled.commit, message: `Save ${records.length} changed records${images.length ? ` and ${imageIds.length} pictures` : ''}` });
+        const files = settingsUnsent ? [{ path: 'settings.json', text: settingsToFileText(state.settings) }] : [];
+        const sent = await github.push({ records, files, images, base: pulled.commit, message: `Save ${records.length} changed records${images.length ? ` and ${imageIds.length} pictures` : ''}` });
         await storage.clearOutbox(outboxIds);
         await storage.saveMeta('imageOutbox', []);
+        await storage.saveMeta('settingsUnsent', false);
         await storage.saveMeta('known', [...pulled.known, ...sent.known]);
         break;
       } catch (error) {
@@ -367,7 +376,7 @@ async function start() {
     for (const record of records) state.records.set(record.id, record);
     state.library = buildLibrary(records, { searchText: false });
     const shared = await storage.meta('settings');
-    if (shared) state.settings = { ...SHARED_DEFAULTS, ...shared };
+    if (shared) state.settings = withDefaults(shared);
   } catch (error) {
     state.storageNote = error.message;
     showNote(error.message);

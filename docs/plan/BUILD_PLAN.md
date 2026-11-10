@@ -183,7 +183,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 8: Organizing
 
-- [ ] **8.1** Location paths, sorting by every field in `PLAN.md`, filters, and saved views.
+- [x] **8.1** Location paths, sorting by every field in `PLAN.md`, filters, and saved views.
 - [ ] **8.2** Status rules: no longer owned (banner, faded, excluded from counts, shelf lists and totals); trash with restore.
 - [ ] **8.3** Wishlist tab: standalone records, and "I bought it" opening a prefilled entry form that keeps the note.
 - [ ] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
