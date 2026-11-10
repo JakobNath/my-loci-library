@@ -55,3 +55,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 - [ ] Laptop: copy `config.example.json` to `config.json` in the tools, pointing `dataRepo` at the test data and `backupFolder` at a folder in Google Drive. Run `loci-backup.cmd`. The Drive folder should get `data/` and `snapshots/<month>/`; `catalog.html` should open with no internet and find books as you type. Then schedule it in Task Scheduler as the tools README says.
 - [ ] Phone: after the next sync, Settings should say "Last backup to the backup folder: <date>".
+
+## Phase 14
+
+- [ ] Phone (1.1.0 or later): scan C. S. Lewis, *Mere Christianity* (9780060652920) or any book whose Open Library record lists contents. The first step should show the edition ("1st HarperCollins ed.") and pages as printed ("xx, 227"); the next step should ask "Is this a collection of works?" with the list filled in; "No, it is one work" should go on to the original date, and the binding step should have Paperback already chosen. Adding should feel as quick as before.
+- [ ] Phone: scan a Bible or Greek New Testament. No contents question should appear.
+

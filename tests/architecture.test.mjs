@@ -114,13 +114,16 @@ test('every innerHTML assignment escapes its data', () => {
 // What a phone loads to open the app: index.html, its stylesheets, and main.js
 // with every module it imports. Comments are not counted, so explaining the
 // code never costs budget (decision of 2026-11-09 in HOW_IT_WORKS.md).
-export function loadedFiles(start = 'index.html') {
+// With later set, it also follows modules loaded when first needed
+// (import('./ui/add.js')): every file the app may load, for offline use.
+export function loadedFiles(start = 'index.html', { later = false } = {}) {
   const found = new Set([start]);
   for (const [, path] of read(start).matchAll(/(?:href|src)="([^"]+\.(?:css|js))"/g)) found.add(path);
   const queue = [...found].filter(file => file.endsWith('.js'));
   while (queue.length) {
     const file = queue.shift();
-    for (const [, path] of read(file).matchAll(/\bimport\s[^'"]*['"](\.[^'"]+)['"]/g)) {
+    const imports = later ? /\bimport(?:\s[^'"]*|\(\s*)['"](\.[^'"]+)['"]/g : /\bimport\s[^'"]*['"](\.[^'"]+)['"]/g;
+    for (const [, path] of read(file).matchAll(imports)) {
       const target = join(dirname(file), path).split(sep).join('/');
       if (!found.has(target)) { found.add(target); queue.push(target); }
     }
@@ -139,7 +142,7 @@ test('the files a phone loads stay within the size budget', () => {
 
 test('the service worker keeps every file the app loads, so it opens offline', () => {
   const listed = [...read('sw.js').matchAll(/'([\w/.-]+\.(?:js|css|html|png|svg|webmanifest))'/g)].map(match => match[1]);
-  const missing = loadedFiles().filter(file => !listed.includes(file));
+  const missing = loadedFiles('index.html', { later: true }).filter(file => !listed.includes(file));
   assert.deepEqual(missing, [], 'add these to FILES in sw.js');
 });
 

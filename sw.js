@@ -12,7 +12,7 @@ const FILES = [
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
   'core/ids.js', 'core/html.js', 'core/dating.js', 'core/anthology.js', 'core/pages.js', 'core/sizes.js',
   'core/search.js', 'core/records.js', 'core/merge.js', 'core/shelf-order.js', 'core/zotero.js', 'core/library.js', 'core/contents.js', 'core/entry.js',
-  'core/lookup.js', 'core/matching.js', 'core/settings.js', 'core/trash.js', 'core/lists.js', 'core/value.js', 'core/exports.js', 'core/backup-status.js',
+  'core/lookup.js', 'core/book-data.js', 'core/bible.js', 'core/matching.js', 'core/settings.js', 'core/trash.js', 'core/lists.js', 'core/value.js', 'core/exports.js', 'core/backup-status.js',
   'edges/storage.js', 'edges/device.js', 'edges/lookup-openlibrary.js', 'edges/lookup-googlebooks.js', 'edges/camera.js', 'edges/photo.js', 'edges/sync-github.js',
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/save-file.js', 'ui/edit.js',
   'ui/add.js', 'ui/images.js', 'ui/photo-editor.js',

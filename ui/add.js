@@ -1,7 +1,8 @@
 // Batch add (PLAN.md, "Batch add"), one question per screen. Scan a barcode,
 // type an ISBN (a USB scanner types it too) or type a title; then, step by
-// step: is this the book, is it the same work as one we have, when was it
-// written, the cover, the spine, the binding, where it goes, anything else.
+// step: is this the book, is it a collection (when a record lists contents),
+// is it the same work as one we have, when was it written, the cover, the
+// spine, the binding, where it goes, anything else.
 // Steps with nothing to ask are skipped. The camera stays open for the whole
 // stack (paused during the steps), and the next scan is ready as soon as a
 // book is saved.
@@ -9,12 +10,14 @@
 import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
-import { combineFound, suggestOriginalDates } from '../core/lookup.js';
+import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
+import { mergeFound } from '../core/book-data.js';
+import { isBible } from '../core/bible.js';
 import { normalizeForSearch } from '../core/search.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
-import { lookUpOpenLibrary, lookUpWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
+import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
@@ -32,7 +35,7 @@ function choiceHtml(action, main, detail = '', value = '') {
 }
 
 /** Draw the batch add screen. Returns a cleanup that closes the camera. */
-const STEP_NAMES = { book: 'The book', work: 'Same work?', date: 'Original date', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', extras: 'Anything else' };
+const STEP_NAMES = { book: 'The book', contents: 'Contents', work: 'Same work?', date: 'Original date', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', extras: 'Anything else' };
 
 export function render(container, state, actions) {
   const prompts = new Set(state.settings.batchAddPrompts || ['title', 'subtitle', 'authors', 'datings', 'binding', 'publisher', 'year']);
@@ -122,24 +125,29 @@ export function render(container, state, actions) {
     find.value = '';
     const duplicates = editionsWithIsbn(isbn, state.library.entries);
     if (duplicates.length) return askAboutDuplicate(duplicates[0]);
-    const work = lookUpWork(isbn).catch(() => NO_WORK); // for date suggestions, alongside
+    // The work search is asked once, alongside: for date suggestions, and for authors the edition record lacks.
+    const workSearch = searchWork(isbn);
+    const work = lookUpWork(isbn, fetch, workSearch).catch(() => NO_WORK);
     const lookups = state.settings.lookups || { openLibrary: true, googleBooks: true };
-    let found = null;
-    let problem = '';
-    const sources = [];
-    if (lookups.openLibrary !== false) {
-      showMessage(`Looking up ISBN ${isbn} on Open Library…`);
-      try { found = await lookUpOpenLibrary(isbn); } catch (error) { problem = error.message; }
-      if (found) sources.push('Open Library');
-    }
-    if ((!found || !found.authors.length || !found.publisher) && lookups.googleBooks !== false) {
+    const key = state.device.googleBooksKey || '';
+    const problems = [];
+    const ask = (lookUp, name) => lookUp().catch(error => { problems.push(error.message); return null; }).then(found => ({ found, name }));
+    // Open Library and, with a key, Google Books are asked at the same moment, so asking both is no slower.
+    const asking = [];
+    if (lookups.openLibrary !== false) asking.push(ask(() => lookUpOpenLibrary(isbn, fetch, workSearch), 'Open Library'));
+    if (lookups.googleBooks !== false && key) asking.push(ask(() => lookUpGoogleBooks(isbn, key), 'Google Books'));
+    showMessage(`Looking up ISBN ${isbn} on ${asking.length > 1 ? 'Open Library and Google Books' : asking.length ? 'Open Library' : 'Google Books'}…`);
+    const answers = await Promise.all(asking);
+    let found = mergeFound(answers.map(answer => answer.found));
+    // Without a key Google Books mostly refuses, so it is asked only when Open Library lacks something.
+    if (!key && (!found || !found.authors.length || !found.publisher) && lookups.googleBooks !== false) {
       showMessage(found ? 'Some details are missing; asking Google Books too…' : `Not on Open Library; trying Google Books…`);
-      let more = null;
-      try { more = await lookUpGoogleBooks(isbn, state.device.googleBooksKey || ''); } catch (error) { problem = problem || error.message; }
-      if (more) sources.push('Google Books');
-      found = combineFound(found, more);
+      answers.push(await ask(() => lookUpGoogleBooks(isbn, ''), 'Google Books'));
+      found = mergeFound(answers.map(answer => answer.found));
     }
-    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problem);
+    const sources = answers.filter(answer => answer.found).map(answer => answer.name);
+    const google = answers.find(answer => answer.name === 'Google Books' && answer.found);
+    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problems[0] || '', google ? google.found.cover : null);
   }
 
   function askAboutDuplicate(entry) {
@@ -161,11 +169,17 @@ export function render(container, state, actions) {
 
   // ---------- the steps ----------
 
-  function startBook(found, workLookup, problem = '') {
+  // otherCover: a Google Books cover, used when Open Library's turns out to be missing.
+  function startBook(found, workLookup, problem = '', otherCover = null) {
+    const full = { ...emptyFound(''), ...found };
     book = {
-      found: { title: '', subtitle: '', authors: [], contributors: [], publisher: '', place: '', year: '', pages: '', languages: [], isbn: '', cover: null, ...found },
-      problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false, originalTitle: '',
-      photos: {}, cover: { state: 'none' }, binding: '', location: (state.batchLocation || []).filter(Boolean), extras: {},
+      found: full,
+      problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false, originalTitle: full.originalTitle,
+      photos: {}, cover: { state: 'none' }, otherCover, binding: full.binding, location: (state.batchLocation || []).filter(Boolean),
+      extras: { series: full.series, seriesNumber: full.seriesNumber },
+      // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
+      contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
+      contents: null, // the accepted contents, one work per line
       fixing: !found.source, // not found online: the details are asked for at once
     };
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
@@ -191,6 +205,8 @@ export function render(container, state, actions) {
       return { state: 'found', source: cover.source, files: await imageFiles(picture) };
     })().catch(() => ({ state: 'none' })).then(result => {
       if (book !== current) return;
+      const other = current.otherCover;
+      if (result.state === 'none' && other) result = { state: 'waiting', url: other.url, source: other.source };
       if (result.files) result.preview = URL.createObjectURL(result.files.thumb);
       current.cover = result;
       if (book.step === 'cover') drawStep();
@@ -200,10 +216,13 @@ export function render(container, state, actions) {
   // The steps this book needs, in order; steps with nothing to ask are left out.
   function steps() {
     const linked = book.works.find(work => work.id === book.workId);
+    // A collection's works each have their own date, asked for later ("needs original date").
+    const single = book.contents === null;
     return [
       'book',
-      book.works.length ? 'work' : null,
-      !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
+      book.contentsOffered ? 'contents' : null,
+      single && book.works.length ? 'work' : null,
+      single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
       'where', 'extras',
@@ -244,7 +263,7 @@ export function render(container, state, actions) {
   }
 
   function drawStep() {
-    const draw = { book: bookStep, work: workStep, date: dateStep, cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, extras: extrasStep }[book.step];
+    const draw = { book: bookStep, contents: contentsStep, work: workStep, date: dateStep, cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, extras: extrasStep }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
     stepArea.oninput = event => { if (event.target.name === 'dating') showDatingPreview(); };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
@@ -272,7 +291,7 @@ export function render(container, state, actions) {
     }
     const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', prompts.has('year') && !found.year && 'year'].filter(Boolean);
     const coverHtml = found.cover && !found.cover.waiting ? `<img class="step-cover" src="${attr(found.cover.url)}" alt="" onerror="this.remove()">` : '';
-    const detailsHtml = escapeHtml([found.authors.join(', '), [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
+    const detailsHtml = escapeHtml([found.authors.join(', '), found.editionStatement, [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
     const peopleHtml = escapeHtml(found.contributors.map(person => `${person.role} ${person.name}`).join(' · '));
     const foundOnHtml = escapeHtml(`Found on ${(found.sources || ['Open Library']).join(' and ')}.`);
     return `<h2 class="step-title">Is this the book?</h2><p class="step-hint">${foundOnHtml}</p>
@@ -283,7 +302,17 @@ export function render(container, state, actions) {
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
 
-  // 2. Same work as one we already have?
+  // 2. A collection of works? Only when a record lists contents.
+  function contentsStep() {
+    const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
+    return `<h2 class="step-title">Is this a collection of works?</h2>
+      <p class="step-hint">The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.</p>
+      <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>
+        <div class="choices">${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
+        <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
+  }
+
+  // 3. Same work as one we already have?
   function workStep() {
     const optionsHtml = book.works.map(work => {
       const dating = workingDating(work);
@@ -354,7 +383,8 @@ export function render(container, state, actions) {
   // 6. The binding.
   function bindingStep() {
     const listHtml = state.settings.bindings.map(binding => `<button type="button" class="chip chip-big${book.binding === binding ? ' is-on' : ''}" data-action="binding" data-value="${attr(binding)}">${escapeHtml(binding)}</button>`).join('');
-    return `<h2 class="step-title">What binding is this copy?</h2><p class="step-hint">Tap one, or type another below.</p><div class="chips">${listHtml}</div>
+    const named = book.found.binding ? ` The record online says ${book.found.binding}.` : '';
+    return `<h2 class="step-title">What binding is this copy?</h2><p class="step-hint">${escapeHtml(`Tap one, or type another below.${named}`)}</p><div class="chips">${listHtml}</div>
       <form class="form">${fieldHtml('Something else', 'binding', state.settings.bindings.includes(book.binding) ? '' : book.binding, { list: 'bindings' })}
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
@@ -396,6 +426,7 @@ export function render(container, state, actions) {
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
       book.works = suggestWorks(found.title, found.authors, state.library);
     }
+    if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
     if (book.step === 'binding' && value('binding')) book.binding = value('binding').trim();
     if (book.step === 'where') {
@@ -417,9 +448,11 @@ export function render(container, state, actions) {
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
       // An empty date is a choice, not an oversight: ask for "Don't know yet".
       if (book.step === 'date' && !book.dating) { book.dateNudge = true; return drawStep(); }
+      if (book.step === 'contents') book.contents = book.contentsText.trim() || null;
       book.fixing = false;
       return next();
     }
+    if (action === 'single') { book.contents = null; return next(); }
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
       const hint = suggestOriginalDates(book.work, book.found.year).find(item => item.text === value);
@@ -457,10 +490,10 @@ export function render(container, state, actions) {
     const { found, extras } = book;
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: found.contributors,
-      publisher: found.publisher, place: found.place, year: found.year, editionStatement: '', translationFirstPublished: number(extras.translationFirstPublished),
+      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(extras.translationFirstPublished),
       series: extras.series || '', seriesNumber: extras.seriesNumber || '', set: extras.set || '', volume: extras.volume || '',
-      isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: null, workId: book.workId,
-      work: { title: '', originalTitle: book.originalTitle, originalLanguage: '', category: '', tags: [], datings: [{ text: book.dating, note: book.datingNote, working: true }] },
+      isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
+      work: { title: '', originalTitle: book.originalTitle, originalLanguage: found.originalLanguage, category: '', tags: [], datings: [{ text: book.dating, note: book.datingNote, working: true }] },
       copy: { binding: book.binding, location: book.location, acquired: '', price: number(extras.price), value: number(extras.value), status: 'owned', markings: false, notes: extras.notes || '' },
     };
     const result = recordsFromForm(form, null, context());
@@ -487,8 +520,15 @@ export function render(container, state, actions) {
     else if (book.cover.state === 'found') add('cover', book.cover.source, book.cover.files, false);
     else if (book.cover.state === 'waiting') images.push({ id: actions.newId(), kind: 'cover', source: book.cover.source, color: null, ratio: null, master: false, waiting: book.cover.url });
     if (book.photos.spine) add('spine', 'photo', book.photos.spine, true);
-    const height = book.photos.spine && book.photos.spine.height;
-    return { ...edition, images, ...(height ? { height, heightSource: 'measured' } : {}) };
+    // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
+    const { height, thickness } = book.found;
+    const measured = book.photos.spine && book.photos.spine.height;
+    return {
+      ...edition, images,
+      ...(height ? { height, heightSource: 'catalog' } : {}),
+      ...(thickness ? { thickness, thicknessSource: 'catalog' } : {}),
+      ...(measured ? { height: measured, heightSource: 'measured' } : {}),
+    };
   }
 
   function finishBook(title) {
