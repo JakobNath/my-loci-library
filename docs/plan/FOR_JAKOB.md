@@ -15,10 +15,48 @@ All tests pass: 109 in the app, 119 in the tools.
 
 ## The next build phase: better book data (phase 14)
 
-Planned on 10 November 2026: the Library of Congress, Open Library and Google Books used together, so each book's first entry holds as much as possible (pages as printed, size, edition, series, translators and editors, original title and language, contents of anthologies, and later catalogue numbers and subjects). The design is in `docs/plan/PLAN.md`, "Book data"; the steps are phase 14 in `docs/plan/BUILD_PLAN.md`.
+**What it does:** uses the Library of Congress, Open Library and Google Books together, so each book you add arrives with as much as possible: pages as printed, height and thickness, edition, series, translators and editors, original title and language, and the contents of anthologies (later also call numbers and subjects). Details: `docs/plan/PLAN.md` ("Book data") and phase 14 in `docs/plan/BUILD_PLAN.md`.
 
-- [ ] **Optional, before starting: a Google Books key.** It lets the phase record Google's real answers. In a browser signed in to your Google account: open https://console.cloud.google.com/apis/library/books.googleapis.com, make a project if asked (any name, such as "My Loci Library"), and click **Enable**. Then open https://console.cloud.google.com/apis/credentials, click **Create credentials › API key**, then **Edit API key**, and under "API restrictions" choose **Restrict key › Books API**; save, and copy the key. Paste it into the tools' `config.json` as `"googleBooksKey": "..."` (the file never leaves the laptop). Without a key the phase still runs; Google's part is then built from its documentation, and the key can be added later. The phase itself adds an easy guide and a "Test the key" button to the app.
-- [ ] **To start:** open a new chat in the `My Loci Library` folder and say: **"Go: continue the build plan with phase 14."** It runs on its own and stops only to ask what is truly yours to decide. It can run alongside your tour of the app below; both lead to the same app.
+**What you do:** Part A once (about 10 minutes, optional but recommended), then Part B.
+
+### Part A: make a Google Books key (optional)
+
+Without a key the phase still runs; with one, it can use Google's real answers from the start. The key is free.
+
+**1. Turn on the Books API**
+
+- [ ] Open https://console.cloud.google.com/apis/library/books.googleapis.com and sign in with your Google account if asked.
+- [ ] If Google asks you to choose or create a project: click **Create project**, name it `My Loci Library`, click **Create**, and wait until it says the project is ready. (If it asks you to agree to terms first, read them and agree.)
+- [ ] Back on the **Books API** page (open the link above again if needed), click the blue **Enable** button. When the page shows "API enabled" or a **Manage** button, this part is done.
+
+**2. Make the key**
+
+- [ ] Open https://console.cloud.google.com/apis/credentials (the **Credentials** page).
+- [ ] At the top, click **Create credentials**, then choose **API key**.
+- [ ] A form opens. Under **API restrictions**, choose **Restrict key**, open the list, tick **Books API**, and close the list. Leave everything else as it is.
+- [ ] Click **Create**. A box titled **API key created** shows a long code starting with `AIza`. Click the copy icon next to it, then **Close**.
+- If your screen looks different: on the Credentials page, any "API key" will do. Make one, then click its name, choose **Restrict key** under **API restrictions**, tick **Books API**, and click **Save**.
+
+**3. Put the key on the laptop**
+
+- [ ] In File Explorer, open `Desktop\Claude Code\My Loci Library\my-loci-library-tools`.
+- [ ] Right-click `config.json` › **Open with** › **Notepad**.
+- [ ] Add one line, so the file ends like this (keep your own Zotero values; note the comma added after the Zotero key):
+
+  ```
+    "zoteroKey": "your Zotero key stays here",
+    "googleBooksKey": "AIza...paste the Google key here..."
+  }
+  ```
+- [ ] Save (Ctrl+S) and close Notepad. The file stays on this laptop; it is never sent to GitHub.
+
+The phones get the same key later, through a step-by-step guide the phase adds to the app (Settings › Advanced), with a **Test the key** button.
+
+### Part B: start the phase
+
+- [ ] Open a new chat in the `My Loci Library` folder.
+- [ ] Type: **Go: continue the build plan with phase 14.**
+- [ ] Let it run. It works on its own and stops only to ask you something that is yours to decide. You can do your app tour (below) at the same time.
 
 ## What comes next for you, in order
 
