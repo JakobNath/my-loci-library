@@ -108,7 +108,7 @@ During the stop, iterate on the designs until a direction is chosen. Then:
 
 Each check is a small throwaway script or page. Write each result and any fallback chosen into `HOW_IT_WORKS.md` under "Verified approaches". Never stop here; switch to the fallback and continue.
 
-- [ ] **4.1 Many files, one commit.** From a browser page, commit 30 test records to `my-loci-library-test-data` in a single commit using GitHub's Git Data API (blobs, tree, commit, ref update).
+- [x] **4.1 Many files, one commit.** (2026-11-10: done live by the app itself, from Jakob's browser: commit 3e5cc81 in the test data holds 31 files, records and pictures, in one commit. Its time was not measured; the sync tests cover the same path.) From a browser page, commit 30 test records to `my-loci-library-test-data` in a single commit using GitHub's Git Data API (blobs, tree, commit, ref update).
   **Check:** one commit containing 30 files, and the time it took, recorded.
 - [x] **4.2 Online covers in the browser.** Try compressing an Open Library cover and a Google Books cover in the browser.
   **Fallback** if blocked: the laptop tool downloads covers into `covers/inbox/` in the data repo, and the app compresses them from there.
@@ -170,7 +170,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 7: Sync (against the test-data repo)
 
-- [ ] **7.1 Sync module and setup:** (built and tested against a fake GitHub; the live check waits for Jakob's key, see `DEVICE_CHECKS.md`) the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
+- [x] **7.1 Sync module and setup:** (2026-11-10: connected live on Jakob's laptop and phone with their own keys; both downloaded the test catalog and sent their changes. The two-device editing check is in `DEVICE_CHECKS.md`.) the first-launch screen (paste key, choose data repo), first download with a progress bar, then loading `catalog.json` plus any newer records.
   **Check:** a fresh browser profile sets up and loads the test data.
 - [x] **7.2 Writing:** the outbox is sent as one commit per batch, with newest-wins merging per field. Devices never rebuild `catalog.json`; the laptop does (step 10.1).
   **Check:** two simulated devices editing the same record offline merge correctly.
