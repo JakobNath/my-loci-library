@@ -222,6 +222,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [ ] **11.3 Linking:** suggests links between digital editions and existing works, for confirmation.
 - [ ] **11.4 Covers:** fetches covers into `covers/inbox/` (compressed by the laptop covers page) or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
   **Check for 11.1–11.4:** tests using `inputs/logos-sample.csv` pass, and a second run changes nothing.
+  (2026-11-10: all four are built and pass their tests with a made-up export; the check waits for the real `inputs/logos-sample.csv`, see `docs/plan/FOR_JAKOB.md`.)
 
 ---
 

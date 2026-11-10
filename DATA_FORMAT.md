@@ -58,6 +58,7 @@ my-loci-library-data/
   catalog.json              all records in one file, built on the laptop for fast loading
   backup-status.json        when the laptop last backed up, kept by loci-backup
   integrations/zotero-links.json   kept by the Zotero tool; the app never reads it
+  integrations/logos-import.json   kept by the Logos importer; the app never reads it
 ```
 
 Each record's file name is its ID. Nothing else about a record is in its file name, so renaming a book never renames a file.
@@ -279,6 +280,14 @@ All records in one file, so a device can load the catalog with one download:
 ```
 
 It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
+
+## integrations/logos-import.json
+
+Kept by the Logos importer: for each Logos resource ID, the edition fields as the importer last wrote them. On the next import a field is updated only if it still holds that value, so a field edited in the app is never overwritten. No person edits it; if it is lost, the next import simply treats every filled field as edited and changes nothing.
+
+```json
+{ "format": 1, "imported": { "LLS:PIEPER1": { "title": "Christian Dogmatics", "subtitle": null, "publisher": "Concordia Publishing House", "year": 1950, "series": null, "languages": ["English"], "isbn": "9780570067130", "logosExtra": { "Resource Type": "Monograph" } } } }
+```
 
 ## backup-status.json
 

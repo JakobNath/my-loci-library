@@ -16,7 +16,7 @@
     <p>Choose the pictures in <code>images/inbox/</code> of the data repository (laptop tools save covers there, named by the edition's ID: <code>&lt;edition id&gt;.jpg</code>). Each is made into a thumbnail and a detail image, and its main color is found.</p>
     <p><input type="file" id="files" accept="image/*" multiple></p>
     <p class="preview" id="status"></p>
-    <p class="preview">Writing the results into the data repository arrives with sync (build plan phase 7); until then this page shows what would be saved.</p>
+    <p class="preview">Open this page in the same browser as the app on this laptop, after the app has synced. Each cover is saved to the app's catalog here, and the app sends it with its next sync. The next run of <code>logos-import --covers</code> clears the inbox files of books that have a cover.</p>
   </section>
   <div class="list" id="results"></div>
 </main>
@@ -24,31 +24,54 @@
   // The laptop covers page (BUILD_PLAN.md step 6.5b). It uses edges/photo.js,
   // the same image code as the phone, so there is one image pipeline.
   import { readPicture, imageFiles } from '../edges/photo.js';
-  import { isId } from '../core/ids.js';
+  import { openStorage } from '../edges/storage.js';
+  import { isId, makeId } from '../core/ids.js';
+  import { withField } from '../core/records.js';
   import { escapeHtml } from '../core/html.js';
 
   const MIN_HEIGHT = 400; // a smaller cover counts as not found (PLAN.md)
   const results = document.getElementById('results');
   const status = document.getElementById('status');
 
+  // Save a cover the way the app saves one: the picture files, the edition's image entry
+  // (queued for sync), and the picture's ID in the list of pictures to send.
+  async function saveCover(storage, edition, made) {
+    const id = makeId(crypto.getRandomValues(new Uint8Array(12)));
+    const now = new Date().toISOString().slice(0, 19) + 'Z';
+    // Inbox covers come from Open Library (the Logos importer fetches them there).
+    const image = { id, kind: 'cover', source: 'openlibrary', color: made.color, ratio: made.ratio, master: false, waiting: null };
+    await storage.saveImage(`${id}/thumb`, made.thumb);
+    await storage.saveImage(`${id}/detail`, made.detail);
+    await storage.saveRecords([withField(edition, 'images', [...edition.images, image], now)], { toOutbox: true });
+    await storage.saveMeta('imageOutbox', [...((await storage.meta('imageOutbox')) || []), id]);
+  }
+
   document.getElementById('files').addEventListener('change', async event => {
     const files = [...event.target.files];
     results.innerHTML = '';
     let done = 0;
+    let saved = 0;
+    const storage = await openStorage();
+    const records = new Map((await storage.allRecords()).map(record => [record.id, record]));
     for (const file of files) {
       const editionId = file.name.replace(/\.[^.]+$/, '');
       try {
         const picture = await readPicture(file);
         if (picture.height < MIN_HEIGHT) throw new Error(`only ${picture.height} px tall; a cover needs at least ${MIN_HEIGHT}`);
+        const edition = records.get(editionId);
+        if (!isId(editionId) || !edition || edition.type !== 'edition') throw new Error('no book with this ID in the app on this laptop; open the app and let it sync first');
+        if (edition.images.some(image => image.kind === 'cover')) throw new Error('this book already has a cover');
         const made = await imageFiles(picture);
+        await saveCover(storage, edition, made);
+        saved++;
         const rowHtml = `<span class="cover cover-s has-image" style="background:${escapeHtml(made.color)}"><img src="${escapeHtml(URL.createObjectURL(made.thumb))}" alt=""></span>`
           + `<span class="row-main"><span class="row-title">${escapeHtml(file.name)}</span>`
-          + `<span class="row-author">${escapeHtml(`${isId(editionId) ? 'edition ' + editionId : 'name is not an edition ID'} · thumbnail ${Math.round(made.thumb.size / 1024)} KB · detail ${Math.round(made.detail.size / 1024)} KB · color ${made.color}`)}</span></span><span></span>`;
+          + `<span class="row-author">${escapeHtml(`saved for ${edition.title} · thumbnail ${Math.round(made.thumb.size / 1024)} KB · detail ${Math.round(made.detail.size / 1024)} KB · color ${made.color}`)}</span></span><span></span>`;
         results.insertAdjacentHTML('beforeend', `<div class="row">${rowHtml}</div>`);
       } catch (error) {
         results.insertAdjacentHTML('beforeend', `<div class="row"><span></span><span class="row-main"><span class="row-title">${escapeHtml(file.name)}</span><span class="row-author">${escapeHtml(`Skipped: ${error.message}`)}</span></span><span></span></div>`);
       }
-      status.textContent = `${++done} of ${files.length} done`;
+      status.textContent = `${++done} of ${files.length} done, ${saved} saved. Open the app to send them.`;
     }
   });
 </script>
