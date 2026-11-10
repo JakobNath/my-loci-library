@@ -1,15 +1,19 @@
 // The photo editor (PLAN.md, "Taking photos"): the outline starts already
 // placed; a cover has four corner handles, a spine has two edge lines and two
-// end bars. Each handle snaps to a strong edge within a few pixels (never
-// further), a magnifier shows under the finger, and the photo can be turned
-// in 90° steps and fine-straightened. Nothing is detected automatically.
+// end bars. A handle stays exactly where it is let go. While dragging, two
+// magnifiers (a wide one and a close one) show the point being placed, away
+// from the finger. The photo can be turned in 90° steps and fine-straightened.
+// Nothing is detected or moved automatically.
 // Loaded only when a photo is taken.
 
-import { readPicture, straighten, imageFiles, edgeStrengthAt } from '../edges/photo.js';
+import { readPicture, straighten, imageFiles } from '../edges/photo.js';
 import { escapeHtml } from '../core/html.js';
 
 const HANDLE = 14; // touch target radius in screen pixels
-const SNAP_RANGE = 6; // screen pixels to look either side of a dropped edge
+// The two magnifiers: a wide one to see the corner in its setting, and a
+// close one for the last few pixels (Jakob found 3x alone too close, 2026-11-10).
+const LOUPES = [{ zoom: 1.5 }, { zoom: 3 }];
+const LOUPE_SIZE = 130; // pixels across
 
 const token = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
@@ -35,27 +39,26 @@ const EDGES = [[0, 1], [1, 2], [2, 3], [3, 0]];
 export async function editPhoto(file, kind, { heightHint = '' } = {}) {
   let picture = await readPicture(file);
   const heightFieldHtml = kind === 'spine' ? `<label class="field">Height in cm, if measured (now ${escapeHtml(heightHint || 'a guess')})<input type="number" step="0.1" inputmode="decimal" data-action="height"></label>` : '';
+  const loupesHtml = LOUPES.map(() => `<canvas class="editor-loupe" width="${LOUPE_SIZE}" height="${LOUPE_SIZE}"></canvas>`).join('');
   const overlay = document.createElement('div');
   overlay.className = 'editor';
   overlay.innerHTML = `<div class="editor-bar"><button type="button" class="btn" data-action="cancel">Cancel</button>
       <span class="editor-title">${escapeHtml(kind === 'spine' ? 'Line up the spine' : 'Line up the cover')}</span>
       <button type="button" class="btn btn-primary" data-action="use">Use photo</button></div>
-    <div class="editor-stage"><canvas class="editor-canvas"></canvas><canvas class="editor-loupe" width="120" height="120" hidden></canvas></div>
+    <div class="editor-stage"><canvas class="editor-canvas"></canvas><div class="editor-loupes" hidden>${loupesHtml}</div></div>
     <div class="editor-tools"><button type="button" class="btn" data-action="turn">Turn 90°</button>
       <label class="field">Straighten<input type="range" min="-15" max="15" step="0.5" value="0" data-action="tilt"></label>
       ${heightFieldHtml}</div>`;
   document.body.append(overlay);
   const canvas = overlay.querySelector('.editor-canvas');
-  const loupe = overlay.querySelector('.editor-loupe');
+  const loupes = overlay.querySelector('.editor-loupes');
   const context = canvas.getContext('2d');
-  let pixels = null;
   let scale = 1;
   let outline = [];
   let tilt = 0;
 
   function setPicture(next) {
     picture = next;
-    pixels = picture.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, picture.width, picture.height);
     const stage = overlay.querySelector('.editor-stage');
     scale = Math.min(stage.clientWidth / picture.width, stage.clientHeight / picture.height);
     canvas.width = Math.round(picture.width * scale);
@@ -105,40 +108,31 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     }
   }
 
-  function showLoupe(x, y) {
-    const zoom = 3;
-    const size = loupe.width;
-    const view = loupe.getContext('2d');
-    view.drawImage(picture, x - size / zoom / 2, y - size / zoom / 2, size / zoom, size / zoom, 0, 0, size, size);
-    view.strokeStyle = token('--pop');
-    view.beginPath();
-    view.moveTo(size / 2, 0); view.lineTo(size / 2, size); view.moveTo(0, size / 2); view.lineTo(size, size / 2);
-    view.stroke();
-    loupe.hidden = false;
-  }
-
-  // After a drag, move each dragged edge to the strongest edge in the photo
-  // within a few pixels, if there is a clear one; otherwise leave it.
-  function snap(corners) {
-    const range = SNAP_RANGE / scale;
-    for (const [i, j] of EDGES.filter(([i, j]) => corners.includes(i) && corners.includes(j))) {
-      const [a, b] = [outline[i], outline[j]];
-      const length = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-      const nx = -(b[1] - a[1]) / length;
-      const ny = (b[0] - a[0]) / length;
-      let best = { offset: 0, strength: 0 };
-      for (let offset = -range; offset <= range; offset += 0.5) {
-        let strength = 0;
-        for (let t = 0.15; t <= 0.85; t += 0.1) {
-          strength += edgeStrengthAt(pixels, a[0] + (b[0] - a[0]) * t + nx * offset, a[1] + (b[1] - a[1]) * t + ny * offset, nx, ny);
-        }
-        if (strength > best.strength) best = { offset, strength };
-      }
-      if (best.strength / 8 > 40) {
-        outline[i] = [a[0] + nx * best.offset, a[1] + ny * best.offset];
-        outline[j] = [b[0] + nx * best.offset, b[1] + ny * best.offset];
-      }
-    }
+  // The magnifiers, centered on the point being placed (a corner, or the
+  // middle of a spine's edge), with the outline drawn in, on the side of
+  // the screen away from the finger.
+  function showLoupes(point, fingerX) {
+    loupes.classList.toggle('is-right', fingerX < canvas.width / 2 / scale);
+    loupes.hidden = false;
+    const points = shown();
+    loupes.querySelectorAll('canvas').forEach((loupe, i) => {
+      const zoom = LOUPES[i].zoom * scale;
+      const view = loupe.getContext('2d');
+      const left = point[0] - LOUPE_SIZE / zoom / 2;
+      const top = point[1] - LOUPE_SIZE / zoom / 2;
+      view.fillStyle = token('--scan-bg');
+      view.fillRect(0, 0, LOUPE_SIZE, LOUPE_SIZE);
+      view.drawImage(picture, left, top, LOUPE_SIZE / zoom, LOUPE_SIZE / zoom, 0, 0, LOUPE_SIZE, LOUPE_SIZE);
+      view.strokeStyle = token('--pop');
+      view.lineWidth = 1.5;
+      view.beginPath();
+      points.forEach(([x, y], k) => (k ? view.lineTo((x - left) * zoom, (y - top) * zoom) : view.moveTo((x - left) * zoom, (y - top) * zoom)));
+      view.closePath();
+      view.stroke();
+      view.beginPath();
+      view.arc(LOUPE_SIZE / 2, LOUPE_SIZE / 2, 3, 0, Math.PI * 2);
+      view.stroke();
+    });
   }
 
   let dragging = null;
@@ -161,14 +155,14 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     for (const i of dragging.corners) outline[i] = [outline[i][0] + x - dragging.x, outline[i][1] + y - dragging.y];
     dragging.x = x;
     dragging.y = y;
-    showLoupe(x, y);
+    const at = dragging.corners.map(i => outline[i]);
+    showLoupes([at.reduce((sum, p) => sum + p[0], 0) / at.length, at.reduce((sum, p) => sum + p[1], 0) / at.length], x);
     draw();
   });
   const endDrag = () => {
     if (!dragging) return;
-    snap(dragging.corners.length === 1 ? [dragging.corners[0], (dragging.corners[0] + 1) % 4, (dragging.corners[0] + 3) % 4] : dragging.corners);
     dragging = null;
-    loupe.hidden = true;
+    loupes.hidden = true;
     draw();
   };
   canvas.addEventListener('pointerup', endDrag);

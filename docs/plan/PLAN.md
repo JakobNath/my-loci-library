@@ -218,7 +218,7 @@ Most books need no photo: the online cover is used. Photos are for books with no
 
 - Photos come from the phone's own camera, opened from the app, or from the photo library. This gives full resolution and needs no camera permission. The app's live camera is used only for barcode scanning.
 - No particular background is needed, and the book can be held in the hand.
-- The editor opens at once with the outline already placed: four corners for a cover; two edge lines and two end bars for a spine. Each handle snaps to a strong edge within a few pixels (never further), a magnifier shows under the finger, and the photo can be rotated in 90° steps and fine-straightened.
+- The editor opens at once with the outline already placed: four corners for a cover; two edge lines and two end bars for a spine. A handle stays exactly where it is let go (nothing snaps or moves by itself). While dragging, two magnifiers away from the finger show the point being placed: a wide one (1.5×) and a close one (3×), with the outline drawn in. The photo can be rotated in 90° steps and fine-straightened.
 - Nothing is detected or saved automatically: every photo gets one look, usually one to three drags.
 - No enhancement (white balance, lighting) in the app. If it is ever wanted, it belongs on the laptop page, working from masters.
 - The result goes through the same compression. This is about 400 lines of plain code, loaded only when a photo is taken, with no outside library.

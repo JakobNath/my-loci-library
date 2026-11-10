@@ -172,17 +172,3 @@ export function mainColor(picture) {
   const [r, g, b, n] = [...groups.values()].sort((x, y) => y[3] - x[3])[0];
   return '#' + [r / n, g / n, b / n].map(value => Math.round(value).toString(16).padStart(2, '0')).join('');
 }
-
-/**
- * How strongly the picture changes across a line at (x, y) in direction
- * (nx, ny): used to snap an edge to the nearest strong edge in the photo.
- */
-export function edgeStrengthAt(pixels, x, y, nx, ny) {
-  const sample = (px, py) => {
-    const i = (Math.min(pixels.height - 1, Math.max(0, Math.round(py))) * pixels.width + Math.min(pixels.width - 1, Math.max(0, Math.round(px)))) * 4;
-    return [pixels.data[i], pixels.data[i + 1], pixels.data[i + 2]];
-  };
-  const before = sample(x - nx * 1.5, y - ny * 1.5);
-  const after = sample(x + nx * 1.5, y + ny * 1.5);
-  return Math.hypot(before[0] - after[0], before[1] - after[1], before[2] - after[2]);
-}

@@ -159,7 +159,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
 - [x] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
-- [x] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder; the cover's main color worked out once and stored. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
+- [x] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, no snapping, two magnifiers (1.5× and 3×) away from the finger, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder; the cover's main color worked out once and stored. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
 - [x] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
   **Check:** an inbox of sample covers is processed into both sizes.
@@ -188,6 +188,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [ ] **8.3** Wishlist tab: standalone records, and "I bought it" opening a prefilled entry form that keeps the note.
 - [ ] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
 - [ ] **8.5** Settings page exactly as listed in `PLAN.md`: shared settings saved in the data repo's `settings.json`, device settings kept on the device.
+- [ ] **8.6 Interface review with Jakob.** Go through every screen on a phone, using the notes in `docs/plan/INTERFACE_NOTES.md`, and ask Jakob about each screen in turn (what feels clunky, too wordy, unclear or slow) before changing it. Fix what is agreed, keeping to the design in `docs/plan/DESIGN.md` and the size budget. Record each change under "Decisions" in `HOW_IT_WORKS.md`.
   **Check for 8.1–8.5:** a test for each item, and the sample books behave as their "What it tests" column says.
 
 ---
