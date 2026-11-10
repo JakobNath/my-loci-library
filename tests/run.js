@@ -9,6 +9,7 @@ const testFiles = [
   '../core/tests/records.tests.js',
   '../core/tests/entry.tests.js',
   '../core/tests/lookup.tests.js',
+  '../core/tests/book-data.tests.js',
   '../core/tests/exports.tests.js',
   './speed.tests.js',
 ];
