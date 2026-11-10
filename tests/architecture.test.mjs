@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SIZE_BUDGET = 100 * 1024; // PLAN.md, "Small and fast"
@@ -87,6 +88,19 @@ export function innerHtmlProblems(file, text) {
 test('core imports nothing outside core and uses no browser or Node globals', () => {
   const problems = appFiles().filter(file => file.startsWith('core/')).flatMap(file => coreProblems(file, read(file)));
   assert.deepEqual(problems, []);
+});
+
+test('every script of the app parses, including screens loaded only when opened', () => {
+  const broken = [];
+  for (const file of appFiles().filter(name => /\.m?js$/.test(name))) {
+    try {
+      execFileSync(process.execPath, ['--check', join(root, file)], { stdio: 'pipe' });
+    } catch (error) {
+      const message = String(error.stderr).split(/\r?\n/).find(line => line.includes('Error')) || 'does not parse';
+      broken.push(`${file}: ${message}`);
+    }
+  }
+  assert.deepEqual(broken, []);
 });
 
 test('each outside service, and IndexedDB, is used by one edge file only', () => {

@@ -53,6 +53,9 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: 9px 16px; border-radius: var(--radius-btn);
   border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 var(--fs-base)/1.2 var(--font-ui); cursor: pointer; }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn, .seg button { min-height: var(--tap); }
+.chip { min-height: 36px; }
+.btn-big { padding: 12px 24px; font-size: 17px; }
 .link { border: 0; background: none; color: var(--accent-ink); cursor: pointer; padding: 0; font: var(--fs-small) var(--font-ui); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 .empty { color: var(--muted); font: var(--fs-small) var(--font-ui); padding: var(--space-5) 0; }
@@ -99,7 +102,8 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 
 /* Book page */
 .detail { display: grid; gap: var(--space-4); }
-.detail-cover { width: min(62%, 260px); margin: 0 auto; display: flex; gap: var(--space-3); align-items: flex-end; }
+.detail-cover { width: min(62%, 260px); margin: 0 auto; display: flex; gap: var(--space-3); align-items: stretch; }
+.detail-cover > .cover { flex: 1 1 0; min-width: 0; }
 .detail-cover .cover { box-shadow: var(--shadow-cover-l); }
 .detail-series { margin: 0; font: 600 var(--fs-small)/1.3 var(--font-ui); letter-spacing: 0.05em; text-transform: uppercase; color: var(--pop-ink); }
 .detail-title { margin: var(--space-1) 0 0; font: var(--h1-weight) var(--fs-detail)/1.12 var(--font-display); }
@@ -133,6 +137,8 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
   border-bottom: 6px solid var(--surface-2); margin-bottom: var(--space-4); }
 .spine { position: relative; flex: none; overflow: hidden; background: var(--surface); border: 1px dashed var(--muted); border-radius: 2px 2px 1px 1px; }
 .spine.has-color { border-width: 1.5px; }
+.spine.has-photo { border: 0; background: var(--surface-2); }
+.spine.has-photo img { display: block; width: 100%; height: 100%; object-fit: fill; }
 .spine-box { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .spine-text { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; text-align: center; line-height: 1.12;
   font: 400 10px/1.12 var(--font-display); color: var(--ink); font-variant-ligatures: none; }
@@ -157,14 +163,15 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 /* Saved cover pictures: the cover's main color shows until the picture loads */
 .cover.has-image::before, .cover.has-image::after { display: none; }
 .cover.has-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
-.spine-photo { flex: none; width: 18%; max-width: 48px; align-self: stretch; display: flex; align-items: flex-end; }
-.spine-photo img { width: 100%; border-radius: 2px; box-shadow: var(--shadow-cover); }
+/* The spine takes the cover's height; its picture adds no height of its own. */
+.spine-photo { position: relative; min-width: 6px; }
+.spine-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; border-radius: 2px; box-shadow: var(--shadow-cover); }
 
 /* Batch add */
 .find { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
 .find input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); }
 .camera { margin-bottom: var(--space-4); text-align: center; }
-.camera-view { position: relative; display: inline-block; width: 100%; max-width: 480px; }
+.camera-view { position: relative; display: inline-block; width: 100%; max-width: 640px; }
 .camera-read { position: absolute; left: 0; right: 0; bottom: var(--space-3); margin: 0; opacity: 0; transition: opacity 0.2s;
   font: 600 var(--fs-base) var(--font-ui); color: var(--on-accent); }
 .camera.is-read video { box-shadow: 0 0 0 4px var(--accent-ink), 0 0 24px var(--accent-ink); }
@@ -172,7 +179,7 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .hints { display: grid; gap: var(--space-1); margin-top: var(--space-1); }
 .hint { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; }
 .hint .chip, .hints > .chip { flex: none; justify-self: start; }
-.camera video { width: 100%; max-width: 480px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-lg); background: var(--scan-bg); }
+.camera video { width: 100%; max-width: 640px; aspect-ratio: 3 / 2; object-fit: cover; border-radius: var(--radius-lg); background: var(--scan-bg); }
 .review-top { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-4); align-items: start; }
 .review-cover { width: 96px; border-radius: var(--cover-radius); box-shadow: var(--shadow-cover); }
 .review-cover.is-empty { aspect-ratio: var(--cover-ratio); display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--space-2); background: var(--surface-2); color: var(--muted); font: var(--fs-small) var(--font-ui); box-shadow: none; }
@@ -181,6 +188,31 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .choice { border: 0; padding: 0; margin: var(--space-3) 0 0; display: grid; gap: var(--space-2); }
 .choice legend { font: 600 var(--fs-small) var(--font-ui); margin-bottom: var(--space-1); }
 label.btn { position: relative; }
+
+/* Batch add, step by step: one question per screen */
+.scan-actions { margin-bottom: var(--space-3); }
+.scan-actions .btn { width: 100%; }
+.step-count { margin: 0 0 var(--space-1); font: var(--fs-small) var(--font-ui); color: var(--muted); }
+.progress { height: 4px; border-radius: 2px; background: var(--surface-2); margin-bottom: var(--space-4); overflow: hidden; }
+.progress span { display: block; height: 100%; background: var(--pop); }
+.step-title { margin: 0 0 var(--space-1); font: var(--h1-weight) var(--fs-h1)/1.15 var(--font-display); }
+.step-hint { margin: 0 0 var(--space-4); color: var(--ink-2); font: var(--fs-base)/1.4 var(--font-ui); }
+.step-hint.is-missing { color: var(--warn-ink); }
+.choices { display: grid; gap: var(--space-2); margin-bottom: var(--space-4); }
+.choice-button { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; width: 100%; min-height: 56px; justify-content: center;
+  padding: var(--space-3) var(--space-4); border: 1px solid var(--card-line); border-radius: var(--radius-lg); background: var(--surface);
+  color: var(--ink); font: 600 17px/1.3 var(--font-ui); text-align: left; cursor: pointer; }
+.choice-button small { font: 400 var(--fs-small)/1.3 var(--font-ui); color: var(--muted); }
+.choice-button:hover, .choice-button:focus-visible { border-color: var(--pop); }
+.step-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; align-items: center; margin-top: var(--space-3); }
+.chip-big { min-height: var(--tap); padding: 8px 16px; font-size: var(--fs-base); }
+.found { display: flex; gap: var(--space-4); align-items: flex-start; margin-bottom: var(--space-4); }
+.found-title { margin: 0; font: 600 var(--fs-h2)/1.25 var(--font-display); }
+.found-sub { margin: 2px 0 0; color: var(--ink-2); font-family: var(--font-display); }
+.found-meta { margin: var(--space-1) 0 0; color: var(--muted); font: var(--fs-small)/1.4 var(--font-ui); }
+.step-cover { width: 96px; flex: none; border-radius: var(--cover-radius); box-shadow: var(--shadow-cover); }
+.step-cover.is-large { width: min(60%, 220px); }
+.step-spine { height: 220px; border-radius: 2px; box-shadow: var(--shadow-cover); }
 
 /* Photo editor, over the whole page */
 .editor { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; background: var(--scan-bg); color: var(--scan-ink); }

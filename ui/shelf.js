@@ -5,6 +5,7 @@
 import { escapeHtml } from '../core/html.js';
 import { estimateSize } from '../core/sizes.js';
 import { iconHtml } from './icons.js';
+import { fillImages } from './images.js';
 
 const SHELF_HEIGHT = 200; // pixels for a 26 cm book, roughly; taller books are capped
 const PIXELS_PER_MM = (SHELF_HEIGHT * 0.92) / 260;
@@ -30,6 +31,13 @@ function spineHtml(entry, copy, related) {
   const height = Math.min(SHELF_HEIGHT, Math.round(size.height.mm * PIXELS_PER_MM));
   const width = Math.max(MIN_WIDTH, Math.round(size.thickness.mm * PIXELS_PER_MM));
   const cover = entry.edition.images.find(image => image.kind === 'cover' && image.color);
+  const spine = entry.edition.images.find(image => image.kind === 'spine');
+  if (spine) {
+    // A spine photo: its own shape gives its width at the book's height.
+    const photoWidth = Math.max(6, Math.round(height * (spine.ratio || size.thickness.mm / size.height.mm)));
+    return `<a class="spine has-photo" href="#/book/${escapeHtml(entry.id)}" title="${escapeHtml(entry.edition.title)}" style="width:${photoWidth}px;height:${height}px">`
+      + `<img data-image="${escapeHtml(spine.id)}/thumb" alt=""></a>`;
+  }
   const foot = entry.edition.volume || entry.edition.seriesNumber || (entry.authors[0] && entry.authors[0].name.split(' ').pop()) || '';
   const title = `${entry.edition.title} · ${size.height.mm / 10} cm (${size.height.source}), ${size.thickness.mm} mm (${size.thickness.source})`;
   return `<a class="spine${cover ? ' has-color' : ''}" href="#/book/${escapeHtml(entry.id)}" title="${escapeHtml(title)}" style="width:${width}px;height:${height}px${cover ? `;border-color:${escapeHtml(cover.color)}` : ''}">`
@@ -39,7 +47,7 @@ function spineHtml(entry, copy, related) {
 }
 
 /** The list of shelves, or one shelf when the route names it. */
-export function render(container, state) {
+export function render(container, state, actions) {
   const copies = [];
   for (const entry of state.library.entries) {
     for (const copy of entry.copies) if (copy.status === 'owned' && copy.location.length) copies.push({ entry, copy });
@@ -63,4 +71,5 @@ export function render(container, state) {
   container.innerHTML = `<a class="back" href="#/shelves">${iconHtml('back')} Shelves</a>`
     + `<div class="page-head"><h1 class="page-title">${escapeHtml(path)}</h1><p class="page-meta">${escapeHtml(`${here.length} books`)}</p></div>`
     + `<div class="shelf">${spinesHtml}</div>`;
+  fillImages(container, actions.imageUrl);
 }

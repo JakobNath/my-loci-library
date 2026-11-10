@@ -98,7 +98,10 @@ export function render(container, state, actions) {
   ]);
   // The spine beside the cover, when there is a spine photo (PLAN.md, "Taking photos").
   const spine = edition.images.find(image => image.kind === 'spine');
-  const spineHtml = spine ? `<div class="spine-photo"><img data-image="${escapeHtml(spine.id)}/detail" alt="Spine"></div>` : '';
+  // As tall as the cover, its width from the spine's shape: the cover box is 2 : 3,
+  // so the spine is (ratio × 1.5) times the cover's width; flex shares the room that way.
+  const spineShare = Math.round((Number(spine && spine.ratio) || 0.1) * 1.5 * 1000) / 1000;
+  const spineHtml = spine ? `<div class="spine-photo" style="flex:${spineShare} 1 0"><img data-image="${escapeHtml(spine.id)}/detail" alt="Spine"></div>` : '';
   const piecesHtml = entry.works.length > 1 ? contentsHtml(entry, style) : '';
   const copiesTitleHtml = entry.copies.length > 1 ? 'Copies' : 'Copy';
   container.innerHTML = `

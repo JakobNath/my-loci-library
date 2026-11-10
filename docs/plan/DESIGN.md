@@ -50,7 +50,7 @@ Each mode uses two greens: **accent** fills things (top bar, buttons, selected c
 - Titles, book titles and notes: a book serif from the device ("Iowan Old Style" on Apple devices, "Palatino Linotype" on Windows, then Palatino, Book Antiqua, Georgia).
 - Everything else: the device's own sans serif (`system-ui`).
 - No font files are downloaded. Because of that, titles look slightly different on an iPhone and on Windows. If that ever matters, the plan allows one self-hosted typeface; it would be added in `styles/` and named first in `--font-display`.
-- Sizes: body 15 px, small 13 px, page titles 26 px on phones and 34 px on wide screens, book titles 30 px on the book page.
+- Sizes: body 16 px, small 14 px (raised from 15 and 13 on 10 November 2026 after phone testing: easier to read, and iPhones do not zoom in on fields of 16 px or more), page titles 26 px on phones and 34 px on wide screens, book titles 30 px on the book page.
 
 ## Spacing and shape
 
