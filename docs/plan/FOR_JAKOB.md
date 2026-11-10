@@ -27,7 +27,7 @@ All tests pass: 107 in the app (`node --test`), 94 on the self-test page, 111 in
 
 - **Settings › Value** shows totals by room, using the first two parts of a location (Home › Office). If you would rather see totals by bookcase or by shelf, say so.
 - **Citation keys** in exports and in Zotero follow your Better BibTeX pattern (`Augustine1991`, with a, b, c for repeats), or the title's first word when there is no author or editor. Keys already pinned in Zotero are kept.
-- **Zotero fields:** the shelf location goes in "Loc. in Archive" and the Loci link in URL; the original date and the pinned key go in Extra.
+- **Zotero fields:** only bibliographic data goes in Zotero's fields; the original date and the pinned key use Zotero's own Original Date and Citation Key fields. The Loci link, with the shelf in its title, is a link attached under each book.
 - **Zotero is reached through its web API**, because Zotero 7's local connection cannot write. It needs the key above; Zotero on the laptop shows changes after its own sync.
 - **The Logos importer** now matches your real export. Five bookkeeping columns that change with every export are left out, editors in the Authors column come in as authors, and covers come from Open Library by title when it has the same title (about 1 in 8 in the trial). Subjects and License are kept with each book.
 - **Version 1.0.0** was tagged as the build plan says, before the live checks above. If any of them turns up a problem, the fix becomes 1.0.1.

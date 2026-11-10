@@ -283,7 +283,7 @@ It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edi
 
 ## integrations/zotero-links.json
 
-Kept by the Zotero tool: the Zotero collection, and for each record sent (an edition, or "<edition id>/<work id>" for a section of an anthology) its Zotero item key, its pinned citation key, a fingerprint of what was last sent, and whether a section has been related to its anthology. No person edits it, and the app never reads it. If it is lost, the next run links the books already in Zotero again, as on a first run.
+Kept by the Zotero tool: the Zotero collection, and for each record sent (an edition, or "<edition id>/<work id>" for a section of an anthology) its Zotero item key, its pinned citation key, a fingerprint of what was last sent, whether a section has been related to its anthology, and, for a book, the key and title of the link attached under it (`attachment`, `attachmentTitle`). No person edits it, and the app never reads it. If it is lost, the next run links the books already in Zotero again, as on a first run.
 
 ```json
 { "format": 1, "collection": "ABCD2345", "items": { "chadw1ck1991": { "key": "QW3RTY78", "citationKey": "Augustine1991", "sent": "5f0c1a2b3c4d5e6f" } } }

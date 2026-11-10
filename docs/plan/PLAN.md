@@ -337,7 +337,7 @@ The tool never reads Logos's internal database, which would break whenever Logos
 - Sends every physical book. Logos books go only when marked "cite", and wishlist items never go.
 - Creates one Zotero item per edition. Two copies of one edition become one item, and a Logos edition is its own item. Every work inside an anthology that is sent to Zotero also gets its own Zotero "book section" item linked to the anthology, so a single piece can be cited in Chicago form. This can mean a few thousand extra items, which Zotero handles fine.
 - Sets `original-date` so Chicago citations show the original date.
-- Writes the shelf location and the book's permanent Loci link into Zotero fields, refreshed every run. Links use a fixed pattern containing only the record ID, so if the app's address ever changes, one run rewrites them all.
+- Attaches a link under each book that opens it in Loci, titled with the book's shelf location and refreshed every run. It never writes them into citation fields: Chicago prints URL and Loc. in Archive (decided 2026-11-10 after the first trial). Links use a fixed pattern containing only the record ID, so if the app's address ever changes, one run rewrites them all.
 - Keeps the current Better BibTeX citekey pattern, author + edition year (Adler1972). It pins every key so it never changes. Same-author, same-year books get Better BibTeX's usual suffixes (Augustine1997a, Augustine1997b), and pinning stops those from shifting when new books arrive.
 - Never deletes from Zotero, since Obsidian notes may cite those items. Books we no longer own, or delete from Loci, are tagged "Loci: no longer owned" or "Loci: removed".
 - Keeps its own link file (Loci record → Zotero item) inside the data repo. The app never reads it.
