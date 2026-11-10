@@ -1,66 +1,39 @@
 # For Jakob
 
-Where the project stands, what comes next, and what is waiting on you. Each item says exactly what to do; tick it when it is done. Last brought up to date on 10 November 2026 (app version 1.0.5).
+Where the project stands, what comes next, and what is waiting on you. Each item says exactly what to do; tick it when it is done. Last brought up to date on 10 November 2026 (app version 1.1.0).
 
 ## Where things stand
 
-Every build phase is done. The one build step left is the shelf view review (13.0), which needs real books on a shelf. The app, the laptop tools and the Zotero companion have been tried live:
+Every build phase is done, including phase 14 (better book data, below). The one build step left is the shelf view review (13.0), which needs real books on a shelf. The app, the laptop tools and the Zotero companion have been tried live:
 
 - **Sync** works on your laptop and phone, each with its own key, against the test catalog (`my-loci-library-test-data`). The real catalog (`my-loci-library-data`) is still empty and untouched.
 - **Logos**: your export of 53 resources imported cleanly in a trial on a copy of the test data, and the importer now matches Logos's real columns.
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly. One of your own Zotero items (*Loci theologici 1*) was overwritten by the first trial and was restored exactly from Zotero's backup.
 - **Book search** (Wishlist and Add) was rebuilt on 10 November after your notes: it now shows specific editions with English titles, publishers and covers, and finds books when you add a publisher or series ("anna karenina everyman's library", "complete works of plato hackett").
 
-All tests pass: 109 in the app, 119 in the tools.
+All tests pass: 134 in the app (and 118 on the self-test page), 142 in the tools.
 
-## The next build phase: better book data (phase 14)
+## Phase 14: better book data (built 10 November)
 
-**What it does:** uses the Library of Congress, Open Library and Google Books together, so each book you add arrives with as much as possible: pages as printed, height and thickness, edition, series, translators and editors, original title and language, and the contents of anthologies (later also call numbers and subjects). Details: `docs/plan/PLAN.md` ("Book data") and phase 14 in `docs/plan/BUILD_PLAN.md`.
+**What it does now:**
 
-**What you do:** Part A once (about 10 minutes, optional but recommended), then Part B.
+- **Adding a book** (on any device) fills more from Open Library, and from Google Books when the device has the key: pages as printed ("xx, 227"), the edition ("1st HarperCollins ed."), series and number, place, height and thickness, the Library of Congress and Dewey call numbers, OCLC number and subject headings. The binding step has the binding the record names already chosen. When the record lists contents (and the book is not a Bible), one step asks "Is this a collection of works?" with the list filled in, to correct or decline; nothing is created unless you say yes. Adding is as quick as before (measured).
+- **Every night on the laptop**, `loci-enrich` (it replaces `loci-sizes` and runs with `loci-backup`) asks the Library of Congress, Open Library and Google Books about every book with an ISBN, and fills **empty** fields only. A field it filled once is never touched again, so whatever you change or clear stays. It never fills an original date. Anthology contents it finds are listed in its report (`loci-enrich/last-report.txt`) for you to enter if they are right. On the test catalog it filled 9 of 13 books.
+- **Settings › Advanced** has the steps for a Google Books key and a **Test the key** button that says plainly what is wrong, if anything.
+- **Data format version 2**: each book now keeps its catalogue numbers and subject headings, shown on its page and in the CSV export. The Zotero companion puts the Library of Congress call number in Zotero's Call Number field, but only when Loci has one, so the call numbers already on your Zotero items stay. The test catalog has been upgraded; older records keep working.
 
-### Part A: make a Google Books key (optional)
+**Waiting on you:**
 
-Without a key the phase still runs; with one, it can use Google's real answers from the start. The key is free.
+- [x] Make the Google Books key and put it in the laptop's `config.json` (done before the phase began). If a key is ever needed again, the steps are in the app (Settings › Advanced, "How to make a free key") and in the tools README ("A Google Books key").
+- [ ] **Update each phone to 1.1.0.** Open the app; when "New version · Reload" appears at the bottom, tap it (or close and reopen the app). Settings shows the version at the bottom. A phone still on 1.0.5 will say the catalog is in a newer format and wait, without changing anything, until it is reloaded.
 
-**1. Turn on the Books API**
-
-- [ ] Open https://console.cloud.google.com/apis/library/books.googleapis.com and sign in with your Google account if asked.
-- [ ] If Google asks you to choose or create a project: click **Create project**, name it `My Loci Library`, click **Create**, and wait until it says the project is ready. (If it asks you to agree to terms first, read them and agree.)
-- [ ] Back on the **Books API** page (open the link above again if needed), click the blue **Enable** button. When the page shows "API enabled" or a **Manage** button, this part is done.
-
-**2. Make the key**
-
-- [ ] Open https://console.cloud.google.com/apis/credentials (the **Credentials** page).
-- [ ] At the top, click **Create credentials**, then choose **API key**.
-- [ ] A form opens. Under **API restrictions**, choose **Restrict key**, open the list, tick **Books API**, and close the list. Leave everything else as it is.
-- [ ] Click **Create**. A box titled **API key created** shows a long code starting with `AIza`. Click the copy icon next to it, then **Close**.
-- If your screen looks different: on the Credentials page, any "API key" will do. Make one, then click its name, choose **Restrict key** under **API restrictions**, tick **Books API**, and click **Save**.
-
-**3. Put the key on the laptop**
-
-- [ ] In File Explorer, open `Desktop\Claude Code\My Loci Library\my-loci-library-tools`.
-- [ ] Right-click `config.json` › **Open with** › **Notepad**.
-- [ ] Add one line, so the file ends like this (keep your own Zotero values; note the comma added after the Zotero key):
-
-  ```
-    "zoteroKey": "your Zotero key stays here",
-    "googleBooksKey": "AIza...paste the Google key here..."
-  }
-  ```
-- [ ] Save (Ctrl+S) and close Notepad. The file stays on this laptop; it is never sent to GitHub.
-
-**4. Put the key on each phone** (once the app has version 1.1.0; Settings shows the version at the bottom)
+**Put the key on each phone** (once it has version 1.1.0). One key serves every device.
 
 - [ ] On the laptop, copy the key from `config.json` and send it to yourself in a way you trust (a note to yourself, or type it).
 - [ ] On each phone, open the app › **Settings** › **Advanced**, and paste the key into **Google Books key** under "This device".
 - [ ] Tap **Test the key**. It should say "The key works". If it says something else, it says what to change; the same steps are under "How to make a free key" just below the button.
 
-### Part B: start the phase
-
-- [ ] Open a new chat in the `My Loci Library` folder.
-- [ ] Type: **Go: continue the build plan with phase 14.**
-- [ ] Let it run. It works on its own and stops only to ask you something that is yours to decide. You can do your app tour (below) at the same time.
+- [ ] **Try the phone checks** for phase 14 in `DEVICE_CHECKS.md` when convenient (scan *Mere Christianity* or another book with a table of contents; scan a Bible; test the key).
 
 ## What comes next for you, in order
 
@@ -118,5 +91,6 @@ The extras the plan set aside: the price estimator, and recognising a book from 
 - **Zotero fields**: only bibliographic data; the original date and the pinned key use Zotero's own Original Date and Citation Key fields; a volume of a set has the set as its title and its own title as `volume-title` in Extra. The Loci link, with the shelf in its title, is a link attached under each book. Bibles are sent as one book, without sections. Anonymous pieces keep their sections, and Zotero's Chicago style puts the editor first for them; correct those by hand when citing.
 - **Zotero is reached through its web API**, because Zotero 7's local connection cannot write. Zotero on the laptop shows changes after its own sync.
 - **The Logos importer** matches your real export. Five bookkeeping columns that change with every export are left out, editors in the Authors column come in as authors, and covers come from Open Library by title when it has the same title (about 1 in 8 in the trial).
-- **Version numbers**: 1.0.0 was tagged as the build plan says; fixes since then are 1.0.1 to 1.0.5.
+- **Version numbers**: 1.0.0 was tagged as the build plan says; fixes since then are 1.0.1 to 1.0.5, and phase 14 is 1.1.0.
+- **Book data (phase 14)**, each with its reason in `HOW_IT_WORKS.md`: places keep their state as the Library of Congress gives it ("Indianapolis, Ind."), since Cambridge, Massachusetts, and Cambridge in England must stay apart; an associate editor is recorded with the role "other", so citations name only the book's editor; someone who "translated, with an introduction" is recorded only as translator; *Mere Christianity*'s four books are offered as contents (it is your call, each time, whether a book is a collection); `loci-enrich` asks about each book again every 90 days, about 22 books a night for 2,000 books.
 - **The yearly archive reminder** appears in Settings and, at most once a week, when the app opens, starting a year after the first laptop backup.
