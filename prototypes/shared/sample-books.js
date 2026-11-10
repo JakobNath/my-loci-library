@@ -120,7 +120,7 @@ export const books = [
   },
   {
     id: 'na28', n: 6, kind: 'owned', format: 'physical',
-    title: 'Novum Testamentum Graece', subtitle: 'Nestle-Aland, 28th revised edition',
+    title: 'Novum Testamentum Graece', subtitle: null,
     authorLine: 'ed. Barbara Aland, Kurt Aland, et al.',
     contributors: [['editor', 'Barbara Aland'], ['editor', 'Kurt Aland'], ['editor', 'Johannes Karavidopoulos'], ['editor', 'Carlo M. Martini'], ['editor', 'Bruce M. Metzger']],
     originalLanguage: 'Greek', edition: '28th revised edition',
