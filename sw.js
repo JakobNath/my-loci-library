@@ -6,7 +6,7 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v0.10.0';
+const VERSION = 'v1.0.0';
 const FILES = [
   './', 'index.html', 'main.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css', 'styles/screens.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',

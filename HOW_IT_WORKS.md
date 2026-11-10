@@ -4,7 +4,40 @@ A plain guide to the parts of My Loci Library and how to fix each one. It is wri
 
 ## The parts
 
-To be written as the parts are built.
+My Loci Library is three things: an app that runs in a browser, a private repository of plain text files that holds the catalog, and a few laptop tools. Nothing depends on a company's service except GitHub (to keep and sync the files), and moving to another service means rewriting one file.
+
+**The catalog** is a folder of small JSON files, one per record, in a private GitHub repository (`my-loci-library-data`). `DATA_FORMAT.md` describes every field. The files are the truth: everything else (the app's stored copy, `catalog.json`, the backups) can be rebuilt from them. Pictures sit beside them in `images/`.
+
+**The app** (this repository, published by GitHub Pages) is plain HTML, CSS and JavaScript with no build step. It is arranged in three rings, and code only reaches inward:
+
+- `core/`: pure functions, with no screen, storage or network. The data format, dates, search, sorting, merging, exports. Every rule worth testing lives here, and its tests are in `core/tests/`. The laptop tools use a copy of this folder.
+- `edges/`: one file for each outside system: `storage.js` (the device's own copy, in IndexedDB), `sync-github.js` (GitHub), `lookup-openlibrary.js` and `lookup-googlebooks.js` (book lookups), `camera.js` (scanning), `photo.js` (pictures), `device.js` (this device's settings). If an outside system changes, only its edge changes.
+- `ui/` and `main.js`: the screens. `main.js` holds the app's state, turns the address after "#" into a screen, and hands each screen the actions it may take. The Library and book pages load at once; Add, the entry form, the shelf view, Wishlist, Settings and Value load the first time they are opened, with `styles/screens.css`.
+
+All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service worker) keeps every file on the device so the app opens with no connection; raising its `VERSION` makes devices fetch a new version. `laptop/covers.html` is a page for the laptop only, which turns covers left in `images/inbox/` into the app's picture sizes.
+
+**The tests**: open `tests/index.html` on any device (it runs the core tests and the speed tests there), or run `node --test` in this folder (the same core tests, the sync tests against a stand-in for GitHub, and the architecture checks: each ring only reaches inward, each outside system is used by one edge, data put into a page is always escaped, the app stays within its size budget, and every file the app loads is kept for offline use).
+
+**The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-sizes` (catalog heights), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
+
+## Looking after it
+
+**The yearly ten-minute check.** Once a year (the app's yearly archive reminder is a good moment):
+
+1. Open the app on each phone and the laptop, open `tests/` (Settings › Advanced › About › Run the self-tests), and check that every line is green. On the laptop, also run `node --test` in both public repositories.
+2. Save the yearly archive (the tools README, "The yearly archive"), and open its `exports/catalog.html` to see that it reads.
+3. Check that each device's sync key has not expired (Settings shows "Connected"; GitHub lists the keys and their expiry dates under Settings › Developer settings).
+4. Look at `DEVICE_CHECKS.md` for anything left unchecked.
+
+Anything red names the file to look at. Fix it in `core/` first if the rule lives there, run the tests again, raise `VERSION` in `sw.js` and `APP_VERSION` in `ui/settings.js`, and push.
+
+**If the app's address ever changes** (a new domain, or a move away from GitHub Pages), the Loci links in Zotero must follow. Set `"appUrl"` in the tools' `config.json` to the new address, ending in a slash (for example `"https://books.example.org/"`), and run `loci-zotero` once: every item's link is part of what it compares, so every link is rewritten in that one run. Obsidian notes link to the Zotero items, not to Loci, so they need nothing.
+
+**If a phone loses its catalog** (the browser cleared its storage), open the app and connect sync again (Settings › Advanced › Sync): the catalog downloads from `catalog.json` and the files changed since.
+
+**If GitHub refuses a key**, the app says so in plain words and keeps every change on the device. Make a new key the same way (the app's README, "Starting to catalog for real") and paste it in.
+
+**If a lookup service disappears** (Open Library, Google Books), adding books still works by typing; only the lookup file in `edges/` needs replacing. If the Library of Congress service used by `loci-sizes` disappears, sizes stay estimated.
 
 ## Verified approaches
 

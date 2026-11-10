@@ -240,11 +240,11 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 ## Phase 13: Release
 
 - [ ] **13.0 Shelf view review with Jakob.** Once several dozen real books are on a shelf, go through the shelf view with Jakob at the bookcase: can he find a book from the screen, do the sizes and drawn spines look like the real shelf, and is the way there quick enough. Fix what is agreed, as in step 8.6.
-- [ ] **13.1** Finish `README.md`, `HOW_IT_WORKS.md` (including the yearly ten-minute check and how to rewrite Zotero links if the app's address ever changes), and `SETUP_FOR_COLLEAGUES.md`.
-- [ ] **13.2** About screen: app version, data format version, MIT license, "Created by Jakob Nath".
-- [ ] **13.3** Run every test in both repos, confirm the size budget, and search both repos for any AI attribution.
-- [ ] **13.4** Tag version 1.0 in both public repos.
-- [ ] **13.5** Write a short summary for Jakob: what was built, the decisions recorded, and the open items in `DEVICE_CHECKS.md`.
+- [x] **13.1** Finish `README.md`, `HOW_IT_WORKS.md` (including the yearly ten-minute check and how to rewrite Zotero links if the app's address ever changes), and `SETUP_FOR_COLLEAGUES.md`.
+- [x] **13.2** About screen: app version, data format version, MIT license, "Created by Jakob Nath".
+- [x] **13.3** Run every test in both repos, confirm the size budget, and search both repos for any AI attribution.
+- [x] **13.4** Tag version 1.0 in both public repos.
+- [x] **13.5** Write a short summary for Jakob: what was built, the decisions recorded, and the open items in `DEVICE_CHECKS.md`.
   **Check:** all tests pass, nothing attributes AI, and the tags exist.
 
 ---
