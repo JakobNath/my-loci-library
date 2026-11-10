@@ -6,12 +6,16 @@
 
 // Sizes and quality, all in one place, to tune later. Sharpness and beauty
 // come before file size (PLAN.md).
+// A spine is narrow, so its files stay small even when tall enough for its
+// lettering to be read on a phone; a cover's detail image is sized for a
+// phone screen at full sharpness (interface review, 2026-11-10).
 export const IMAGE_SETTINGS = {
-  thumbHeight: 200, // grid thumbnail, kept on every device
-  detailHeight: 600, // book page, loaded when opened
+  thumbHeight: { cover: 200, spine: 600 }, // grid thumbnail and shelf spine, kept on every device
+  detailHeight: { cover: 1000, spine: 1600 }, // book page, loaded when opened
   masterLongSide: 1600, // our own photos only, never sent to phones
   workingLongSide: 3000, // a camera photo is read at most this large before straightening
-  quality: { thumb: 0.8, detail: 0.84, master: 0.9 },
+  quality: { thumb: 0.8, detail: 0.85, master: 0.9 },
+  sharpen: 0.35, // a light sharpening after shrinking, which brings back crisp lettering
 };
 
 /**
@@ -125,6 +129,38 @@ function drawAt(source, height) {
   return canvas;
 }
 
+/**
+ * Sharpen a picture slightly, in place: each pixel is pushed away from the
+ * average of its four neighbours (a small "unsharp mask"). Shrinking softens
+ * fine lettering, and this restores it. About 20 ms for a 1,000 px cover.
+ */
+function sharpen(canvas, amount) {
+  const context = canvas.getContext('2d');
+  const { width, height } = canvas;
+  if (width < 3 || height < 3 || !amount) return canvas;
+  const image = context.getImageData(0, 0, width, height);
+  const source = new Uint8ClampedArray(image.data);
+  const out = image.data;
+  const row = width * 4;
+  for (let y = 1; y < height - 1; y++) {
+    for (let x = 1; x < width - 1; x++) {
+      const i = y * row + x * 4;
+      for (let c = 0; c < 3; c++) {
+        const around = source[i - 4 + c] + source[i + 4 + c] + source[i - row + c] + source[i + row + c];
+        out[i + c] = source[i + c] + amount * (4 * source[i + c] - around);
+      }
+    }
+  }
+  context.putImageData(image, 0, 0);
+  return canvas;
+}
+
+// The shrunk copy, sharpened; never the source itself, which may be needed again.
+function shrunk(source, height, amount) {
+  const result = resize(source, height);
+  return result === source ? result : sharpen(result, amount);
+}
+
 const jpeg = (canvas, quality) => new Promise((resolve, reject) => {
   canvas.toBlob(blob => (blob ? resolve(blob) : reject(new Error('The picture could not be saved as JPEG.'))), 'image/jpeg', quality);
 });
@@ -133,17 +169,17 @@ const jpeg = (canvas, quality) => new Promise((resolve, reject) => {
  * The image files for one cover or spine. A detail image is never enlarged
  * beyond its source (Open Library covers are often only 500 px tall).
  * @param {HTMLCanvasElement} picture upright and cropped
- * @param {{ master?: boolean }} [options] master: also keep the large copy (our own photos)
+ * @param {{ master?: boolean, kind?: 'cover'|'spine' }} [options] master: also keep the large copy (our own photos)
  * @returns {Promise<{ thumb: Blob, detail: Blob, master: Blob|null, color: string, ratio: number }>}
  *   ratio: width ÷ height, which gives a spine's thickness from its height
  */
-export async function imageFiles(picture, { master = false } = {}) {
+export async function imageFiles(picture, { master = false, kind = 'cover' } = {}) {
   const settings = IMAGE_SETTINGS;
   const longSide = Math.max(picture.width, picture.height);
   const masterCanvas = master && longSide > settings.masterLongSide ? drawAt(picture, picture.height * settings.masterLongSide / longSide) : picture;
   return {
-    thumb: await jpeg(resize(picture, settings.thumbHeight), settings.quality.thumb),
-    detail: await jpeg(resize(picture, settings.detailHeight), settings.quality.detail),
+    thumb: await jpeg(shrunk(picture, settings.thumbHeight[kind], settings.sharpen), settings.quality.thumb),
+    detail: await jpeg(shrunk(picture, settings.detailHeight[kind], settings.sharpen), settings.quality.detail),
     master: master ? await jpeg(masterCanvas, settings.quality.master) : null,
     color: mainColor(picture),
     ratio: Math.round(picture.width / picture.height * 10000) / 10000,

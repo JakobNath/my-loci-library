@@ -199,8 +199,8 @@ Every cover is a JPEG in two sizes, made by one shared piece of code. JPEG was c
 
 | Size | Approx. dimensions | Approx. file size | Where it lives |
 | --- | --- | --- | --- |
-| Grid thumbnail | 200 px tall | about 10 KB | Cached offline on every device for instant scrolling |
-| Detail image | 600 px tall | about 40–60 KB | Loaded when a book is opened; cached once seen |
+| Grid thumbnail | 200 px tall (spines 600 px) | about 10 KB | Cached offline on every device for instant scrolling |
+| Detail image | 1,000 px tall (spines 1,600 px), lightly sharpened | about 100–150 KB (spines about 60 KB) | Loaded when a book is opened; cached once seen |
 
 - A tiny blurred placeholder shows while images load.
 - **Masters:** photos taken from the app are not saved to the phone's photo library, so a straightened master (1,600 px on the long side, high-quality JPEG) is kept in the data repo. Phones never download masters. The laptop page uses them to re-make covers later.
@@ -218,7 +218,7 @@ Most books need no photo: the online cover is used. Photos are for books with no
 
 - Photos come from the phone's own camera, opened from the app, or from the photo library. This gives full resolution and needs no camera permission. The app's live camera is used only for barcode scanning.
 - No particular background is needed, and the book can be held in the hand.
-- The editor opens at once with the outline already placed: four corners for a cover; two edge lines and two end bars for a spine. A handle stays exactly where it is let go (nothing snaps or moves by itself). While dragging, two magnifiers away from the finger show the point being placed: a wide one (1.5×) and a close one (3×), with the outline drawn in. The photo can be rotated in 90° steps and fine-straightened.
+- The editor opens at once with the outline already placed: four corners for a cover; two edge lines and two end bars for a spine. A handle stays exactly where it is let go (nothing snaps or moves by itself). While dragging, two magnifiers away from the finger show the point being placed: a wide one (1.5×) and a close one (3×), with the outline drawn in. The photo can be rotated in 90° steps; the corners do any fine straightening.
 - Nothing is detected or saved automatically: every photo gets one look, usually one to three drags.
 - No enhancement (white balance, lighting) in the app. If it is ever wanted, it belongs on the laptop page, working from masters.
 - The result goes through the same compression. This is about 400 lines of plain code, loaded only when a photo is taken, with no outside library.

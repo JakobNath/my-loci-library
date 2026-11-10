@@ -102,12 +102,17 @@ export function render(container, state, actions) {
   // so the spine is (ratio × 1.5) times the cover's width; flex shares the room that way.
   const spineShare = Math.round((Number(spine && spine.ratio) || 0.1) * 1.5 * 1000) / 1000;
   const spineHtml = spine ? `<div class="spine-photo" style="flex:${spineShare} 1 0"><img data-image="${escapeHtml(spine.id)}/detail" alt="Spine"></div>` : '';
+  // On a phone the cover is small; tapping it shows the cover and spine full size (interface review).
+  const cover = edition.images.find(image => image.kind === 'cover' && !image.waiting);
+  const viewerHtml = cover || spine ? `<dialog class="viewer" aria-label="Pictures"><div class="viewer-pictures">${cover ? `<img data-image="${escapeHtml(cover.id)}/detail" alt="Cover">` : ''}`
+    + `${spine ? `<img class="viewer-spine" data-image="${escapeHtml(spine.id)}/detail" alt="Spine">` : ''}</div><p class="page-meta">Tap to close</p></dialog>` : '';
+  const coverLabelHtml = cover || spine ? ' role="button" tabindex="0" aria-label="Show the pictures full size" data-action="enlarge"' : '';
   const piecesHtml = entry.works.length > 1 ? contentsHtml(entry, style) : '';
   const copiesTitleHtml = entry.copies.length > 1 ? 'Copies' : 'Copy';
   container.innerHTML = `
     <a class="back" href="#/">${iconHtml('back')} Library</a>
     <article class="detail">
-      <div class="detail-cover">${coverHtml(entry, 'l')}${spineHtml}</div>
+      <div class="detail-cover"${coverLabelHtml}>${coverHtml(entry, 'l')}${spineHtml}</div>
       <div class="detail-body">
         ${goneHtml}
         <p class="detail-series">${seriesHtml}</p>
@@ -123,8 +128,18 @@ export function render(container, state, actions) {
     ${piecesHtml}
     <section class="block"><h2 class="block-title">Edition</h2>${editionHtml}</section>
     <section class="block"><h2 class="block-title">${copiesTitleHtml}</h2>${copiesHtml(entry, state.settings.currency)}</section>
-    ${relatedHtml(entry, state.library)}`;
+    ${relatedHtml(entry, state.library)}
+    ${viewerHtml}`;
   fillImages(container, actions.imageUrl);
+  const viewer = container.querySelector('.viewer');
+  const enlarge = () => { if (viewer && viewer.showModal) viewer.showModal(); };
+  container.onclick = event => {
+    if (event.target.closest('[data-action="enlarge"]')) enlarge();
+    else if (viewer && viewer.open && event.target.closest('.viewer')) viewer.close();
+  };
+  container.onkeydown = event => {
+    if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('[data-action="enlarge"]')) { event.preventDefault(); enlarge(); }
+  };
   container.onchange = event => {
     if (event.target.dataset.action === 'cite') actions.saveEdition(edition.id, { cite: event.target.checked });
   };

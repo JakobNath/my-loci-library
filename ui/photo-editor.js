@@ -2,7 +2,8 @@
 // placed; a cover has four corner handles, a spine has two edge lines and two
 // end bars. A handle stays exactly where it is let go. While dragging, two
 // magnifiers (a wide one and a close one) show the point being placed, away
-// from the finger. The photo can be turned in 90° steps and fine-straightened.
+// from the finger. The photo can be turned in 90° steps; the four corners do
+// any straightening (a separate slider was dropped in the interface review).
 // Nothing is detected or moved automatically.
 // Loaded only when a photo is taken.
 
@@ -47,7 +48,6 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
       <button type="button" class="btn btn-primary" data-action="use">Use photo</button></div>
     <div class="editor-stage"><canvas class="editor-canvas"></canvas><div class="editor-loupes" hidden>${loupesHtml}</div></div>
     <div class="editor-tools"><button type="button" class="btn" data-action="turn">Turn 90°</button>
-      <label class="field">Straighten<input type="range" min="-15" max="15" step="0.5" value="0" data-action="tilt"></label>
       ${heightFieldHtml}</div>`;
   document.body.append(overlay);
   const canvas = overlay.querySelector('.editor-canvas');
@@ -55,7 +55,6 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
   const context = canvas.getContext('2d');
   let scale = 1;
   let outline = [];
-  let tilt = 0;
 
   function setPicture(next) {
     picture = next;
@@ -64,28 +63,17 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     canvas.width = Math.round(picture.width * scale);
     canvas.height = Math.round(picture.height * scale);
     outline = startingOutline(picture.width, picture.height, kind);
-    tilt = 0;
-    overlay.querySelector('[data-action="tilt"]').value = '0';
     draw();
   }
 
-  // The outline as shown: turned by the straighten slider around its middle.
-  function shown() {
-    const cx = outline.reduce((sum, p) => sum + p[0], 0) / 4;
-    const cy = outline.reduce((sum, p) => sum + p[1], 0) / 4;
-    const cos = Math.cos(tilt * Math.PI / 180);
-    const sin = Math.sin(tilt * Math.PI / 180);
-    return outline.map(([x, y]) => [cx + (x - cx) * cos - (y - cy) * sin, cy + (x - cx) * sin + (y - cy) * cos]);
-  }
-
   function handles() {
-    const points = shown();
+    const points = outline;
     if (kind === 'cover') return points.map((point, i) => ({ at: point, corners: [i] }));
     return EDGES.map(([i, j]) => ({ at: [(points[i][0] + points[j][0]) / 2, (points[i][1] + points[j][1]) / 2], corners: [i, j] }));
   }
 
   function draw() {
-    const points = shown().map(([x, y]) => [x * scale, y * scale]);
+    const points = outline.map(([x, y]) => [x * scale, y * scale]);
     context.drawImage(picture, 0, 0, canvas.width, canvas.height);
     context.fillStyle = 'rgba(0, 0, 0, 0.45)';
     context.beginPath();
@@ -114,7 +102,7 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
   function showLoupes(point, fingerX) {
     loupes.classList.toggle('is-right', fingerX < canvas.width / 2 / scale);
     loupes.hidden = false;
-    const points = shown();
+    const points = outline;
     loupes.querySelectorAll('canvas').forEach((loupe, i) => {
       const zoom = LOUPES[i].zoom * scale;
       const view = loupe.getContext('2d');
@@ -142,8 +130,6 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     const y = (event.clientY - rect.top) / scale;
     const nearest = handles().map(handle => ({ handle, distance: Math.hypot(handle.at[0] - x, handle.at[1] - y) * scale })).sort((p, q) => p.distance - q.distance)[0];
     if (!nearest || nearest.distance > HANDLE * 2) return;
-    // Drag in the untilted outline: undo the slider's turn first.
-    if (tilt) { outline = shown(); tilt = 0; overlay.querySelector('[data-action="tilt"]').value = '0'; }
     dragging = { corners: nearest.handle.corners, x, y };
     canvas.setPointerCapture(event.pointerId);
   });
@@ -169,9 +155,6 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
   canvas.addEventListener('pointercancel', endDrag);
 
   return new Promise(resolve => {
-    overlay.addEventListener('input', event => {
-      if (event.target.dataset.action === 'tilt') { tilt = Number(event.target.value); draw(); }
-    });
     overlay.addEventListener('click', async event => {
       const action = event.target.dataset.action;
       if (action === 'turn') {
@@ -188,7 +171,7 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
       if (action === 'use') {
         event.target.disabled = true;
         event.target.textContent = 'Saving…';
-        const files = await imageFiles(straighten(picture, shown()), { master: true });
+        const files = await imageFiles(straighten(picture, outline), { master: true, kind });
         const measured = Number(overlay.querySelector('[data-action="height"]')?.value || 0);
         overlay.remove();
         resolve({ ...files, height: measured > 0 ? Math.round(measured * 10) : null });

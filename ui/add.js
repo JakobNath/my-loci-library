@@ -32,6 +32,8 @@ function choiceHtml(action, main, detail = '', value = '') {
 }
 
 /** Draw the batch add screen. Returns a cleanup that closes the camera. */
+const STEP_NAMES = { book: 'The book', work: 'Same work?', date: 'Original date', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', extras: 'Anything else' };
+
 export function render(container, state, actions) {
   const prompts = new Set(state.settings.batchAddPrompts || ['title', 'subtitle', 'authors', 'datings', 'binding', 'publisher', 'year']);
   let scanner = null;
@@ -44,6 +46,7 @@ export function render(container, state, actions) {
   const bindingOptionsHtml = state.settings.bindings.map(binding => `<option value="${attr(binding)}">`).join('');
   container.innerHTML = `
     <div id="scan">
+      <p class="saved-banner" data-saved role="status" hidden></p>
       <div class="page-head"><h1 class="page-title">Add books</h1>
         <p class="page-meta">Scan the barcode on the back, or type an ISBN or a title.</p></div>
       <div class="camera" hidden><div class="camera-view"><video aria-label="Camera"></video><p class="camera-read" aria-live="polite"></p></div>
@@ -119,18 +122,24 @@ export function render(container, state, actions) {
     find.value = '';
     const duplicates = editionsWithIsbn(isbn, state.library.entries);
     if (duplicates.length) return askAboutDuplicate(duplicates[0]);
-    showMessage('Looking up the book…');
     const work = lookUpWork(isbn).catch(() => NO_WORK); // for date suggestions, alongside
     const lookups = state.settings.lookups || { openLibrary: true, googleBooks: true };
     let found = null;
     let problem = '';
+    const sources = [];
     if (lookups.openLibrary !== false) {
+      showMessage(`Looking up ISBN ${isbn} on Open Library…`);
       try { found = await lookUpOpenLibrary(isbn); } catch (error) { problem = error.message; }
+      if (found) sources.push('Open Library');
     }
     if ((!found || !found.authors.length || !found.publisher) && lookups.googleBooks !== false) {
-      try { found = combineFound(found, await lookUpGoogleBooks(isbn, state.device.googleBooksKey || '')); } catch (error) { problem = problem || error.message; }
+      showMessage(found ? 'Some details are missing; asking Google Books too…' : `Not on Open Library; trying Google Books…`);
+      let more = null;
+      try { more = await lookUpGoogleBooks(isbn, state.device.googleBooksKey || ''); } catch (error) { problem = problem || error.message; }
+      if (more) sources.push('Google Books');
+      found = combineFound(found, more);
     }
-    startBook(found || { isbn }, work, found ? '' : problem);
+    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problem);
   }
 
   function askAboutDuplicate(entry) {
@@ -226,7 +235,8 @@ export function render(container, state, actions) {
   function progressHtml() {
     const list = steps();
     const at = list.indexOf(book.step) + 1;
-    return `<p class="step-count">Step ${at} of ${list.length}</p><div class="progress"><span style="width:${Math.round(at / list.length * 100)}%"></span></div>`;
+    const where = escapeHtml(`Step ${at} of ${list.length}: ${STEP_NAMES[book.step]}${book.found.title ? ` · ${book.found.title}` : ''}`);
+    return `<p class="step-count">${where}</p><div class="progress"><span style="width:${Math.round(at / list.length * 100)}%"></span></div>`;
   }
 
   function backHtml(label = 'Back') {
@@ -264,7 +274,8 @@ export function render(container, state, actions) {
     const coverHtml = found.cover && !found.cover.waiting ? `<img class="step-cover" src="${attr(found.cover.url)}" alt="" onerror="this.remove()">` : '';
     const detailsHtml = escapeHtml([found.authors.join(', '), [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
     const peopleHtml = escapeHtml(found.contributors.map(person => `${person.role} ${person.name}`).join(' · '));
-    return `<h2 class="step-title">Is this the book?</h2>
+    const foundOnHtml = escapeHtml(`Found on ${(found.sources || ['Open Library']).join(' and ')}.`);
+    return `<h2 class="step-title">Is this the book?</h2><p class="step-hint">${foundOnHtml}</p>
       <div class="found">${coverHtml}<div><p class="found-title">${escapeHtml(found.title)}</p><p class="found-sub">${escapeHtml(found.subtitle)}</p>
         <p class="found-meta">${detailsHtml}</p><p class="found-meta">${peopleHtml}</p></div></div>
       ${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. Tap "Fix details" to add.`)}</p>` : ''}
@@ -279,7 +290,7 @@ export function render(container, state, actions) {
       return choiceHtml('work', `Yes, the same work as ${work.title}`, dating ? `${dating.text}${work.originalTitle ? ' · ' + work.originalTitle : ''}` : 'already in the library', work.id);
     }).join('');
     return `<h2 class="step-title">Is this the same work as one you have?</h2>
-      <p class="step-hint">Another edition or translation of the same work shares its original date, and is shown with it.</p>
+      <p class="step-hint">If this is another edition or translation of a work you already have, they share its original date and are shown together.</p>
       <div class="choices">${optionsHtml}${choiceHtml('work', 'No, a different work', '', '')}</div>${backHtml()}`;
   }
 
@@ -292,7 +303,7 @@ export function render(container, state, actions) {
     const titleHtml = book.work && book.work.workTitle && normalizeForSearch(book.work.workTitle) !== normalizeForSearch(book.found.title)
       ? `<p class="step-hint">${escapeHtml(`Original title on Open Library: ${book.work.workTitle}`)} <button type="button" class="chip" data-action="original-title">Use it</button></p>` : '';
     return `<h2 class="step-title">When was this work written?</h2>
-      <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `The original, not ${year}.`)}</p>
+      <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>${titleHtml}
@@ -318,7 +329,7 @@ export function render(container, state, actions) {
     }
     if (cover.state === 'checking') return `<h2 class="step-title">Cover</h2><p class="step-hint">Looking for the cover online…</p><div class="choices">${photoButtonHtml('Take a photo instead')}</div>${backHtml()}`;
     if (cover.state === 'found') {
-      return `<h2 class="step-title">Use this cover?</h2><p class="step-hint">Found on Open Library.</p><div class="found"><img class="step-cover is-large" src="${attr(cover.preview)}" alt=""></div>
+      return `<h2 class="step-title">Use this cover?</h2><p class="step-hint">Found on Open Library. Check it matches the book in your hand.</p><div class="found"><img class="step-cover is-large" src="${attr(cover.preview)}" alt=""></div>
         <div class="choices">${choiceHtml('next', 'Yes, use it')}${photoButtonHtml('No, take my own photo')}</div>${backHtml()}`;
     }
     if (cover.state === 'waiting') {
@@ -334,7 +345,7 @@ export function render(container, state, actions) {
   function spineStep() {
     const doneHtml = book.photos.spine ? `<div class="found"><img class="step-spine" src="${attr(book.photos.spine.preview)}" alt=""></div>` : '';
     return `<h2 class="step-title">${escapeHtml(book.photos.spine ? 'Your spine photo' : 'Add a spine photo?')}</h2>
-      <p class="step-hint">Optional. It shows on the book page and in the shelf view.</p>${doneHtml}
+      <p class="step-hint">Optional. A spine photo shows on the book page and in the shelf view, so the book is easy to spot on the shelf.</p>${doneHtml}
       <div class="choices"><label class="choice-button"><span>${escapeHtml(book.photos.spine ? 'Take it again' : 'Take a photo of the spine')}</span>
         <small>The editor opens to line it up</small><input type="file" accept="image/*" capture="environment" data-photo="spine" hidden></label>
         ${choiceHtml('next', book.photos.spine ? 'Use this photo' : 'Skip')}</div>${backHtml()}`;
@@ -343,7 +354,7 @@ export function render(container, state, actions) {
   // 6. The binding.
   function bindingStep() {
     const listHtml = state.settings.bindings.map(binding => `<button type="button" class="chip chip-big${book.binding === binding ? ' is-on' : ''}" data-action="binding" data-value="${attr(binding)}">${escapeHtml(binding)}</button>`).join('');
-    return `<h2 class="step-title">What binding is this copy?</h2><div class="chips">${listHtml}</div>
+    return `<h2 class="step-title">What binding is this copy?</h2><p class="step-hint">Tap one, or type another below.</p><div class="chips">${listHtml}</div>
       <form class="form">${fieldHtml('Something else', 'binding', state.settings.bindings.includes(book.binding) ? '' : book.binding, { list: 'bindings' })}
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
@@ -355,7 +366,7 @@ export function render(container, state, actions) {
     const placesHtml = [current.join(' › '), ...recent.filter(place => place !== current.join(' › '))].filter(Boolean)
       .map((place, i) => choiceHtml('place', place, i === 0 && current.length ? 'The shelf you are filling: goes after the last book added' : '', place)).join('');
     const partsHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'where', book.location[i] || '')).join('');
-    return `<h2 class="step-title">Where does it go?</h2>
+    return `<h2 class="step-title">Where does it go?</h2><p class="step-hint">Tap a shelf you have used, or type a new place below.</p>
       <div class="choices">${placesHtml}${choiceHtml('place', 'No place yet', 'It can be shelved later', '')}</div>
       <form class="form"><p class="step-hint">Or type a new place:</p><div class="field-row">${partsHtml}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
@@ -365,7 +376,7 @@ export function render(container, state, actions) {
   function extrasStep() {
     const extras = book.extras;
     const translated = book.found.contributors.some(person => person.role === 'translator');
-    return `<h2 class="step-title">Anything else?</h2><p class="step-hint">All optional.</p>
+    return `<h2 class="step-title">Anything else?</h2><p class="step-hint">All optional. "Save the book" saves it and gets ready for the next one.</p>
       <form class="form">
         <label class="field">Notes: why we own it, a gift, its condition<textarea name="notes" rows="3">${escapeHtml(extras.notes || '')}</textarea></label>
         <div class="field-row">${fieldHtml('Estimated value', 'value', extras.value, { type: 'number' })}${fieldHtml('Price paid', 'price', extras.price, { type: 'number' })}</div>
@@ -481,6 +492,10 @@ export function render(container, state, actions) {
   }
 
   function finishBook(title) {
+    const banner = container.querySelector('[data-saved]');
+    const place = book && book.location && book.location.length ? ` on ${book.location.join(' › ')}` : '';
+    banner.textContent = title ? `✓ Saved: ${title}${place}. Ready for the next book.` : '';
+    banner.hidden = !title;
     book = null;
     stepArea.hidden = true;
     stepArea.innerHTML = '';
@@ -489,7 +504,7 @@ export function render(container, state, actions) {
     if (title) {
       added.unshift(title);
       const addedHtml = added.slice(0, 8).map(name => `<p class="piece-title">${escapeHtml(name)}</p>`).join('');
-      container.querySelector('#added').innerHTML = `<section class="block"><h2 class="block-title">${escapeHtml(`Saved ✓ ${title}`)}</h2>${addedHtml}</section>`;
+      container.querySelector('#added').innerHTML = `<section class="block"><h2 class="block-title">Added this time</h2>${addedHtml}</section>`;
     }
     if (scanner) scanner.resume();
     else find.focus();

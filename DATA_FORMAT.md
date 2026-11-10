@@ -51,8 +51,8 @@ my-loci-library-data/
   authors/<id>.json
   wishlist/<id>.json
   settings.json            settings shared by everyone using this catalog
-  images/thumb/<id>.jpg     about 200 px tall
-  images/detail/<id>.jpg    about 600 px tall
+  images/thumb/<id>.jpg     about 200 px tall (a spine 600 px)
+  images/detail/<id>.jpg    about 1,000 px tall (a spine 1,600 px); images made before 2026-11-11 are 600 px
   images/master/<id>.jpg    1,600 px on the long side; only for our own photos
   images/inbox/             covers left by laptop tools, waiting to be processed
   catalog.json              all records in one file, built on the laptop for fast loading

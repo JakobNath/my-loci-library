@@ -14,7 +14,8 @@ Things Jakob has noticed while testing on his phones, kept for the interface rev
 
 - [x] A corner moved away from where it was placed when let go (2026-11-10). Done: no snapping; handles stay where they are let go (0.6.3).
 - [x] The magnifier was too close and hard to see (2026-11-10). Done: two magnifiers, 1.5× and 3×, away from the finger, centred on the point being placed, with the outline drawn in (0.6.3).
-- [ ] To review: whether dragging is precise enough on a small phone, and whether the straighten slider is needed.
+- [x] Reviewed (2026-11-11): the straighten slider was not needed and is gone (0.8.4); dragging was not raised as a problem.
+- [x] Spine photos were too blurry to read, and covers were soft (2026-11-11). Done: spines are kept 1,600 px tall (600 px in the shelf view) and covers 1,000 px, both lightly sharpened after shrinking (0.8.4). Pictures taken before then keep their old size; the laptop can re-make them from their masters later.
 
 ## Spines
 
@@ -23,3 +24,13 @@ Things Jakob has noticed while testing on his phones, kept for the interface rev
 ## General
 
 - [ ] Some parts of the interface could be better ("some UI systems could be improved", 2026-11-10). To review screen by screen with Jakob: the library grid and list, search, the book page, the shelf view, settings, and the phone feel overall (too much scrolling, small buttons and text, the camera size: partly done in 0.6.2).
+
+## Review with Jakob, round 1 and 2 (2026-11-11)
+
+- [x] Library screen: fine as it is.
+- [x] Book page: the cover was too big on a phone. Done: the cover (with any spine photo) takes about a third of the width, and tapping it shows the pictures full size (0.8.4).
+- [x] Adding books was not quite clear enough at four points; slight improvements were wanted. Done (0.8.4):
+  - Where am I: each step is headed "Step 3 of 7: Original date · <title>".
+  - Did it look it up: the screen says which service it is asking ("Looking up ISBN … on Open Library…", then Google Books if needed), and the first step says where the book was found.
+  - What a step wants: every step has one plain line saying what to do.
+  - Was it saved: a green line at the top of the scan screen says "✓ Saved: <title> on <place>. Ready for the next book."
