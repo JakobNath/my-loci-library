@@ -8,6 +8,7 @@
 import { newRecord } from '../core/records.js';
 import { buildLibrary, withSearchText, viewEntries, searchEntries } from '../core/library.js';
 import { openStorage, deleteStorage } from '../edges/storage.js';
+import { recordsFromForm } from '../core/entry.js';
 import * as libraryScreen from '../ui/library.js';
 import * as bookScreen from '../ui/book.js';
 
@@ -71,8 +72,8 @@ function deviceIsSlow() {
 const IS_PHONE = matchMedia('(pointer: coarse)').matches;
 const SLOW = IS_PHONE || deviceIsSlow();
 const BUDGET = SLOW
-  ? { label: 'phone targets', start: 1000, search: 100, book: 100, sort: 500, scroll: 50 }
-  : { label: 'laptop budgets', start: 300, search: 10, book: 16, sort: 100, scroll: 16 };
+  ? { label: 'phone targets', start: 1000, search: 100, book: 100, sort: 500, scroll: 50, save: 200 }
+  : { label: 'laptop budgets', start: 300, search: 10, book: 16, sort: 100, scroll: 16, save: 50 };
 
 function check(ms, limit, what) {
   if (ms > limit) throw new Error(`${what} took ${ms.toFixed(1)} ms; the limit is ${limit} ms (${BUDGET.label})`);
@@ -145,6 +146,32 @@ export const tests = [
       }
       stop(); box.remove();
       return check(slowest, BUDGET.scroll, 'the slowest redraw');
+    },
+  },
+  {
+    name: 'saving a scanned book until the next scan is ready (50 ms laptop, 200 ms phone)',
+    async fn() {
+      // What batch add does on "Save, next book" with 10,000 books on the device:
+      // build the records from a looked-up book, and store them. Rebuilding the
+      // library and downloading the cover happen afterwards, so they are not counted.
+      const storage = await openStorage('loci-speed-save');
+      await storage.replaceRecords(catalog);
+      const authors = catalog.filter(record => record.type === 'author');
+      const form = {
+        title: 'Confessions', subtitle: '', authors: ['Augustine of Hippo'], contributors: [{ name: 'F. J. Sheed', role: 'translator' }],
+        publisher: 'Hackett', place: 'Indianapolis', year: '2006', editionStatement: '', translationFirstPublished: '', series: '', seriesNumber: '',
+        set: '', volume: '', isbn: '9780872208162', pages: 'xxxvi, 345', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
+        work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [{ text: 'c. 397–400', note: '', working: true }] },
+        copy: { binding: 'Paperback', location: ['Home', 'Office', 'Case 9', 'Shelf 1'], shelfOrder: 'g', acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
+      };
+      let n = 0;
+      const start = performance.now();
+      const result = recordsFromForm(form, null, { newId: () => `zz${String(++n).padStart(10, '0')}`, now: NOW, today: '2026-11-09', authors });
+      await storage.saveRecords(result.records, { toOutbox: true });
+      const ms = performance.now() - start;
+      storage.close();
+      await deleteStorage('loci-speed-save');
+      return check(ms, BUDGET.save, 'saving');
     },
   },
 ];

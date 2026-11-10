@@ -151,19 +151,19 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 6: Batch add
 
-- [ ] **6.1 Scanning:** camera scan (`BarcodeDetector` or the vendored decoder, loaded only on this screen), USB scanner input (an ISBN typed and followed by Enter), plus typed ISBN or title search.
+- [x] **6.1 Scanning:** camera scan (`BarcodeDetector` or the vendored decoder, loaded only on this screen), USB scanner input (an ISBN typed and followed by Enter), plus typed ISBN or title search.
   **Check:** desktop tests pass; a phone camera check is added to `DEVICE_CHECKS.md`.
-- [ ] **6.2 Lookups:** Open Library first, then Google Books, mapped to edition fields, including page count. Never fill original dates. A found cover of at least 400 px tall is imported automatically in the background. Google Books takes an optional per-device API key; a refused request falls back quietly to Open Library and manual entry, with a plain note.
+- [x] **6.2 Lookups:** Open Library first, then Google Books, mapped to edition fields, including page count. Never fill original dates. A found cover of at least 400 px tall is imported automatically in the background. Google Books takes an optional per-device API key; a refused request falls back quietly to Open Library and manual entry, with a plain note.
   **Check:** tests with recorded responses pass, and the app still works with both lookups off.
-- [ ] **6.3 Matching and duplicates:** suggest an existing work for confirmation (never link automatically), and warn when the ISBN already exists ("Add another copy?").
+- [x] **6.3 Matching and duplicates:** suggest an existing work for confirmation (never link automatically), and warn when the ISBN already exists ("Add another copy?").
   **Check:** #12 and #13 group under one work; #16 triggers the warning.
-- [ ] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
+- [x] **6.4 Review card and missing-data prompts:** each book is reviewed as it is scanned, before the next scan: the found cover (with "Wrong cover? Take a photo" and an optional spine photo) and prompts for the fields set in shared settings (default: title, subtitle, author, original date, binding, publisher, edition year), each skippable.
   **Check:** the prompts follow the settings.
-- [ ] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder; the cover's main color worked out once and stored. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
+- [x] **6.5 Photos:** the phone's own camera or photo library through a file input; the manual editor (four corners for a cover, two edge lines and two end bars for a spine, snapping within a few pixels, a magnifier, 90° rotate and fine straighten); compression to the two JPEG sizes plus a master; a blurred placeholder; the cover's main color worked out once and stored. Sizes and quality sit in one settings block. Loaded only when a photo is taken. For a spine, an optional height box shows the current height with its source ("23 cm · catalog", "~22 cm · guess"); a typed height is stored as measured. Rewritten from the prototype editor to `CODE_STYLE.md`; no automatic detection or enhancement.
   **Check:** outputs land near the sizes in `PLAN.md`, and a phone check is added to `DEVICE_CHECKS.md`.
-- [ ] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
+- [x] **6.5b Laptop covers page:** `laptop/covers.html` compresses covers from `covers/inbox/` and can re-make covers from masters. Phones never load it, and the service worker does not cache it.
   **Check:** an inbox of sample covers is processed into both sizes.
-- [ ] **6.6 Speed:** after Save, the next scan is ready within 200 ms; cover downloads and sync never block it.
+- [x] **6.6 Speed:** after Save, the next scan is ready within 200 ms; cover downloads and sync never block it.
   **Check:** the timing test passes with recorded lookup responses.
 
 ---

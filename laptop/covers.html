@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Covers · My Loci Library</title>
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/app.css">
+</head>
+<body>
+<main>
+  <div class="page-head"><h1 class="page-title">Covers</h1>
+    <p class="page-meta">A laptop page, never loaded by phones. It turns covers into the app's two sizes with the same code the phone uses for photos.</p></div>
+  <section class="block"><h2 class="block-title">Covers from the inbox</h2>
+    <p>Choose the pictures in <code>images/inbox/</code> of the data repository (laptop tools save covers there, named by the edition's ID: <code>&lt;edition id&gt;.jpg</code>). Each is made into a thumbnail and a detail image, and its main color is found.</p>
+    <p><input type="file" id="files" accept="image/*" multiple></p>
+    <p class="preview" id="status"></p>
+    <p class="preview">Writing the results into the data repository arrives with sync (build plan phase 7); until then this page shows what would be saved.</p>
+  </section>
+  <div class="list" id="results"></div>
+</main>
+<script type="module">
+  // The laptop covers page (BUILD_PLAN.md step 6.5b). It uses edges/photo.js,
+  // the same image code as the phone, so there is one image pipeline.
+  import { readPicture, imageFiles } from '../edges/photo.js';
+  import { isId } from '../core/ids.js';
+  import { escapeHtml } from '../core/html.js';
+
+  const MIN_HEIGHT = 400; // a smaller cover counts as not found (PLAN.md)
+  const results = document.getElementById('results');
+  const status = document.getElementById('status');
+
+  document.getElementById('files').addEventListener('change', async event => {
+    const files = [...event.target.files];
+    results.innerHTML = '';
+    let done = 0;
+    for (const file of files) {
+      const editionId = file.name.replace(/\.[^.]+$/, '');
+      try {
+        const picture = await readPicture(file);
+        if (picture.height < MIN_HEIGHT) throw new Error(`only ${picture.height} px tall; a cover needs at least ${MIN_HEIGHT}`);
+        const made = await imageFiles(picture);
+        const rowHtml = `<span class="cover cover-s has-image" style="background:${escapeHtml(made.color)}"><img src="${escapeHtml(URL.createObjectURL(made.thumb))}" alt=""></span>`
+          + `<span class="row-main"><span class="row-title">${escapeHtml(file.name)}</span>`
+          + `<span class="row-author">${escapeHtml(`${isId(editionId) ? 'edition ' + editionId : 'name is not an edition ID'} · thumbnail ${Math.round(made.thumb.size / 1024)} KB · detail ${Math.round(made.detail.size / 1024)} KB · color ${made.color}`)}</span></span><span></span>`;
+        results.insertAdjacentHTML('beforeend', `<div class="row">${rowHtml}</div>`);
+      } catch (error) {
+        results.insertAdjacentHTML('beforeend', `<div class="row"><span></span><span class="row-main"><span class="row-title">${escapeHtml(file.name)}</span><span class="row-author">${escapeHtml(`Skipped: ${error.message}`)}</span></span><span></span></div>`);
+      }
+      status.textContent = `${++done} of ${files.length} done`;
+    }
+  });
+</script>
+</body>
+</html>
