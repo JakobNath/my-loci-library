@@ -10,9 +10,10 @@
  * @param {(index: number) => string} options.itemHtml markup for one item (escaped by the caller)
  * @param {number} options.minWidth smallest item width in pixels; 0 for one item per row
  * @param {string} options.className class of each row ("grid" or "list")
+ * @param {(rows: HTMLElement) => void} [options.onDraw] called after rows are drawn (to fill in pictures)
  * @returns {() => void} call to stop following the scroll when the screen changes
  */
-export function showLongList(container, count, { itemHtml, minWidth, className }) {
+export function showLongList(container, count, { itemHtml, minWidth, className, onDraw = () => {} }) {
   container.innerHTML = '<div class="long-list"><div class="long-list-window"></div></div>';
   const list = container.firstChild;
   const window_ = list.firstChild;
@@ -51,6 +52,7 @@ export function showLongList(container, count, { itemHtml, minWidth, className }
     for (let row = first; row < last; row++) rows += rowHtml(row);
     window_.style.transform = `translateY(${first * rowHeight}px)`;
     window_.innerHTML = rows;
+    onDraw(window_);
   }
 
   // Browsers send at most one scroll event per frame, and draw() returns at

@@ -12,13 +12,20 @@ function clothOf(id) {
 }
 
 /**
- * A cover: for now always a drawn tile with the title and author; covers
- * and photos arrive with batch add (phase 6).
+ * A cover: the saved picture when there is one, otherwise a drawn tile with
+ * the title and author.
  * @param {object} entry a library entry (core/library.js)
- * @param {'s'|'m'} [size]
+ * @param {'s'|'m'|'l'} [size] l uses the detail image (book page)
  */
 export function coverHtml(entry, size = 'm') {
   const gone = entry.owned || entry.isWish ? '' : ' is-gone';
+  const image = entry.edition.images.find(item => item.kind === 'cover' && !item.waiting);
+  if (image) {
+    // The picture is filled in by ui/images.js; its main color shows until it loads.
+    const file = size === 'l' ? 'detail' : 'thumb';
+    return `<div class="cover has-image${size === 's' ? ' cover-s' : ''}${gone}" style="background:${escapeHtml(image.color || 'var(--surface-2)')}">`
+      + `<img data-image="${escapeHtml(image.id)}/${file}" alt=""></div>`;
+  }
   return `<div class="cover ${clothOf(entry.id)}${size === 's' ? ' cover-s' : ''}${gone}" aria-hidden="true">`
     + `<p class="cover-title">${escapeHtml(entry.edition.title)}</p><span class="cover-rule"></span>`
     + `<p class="cover-author">${escapeHtml(entry.authorLine)}</p></div>`;

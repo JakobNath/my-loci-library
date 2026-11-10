@@ -7,6 +7,7 @@ import { formatYearRange, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
 import { coverHtml, dateLineHtml, badgesHtml } from './pieces.js';
 import { iconHtml } from './icons.js';
+import { fillImages } from './images.js';
 
 const money = (currency, amount) => (amount === null || amount === undefined ? '' : `${currency}${amount}`);
 
@@ -95,12 +96,15 @@ export function render(container, state, actions) {
     ['Category', work && work.category],
     ['Tags', work && work.tags.join(', ')],
   ]);
+  // The spine beside the cover, when there is a spine photo (PLAN.md, "Taking photos").
+  const spine = edition.images.find(image => image.kind === 'spine');
+  const spineHtml = spine ? `<div class="spine-photo"><img data-image="${escapeHtml(spine.id)}/detail" alt="Spine"></div>` : '';
   const piecesHtml = entry.works.length > 1 ? contentsHtml(entry, style) : '';
   const copiesTitleHtml = entry.copies.length > 1 ? 'Copies' : 'Copy';
   container.innerHTML = `
     <a class="back" href="#/">${iconHtml('back')} Library</a>
     <article class="detail">
-      <div class="detail-cover">${coverHtml(entry)}</div>
+      <div class="detail-cover">${coverHtml(entry, 'l')}${spineHtml}</div>
       <div class="detail-body">
         ${goneHtml}
         <p class="detail-series">${seriesHtml}</p>
@@ -117,6 +121,7 @@ export function render(container, state, actions) {
     <section class="block"><h2 class="block-title">Edition</h2>${editionHtml}</section>
     <section class="block"><h2 class="block-title">${copiesTitleHtml}</h2>${copiesHtml(entry, state.settings.currency)}</section>
     ${relatedHtml(entry, state.library)}`;
+  fillImages(container, actions.imageUrl);
   container.onchange = event => {
     if (event.target.dataset.action === 'cite') actions.saveEdition(edition.id, { cite: event.target.checked });
   };

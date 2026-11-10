@@ -8,6 +8,7 @@ import { matchesSearch } from '../core/search.js';
 import { coverHtml, dateLineHtml, badgesHtml } from './pieces.js';
 import { iconHtml } from './icons.js';
 import { showLongList } from './long-list.js';
+import { fillImages } from './images.js';
 
 const MEDIUMS = [['physical', 'Physical'], ['logos', 'Logos'], ['all', 'All']];
 const TILE_WIDTH = { small: 110, medium: 150, large: 200 };
@@ -69,6 +70,7 @@ export function render(container, state, actions) {
     itemHtml: i => (grid ? tileHtml(entries[i], settings.dateStyle) : rowHtml(entries[i], settings.dateStyle)),
     minWidth: grid ? TILE_WIDTH[device.coverSize] || TILE_WIDTH.medium : 0,
     className: grid ? 'grid' : 'list',
+    onDraw: rows => fillImages(rows, actions.imageUrl),
   });
 }
 

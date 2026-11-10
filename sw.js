@@ -6,14 +6,16 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v0.5.3';
+const VERSION = 'v0.6.0';
 const FILES = [
   './', 'index.html', 'main.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
   'core/ids.js', 'core/html.js', 'core/dating.js', 'core/anthology.js', 'core/pages.js', 'core/sizes.js',
   'core/search.js', 'core/records.js', 'core/merge.js', 'core/shelf-order.js', 'core/zotero.js', 'core/library.js', 'core/contents.js', 'core/entry.js',
-  'edges/storage.js', 'edges/device.js',
+  'core/lookup.js', 'core/matching.js',
+  'edges/storage.js', 'edges/device.js', 'edges/lookup-openlibrary.js', 'edges/lookup-googlebooks.js', 'edges/camera.js', 'edges/photo.js',
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/edit.js',
+  'ui/add.js', 'ui/images.js', 'ui/photo-editor.js',
 ];
 
 self.addEventListener('install', event => {
@@ -39,6 +41,14 @@ self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== location.origin) return;
   const path = url.pathname.slice(new URL(self.registration.scope).pathname.length);
+  // The barcode decoder is kept the first time the scan screen loads it.
+  if (path.startsWith('vendor/')) {
+    event.respondWith(caches.open(VERSION).then(cache => cache.match(path).then(hit => hit || fetch(event.request).then(response => {
+      if (response.ok) cache.put(path, response.clone());
+      return response;
+    }))));
+    return;
+  }
   if (!FILES.includes(path || './')) return;
   // ignoreVary: GitHub Pages marks files "Vary: Accept-Encoding", and some
   // browsers (Firefox) would otherwise refuse a stored copy when a page

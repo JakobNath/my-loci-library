@@ -151,6 +151,36 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .problems { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-ink); font: var(--fs-small) var(--font-ui); }
 .toggle { display: inline-flex; align-items: center; gap: var(--space-2); font: var(--fs-small) var(--font-ui); cursor: pointer; }
 
+/* Saved cover pictures: the cover's main color shows until the picture loads */
+.cover.has-image::before, .cover.has-image::after { display: none; }
+.cover.has-image img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+.spine-photo { flex: none; width: 18%; max-width: 48px; align-self: stretch; display: flex; align-items: flex-end; }
+.spine-photo img { width: 100%; border-radius: 2px; box-shadow: var(--shadow-cover); }
+
+/* Batch add */
+.find { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
+.find input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); }
+.camera { margin-bottom: var(--space-4); text-align: center; }
+.camera video { width: 100%; max-width: 480px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-lg); background: var(--scan-bg); }
+.review-top { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-4); align-items: start; }
+.review-cover { width: 96px; border-radius: var(--cover-radius); box-shadow: var(--shadow-cover); }
+.review-cover.is-empty { aspect-ratio: var(--cover-ratio); display: flex; align-items: center; justify-content: center; text-align: center; padding: var(--space-2); background: var(--surface-2); color: var(--muted); font: var(--fs-small) var(--font-ui); box-shadow: none; }
+.review-fields { display: grid; gap: var(--space-3); min-width: 0; }
+.field.is-missing input { border-color: var(--pop); box-shadow: 0 0 0 3px var(--pop-soft); }
+.choice { border: 0; padding: 0; margin: var(--space-3) 0 0; display: grid; gap: var(--space-2); }
+.choice legend { font: 600 var(--fs-small) var(--font-ui); margin-bottom: var(--space-1); }
+label.btn { position: relative; }
+
+/* Photo editor, over the whole page */
+.editor { position: fixed; inset: 0; z-index: 20; display: flex; flex-direction: column; background: var(--scan-bg); color: var(--scan-ink); }
+.editor-bar, .editor-tools { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; padding: var(--space-3); padding-top: calc(var(--space-3) + env(safe-area-inset-top)); }
+.editor-tools { flex-wrap: wrap; justify-content: center; padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom)); }
+.editor-tools .field { color: var(--scan-ink); }
+.editor-title { font: 600 var(--fs-base) var(--font-ui); }
+.editor-stage { position: relative; flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.editor-canvas { touch-action: none; max-width: 100%; max-height: 100%; }
+.editor-loupe { position: absolute; top: var(--space-3); left: var(--space-3); width: 120px; height: 120px; border-radius: 50%; border: 2px solid var(--pop); }
+
 /* Wider screens */
 @media (min-width: 420px) { .brand-name { display: inline; } }
 @media (min-width: 900px) {

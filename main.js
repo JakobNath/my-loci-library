@@ -15,7 +15,6 @@ import * as bookScreen from './ui/book.js';
 import * as shelfScreen from './ui/shelf.js';
 import * as wishlistScreen from './ui/wishlist.js';
 import * as settingsScreen from './ui/settings.js';
-import * as editScreen from './ui/edit.js';
 
 // Shared settings until sync brings settings.json (DATA_FORMAT.md, "settings.json").
 const SHARED_DEFAULTS = {
@@ -33,7 +32,9 @@ const state = {
   query: '',
   storageNote: '',
   offlineReady: false,
+  batchLocation: [], // the shelf being filled in batch add, kept while the app is open
 };
+const imageUrls = new Map(); // image file key → address of the picture held in memory
 let storage = null;
 let stopScreen = () => {};
 
@@ -43,6 +44,27 @@ const note = document.getElementById('note');
 
 // ---------- routes ----------
 
+// Screens used only when adding or editing books (batch add with the scan
+// camera and lookups, and the full entry form) load the first time they are
+// opened, so opening the app stays fast (PLAN.md, "Small and fast"; the
+// exception to the code style is recorded in HOW_IT_WORKS.md).
+function screenLoadedWhenOpened(load) {
+  return (container, current, given) => {
+    let stop = () => {};
+    let left = false;
+    container.innerHTML = '<p class="empty">Opening…</p>';
+    load().then(screenModule => {
+      if (!left) stop = screenModule.render(container, current, given) || stop;
+    }).catch(error => {
+      container.innerHTML = '';
+      showNote(`This screen could not be loaded (${error.message}). Check the connection once; after that it works offline.`);
+    });
+    return () => { left = true; stop(); };
+  };
+}
+const renderAddScreen = screenLoadedWhenOpened(() => import('./ui/add.js'));
+const renderEditScreen = screenLoadedWhenOpened(() => import('./ui/edit.js'));
+
 const ROUTES = {
   '': libraryScreen.render,
   book: bookScreen.render,
@@ -50,9 +72,11 @@ const ROUTES = {
   shelf: shelfScreen.render,
   wishlist: wishlistScreen.render,
   settings: settingsScreen.render,
-  add: editScreen.render,
-  edit: editScreen.render,
+  add: renderAddScreen,
+  new: renderEditScreen,
+  edit: renderEditScreen,
 };
+
 
 function readRoute() {
   const [name = '', ...rest] = location.hash.replace(/^#\/?/, '').split('/');
@@ -62,7 +86,7 @@ function readRoute() {
 const TABS = [['', 'library', 'Library'], ['wishlist', 'wishlist', 'Wishlist'], ['add', 'add', 'Add'], ['settings', 'settings', 'Settings']];
 
 function tabsHtml(current) {
-  const section = current === 'book' || current === 'shelves' || current === 'shelf' ? '' : current === 'edit' ? 'add' : current;
+  const section = current === 'book' || current === 'shelves' || current === 'shelf' ? '' : current === 'edit' || current === 'new' ? 'add' : current;
   return TABS.map(([name, icon, label]) => `<a class="tab${name === 'add' ? ' tab-add' : ''}${name === section ? ' is-on' : ''}" href="#/${name}"${name === section ? ' aria-current="page"' : ''}>${iconHtml(icon)}<span>${escapeHtml(label)}</span></a>`).join('');
 }
 
@@ -114,8 +138,12 @@ const actions = {
     render();
   },
 
-  /** Save new or changed records here, and queue them for the next sync. */
-  async saveRecords(records) {
+  /**
+   * Save new or changed records here, and queue them for the next sync.
+   * With `soon`, the library is rebuilt just after, so batch add is ready
+   * for the next book at once (PLAN.md: within about 200 ms).
+   */
+  async saveRecords(records, { soon = false } = {}) {
     try {
       await storage.saveRecords(records, { toOutbox: true });
     } catch (error) {
@@ -123,8 +151,42 @@ const actions = {
       return false;
     }
     for (const record of records) state.records.set(record.id, record);
-    state.library = buildLibrary([...state.records.values()]);
+    const rebuild = () => { state.library = withSearchText(buildLibrary([...state.records.values()])); };
+    if (soon) setTimeout(rebuild, 0);
+    else rebuild();
     return true;
+  },
+
+  /** Keep the files of one image: thumbnail, detail image and (for our photos) master. */
+  async saveImageFiles(id, files) {
+    try {
+      await storage.saveImage(`${id}/thumb`, files.thumb);
+      await storage.saveImage(`${id}/detail`, files.detail);
+      if (files.master) await storage.saveImage(`${id}/master`, files.master);
+    } catch (error) {
+      showNote(error.message);
+    }
+  },
+
+  /** Add an image to an edition: a cover goes first, so it is the one shown. */
+  async addImage(editionId, image) {
+    const edition = state.records.get(editionId);
+    if (!edition) return;
+    const images = image.kind === 'cover' ? [image, ...edition.images.filter(other => other.kind !== 'cover' || other.source === 'photo')] : [...edition.images, image];
+    await actions.saveRecords([withField(edition, 'images', images, now())], { soon: true });
+  },
+
+  /** The address of a stored picture ("<image id>/thumb"), or null if this device does not have it. */
+  async imageUrl(key) {
+    if (!imageUrls.has(key)) {
+      const blob = storage ? await storage.image(key) : null;
+      imageUrls.set(key, blob ? URL.createObjectURL(blob) : null);
+    }
+    return imageUrls.get(key);
+  },
+
+  setBatchLocation(parts) {
+    state.batchLocation = parts;
   },
 
   /** Change some fields of an edition, as from the cite toggle. */

@@ -8,6 +8,7 @@ const testFiles = [
   '../core/tests/catalog.tests.js',
   '../core/tests/records.tests.js',
   '../core/tests/entry.tests.js',
+  '../core/tests/lookup.tests.js',
   './speed.tests.js',
 ];
 
