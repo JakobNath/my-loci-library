@@ -75,7 +75,7 @@ export function render(container, state, actions) {
 }
 
 /** Search results, drawn in place of the screen while the search box has text. */
-export function renderSearch(container, state) {
+export function renderSearch(container, state, actions) {
   const results = searchEntries(state.library, state.query);
   const wishes = state.library.wishlist.filter(wish => matchesSearch(wish.searchText, state.query)).map(wish => wish.item);
   const total = results.length + wishes.length;
@@ -85,4 +85,5 @@ export function renderSearch(container, state) {
     + `<span class="row-author">${escapeHtml(item.authors.join(', '))} <span class="badge badge-wish">Wishlist</span></span></span><span></span></a>`).join('');
   container.innerHTML = `<div class="page-head"><h1 class="page-title">Search</h1><p class="page-meta">${countHtml}</p></div>
     <div class="list">${resultsHtml}${wishesHtml}</div>`;
+  fillImages(container, actions.imageUrl);
 }

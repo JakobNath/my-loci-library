@@ -108,7 +108,7 @@ function render() {
   screen.oninput = null;
   screen.onsubmit = null;
   if (state.query.trim()) {
-    libraryScreen.renderSearch(screen, state);
+    libraryScreen.renderSearch(screen, state, actions);
     return;
   }
   const stop = ROUTES[state.route.name](screen, state, actions);

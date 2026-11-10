@@ -10,6 +10,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .icon { width: 1.25em; height: 1.25em; flex: none; vertical-align: -0.25em; }
 .muted { color: var(--muted); }
 .small { font-size: var(--fs-small); }
+/* Anything marked hidden stays hidden, whatever its own display style. */
+[hidden] { display: none !important; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
 /* Shell */
