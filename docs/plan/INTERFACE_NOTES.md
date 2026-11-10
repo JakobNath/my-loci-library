@@ -34,3 +34,11 @@ Things Jakob has noticed while testing on his phones, kept for the interface rev
   - Did it look it up: the screen says which service it is asking ("Looking up ISBN … on Open Library…", then Google Books if needed), and the first step says where the book was found.
   - What a step wants: every step has one plain line saying what to do.
   - Was it saved: a green line at the top of the scan screen says "✓ Saved: <title> on <place>. Ready for the next book."
+
+## Review with Jakob, round 3 (2026-11-11)
+
+- [x] Search: fine as it is.
+- [x] Settings: good as it is.
+- [x] Phone feel (scrolling, sizes, camera): good now.
+- [x] Wishlist: adding an item should find the book and its cover, not ask for everything by hand; an Amazon link should work. Done (0.8.5): a find box takes a title (results as you type, with small covers), an ISBN, or an Amazon link (its ISBN is read from the address; Amazon is never contacted). The item gets its cover, falling back to the work's cover when the edition has none, and "I bought it" carries the cover into the library.
+- [ ] Shelf view: to be reviewed once several dozen real books are on a shelf (build step 13.0).

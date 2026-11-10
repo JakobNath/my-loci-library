@@ -188,7 +188,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [x] **8.3** Wishlist tab: standalone records, and "I bought it" opening a prefilled entry form that keeps the note.
 - [x] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
 - [x] **8.5** Settings page exactly as listed in `PLAN.md`: shared settings saved in the data repo's `settings.json`, device settings kept on the device.
-- [ ] **8.6 Interface review with Jakob.** Go through every screen on a phone, using the notes in `docs/plan/INTERFACE_NOTES.md`, and ask Jakob about each screen in turn (what feels clunky, too wordy, unclear or slow) before changing it. Fix what is agreed, keeping to the design in `docs/plan/DESIGN.md` and the size budget. Record each change under "Decisions" in `HOW_IT_WORKS.md`.
+- [x] **8.6 Interface review with Jakob.** (Done 2026-11-11, except the shelf view, which Jakob will review once several dozen real books are shelved: step 13.0.) Go through every screen on a phone, using the notes in `docs/plan/INTERFACE_NOTES.md`, and ask Jakob about each screen in turn (what feels clunky, too wordy, unclear or slow) before changing it. Fix what is agreed, keeping to the design in `docs/plan/DESIGN.md` and the size budget. Record each change under "Decisions" in `HOW_IT_WORKS.md`.
   **Check for 8.1–8.5:** a test for each item, and the sample books behave as their "What it tests" column says.
 
 ---
@@ -237,6 +237,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 13: Release
 
+- [ ] **13.0 Shelf view review with Jakob.** Once several dozen real books are on a shelf, go through the shelf view with Jakob at the bookcase: can he find a book from the screen, do the sizes and drawn spines look like the real shelf, and is the way there quick enough. Fix what is agreed, as in step 8.6.
 - [ ] **13.1** Finish `README.md`, `HOW_IT_WORKS.md` (including the yearly ten-minute check and how to rewrite Zotero links if the app's address ever changes), and `SETUP_FOR_COLLEAGUES.md`.
 - [ ] **13.2** About screen: app version, data format version, MIT license, "Created by Jakob Nath".
 - [ ] **13.3** Run every test in both repos, confirm the size budget, and search both repos for any AI attribution.

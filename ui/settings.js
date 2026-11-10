@@ -9,7 +9,7 @@ import { SORTS } from '../core/library.js';
 import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 import { renderLists } from './lists.js';
 
-export const APP_VERSION = '0.8.4';
+export const APP_VERSION = '0.8.5';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 

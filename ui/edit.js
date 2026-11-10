@@ -136,8 +136,12 @@ export function render(container, state, actions) {
       problems.scrollIntoView({ block: 'center' });
       return;
     }
-    // A wishlist item just bought leaves the wishlist (to the trash, so nothing is lost).
-    if (wishRecord && wish) result.records.push(trashRecord(wishRecord, actions.today(), actions.now()));
+    // A wishlist item just bought leaves the wishlist (to the trash, so nothing is lost),
+    // and its cover becomes the new book's cover: the same picture files, under the same ID.
+    if (wishRecord && wish) {
+      result.records = result.records.map(record => (record.type === 'edition' ? { ...record, images: wishRecord.images } : record));
+      result.records.push(trashRecord(wishRecord, actions.today(), actions.now()));
+    }
     if (await actions.saveRecords(result.records)) {
       actions.showNote(wish ? 'Added to the library, and taken off the wishlist' : 'Saved');
       actions.go(`#/book/${result.editionId}`);

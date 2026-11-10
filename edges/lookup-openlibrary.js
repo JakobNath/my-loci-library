@@ -18,6 +18,11 @@ export function openLibraryCoverUrl(isbn) {
   return `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg?default=false`;
 }
 
+/** Where Open Library keeps a cover by its number (from a title search), in size S (small) or L (large). */
+export function openLibraryCoverUrlById(id, size = 'L') {
+  return `https://covers.openlibrary.org/b/id/${id}-${size}.jpg?default=false`;
+}
+
 /**
  * Look up one ISBN.
  * @param {string} isbn 13 digits
@@ -48,7 +53,7 @@ export async function lookUpWork(isbn, fetchFn = fetch) {
  * @returns {Promise<{ title: string, authors: string[], year: string, isbn: string }[]>}
  */
 export async function searchOpenLibrary(text, fetchFn = fetch) {
-  const fields = 'title,subtitle,author_name,first_publish_year,isbn';
+  const fields = 'title,subtitle,author_name,first_publish_year,isbn,cover_i';
   const answer = await getJson(`${BASE}/search.json?q=${encodeURIComponent(text)}&limit=10&fields=${fields}`, fetchFn);
   return candidatesFromSearch(answer);
 }

@@ -44,3 +44,4 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: on the Wishlist, add an item with a note, then tap "I bought it". The entry form should open filled from the item, with the note in the copy's notes. After saving, the item should be gone from the Wishlist and listed in Settings › Trash.
 - [ ] Phone: in Settings › Lists, rename a place (a shelf, say). The books on it should show the new name on their pages and in the Library's location filter.
 - [ ] Phone (0.8.4 or later): add a book with a spine photo. On its page, tap the small cover: the cover and spine should open full size, and the spine's lettering should be readable. Tap anywhere to close.
+- [ ] Phone (0.8.5 or later): in the Wishlist, tap "Add to wishlist", share or copy a book's link from the Amazon app or site, and paste it. The book's details and cover should fill in. Then try typing a title: small covers should appear as you type.

@@ -129,7 +129,7 @@ One author record holds every name form (Augustine, Augustine of Hippo, Aurelius
 
 **Wishlist**
 
-A wishlist item is a small standalone record, not linked to any existing work. It holds the title, author, edition details (translator, publisher), ISBN if known, an optional cover, and one free note for why we want it, prices, or where we saw it. One tap of "I bought it" opens the normal entry form prefilled with these details and keeps the note. The item then leaves the wishlist. The wishlist is shared between us.
+A wishlist item is a small standalone record, not linked to any existing work. It holds the title, author, edition details (translator, publisher), ISBN if known, an optional cover, and one free note for why we want it, prices, or where we saw it. A new item starts from a find box: type a title (results appear as you type, with small covers), an ISBN, or paste a link to the printed book on Amazon. The app reads the ISBN from the link's address and never contacts Amazon; the details and cover come from Open Library, then Google Books. A title search fills only the title, authors and cover, since it finds the work rather than one edition. One tap of "I bought it" opens the normal entry form prefilled with these details and keeps the note and the cover. The item then leaves the wishlist. The wishlist is shared between us.
 
 **Status, deleting and duplicates**
 
