@@ -9,6 +9,7 @@ import { newRecord } from '../core/records.js';
 import { buildLibrary, withSearchText, viewEntries, searchEntries } from '../core/library.js';
 import { openStorage, deleteStorage } from '../edges/storage.js';
 import { recordsFromForm } from '../core/entry.js';
+import { SHARED_DEFAULTS } from '../core/settings.js';
 import * as libraryScreen from '../ui/library.js';
 import * as bookScreen from '../ui/book.js';
 
@@ -48,7 +49,7 @@ function time(action) {
 }
 
 function fakeState(library, route = { name: '', id: '' }) {
-  return { library, route, query: '', device: { view: 'grid', sort: 'title', coverSize: 'medium', medium: 'physical' }, settings: { dateStyle: 'AD', currency: '$' } };
+  return { library, route, query: '', device: { view: 'grid', sort: 'title', coverSize: 'medium', medium: 'physical' }, settings: SHARED_DEFAULTS };
 }
 
 function hiddenBox() {
