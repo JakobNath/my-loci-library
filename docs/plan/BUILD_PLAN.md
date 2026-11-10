@@ -113,7 +113,7 @@ Each check is a small throwaway script or page. Write each result and any fallba
 - [x] **4.2 Online covers in the browser.** Try compressing an Open Library cover and a Google Books cover in the browser.
   **Fallback** if blocked: the laptop tool downloads covers into `covers/inbox/` in the data repo, and the app compresses them from there.
   **Check:** the result and the chosen approach recorded.
-- [ ] **4.3 Zotero.** With Zotero open, create a test item in a "Loci test" collection through the local connection, set `original-date`, pin a Better BibTeX citekey using the method Better BibTeX documents, then delete the test item.
+- [x] **4.3 Zotero.** (Answered in phase 12: Zotero 7's local connection only reads, so the web API is used; `original-date` and the pinned key go in Zotero's own Original Date and Citation Key fields.) With Zotero open, create a test item in a "Loci test" collection through the local connection, set `original-date`, pin a Better BibTeX citekey using the method Better BibTeX documents, then delete the test item.
   **Fallback:** Zotero's web API.
   **Check:** the method that worked recorded, with no test items left behind.
 - [x] **4.4b Catalog heights.** From Node, look up the sample books' ISBNs in the Library of Congress catalog (its SRU service, MARC field 300) and read the height in centimeters.
@@ -228,12 +228,12 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 12: Zotero companion
 
-- [ ] **12.1 One-way sync** into a "My Loci Library" collection: every physical edition, Logos editions marked "cite", book sections for the contents of anthologies that are sent, and `original-date` set. Wishlist items are never sent.
-- [ ] **12.2 Fields:** shelf location and a permanent Loci link (fixed pattern, record ID only), refreshed every run; a link file in `integrations/zotero-links.json`; pinned Better BibTeX keys in the existing author + year pattern.
-- [ ] **12.3 Safety:** never deletes Zotero items (tags them "Loci: no longer owned" or "Loci: removed"); the first run links existing items and writes a report of every difference it overwrote; uses the web API as a fallback.
-- [ ] **12.4 Speed and launchers:** only changed books are processed; one new book arrives in under 10 seconds; one-click `.cmd` and `.sh` launchers; README notes on optional scheduling.
+- [x] **12.1 One-way sync** into a "My Loci Library" collection: every physical edition, Logos editions marked "cite", book sections for the contents of anthologies that are sent, and `original-date` set. Wishlist items are never sent.
+- [x] **12.2 Fields:** shelf location and a permanent Loci link (fixed pattern, record ID only), refreshed every run; a link file in `integrations/zotero-links.json`; pinned Better BibTeX keys in the existing author + year pattern.
+- [x] **12.3 Safety:** never deletes Zotero items (tags them "Loci: no longer owned" or "Loci: removed"); the first run links existing items and writes a report of every difference it overwrote; uses the web API as a fallback.
+- [x] **12.4 Speed and launchers:** only changed books are processed; one new book arrives in under 10 seconds; one-click `.cmd` and `.sh` launchers; README notes on optional scheduling.
   **Check for 12.1–12.4:** against a "Loci test" collection, the sample books arrive correctly, a second run changes nothing, and the timing test passes. Remove the test collection afterward.
-  (2026-11-10: all four are built and pass their tests against a stand-in for Zotero's web API; the live check waits for a Zotero key, see `docs/plan/FOR_JAKOB.md`.)
+  (2026-11-10: checked with Jakob in four live trials into "Loci test". The trials found and fixed: a wrongly linked real item (restored), citation fields that Chicago would print, premodern names, anthology dates and authors, volumes of a set, section translators and edition wording; Chicago notes copied from Zotero were then checked by Jakob. A second run sent nothing in 1.5 s. Removing the test collection is Jakob's, in `docs/plan/FOR_JAKOB.md`.)
 
 ---
 
