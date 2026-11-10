@@ -14,7 +14,7 @@ import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 
-export const APP_VERSION = '1.0.5';
+export const APP_VERSION = '1.1.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 

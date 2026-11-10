@@ -507,7 +507,8 @@ export function render(container, state, actions) {
     finishBook(found.title);
   }
 
-  // The new edition's images: our photos, the checked online cover, or a waiting Google Books cover.
+  // The new edition's images (our photos, the checked online cover, or a waiting Google Books
+  // cover), and what the records online gave that the steps do not ask: sizes, catalogue numbers, subjects.
   function withImages(edition) {
     const images = [];
     book.imageFiles = [];
@@ -523,8 +524,10 @@ export function render(container, state, actions) {
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
     const measured = book.photos.spine && book.photos.spine.height;
+    const { lccn, oclc, lcc, ddc } = book.found.identifiers;
     return {
       ...edition, images,
+      identifiers: { lccn: lccn || null, oclc: oclc || null, lcc: lcc || null, ddc: ddc || null }, subjects: book.found.subjects,
       ...(height ? { height, heightSource: 'catalog' } : {}),
       ...(thickness ? { thickness, thicknessSource: 'catalog' } : {}),
       ...(measured ? { height: measured, heightSource: 'measured' } : {}),

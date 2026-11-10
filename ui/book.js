@@ -90,11 +90,16 @@ export function render(container, state, actions) {
     ['Edition', edition.editionStatement],
     ['Translation first published', edition.translationFirstPublished],
     ['ISBN', edition.isbn],
+    ['Library of Congress number', edition.identifiers.lccn],
+    ['OCLC number', edition.identifiers.oclc],
+    ['Call number', edition.identifiers.lcc],
+    ['Dewey number', edition.identifiers.ddc],
     ['Languages', edition.languages.join(', ')],
     ['Pages', edition.pages && `${edition.pages}${countPages(edition.pages) && String(countPages(edition.pages)) !== edition.pages ? ` (${countPages(edition.pages)} pages)` : ''}`],
     ['Format', entry.isDigital ? `Logos${edition.logosId ? ` (${edition.logosId})` : ''}` : 'Physical'],
     ['Category', work && work.category],
     ['Tags', work && work.tags.join(', ')],
+    ['Subjects', edition.subjects.join('; ')],
   ]);
   // The spine beside the cover, when there is a spine photo (PLAN.md, "Taking photos").
   const spine = edition.images.find(image => image.kind === 'spine');

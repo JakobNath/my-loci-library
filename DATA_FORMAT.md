@@ -2,7 +2,7 @@
 
 This file describes every record and field in the catalog. It is the most important document in the project: if the app is ever lost, the data can be read, and a new app written, from this file alone.
 
-Format version: **1** (November 2026).
+Format version: **2** (November 2026). Version 1 records are still read; see "Format versions".
 
 ## The idea in one paragraph
 
@@ -59,6 +59,7 @@ my-loci-library-data/
   backup-status.json        when the laptop last backed up, kept by loci-backup
   integrations/zotero-links.json   kept by the Zotero tool; the app never reads it
   integrations/logos-import.json   kept by the Logos importer; the app never reads it
+  integrations/enrich.json         kept by loci-enrich; the app never reads it
 ```
 
 Each record's file name is its ID. Nothing else about a record is in its file name, so renaming a book never renames a file.
@@ -80,7 +81,7 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 1. |
+| `format` | number | The format version this record was written in. Currently 2. |
 | `type` | text | `work`, `edition`, `copy`, `author` or `wishlist`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
@@ -160,10 +161,12 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `set` | text or null | | "Chemnitz's Works". |
 | `volume` | text or null | | The volume label within the set: "1", "I/1". |
 | `isbn` | text or null | | ISBN-13, digits only. An ISBN-10 is converted when entered. |
+| `identifiers` | object | | The edition's catalogue numbers, from library records; see "Identifiers". (Version 2.) |
 | `languages` | list of text | | The languages printed in it. Two make a diglot ("Greek", "English"), three a triglot. |
+| `subjects` | list of text | | Subject headings from library records, as the library writes them: "Christian saints -- Algeria -- Hippo (Extinct city) -- Biography". (Version 2.) |
 | `pages` | text or null | | The pages as printed: "xxviii, 311", or "89–132" for a journal issue. The app counts them (339; 44). |
 | `height` | number or null | | In millimeters. |
-| `heightSource` | text or null | | `measured` (a person) or `catalog` (a library record). |
+| `heightSource` | text or null | | `measured` (a person) or `catalog` (a library record, Open Library or Google Books). |
 | `thickness` | number or null | | In millimeters. |
 | `thicknessSource` | text or null | | `measured`, `catalog` or `photo` (worked out from a spine photo and the height). |
 | `medium` | text | yes | `physical` or `logos`. (Not called `format`, which is the record's format version.) |
@@ -173,6 +176,21 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `images` | list | | Covers and spines; see "Images". |
 
 Estimated sizes are never stored. When height or thickness is null, the app works them out each time from the other data, in the order given in `PLAN.md` under "Book sizes".
+
+### Identifiers
+
+An object with four keys, always in this order, each text or null when unknown:
+
+| Key | Meaning |
+| --- | --- |
+| `lccn` | Library of Congress control number: "2008491261". |
+| `oclc` | OCLC (WorldCat) number: "228195188". |
+| `lcc` | Library of Congress call number: "BR65.A6 E5 2008". |
+| `ddc` | Dewey decimal number, without the slashes some catalogues print: "891.733". |
+
+```json
+"identifiers": { "lccn": "2008491261", "oclc": "228195188", "lcc": "BR65.A6 E5 2008", "ddc": "270.2092" }
+```
 
 ### Contents
 
@@ -279,7 +297,7 @@ All records in one file, so a device can load the catalog with one download:
 { "format": 1, "built": "2026-11-09T22:00:00Z", "works": [], "editions": [], "copies": [], "authors": [], "wishlist": [] }
 ```
 
-It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
+It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. Each record in it is exactly as its file stores it, in that file's format version, so a device can tell which files it need not download. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
 
 ## integrations/zotero-links.json
 
@@ -295,6 +313,14 @@ Kept by the Logos importer: for each Logos resource ID, the edition fields as th
 
 ```json
 { "format": 1, "imported": { "LLS:PIEPER1": { "title": "Christian Dogmatics", "subtitle": null, "publisher": "Concordia Publishing House", "year": 1950, "series": null, "languages": ["English"], "isbn": "9780570067130", "logosExtra": { "Resource Type": "Monograph" } } } }
+```
+
+## integrations/enrich.json
+
+Kept by the laptop tool `loci-enrich`: for each edition it asked about, the ISBN asked, the day, whether any source knew the book, and every value it wrote (`work.` before a field of the edition's work). A field it once wrote is never written again, so a value a person changed or cleared stays as they left it.
+
+```json
+{ "format": 1, "books": { "chadw1ck1991": { "isbn": "9780199537822", "asked": "2026-11-10", "found": true, "wrote": { "height": 200, "work.originalLanguage": "Latin" } } } }
 ```
 
 ## backup-status.json
@@ -316,8 +342,10 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 
 ## Format versions
 
-- Version 1: this document.
-- When the format changes, the version number rises, this document says what changed, and the core module gains a `migrate` step that upgrades a version-1 record to version 2 (and so on, one version at a time), with tests. Old records are never silently reinterpreted.
+- Version 1 (November 2026): the first format.
+- Version 2 (November 2026): each edition gained `identifiers` and `subjects`. A version-1 edition is read as version 2 with `identifiers` all null and `subjects` empty; any other version-1 record only changes its `format`. Nothing else changes, and a version-1 file stays as it is until the record is next saved.
+- Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
+- When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
 ## Examples
 
@@ -325,7 +353,7 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
@@ -350,7 +378,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
@@ -373,7 +401,9 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "set": null,
   "volume": null,
   "isbn": "9783438051400",
+  "identifiers": { "lccn": null, "oclc": null, "lcc": null, "ddc": null },
   "languages": ["Greek"],
+  "subjects": [],
   "pages": "89*, 890",
   "height": null,
   "heightSource": null,
@@ -396,7 +426,7 @@ A copy:
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
@@ -421,7 +451,7 @@ An author:
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -437,7 +467,7 @@ A wishlist item:
 
 ```json
 {
-  "format": 1,
+  "format": 2,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",

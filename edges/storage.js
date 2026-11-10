@@ -11,6 +11,8 @@
 // that can't lose data"), except for the outbox, which is why it is kept
 // until the sync module says each change has arrived.
 
+import { migrate } from '../core/records.js';
+
 const DATABASE = 'my-loci-library';
 const VERSION = 1;
 
@@ -63,10 +65,11 @@ export async function openStorage(name = DATABASE) {
         requestResult(transaction.objectStore('meta').get('snapshot')),
         requestResult(transaction.objectStore('records').getAll()),
       ]);
-      if (!changed.length) return snapshot ? JSON.parse(snapshot) : [];
+      // Records saved by an older version of the app are read in this app's data format.
+      if (!changed.length) return snapshot ? JSON.parse(snapshot).map(migrate) : [];
       const byId = new Map(snapshot ? JSON.parse(snapshot).map(record => [record.id, record]) : []);
       for (const record of changed) byId.set(record.id, record);
-      return [...byId.values()];
+      return [...byId.values()].map(migrate);
     },
     /** How many records changed since the snapshot; compact when this grows. */
     async changedCount() {

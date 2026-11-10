@@ -113,9 +113,38 @@ test('an expired key, no connection, the GitHub rate limit and a newer data form
   }) });
   await assert.rejects(limited.check(), /asks the app to wait until/);
   await assert.rejects(offline.check(), /No connection/);
-  const future = { ...copy(9), format: 2 };
+  const future = { ...copy(9), format: 3 };
   github.commitFiles({ [recordPath(future)]: JSON.stringify(future, null, 2) + '\n' });
   const phone = device(github);
   await assert.rejects(phone.pull(), /newer data format/);
   assert.equal(phone.state.local.size, 0, 'nothing was written');
+});
+
+test('a catalog of version-1 files is read as version 2, and only edited records are sent in the new version', async () => {
+  const github = fakeGitHub();
+  // Two editions as the app's version 1 wrote them, before catalogue numbers and subjects existed.
+  const asVersion1 = record => {
+    const { identifiers, subjects, ...rest } = record;
+    return { ...rest, format: 1 };
+  };
+  const work = asVersion1(newRecord('work', ids(800), T0, { title: 'Confessions' }));
+  const editions = [1, 2].map(n => asVersion1(newRecord('edition', ids(n), T0, { title: `Edition ${n}`, contents: [{ work: work.id, extent: 'complete', translator: null, pages: null }] })));
+  const files = Object.fromEntries([work, ...editions].map(record => [recordPath(record), recordToFileText(record)]));
+  files['catalog.json'] = JSON.stringify({ format: 1, built: T0, works: [work], editions: [editions[0]], copies: [], authors: [], wishlist: [] });
+  github.commitFiles(files);
+  const phone = device(github);
+  await phone.pull();
+  assert.equal(github.calls.filter(call => call.includes('/git/blobs/')).length, 1, 'catalog.json still saves downloads: only the edition not in it is fetched');
+  for (const record of phone.state.local.values()) assert.equal(record.format, 2);
+  assert.deepEqual(phone.state.local.get(ids(1)).identifiers, { lccn: null, oclc: null, lcc: null, ddc: null });
+  // Two devices edit the same edition; both changes survive the merge.
+  const laptop = device(github);
+  await laptop.pull();
+  phone.edit(withField(phone.state.local.get(ids(1)), 'subjects', ['Christian saints'], '2026-11-12T09:00:00Z'));
+  laptop.edit(withField(laptop.state.local.get(ids(1)), 'pages', 'xxviii, 311', '2026-11-12T09:30:00Z'));
+  await phone.send();
+  await laptop.send();
+  const sent = JSON.parse(github.fileText(recordPath(editions[0])));
+  assert.deepEqual([sent.format, sent.subjects, sent.pages], [2, ['Christian saints'], 'xxviii, 311']);
+  assert.equal(JSON.parse(github.fileText(recordPath(editions[1]))).format, 1, 'a record nobody edited keeps its file as it was');
 });

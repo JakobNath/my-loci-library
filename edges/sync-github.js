@@ -14,7 +14,7 @@
 // - Local changes go up as one commit: GitHub's "Git Data" API lets one tree
 //   hold many files, so a batch of 30 books is one commit, not 30.
 
-import { recordToFileText, FORMAT_VERSION } from '../core/records.js';
+import { recordToFileText, FORMAT_VERSION, migrate } from '../core/records.js';
 import { mergeRecords } from '../core/merge.js';
 
 const API = 'https://api.github.com';
@@ -135,15 +135,17 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
         for (const record of all) {
           const path = recordPath(record);
           const sha = await blobSha(recordToFileText(record));
-          if (files.get(path) === sha) { fingerprints.set(path, sha); fromCatalog.push(record); }
+          // Compared as stored, then read in this app's data format.
+          if (files.get(path) === sha) { fingerprints.set(path, sha); fromCatalog.push(migrate(record)); }
         }
       }
       const changed = [...files].filter(([path, sha]) => TYPE_OF_FOLDER[path.split('/')[0]] && path.endsWith('.json') && fingerprints.get(path) !== sha);
       const downloaded = await downloadRecords(changed, onProgress);
       checkVersions(downloaded.map(item => item.record));
       const records = [];
-      for (const { path, sha, record } of downloaded) {
+      for (const { path, sha, record: stored } of downloaded) {
         fingerprints.set(path, sha);
+        const record = migrate(stored);
         const mine = local.get(record.id);
         records.push(mine && outbox.has(record.id) ? mergeRecords(mine, record) : record);
       }
