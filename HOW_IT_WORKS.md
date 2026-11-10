@@ -18,7 +18,7 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 
 **The tests**: open `tests/index.html` on any device (it runs the core tests and the speed tests there), or run `node --test` in this folder (the same core tests, the sync tests against a stand-in for GitHub, and the architecture checks: each ring only reaches inward, each outside system is used by one edge, data put into a page is always escaped, the app stays within its size budget, and every file the app loads is kept for offline use).
 
-**The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-sizes` (catalog heights), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
+**The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-enrich` (fills empty book fields from the Library of Congress, Open Library and Google Books), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
 
 ## Looking after it
 
@@ -37,7 +37,7 @@ Anything red names the file to look at. Fix it in `core/` first if the rule live
 
 **If GitHub refuses a key**, the app says so in plain words and keeps every change on the device. Make a new key the same way (the app's README, "Starting to catalog for real") and paste it in.
 
-**If a lookup service disappears** (Open Library, Google Books), adding books still works by typing; only the lookup file in `edges/` needs replacing. If the Library of Congress service used by `loci-sizes` disappears, sizes stay estimated.
+**If a lookup service disappears** (Open Library, Google Books), adding books still works by typing; only the lookup file in `edges/` needs replacing. If a service used by `loci-enrich` disappears, the fields it would have filled simply stay as they are.
 
 ## Verified approaches
 
@@ -183,4 +183,10 @@ Choices made during the build that the plan did not settle, with the reason for 
   - When Open Library's cover is missing or too small and Google Books has one, the Google Books cover is kept, waiting for the laptop, as decided in phase 4.
   - When a record lists contents and the book is not a Bible (`core/bible.js`), a step asks "Is this a collection of works?" with the list filled in, one work per line, to correct; works are created only when the person answers yes. A collection skips "Same work?" and the original date, since each of its works has its own date, found later through "Needs an original date".
 - **Testing a Google Books key (2026-11-10, build step 14.5).** "Test the key" in Settings › Advanced makes one lookup (Chadwick's *Confessions*) with the key in the box and reads Google's reason for any refusal (`googleKeyVerdict` in `core/book-data.js`): an unknown key, the Books API not switched on, a key limited to other services or to certain websites or apps, or the day's limit reached, each with what to change. The steps for making a key are beside it, in the tools README and in `docs/plan/FOR_JAKOB.md`; they tell people to leave "Application restrictions" at "None", because a phone app at a web address and a laptop tool cannot share a key limited to one website.
+- **loci-enrich (2026-11-10, build step 14.6).** It replaces `loci-sizes` and runs with every daily backup. Choices made while building it:
+  - Each book is asked once, and again after 90 days, not only when no source knew it: at about 2,000 physical books that is some 22 books a day, and it finds catalog records made since. What it wrote is kept per book in `integrations/enrich.json`; a field it once wrote is never written again, so a value a person changed or cleared stays as they left it. The per-book file also lets a first long run, or one limited with `--limit`, carry on where it stopped.
+  - Translators and editors are filled only when the book names no contributors at all, so a list a person began is never added to. The work's original title and language are filled only for a book holding one work.
+  - Without a key in `config.json`, Google Books is not asked: it refuses most keyless requests, and the report says so.
+  - The three services are asked at the same moment for each book (they are different services), with a second's pause between books. The report is printed and kept in `loci-enrich/last-report.txt` on the laptop.
+  - The first trial's report showed four things now handled in `core`: sizes that cannot be one book's are not used at all, since Open Library's record for an Ante-Nicene Fathers volume measured the boxed set (14.1 × 10 × 8.5 inches); volume and part labels ("V. 1. Part I") and front matter are never offered as works; a bookseller's "New Ed edition" reads "New ed."; and a series that only repeats the book's set (Chemnitz's Works) is not filled.
 
