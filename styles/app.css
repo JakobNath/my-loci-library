@@ -145,6 +145,7 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .field { display: grid; gap: var(--space-1); font: var(--fs-small) var(--font-ui); color: var(--muted); }
 .field input, .field textarea, .field select { width: 100%; font: var(--fs-base) var(--font-body); background: var(--bg); }
 .field textarea { min-height: 5em; resize: vertical; }
+.field input[type="checkbox"], .field input[type="radio"] { width: auto; }
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); gap: var(--space-3); }
 .preview { margin: 0; font: var(--fs-small) var(--font-ui); color: var(--muted); }
 .preview strong { color: var(--accent-ink); }
@@ -163,6 +164,14 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .find { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
 .find input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); }
 .camera { margin-bottom: var(--space-4); text-align: center; }
+.camera-view { position: relative; display: inline-block; width: 100%; max-width: 480px; }
+.camera-read { position: absolute; left: 0; right: 0; bottom: var(--space-3); margin: 0; opacity: 0; transition: opacity 0.2s;
+  font: 600 var(--fs-base) var(--font-ui); color: var(--on-accent); }
+.camera.is-read video { box-shadow: 0 0 0 4px var(--accent-ink), 0 0 24px var(--accent-ink); }
+.camera.is-read .camera-read { opacity: 1; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6); }
+.hints { display: grid; gap: var(--space-1); margin-top: var(--space-1); }
+.hint { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; }
+.hint .chip, .hints > .chip { flex: none; justify-self: start; }
 .camera video { width: 100%; max-width: 480px; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--radius-lg); background: var(--scan-bg); }
 .review-top { display: grid; grid-template-columns: 96px 1fr; gap: var(--space-4); align-items: start; }
 .review-cover { width: 96px; border-radius: var(--cover-radius); box-shadow: var(--shadow-cover); }

@@ -10,6 +10,7 @@ export const DEVICE_DEFAULTS = {
   coverSize: 'medium', // small, medium or large
   showLogos: false, // Logos books in the main Library view
   sort: 'title',
+  scanSound: true, // a beep when a barcode is read
 };
 
 /** This device's settings, with defaults for anything never set. */

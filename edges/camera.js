@@ -53,6 +53,24 @@ function loadBundledDecoder() {
   });
 }
 
+/**
+ * Tell the person a barcode was read: a short soft beep (if sound is on) and
+ * a buzz where the phone allows it (Android; iPhones do not let web apps vibrate).
+ */
+function signalRead(audio) {
+  if (navigator.vibrate) navigator.vibrate(60);
+  if (!audio) return;
+  audio.resume();
+  const tone = audio.createOscillator();
+  const volume = audio.createGain();
+  tone.frequency.value = 880; // a soft, high "beep"
+  volume.gain.setValueAtTime(0.12, audio.currentTime);
+  volume.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.15);
+  tone.connect(volume).connect(audio.destination);
+  tone.start();
+  tone.stop(audio.currentTime + 0.15);
+}
+
 /** Plain words for the browser's camera errors. */
 function cameraError(error) {
   if (error.name === 'NotAllowedError') return new Error('The camera is not allowed for this app. Allow it in the browser\'s site settings, or type the ISBN instead.');
@@ -64,12 +82,16 @@ function cameraError(error) {
  * Start scanning into a <video> element.
  * @param {HTMLVideoElement} video
  * @param {(isbn: string) => void} onIsbn called with each new book ISBN read
+ * @param {{ sound?: boolean }} [options] sound: a short beep on each read (a device setting)
  * @returns {Promise<{ decoderName: string, pause: () => void, resume: () => void, stop: () => void }>}
  */
-export async function startScanner(video, onIsbn) {
+export async function startScanner(video, onIsbn, { sound = true } = {}) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error('This browser cannot use the camera here. Type the ISBN instead.');
   }
+  // The beep's sound player is made now, while the person's tap on "Scan" is
+  // still fresh: phones only allow sound that starts from a tap.
+  const audio = sound && 'AudioContext' in globalThis ? new AudioContext() : null;
   const decoder = await chooseDecoder();
   let stream;
   try {
@@ -110,7 +132,7 @@ export async function startScanner(video, onIsbn) {
       const now = Date.now();
       if (code && isBookBarcode(code) && !(code === last.code && now - last.at < SAME_CODE_PAUSE)) {
         last = { code, at: now };
-        if (navigator.vibrate) navigator.vibrate(60);
+        signalRead(audio);
         onIsbn(code);
       }
     } catch {
@@ -125,6 +147,7 @@ export async function startScanner(video, onIsbn) {
     resume() { paused = false; },
     stop() {
       clearInterval(timer);
+      if (audio) audio.close();
       stream.getTracks().forEach(part => part.stop());
       video.srcObject = null;
     },

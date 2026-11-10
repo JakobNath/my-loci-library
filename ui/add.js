@@ -7,11 +7,12 @@
 import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
-import { combineFound } from '../core/lookup.js';
+import { combineFound, suggestOriginalDates } from '../core/lookup.js';
+import { normalizeForSearch } from '../core/search.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
-import { lookUpOpenLibrary, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
+import { lookUpOpenLibrary, lookUpWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
@@ -41,7 +42,7 @@ export function render(container, state, actions) {
       <p class="preview">Optional. Books are placed on this shelf in the order they are added, so scan a shelf from left to right.</p>${listsHtml}</section>
     <form class="find" autocomplete="off"><input id="find" type="search" placeholder="ISBN or title" enterkeyhint="search" inputmode="search">
       <button class="btn btn-primary" type="submit">Look up</button><button class="btn" type="button" data-action="camera">Scan</button></form>
-    <div class="camera" hidden><video aria-label="Camera"></video><p class="preview" data-camera-status>Hold the barcode in the middle of the picture.</p></div>
+    <div class="camera" hidden><div class="camera-view"><video aria-label="Camera"></video><p class="camera-read" aria-live="polite"></p></div><p class="preview" data-camera-status>Hold the barcode in the middle of the picture.</p></div>
     <div id="card"></div>
     <div id="added"></div>`;
   const card = container.querySelector('#card');
@@ -95,6 +96,9 @@ export function render(container, state, actions) {
     const duplicates = editionsWithIsbn(isbn, state.library.entries);
     if (duplicates.length) return showDuplicate(duplicates[0]);
     status('Looking up…');
+    // The work behind the ISBN (for original-date suggestions) is looked up
+    // alongside; its suggestions appear on the card when they arrive.
+    const workLookup = lookUpWork(isbn).catch(() => ({ workTitle: '', firstPublished: null, author: null }));
     const lookups = state.settings.lookups || { openLibrary: true, googleBooks: true };
     let found = null;
     const problems = [];
@@ -107,6 +111,13 @@ export function render(container, state, actions) {
     }
     if (problems.length && !found) actions.showNote(problems[0]);
     startReview(found || { isbn });
+    const reviewed = review;
+    workLookup.then(work => {
+      if (review !== reviewed) return; // the person has moved on to another book
+      review.work = work;
+      const hints = card.querySelector('[data-hints]');
+      if (hints) hints.innerHTML = hintsHtml();
+    });
   }
 
   function showDuplicate(entry) {
@@ -148,17 +159,29 @@ export function render(container, state, actions) {
     }).join('')}<label class="check"><input type="radio" name="work" value=""${review.workId ? '' : ' checked'}> A different work</label></fieldset>` : '';
     // A field is asked for only when shared settings list it (PLAN.md, "Settings").
     const promptHtml = (name, label, value, missing, list = '') => (prompts.has(name) ? fieldHtml(label, name, value, missing, list) : '');
-    const datingHtml = needsDate && prompts.has('datings')
-      ? `<label class="field is-missing">Original date (can wait)<input name="dating" value="${attr(review.dating)}" autocomplete="off" placeholder="c. 397, 1530–59, early 2nd c."><span class="preview" data-preview></span></label>` : '';
+    // The original date is asked every time, unless the linked work already has one.
+    const datingHtml = needsDate
+      ? `<div class="field${review.dating || review.dateUnknown ? '' : ' is-missing'}"><label for="dating">When was this work written? (not this printing)</label>
+        <input id="dating" name="dating" value="${attr(review.dating)}" autocomplete="off" placeholder="c. 397, 1530–59, early 2nd c.">
+        <span class="preview" data-preview></span><div class="hints" data-hints>${hintsHtml()}</div>
+        <label class="check"><input type="checkbox" name="dateUnknown"${review.dateUnknown ? ' checked' : ''}> Don't know yet</label></div>` : '';
+    const translated = found.contributors.some(person => person.role === 'translator');
+    const translationHtml = translated || review.translationFirstPublished ? fieldHtml('Translation first published', 'translationFirstPublished', review.translationFirstPublished, false) : '';
     const summary = [found.contributors.map(person => `${person.role}: ${person.name}`).join('; '), found.place, found.pages && `${found.pages} pages`, found.isbn && `ISBN ${found.isbn}`].filter(Boolean).join(' · ');
     const size = estimateSize({ ...found, images: [], height: null, thickness: null, series: null, set: null }, { binding: '' });
-    card.innerHTML = `<section class="block review"><div class="review-top">${coverHtml}<div class="review-fields">
+    const problemHtml = review.problem ? `<p class="problems">${escapeHtml(review.problem)}</p>` : '';
+    card.innerHTML = `<section class="block review">${problemHtml}<div class="review-top">${coverHtml}<div class="review-fields">
         ${fieldHtml('Title', 'title', found.title, !found.title)}
         ${promptHtml('subtitle', 'Subtitle', found.subtitle, false)}
         ${promptHtml('authors', 'Authors (separate with ;)', found.authors.join('; '), !found.authors.length, 'authors')}
         ${datingHtml}
+        ${fieldHtml('Original title', 'originalTitle', review.originalTitle, false)}
         ${promptHtml('binding', 'Binding', review.binding || '', true, 'bindings')}
-        <div class="field-row">${promptHtml('publisher', 'Publisher', found.publisher, !found.publisher)}${promptHtml('year', 'Year', found.year, !found.year)}</div>
+        <div class="field-row">${promptHtml('publisher', 'Publisher', found.publisher, !found.publisher)}${promptHtml('year', 'Year of this printing', found.year, !found.year)}${translationHtml}</div>
+        <div class="field-row">${fieldHtml('Series', 'series', review.series, false, 'series')}${fieldHtml('Number', 'seriesNumber', review.seriesNumber, false)}</div>
+        <div class="field-row">${fieldHtml('Set', 'set', review.set, false)}${fieldHtml('Volume', 'volume', review.volume, false)}</div>
+        <div class="field-row">${fieldHtml('Price paid', 'price', review.price, false)}${fieldHtml('Estimated value', 'value', review.value, false)}</div>
+        <label class="field">Notes<textarea name="notes" rows="2">${escapeHtml(review.notes || '')}</textarea></label>
       </div></div>
       <p class="preview">${escapeHtml(summary || (found.source ? '' : 'Not found online: fill in what you know.'))}</p>
       ${worksHtml}
@@ -170,11 +193,9 @@ export function render(container, state, actions) {
         <button class="btn" type="button" data-action="save-edit">Save and edit all fields</button><button class="btn" type="button" data-action="skip">Skip</button></div>
       <p class="preview">${escapeHtml(`Shelf size until measured: ~${Math.round(size.height.mm / 10)} cm tall, ${Math.round(size.thickness.mm)} mm thick.`)}</p>
     </section>${bindingsHtml(state)}`;
+    showDatingPreview();
     card.oninput = event => {
-      if (event.target.name !== 'dating') return;
-      const preview = card.querySelector('[data-preview]');
-      const read = parseDating(event.target.value);
-      preview.textContent = !event.target.value.trim() ? '' : read.ok ? `Read as ${formatYearRange(read.dating.earliest, read.dating.latest)} (${read.dating.certainty})` : read.problem;
+      if (event.target.name === 'dating') showDatingPreview();
     };
     card.onchange = async event => {
       if (event.target.name === 'work') { keepTyped(); review.workId = event.target.value || null; drawReview(); return; }
@@ -189,9 +210,37 @@ export function render(container, state, actions) {
     };
     card.onclick = event => {
       const action = event.target.dataset.action;
+      // A suggestion is filled in only when tapped (PLAN.md, "Original dates").
+      if (event.target.dataset.suggestDate !== undefined) {
+        card.querySelector('[name="dating"]').value = event.target.dataset.suggestDate;
+        // Where the date came from is kept as the dating's note.
+        review.suggested = { text: event.target.dataset.suggestDate, note: event.target.dataset.suggestNote };
+        showDatingPreview();
+      }
+      if (event.target.dataset.suggestTitle !== undefined) card.querySelector('[name="originalTitle"]').value = event.target.dataset.suggestTitle;
       if (action === 'skip') finishBook();
       if (action === 'save' || action === 'save-edit') saveBook(action === 'save-edit');
     };
+  }
+
+  function showDatingPreview() {
+    const input = card.querySelector('[name="dating"]');
+    if (!input) return;
+    const preview = card.querySelector('[data-preview]');
+    const read = parseDating(input.value);
+    preview.textContent = !input.value.trim() ? '' : read.ok ? `Read as ${formatYearRange(read.dating.earliest, read.dating.latest)} (${read.dating.certainty})` : read.problem;
+  }
+
+  // Suggestions for the original date and title, from the work behind the ISBN.
+  function hintsHtml() {
+    const work = review && review.work;
+    if (!work) return review && review.found.isbn ? '<span class="preview">Looking for the first publication…</span>' : '';
+    const dates = suggestOriginalDates(work, review.found.year);
+    const datesHtml = dates.map(hint => `<span class="hint"><button type="button" class="chip" data-suggest-date="${attr(hint.text)}" data-suggest-note="${attr(`suggested: ${hint.label}`)}">Use ${escapeHtml(hint.text)}</button><span class="preview">${escapeHtml(hint.label)}</span></span>`).join('');
+    const sameTitle = normalizeForSearch(work.workTitle) === normalizeForSearch(review.found.title);
+    const titleHtml = work.workTitle && !sameTitle
+      ? `<button type="button" class="chip" data-suggest-title="${attr(work.workTitle)}">Original title: ${escapeHtml(work.workTitle)}</button>` : '';
+    return datesHtml + titleHtml || '<span class="preview">No suggestion found; type the date if you know it.</span>';
   }
 
   // Keep what was typed when the card is drawn again.
@@ -200,23 +249,42 @@ export function render(container, state, actions) {
     const found = review.found;
     for (const name of ['title', 'subtitle', 'publisher', 'year']) if (value(name) !== undefined) found[name] = value(name);
     if (value('authors') !== undefined) found.authors = value('authors').split(';').map(name => name.trim()).filter(Boolean);
-    review.binding = value('binding') ?? review.binding;
-    review.dating = value('dating') ?? review.dating;
+    for (const name of ['binding', 'dating', 'originalTitle', 'translationFirstPublished', 'series', 'seriesNumber', 'set', 'volume', 'price', 'value', 'notes']) {
+      review[name] = value(name) ?? review[name];
+    }
+    const unknown = card.querySelector('[name="dateUnknown"]');
+    if (unknown) review.dateUnknown = unknown.checked;
   }
 
   async function saveBook(thenEdit) {
     keepTyped();
     const { found, photos } = review;
+    // The first entry should be complete: an empty original date is asked
+    // about once, unless "Don't know yet" is ticked or the work already has one.
+    const linked = review.works.find(work => work.id === review.workId);
+    const hasDate = (review.dating || '').trim() || review.dateUnknown || (linked && linked.datings.length);
+    if (!hasDate && !review.askedAboutDate) {
+      review.askedAboutDate = true;
+      review.problem = 'No original date yet. Type it, tap a suggestion, or tick "Don\'t know yet", then save again.';
+      drawReview();
+      card.querySelector('[name="dating"]')?.focus();
+      return;
+    }
+    const number = text => String(text || '').replace(/[^\d.]/g, '');
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: found.contributors,
-      publisher: found.publisher, place: found.place, year: found.year, editionStatement: '', translationFirstPublished: '',
-      series: '', seriesNumber: '', set: '', volume: '', isbn: found.isbn, pages: found.pages, languages: found.languages,
+      publisher: found.publisher, place: found.place, year: found.year, editionStatement: '', translationFirstPublished: review.translationFirstPublished || '',
+      series: review.series || '', seriesNumber: review.seriesNumber || '', set: review.set || '', volume: review.volume || '',
+      isbn: found.isbn, pages: found.pages, languages: found.languages,
       medium: 'physical', logosId: '', contents: null, workId: review.workId || null,
-      work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [{ text: review.dating || '', note: '', working: true }] },
-      copy: { binding: review.binding || '', location: location(), shelfOrder: nextShelfOrder(), acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
+      work: { title: '', originalTitle: review.originalTitle || '', originalLanguage: '', category: '', tags: [], datings: [{ text: review.dating || '', note: review.suggested && review.suggested.text === (review.dating || '').trim() ? review.suggested.note : '', working: true }] },
+      copy: { binding: review.binding || '', location: location(), acquired: '', price: number(review.price), value: number(review.value), status: 'owned', markings: false, notes: review.notes || '' },
     };
     const result = recordsFromForm(form, null, context());
-    if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
+    if (result.problems.length) { review.problem = result.problems.join(' '); drawReview(); return; }
+    // The shelf place is given only once the book is really saved.
+    const shelfOrder = nextShelfOrder();
+    for (const record of result.records) if (record.type === 'copy') record.shelfOrder = shelfOrder;
     const records = result.records.map(record => (record.type === 'edition' ? withImages(record) : record));
     if (!(await actions.saveRecords(records, { soon: !thenEdit }))) return;
     for (const [kind, files] of Object.entries(photos)) actions.saveImageFiles(review.imageIds[kind], files);
@@ -288,7 +356,7 @@ export function render(container, state, actions) {
     event.target.textContent = 'Stop camera';
     try {
       const { startScanner } = await import('../edges/camera.js');
-      scanner = await startScanner(box.querySelector('video'), isbn => handleIsbn(isbn));
+      scanner = await startScanner(box.querySelector('video'), isbn => { showRead(box, isbn); handleIsbn(isbn); }, { sound: state.device.scanSound !== false });
       box.querySelector('[data-camera-status]').textContent = `Hold the barcode in the middle of the picture (reading with ${scanner.decoderName}).`;
     } catch (error) {
       box.querySelector('[data-camera-status]').textContent = error.message;
@@ -296,6 +364,14 @@ export function render(container, state, actions) {
     }
   };
   return () => { if (scanner) scanner.stop(); };
+}
+
+// A green flash and check mark over the camera when a barcode is read.
+function showRead(box, isbn) {
+  const read = box.querySelector('.camera-read');
+  read.textContent = `✓ Read ${isbn}`;
+  box.classList.add('is-read');
+  setTimeout(() => box.classList.remove('is-read'), 1200);
 }
 
 function bindingsHtml(state) {

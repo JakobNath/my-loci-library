@@ -2,7 +2,7 @@
 // cover. The only file that talks to Open Library. Answers are read by
 // core/lookup.js. Open Library is free and needs no key.
 
-import { fromOpenLibrary, candidatesFromSearch } from '../core/lookup.js';
+import { fromOpenLibrary, candidatesFromSearch, workFromOpenLibrary } from '../core/lookup.js';
 
 const BASE = 'https://openlibrary.org';
 const TIMEOUT = 8000; // milliseconds before giving up, so a slow answer never holds up scanning
@@ -27,6 +27,20 @@ export function openLibraryCoverUrl(isbn) {
 export async function lookUpOpenLibrary(isbn, fetchFn = fetch) {
   const answer = await getJson(`${BASE}/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`, fetchFn);
   return fromOpenLibrary(answer, isbn, openLibraryCoverUrl(isbn));
+}
+
+/**
+ * What Open Library knows about the work behind an ISBN: its title (often
+ * in the original language), its earliest edition, and its first author's
+ * life dates, for suggesting an original date (core/lookup.js).
+ * @returns {Promise<{ workTitle: string, firstPublished: number|null, author: object|null }>}
+ */
+export async function lookUpWork(isbn, fetchFn = fetch) {
+  const search = await getJson(`${BASE}/search.json?q=isbn:${isbn}&fields=title,first_publish_year,author_key&limit=1`, fetchFn);
+  const doc = search.docs && search.docs[0];
+  const authorKey = doc && doc.author_key && doc.author_key[0];
+  const author = authorKey ? await getJson(`${BASE}/authors/${encodeURIComponent(authorKey)}.json`, fetchFn).catch(() => null) : null;
+  return workFromOpenLibrary(search, author);
 }
 
 /**

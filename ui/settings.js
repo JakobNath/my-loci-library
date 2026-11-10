@@ -4,12 +4,13 @@
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
 
-export const APP_VERSION = '0.6.0';
+export const APP_VERSION = '0.6.1';
 
 const CHOICES = [
   ['theme', 'Theme', [['device', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']]],
   ['view', 'Library view', [['grid', 'Covers'], ['list', 'List']]],
   ['coverSize', 'Cover size', [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']]],
+  ['scanSound', 'Beep when a barcode is read', [[true, 'On'], [false, 'Off']]],
 ];
 
 export function render(container, state, actions) {
@@ -35,6 +36,9 @@ export function render(container, state, actions) {
   };
   container.onclick = event => {
     const button = event.target.closest('[data-key]');
-    if (button) actions.setDevice({ [button.dataset.key]: button.dataset.value });
+    if (!button) return;
+    // On and Off are stored as true and false, not as the words.
+    const value = { true: true, false: false }[button.dataset.value] ?? button.dataset.value;
+    actions.setDevice({ [button.dataset.key]: value });
   };
 }

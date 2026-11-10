@@ -30,3 +30,4 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Both phones: the same with "Add a spine photo", typing a measured height. The book page should show the spine beside the cover.
 - [ ] Both phones: with Google Books' free key typed in Settings, scan a book Open Library does not know. Without the key, the app should say that Google Books refused, and still open the review card.
 - [ ] Desktop with a USB barcode scanner (if one is ever bought): click the "ISBN or title" box and scan; the book should be looked up as if typed.
+- [ ] Both phones: scan a barcode with the camera. There should be a beep, a green glow with "✓ Read" and the ISBN, and (Android only) a short buzz. Turn the beep off in Settings and scan again: glow and buzz only.
