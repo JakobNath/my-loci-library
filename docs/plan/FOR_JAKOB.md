@@ -50,7 +50,11 @@ Without a key the phase still runs; with one, it can use Google's real answers f
   ```
 - [ ] Save (Ctrl+S) and close Notepad. The file stays on this laptop; it is never sent to GitHub.
 
-The phones get the same key later, through a step-by-step guide the phase adds to the app (Settings › Advanced), with a **Test the key** button.
+**4. Put the key on each phone** (once the app has version 1.1.0; Settings shows the version at the bottom)
+
+- [ ] On the laptop, copy the key from `config.json` and send it to yourself in a way you trust (a note to yourself, or type it).
+- [ ] On each phone, open the app › **Settings** › **Advanced**, and paste the key into **Google Books key** under "This device".
+- [ ] Tap **Test the key**. It should say "The key works". If it says something else, it says what to change; the same steps are under "How to make a free key" just below the button.
 
 ### Part B: start the phase
 

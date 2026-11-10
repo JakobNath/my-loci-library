@@ -180,3 +180,31 @@ export function mergeFound(answers) {
   const printed = present.map(found => found.pages).find(pages => pages && !isBareCount(pages));
   return printed ? { ...merged, pages: printed } : merged;
 }
+
+// Google's reasons for refusing a key (the "reason" in its error answer), in plain words.
+const KEY_PROBLEMS = {
+  API_KEY_INVALID: 'Google does not know this key. Check that it was copied whole: it starts with "AIza".',
+  SERVICE_DISABLED: 'The Books API is not switched on for this key\'s project. Do step 1 again and click "Enable".',
+  API_KEY_SERVICE_BLOCKED: 'The key is limited to other services. In step 3, tick "Books API" under the key\'s API restrictions.',
+  API_KEY_HTTP_REFERRER_BLOCKED: 'The key only works on certain websites. In step 3, set "Application restrictions" to "None".',
+  API_KEY_ANDROID_APP_BLOCKED: 'The key only works in certain Android apps. In step 3, set "Application restrictions" to "None".',
+  API_KEY_IOS_APP_BLOCKED: 'The key only works in certain iPhone apps. In step 3, set "Application restrictions" to "None".',
+  RATE_LIMIT_EXCEEDED: 'The key works, but has reached today\'s limit of lookups. It will work again tomorrow.',
+};
+
+/**
+ * Whether a Google Books key works, from the answer to one lookup made with
+ * it (Settings › Advanced, "Test the key"), and why not in plain words.
+ * @param {number} status the answer's HTTP status
+ * @param {object|null} answer the answer, parsed
+ * @returns {{ works: boolean, message: string }}
+ */
+export function googleKeyVerdict(status, answer) {
+  if (status === 200) return { works: true, message: 'The key works: Google Books answered a test lookup.' };
+  const error = (answer && answer.error) || {};
+  const reasons = [...(error.details || []), ...(error.errors || [])].map(item => item.reason);
+  const known = reasons.find(reason => KEY_PROBLEMS[reason]);
+  if (known) return { works: false, message: KEY_PROBLEMS[known] };
+  if (status === 429) return { works: false, message: KEY_PROBLEMS.RATE_LIMIT_EXCEEDED };
+  return { works: false, message: `Google Books refused the key (${status}${error.message ? `: ${error.message}` : ''}).` };
+}

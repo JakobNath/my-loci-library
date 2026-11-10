@@ -12,6 +12,7 @@ import { renderLists } from './lists.js';
 import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
+import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 
 export const APP_VERSION = '1.0.5';
 
@@ -21,6 +22,16 @@ const ON_OFF = [[true, 'On'], [false, 'Off']];
 // and "Contents: Read and write" (GitHub Docs, "Pre-filling fine-grained personal
 // access token details using URL parameters"). Only the repository is left to choose.
 const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write';
+
+// Making a Google Books key, step by step (the same steps are in the tools
+// README and docs/plan/FOR_JAKOB.md). Google Cloud's pages move now and then;
+// the two addresses below go straight to the right ones.
+const GOOGLE_KEY_GUIDE_HTML = `<details class="small"><summary>How to make a free key (about two minutes)</summary><ol>
+  <li>Open <a class="link" href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">the Books API in Google Cloud</a> and sign in with any Google account. If it asks for a project, make one (any name, such as "My Loci Library"). Click "Enable".</li>
+  <li>Open <a class="link" href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Credentials</a>, click "Create credentials", then "API key".</li>
+  <li>In the form that opens (or, if a key appears at once, by clicking its name), choose "Restrict key" under "API restrictions" and tick "Books API", so the key is good for nothing else. Leave "Application restrictions" at "None". Click "Create" or "Save", and copy the key (it starts with AIza).</li>
+  <li>Paste the key above and tap "Test the key". The same key can be pasted on every phone, and into the laptop's config.json. It stays on each device and is never sent to the data repository. It costs nothing.</li>
+</ol></details>`;
 
 // [key, label, choices]: shared ones are saved with saveSettings, device ones with setDevice.
 const SHARED_CHOICES = [
@@ -129,8 +140,10 @@ function advancedHtml(state) {
   return `${backHtml}<div class="page-head"><h1 class="page-title">Advanced</h1></div>
     <section class="block"><h2 class="block-title">The library</h2>${sharedHtml(settings)}</section>
     <section class="block"><h2 class="block-title">This device</h2><p class="page-meta">For this device only.</p><div class="form">${deviceChoicesHtml}
-      <label class="field">Google Books key (optional). Without one Google Books refuses most lookups; Open Library works either way. A free key comes from Google Cloud's "Books API" page.
-        <input data-key-input="googleBooksKey" value="${escapeHtml(device.googleBooksKey || '')}" autocomplete="off" spellcheck="false"></label></div></section>
+      <label class="field">Google Books key (optional). With one, adding a book also fills its height and thickness and finds more covers; without one Google Books refuses most lookups. Open Library works either way.
+        <input data-key-input="googleBooksKey" value="${escapeHtml(device.googleBooksKey || '')}" autocomplete="off" spellcheck="false"></label>
+      <div class="actions"><button class="btn" type="button" data-test-key>Test the key</button></div><p class="page-meta" data-key-result></p>
+      ${GOOGLE_KEY_GUIDE_HTML}</div></section>
     <section class="block"><h2 class="block-title">Sync</h2>${syncHtml(state)}</section>
     <section class="block"><h2 class="block-title">About</h2><dl class="facts">
       <dt>App version</dt><dd>${escapeHtml(APP_VERSION)}</dd>
@@ -168,6 +181,7 @@ export function render(container, state, actions) {
   container.onclick = event => {
     const exportButton = event.target.closest('[data-export]');
     if (exportButton) { exportCatalog(exportButton.dataset.export, state); return; }
+    if (event.target.closest('[data-test-key]')) { testGoogleKey(container); return; }
     const target = event.target.closest('[data-sync-now], [data-restore], [data-key], [data-shared], [data-lookup], [data-prompt]');
     if (!target) return;
     const { restore, key, shared, lookup, prompt } = target.dataset;
@@ -184,6 +198,15 @@ export function render(container, state, actions) {
       actions.saveSettings({ batchAddPrompts: PROMPTS.map(([item]) => item).filter(item => prompts.includes(item)) });
     }
   };
+}
+
+// "Test the key": one lookup with the key in the box, and the answer in plain words.
+async function testGoogleKey(container) {
+  const result = container.querySelector('[data-key-result]');
+  result.textContent = 'Asking Google Books…';
+  const verdict = await checkGoogleBooksKey(container.querySelector('[data-key-input="googleBooksKey"]').value.trim());
+  result.textContent = verdict.message;
+  result.classList.toggle('is-missing', !verdict.works);
 }
 
 async function restoreItem(id, container, state, actions) {

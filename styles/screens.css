@@ -103,3 +103,4 @@ label.btn { position: relative; }
 .value-total { margin: 0 0 var(--space-2); font: var(--h1-weight) var(--fs-h1)/1.2 var(--font-display); color: var(--ink); }
 button.menu-row { border: 0; border-top: 1px solid var(--line); background: none; text-align: start; cursor: pointer; width: 100%; }
 button.menu-row:first-child { border-top: 0; }
+.page-meta.is-missing { color: var(--warn-ink); }

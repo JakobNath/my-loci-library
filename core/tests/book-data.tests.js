@@ -3,7 +3,7 @@
 // answers recorded in core/tests/answers/ on 10 November 2026.
 
 import { fromLibraryOfCongress, heightInMm } from '../marc.js';
-import { fromOpenLibraryEdition, fromGoogleBooksVolume, mergeFound, bindingFromFormat, sizesFromDimensions } from '../book-data.js';
+import { fromOpenLibraryEdition, fromGoogleBooksVolume, mergeFound, bindingFromFormat, sizesFromDimensions, googleKeyVerdict } from '../book-data.js';
 import { fromOpenLibrary, fromGoogleBooks, contributorsFrom, cleanPages } from '../lookup.js';
 import { equal, same, ok } from './check.js';
 import * as confessions from './answers/9780199537822.js';
@@ -166,6 +166,20 @@ export const tests = [
       same(['Hardcover', 'paperback', 'Mass Market Paperback', 'Leather Bound', 'Bonded Leather', 'Library Binding', 'Audio CD'].map(bindingFromFormat),
         ['Hardcover', 'Paperback', 'Mass-market paperback', 'Leather', 'Bonded leather', 'Library binding', '']);
       same([heightInMm('24 cm.'), heightInMm('24 x 30 cm'), heightInMm('maps ;')], [240, 240, null]);
+    },
+  },
+  {
+    name: '"Test the key" says plainly whether a Google Books key works, and why not',
+    fn() {
+      equal(googleKeyVerdict(200, { items: [] }).works, true);
+      // Google's answer to a key it does not know, as sent on 10 November 2026.
+      const invalid = { error: { code: 400, message: 'API key not valid. Please pass a valid API key.', status: 'INVALID_ARGUMENT',
+        errors: [{ reason: 'badRequest' }], details: [{ '@type': 'type.googleapis.com/google.rpc.ErrorInfo', reason: 'API_KEY_INVALID' }] } };
+      ok(googleKeyVerdict(400, invalid).message.includes('copied whole'), 'an unknown key');
+      ok(googleKeyVerdict(403, { error: { code: 403, details: [{ reason: 'SERVICE_DISABLED' }] } }).message.includes('Enable'), 'the Books API is off');
+      ok(googleKeyVerdict(403, { error: { code: 403, details: [{ reason: 'API_KEY_SERVICE_BLOCKED' }] } }).message.includes('Books API'), 'restricted to other services');
+      ok(googleKeyVerdict(429, null).message.includes('limit'), 'the daily limit');
+      equal(googleKeyVerdict(500, null).message, 'Google Books refused the key (500).');
     },
   },
 ];

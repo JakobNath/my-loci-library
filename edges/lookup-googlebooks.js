@@ -4,7 +4,7 @@
 // a free key in its settings (HOW_IT_WORKS.md).
 
 import { fromGoogleBooks, googleBooksItem } from '../core/lookup.js';
-import { fromGoogleBooksVolume, mergeFound } from '../core/book-data.js';
+import { fromGoogleBooksVolume, mergeFound, googleKeyVerdict } from '../core/book-data.js';
 
 const API = 'https://www.googleapis.com/books/v1';
 const TIMEOUT = 8000; // milliseconds
@@ -36,4 +36,21 @@ export async function lookUpGoogleBooks(isbn, key = '', fetchFn = fetch) {
   // The volume record only adds to the search answer: when it fails, the search answer stands.
   const volume = await getJson(`${API}/volumes/${encodeURIComponent(item.id)}`, key, fetchFn).catch(() => null);
   return mergeFound([fromGoogleBooksVolume(volume, isbn), found]);
+}
+
+/**
+ * Make one lookup with a key, for "Test the key" in Settings.
+ * @returns {Promise<{ works: boolean, message: string }>}
+ */
+export async function checkGoogleBooksKey(key, fetchFn = fetch) {
+  if (!key) return { works: false, message: 'Paste a key into the box first.' };
+  let response;
+  // Any book Google Books knows will do; this is Chadwick's Confessions.
+  try {
+    response = await fetchFn(withKey(`${API}/volumes?q=isbn:9780199537822`, key), { signal: AbortSignal.timeout(TIMEOUT) });
+  } catch {
+    return { works: false, message: 'Google Books did not answer. Check the internet connection and try again.' };
+  }
+  const answer = await response.json().catch(() => null);
+  return googleKeyVerdict(response.status, answer);
 }
