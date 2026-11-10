@@ -15,11 +15,14 @@ This repository is your catalog. Every book you add becomes a small text file in
 
 The app needs a key to read and write your repository. Make one for each phone, tablet or computer you will use, so a lost phone's key can be cancelled on its own.
 
-1. On github.com: your picture (top right) › Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.
-2. Name it after the device ("My phone"). Expiration: a year.
-3. Repository access: "Only select repositories", and choose `my-loci-library-data`.
-4. Permissions › Repository permissions › Contents: "Read and write".
-5. Click "Generate token" and copy it. GitHub shows it only once.
+1. Sign in to github.com in your browser.
+2. Open this link: https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write
+   It opens GitHub's form for a new key with a name, a year's expiry and the permission "Contents: Read and write" already filled in. You may change the name to the device's ("My phone").
+3. Find "Repository access" and choose "Only select repositories". In the list that appears, pick `my-loci-library-data`.
+4. Scroll to the bottom and click "Generate token".
+5. Copy the code it shows (it starts with `github_pat_`). GitHub shows it only once.
+
+The same steps, with the link, are in the app under Settings › Advanced › Sync › "How to make a key".
 
 ## 3. Connect the app
 

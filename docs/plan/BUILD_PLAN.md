@@ -119,7 +119,7 @@ Each check is a small throwaway script or page. Write each result and any fallba
 - [x] **4.4b Catalog heights.** From Node, look up the sample books' ISBNs in the Library of Congress catalog (its SRU service, MARC field 300) and read the height in centimeters.
   **Fallback:** another free library catalog; if none works, sizes stay estimated and `loci-sizes` is left out.
   **Check:** the share of sample books with a height, and the method, recorded.
-- [ ] **4.4 Logos export.** Read `inputs/logos-sample.csv`, list its columns, and write the column-to-field mapping into the tools README.
+- [x] **4.4 Logos export.** Read `inputs/logos-sample.csv`, list its columns, and write the column-to-field mapping into the tools README.
   **Check:** every column is either mapped or marked "kept as extra Logos data".
 
 ---
@@ -217,12 +217,12 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 
 ## Phase 11: Logos importer
 
-- [ ] **11.1 Import:** reads the Logos CSV, matches rows by resource ID, adds new books, keeps unmapped columns as extra Logos data, never overwrites fields edited in Loci, and writes a change report.
-- [ ] **11.2 Removals:** a full export marks missing digital books "no longer owned"; a filtered export never removes anything.
-- [ ] **11.3 Linking:** suggests links between digital editions and existing works, for confirmation.
-- [ ] **11.4 Covers:** fetches covers into `covers/inbox/` (compressed by the laptop covers page) or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
+- [x] **11.1 Import:** reads the Logos CSV, matches rows by resource ID, adds new books, keeps unmapped columns as extra Logos data, never overwrites fields edited in Loci, and writes a change report.
+- [x] **11.2 Removals:** a full export marks missing digital books "no longer owned"; a filtered export never removes anything.
+- [x] **11.3 Linking:** suggests links between digital editions and existing works, for confirmation.
+- [x] **11.4 Covers:** fetches covers into `covers/inbox/` (compressed by the laptop covers page) or writes a citation-style tile description for the app to render; works in resumable batches sized for about 4,000 books.
   **Check for 11.1–11.4:** tests using `inputs/logos-sample.csv` pass, and a second run changes nothing.
-  (2026-11-10: all four are built and pass their tests with a made-up export; the check waits for the real `inputs/logos-sample.csv`, see `docs/plan/FOR_JAKOB.md`.)
+  (2026-11-10: checked with Jakob's export of 53 resources: all imported in 0.2 s into a copy of the test data, and a second run changed nothing. The tests use a sample in the same 24-column shape.)
 
 ---
 

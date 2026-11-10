@@ -13,9 +13,14 @@ import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.0.1';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
+
+// GitHub's form for a new key, filled in by its address: a name, a year's expiry,
+// and "Contents: Read and write" (GitHub Docs, "Pre-filling fine-grained personal
+// access token details using URL parameters"). Only the repository is left to choose.
+const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write';
 
 // [key, label, choices]: shared ones are saved with saveSettings, device ones with setDevice.
 const SHARED_CHOICES = [
@@ -68,10 +73,10 @@ function syncHtml(state) {
         <div class="actions"><button class="btn btn-primary" type="submit">Connect and download</button><button class="btn" type="button" data-sync-now>Sync now</button></div>
       </form>
       <details class="small"><summary>How to make a key</summary><ol>
-        <li>On github.com: Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.</li>
-        <li>Name it after this device ("Jakob's phone"), and give it an expiry (a year).</li>
-        <li>Repository access: only the data repository. Permissions: Contents, read and write.</li>
-        <li>Generate it, copy it, and paste it above. It stays on this device only. When it expires, make a new one the same way.</li>
+        <li>Open <a class="link" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">GitHub's form for a new key</a> (sign in if asked). The name, a year's expiry and the permission "Contents: Read and write" are already filled in.</li>
+        <li>Under "Repository access", choose "Only select repositories", then pick your data repository from the list.</li>
+        <li>Click "Generate token" at the bottom, and copy the code it shows (it starts with github_pat_).</li>
+        <li>Paste it above and tap "Connect and download". The key stays on this device only. When it expires, make a new one the same way.</li>
       </ol></details>`;
 }
 

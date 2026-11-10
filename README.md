@@ -13,7 +13,7 @@ https://jakobnath.github.io/my-loci-library/
 
 The app keeps its catalog in a private GitHub repository. During the build it used `my-loci-library-test-data`; the real catalog lives in `my-loci-library-data`. To switch a device to the real catalog:
 
-1. On github.com, make a fine-grained personal access token for this device: Settings › Developer settings › Personal access tokens › Fine-grained tokens. Repository access: only `my-loci-library-data`. Permissions: Contents, read and write. Give it an expiry (a year) and name it after the device.
+1. Make a key for this device: open https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write while signed in to GitHub. The form opens with a name, a year's expiry and "Contents: Read and write" already set. Under "Repository access", choose "Only select repositories" and pick `my-loci-library-data`. Click "Generate token" and copy the code (it starts with `github_pat_`). The same steps are in the app, under Settings › Advanced › Sync › "How to make a key".
 2. In the app: Settings › Advanced › Sync. Type `JakobNath/my-loci-library-data`, paste the token, and tap "Connect and download".
 3. A device that was connected to the test data still holds the sample books. Before connecting it to the real catalog, clear the site's data for the app in the browser's settings (or use a private window once to check), so no sample book is sent to the real catalog.
 4. On the laptop, set `dataRepo` in the tools' `config.json` to the real repository's folder, and schedule `loci-backup` (see the tools README).
