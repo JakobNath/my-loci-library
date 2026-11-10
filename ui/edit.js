@@ -9,6 +9,7 @@ import { parseDating, formatYearRange } from '../core/dating.js';
 import { contentsLine } from '../core/contents.js';
 import { recordsFromForm } from '../core/entry.js';
 import { STATUSES, ROLES } from '../core/records.js';
+import { trashBook } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 
 const attr = value => escapeHtml(value ?? '');
@@ -65,6 +66,7 @@ export function render(container, state, actions) {
   const locationHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'location', copy.location[i], { list: `location${i}` })).join('');
   const backHtml = entry ? `<a class="back" href="#/book/${attr(entry.id)}">${iconHtml('back')} Back to the book</a>` : '';
   const titleHtml = entry ? 'Edit book' : 'Add a book';
+  const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   container.innerHTML = `${backHtml}
     <div class="page-head"><h1 class="page-title">${titleHtml}</h1><p class="page-meta">Fill in what you know; everything but the title can wait.</p></div>
     <form class="form" novalidate>
@@ -99,7 +101,7 @@ export function render(container, state, actions) {
         <label class="check"><input type="checkbox" name="markings"${copy.markings ? ' checked' : ''}> Writing or markings when acquired</label>
         <label class="field">Notes<textarea name="notes" rows="4">${escapeHtml(copy.notes)}</textarea></label>
       </fieldset>
-      <div class="actions"><button class="btn btn-primary" type="submit">Save</button></div>
+      <div class="actions"><button class="btn btn-primary" type="submit">Save</button>${trashHtml}</div>
       ${datalistsHtml(state.library, state.settings)}
     </form>`;
 
@@ -114,6 +116,7 @@ export function render(container, state, actions) {
   container.onclick = event => {
     const action = event.target.dataset.action;
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
+    if (action === 'trash') moveToTrash(entry, state, actions);
     if (action === 'contributor') event.target.insertAdjacentHTML('beforebegin', contributorRowHtml({ name: '', role: 'translator' }));
   };
   container.onsubmit = async event => {
@@ -132,6 +135,14 @@ export function render(container, state, actions) {
       actions.go(`#/book/${result.editionId}`);
     }
   };
+}
+
+// Deleting moves the book to the trash (PLAN.md, "Status"); Settings › Trash restores it.
+async function moveToTrash(entry, state, actions) {
+  if (await actions.saveRecords(trashBook(state.records, entry.id, actions.today(), actions.now()))) {
+    actions.showNote('Moved to the trash. Settings › Trash brings it back.');
+    actions.go('#/');
+  }
 }
 
 function showPreview(input) {

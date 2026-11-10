@@ -3,8 +3,9 @@
 
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
+import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 
-export const APP_VERSION = '0.8.0';
+export const APP_VERSION = '0.8.1';
 
 const CHOICES = [
   ['theme', 'Theme', [['device', 'Follow device'], ['light', 'Light'], ['dark', 'Dark']]],
@@ -12,6 +13,15 @@ const CHOICES = [
   ['coverSize', 'Cover size', [['small', 'Small'], ['medium', 'Medium'], ['large', 'Large']]],
   ['scanSound', 'Beep when a barcode is read', [[true, 'On'], [false, 'Off']]],
 ];
+
+// The trash: books and wishlist items moved there, each with Restore.
+function trashHtml(records) {
+  const items = trashedItems(records);
+  if (!items.length) return '<p class="page-meta">The trash is empty.</p>';
+  const rowsHtml = items.map(item => `<li><span>${escapeHtml(item.title)}<span class="page-meta"> · ${escapeHtml(item.type === 'wishlist' ? 'wishlist, ' : '')}moved ${escapeHtml(item.trashed)}</span></span>`
+    + `<button class="btn" data-restore="${escapeHtml(item.id)}">Restore</button></li>`).join('');
+  return `<ul class="trash-list">${rowsHtml}</ul>`;
+}
 
 export function render(container, state, actions) {
   const choicesHtml = CHOICES.map(([key, label, options]) => `<div class="field">${escapeHtml(label)}<div class="chips">`
@@ -39,6 +49,7 @@ export function render(container, state, actions) {
     <section class="block"><h2 class="block-title">Google Books key</h2>
       <label class="field">Optional. Without a key Google Books refuses most lookups; Open Library is used either way. A free key comes from Google Cloud's "Books API" page and stays on this device only.
         <input data-key-input="googleBooksKey" value="${escapeHtml(state.device.googleBooksKey || '')}" autocomplete="off" spellcheck="false"></label></section>
+    <section class="block"><h2 class="block-title">Trash</h2>${trashHtml(state.records)}</section>
     <section class="block"><h2 class="block-title">About</h2><dl class="facts">
       <dt>App version</dt><dd>${escapeHtml(APP_VERSION)}</dd>
       <dt>Data format</dt><dd>${escapeHtml(String(FORMAT_VERSION))}</dd>
@@ -57,10 +68,20 @@ export function render(container, state, actions) {
   };
   container.onclick = event => {
     if (event.target.matches('[data-sync-now]')) { actions.syncNow(); return; }
+    if (event.target.dataset.restore) { restore(event.target.dataset.restore, container, state, actions); return; }
     const button = event.target.closest('[data-key]');
     if (!button) return;
     // On and Off are stored as true and false, not as the words.
     const value = { true: true, false: false }[button.dataset.value] ?? button.dataset.value;
     actions.setDevice({ [button.dataset.key]: value });
   };
+}
+
+async function restore(id, container, state, actions) {
+  const record = state.records.get(id);
+  const changed = record.type === 'edition' ? restoreBook(state.records, id, actions.now()) : [trashRecord(record, null, actions.now())];
+  if (await actions.saveRecords(changed)) {
+    actions.showNote(`Restored: ${record.title}`);
+    render(container, state, actions);
+  }
 }

@@ -8,7 +8,11 @@ import { escapeHtml } from '../html.js';
 import { editionToCsl, cslName } from '../zotero.js';
 import { equal, same, ok, throws } from './check.js';
 import { SHARED_DEFAULTS, settingsToFileText } from '../settings.js';
+import { trashBook, restoreBook, trashedItems } from '../trash.js';
+import { buildLibrary, viewEntries } from '../library.js';
 import { na28, na28Works, loeb36, loebWorks, plato, chadwick, confessions, augustine, byId } from './samples.js';
+
+const NOW_TEST = '2026-11-10T12:00:00Z';
 
 const T1 = '2026-11-09T10:00:00Z';
 const T2 = '2026-11-09T11:00:00Z';
@@ -139,6 +143,41 @@ export const tests = [
       same(Object.keys(JSON.parse(text)), Object.keys(SHARED_DEFAULTS));
       equal(JSON.parse(text).currency, '€');
       ok(text.endsWith('}\n'), 'a newline at the end');
+    },
+  },
+  {
+    name: 'trash: a book goes with its copies and its own works, a shared work stays, and restoring brings all back',
+    fn() {
+      const copy = (id, edition, values = {}) => newRecord('copy', id, NOW_TEST, { edition, added: '2026-11-10', ...values });
+      const secondConfessions = { ...chadwick, id: 'c0nf2nded1tn' };
+      const records = byId([plato, ...loebWorks, loeb36, augustine, confessions, chadwick, secondConfessions,
+        copy('c0py0000000a', loeb36.id), copy('c0py0000000b', chadwick.id)]);
+      const trashedLoeb = trashBook(records, loeb36.id, '2026-11-10', NOW_TEST);
+      equal(trashedLoeb.filter(record => record.type === 'work').length, loebWorks.length, 'its works, used by no other edition');
+      equal(trashedLoeb.filter(record => record.type !== 'work').length, 2, 'the edition and its copy');
+      ok(trashedLoeb.every(record => record.trashed === '2026-11-10' && record.changed.trashed === NOW_TEST), 'each is dated, and the change is recorded for sync');
+      const trashedChadwick = trashBook(records, chadwick.id, '2026-11-10', NOW_TEST);
+      ok(!trashedChadwick.some(record => record.id === confessions.id), 'Confessions stays: another edition uses it');
+      for (const record of trashedLoeb) records.set(record.id, record);
+      equal(buildLibrary([...records.values()]).entries.some(entry => entry.id === loeb36.id), false, 'the library leaves it out');
+      same(trashedItems(records).map(record => record.id), [loeb36.id]);
+      const restored = restoreBook(records, loeb36.id, NOW_TEST);
+      equal(restored.length, trashedLoeb.length);
+      for (const record of restored) records.set(record.id, record);
+      equal(buildLibrary([...records.values()]).entries.some(entry => entry.id === loeb36.id), true, 'back in the library');
+      same(trashedItems(records), []);
+    },
+  },
+  {
+    name: 'a book no longer owned is left out of counts, shelf lists and value totals',
+    fn() {
+      const copy = (id, values) => newRecord('copy', id, NOW_TEST, { edition: chadwick.id, added: '2026-11-10', location: ['Home', 'Office'], value: 20, ...values });
+      const library = buildLibrary([augustine, confessions, chadwick, copy('c0py0000000c', { status: 'given away' })]);
+      const entry = library.entries[0];
+      equal(entry.owned, false);
+      equal(entry.value, 0, 'no value counted');
+      same(viewEntries(library.entries, { location: ['Home', 'Office'] }), [], 'not on the shelf list');
+      equal(viewEntries(library.entries, { status: 'gone' }).length, 1, 'still found when asked for');
     },
   },
 ];
