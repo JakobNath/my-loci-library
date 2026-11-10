@@ -11,7 +11,7 @@ Every build phase is done. The one build step left is the shelf view review (13.
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly. One of your own Zotero items (*Loci theologici 1*) was overwritten by the first trial and was restored exactly from Zotero's backup.
 - **Book search** (Wishlist and Add) was rebuilt on 10 November after your notes: it now shows specific editions with English titles, publishers and covers, and finds books when you add a publisher or series ("anna karenina everyman's library", "complete works of plato hackett").
 
-All tests pass: 109 in the app, 118 in the tools.
+All tests pass: 109 in the app, 119 in the tools.
 
 ## What comes next, in order
 
