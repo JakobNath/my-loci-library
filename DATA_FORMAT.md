@@ -281,6 +281,14 @@ All records in one file, so a device can load the catalog with one download:
 
 It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
 
+## integrations/zotero-links.json
+
+Kept by the Zotero tool: the Zotero collection, and for each record sent (an edition, or "<edition id>/<work id>" for a section of an anthology) its Zotero item key, its pinned citation key, a fingerprint of what was last sent, and whether a section has been related to its anthology. No person edits it, and the app never reads it. If it is lost, the next run links the books already in Zotero again, as on a first run.
+
+```json
+{ "format": 1, "collection": "ABCD2345", "items": { "chadw1ck1991": { "key": "QW3RTY78", "citationKey": "Augustine1991", "sent": "5f0c1a2b3c4d5e6f" } } }
+```
+
 ## integrations/logos-import.json
 
 Kept by the Logos importer: for each Logos resource ID, the edition fields as the importer last wrote them. On the next import a field is updated only if it still holds that value, so a field edited in the app is never overwritten. No person edits it; if it is lost, the next import simply treats every filled field as edited and changes nothing.

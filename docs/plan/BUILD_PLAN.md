@@ -233,6 +233,7 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [ ] **12.3 Safety:** never deletes Zotero items (tags them "Loci: no longer owned" or "Loci: removed"); the first run links existing items and writes a report of every difference it overwrote; uses the web API as a fallback.
 - [ ] **12.4 Speed and launchers:** only changed books are processed; one new book arrives in under 10 seconds; one-click `.cmd` and `.sh` launchers; README notes on optional scheduling.
   **Check for 12.1–12.4:** against a "Loci test" collection, the sample books arrive correctly, a second run changes nothing, and the timing test passes. Remove the test collection afterward.
+  (2026-11-10: all four are built and pass their tests against a stand-in for Zotero's web API; the live check waits for a Zotero key, see `docs/plan/FOR_JAKOB.md`.)
 
 ---
 
