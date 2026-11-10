@@ -109,6 +109,9 @@ export function render(container, state, actions) {
   const coverLabelHtml = cover || spine ? ' role="button" tabindex="0" aria-label="Show the pictures full size" data-action="enlarge"' : '';
   const piecesHtml = entry.works.length > 1 ? contentsHtml(entry, style) : '';
   const copiesTitleHtml = entry.copies.length > 1 ? 'Copies' : 'Copy';
+  // Where the book stands, beside the cover, opening its shelf (the reason most people open a book's page).
+  const place = (entry.copies.find(copy => copy.status === 'owned' && copy.location.length) || { location: [] }).location.join(' › ');
+  const whereHtml = place ? `<a class="detail-where" href="#/shelf/${encodeURIComponent(place)}">${iconHtml('shelf')}<span>${escapeHtml(place)}</span></a>` : '';
   container.innerHTML = `
     <a class="back" href="#/">${iconHtml('back')} Library</a>
     <article class="detail">
@@ -120,6 +123,7 @@ export function render(container, state, actions) {
         <p class="detail-subtitle">${escapeHtml(edition.subtitle || '')}</p>
         <p class="detail-author">${escapeHtml(entry.authorLine)} ${badgesHtml(entry)}</p>
         <div class="dates">${datesHtml}</div>
+        ${whereHtml}
         ${citeHtml}
         <div class="actions"><a class="btn" href="#/edit/${escapeHtml(edition.id)}">Edit</a></div>
       </div>

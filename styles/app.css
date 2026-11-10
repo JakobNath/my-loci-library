@@ -102,13 +102,18 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 .is-gone .tile-caption, .is-gone .row-main { opacity: var(--gone-opacity); }
 
 /* Book page */
-.detail { display: grid; gap: var(--space-4); }
-.detail-cover { width: min(38%, 170px); margin: 0 auto; display: flex; gap: var(--space-2); align-items: stretch; }
+/* On a phone the cover sits on the left and the title, dates and shelf beside it, so no width is left empty. */
+.detail { display: grid; grid-template-columns: minmax(0, 36%) minmax(0, 1fr); gap: var(--space-4); align-items: start; margin-bottom: var(--space-4); }
+.detail-cover { width: 100%; display: flex; gap: var(--space-2); align-items: stretch; }
+.detail-body > :first-child { margin-top: 0; }
+.detail-body .actions { margin-top: var(--space-3); }
+.detail-where { display: inline-flex; gap: var(--space-2); align-items: center; margin-top: var(--space-3); color: var(--accent-ink); font: var(--fs-small)/1.3 var(--font-ui); }
+.detail-where .icon { flex: none; width: 18px; height: 18px; }
 .detail-cover[data-action] { cursor: zoom-in; }
 .detail-cover > .cover { flex: 1 1 0; min-width: 0; }
 .detail-cover .cover { box-shadow: var(--shadow-cover-l); }
 .detail-series { margin: 0; font: 600 var(--fs-small)/1.3 var(--font-ui); letter-spacing: 0.05em; text-transform: uppercase; color: var(--pop-ink); }
-.detail-title { margin: var(--space-1) 0 0; font: var(--h1-weight) var(--fs-detail)/1.12 var(--font-display); }
+.detail-title { margin: var(--space-1) 0 0; font: var(--h1-weight) var(--fs-detail-narrow)/1.15 var(--font-display); overflow-wrap: anywhere; }
 .detail-subtitle { margin: var(--space-1) 0 0; font: var(--fs-h2)/1.3 var(--font-display); color: var(--ink-2); }
 .detail-author { margin: var(--space-2) 0 0; font: 500 var(--fs-base) var(--font-ui); }
 .dates { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; margin: var(--space-3) 0 0; font: var(--fs-small) var(--font-ui); }
@@ -242,6 +247,7 @@ label.btn { position: relative; }
   .note { bottom: var(--space-5); }
   .detail { grid-template-columns: 300px 1fr; gap: var(--space-5) var(--space-6); align-items: start; }
   .detail-cover { width: 100%; position: sticky; top: 90px; }
+  .detail-title { font-size: var(--fs-detail); }
   .page-title { font-size: var(--fs-h1-wide); }
 }
 
@@ -280,3 +286,10 @@ label.btn { position: relative; }
 .result-cover { width: 40px; height: 60px; flex: none; object-fit: cover; border-radius: 2px; background: var(--surface-2); }
 .wish-find .btn { margin-top: var(--space-3); }
 .choice-button.result > span:last-child { display: flex; flex-direction: column; gap: 2px; }
+
+/* Settings: the short main page's menu rows */
+.menu { display: grid; margin-bottom: var(--space-4); background: var(--surface); border: 1px solid var(--card-line); border-radius: var(--radius-lg); overflow: hidden; }
+.menu-row { display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 56px; padding: var(--space-3) var(--space-4); color: var(--ink); font: 600 var(--fs-base) var(--font-ui); border-top: 1px solid var(--line); }
+.menu-row:first-child { border-top: 0; }
+.menu-row .page-meta { margin: 0; font-weight: 400; }
+.settings-foot { text-align: center; }

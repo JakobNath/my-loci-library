@@ -1,15 +1,17 @@
-// The Settings screen (PLAN.md, "Settings"). Shared settings describe the
-// library and go to the data repository's settings.json; settings for this
-// device stay in this browser. Defaults are chosen so most people never need
-// to open this screen.
+// The Settings screen (PLAN.md, "Settings"): a short main page (#/settings),
+// and the Trash, Rename and merge, and Advanced pages (#/settings/<page>).
+// Shared settings describe the library and go to the data repository's
+// settings.json; settings for this device stay in this browser. Defaults are
+// chosen so most people never need to open this screen.
 
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
 import { SORTS } from '../core/library.js';
 import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 import { renderLists } from './lists.js';
+import { iconHtml } from './icons.js';
 
-export const APP_VERSION = '0.8.5';
+export const APP_VERSION = '0.8.6';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -54,13 +56,6 @@ function sharedHtml(settings) {
     </div>`;
 }
 
-function deviceHtml(device) {
-  const choices = DEVICE_CHOICES.map(([key, label, options]) => chipsHtml('data-key', key, label, options, device[key] ?? options[0][0])).join('');
-  return `<p class="page-meta">For this device only.</p><div class="form">${choices}
-      <label class="field">Google Books key (optional). Without one Google Books refuses most lookups; Open Library works either way. A free key comes from Google Cloud's "Books API" page.
-        <input data-key-input="googleBooksKey" value="${escapeHtml(device.googleBooksKey || '')}" autocomplete="off" spellcheck="false"></label></div>`;
-}
-
 function syncHtml(state) {
   const statusHtml = escapeHtml(!state.device.syncRepo ? 'Not connected: this device keeps its own catalog until it is connected to the data repository.'
     : `${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Nothing waiting to be sent.'}`);
@@ -87,22 +82,61 @@ function trashHtml(records) {
   return `<ul class="trash-list">${rowsHtml}</ul>`;
 }
 
-export function render(container, state, actions) {
+// The main page holds what anyone using the app may want: how it looks, whether
+// it is synced, and the way to the trash. Everything else is one tap further,
+// under Rename and merge, or Advanced (interface review, 2026-11-11).
+const LOOK_KEYS = ['theme', 'view', 'coverSize'];
+
+function menuRowHtml(href, label, detail) {
+  return `<a class="menu-row" href="${href}"><span>${escapeHtml(label)}</span><span class="page-meta">${escapeHtml(detail)}</span></a>`;
+}
+
+function mainHtml(state) {
+  const { device } = state;
+  const lookHtml = DEVICE_CHOICES.filter(([key]) => LOOK_KEYS.includes(key)).map(([key, label, options]) => chipsHtml('data-key', key, label, options, device[key] ?? options[0][0])).join('');
+  const syncLine = !device.syncRepo ? 'Not connected yet. Advanced › Sync sets it up.'
+    : `${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Everything is sent.'}`;
+  const syncButtonHtml = device.syncRepo ? '<button class="btn" type="button" data-sync-now>Sync now</button>' : '';
+  const trashCount = trashedItems(state.records).length;
+  const menuHtml = menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
+    + menuRowHtml('#/settings/lists', 'Rename and merge', 'categories, tags, series, bindings, places')
+    + menuRowHtml('#/settings/advanced', 'Advanced', 'shared settings, scanning, sync setup, about');
+  const offline = state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use.';
+  return `<div class="page-head"><h1 class="page-title">Settings</h1></div>
+    <section class="block"><h2 class="block-title">Look</h2><div class="form">${lookHtml}</div></section>
+    <section class="block"><h2 class="block-title">Sync</h2><p class="page-meta">${escapeHtml(syncLine)}</p>${syncButtonHtml}</section>
+    <nav class="menu" aria-label="More settings">${menuHtml}</nav>
+    <p class="page-meta settings-foot">${escapeHtml(`My Loci Library ${APP_VERSION} · ${offline} ${state.storageNote || ''}`)}<br>Created by Jakob Nath.</p>`;
+}
+
+const backHtml = `<a class="back" href="#/settings">${iconHtml('back')} Settings</a>`;
+
+function advancedHtml(state) {
   const { settings, device } = state;
-  const offlineHtml = escapeHtml(`${state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use; it is stored on the first visit with a connection.'} ${state.storageNote || ''}`);
-  container.innerHTML = `<div class="page-head"><h1 class="page-title">Settings</h1><p class="page-meta">${offlineHtml}</p></div>
+  const deviceChoicesHtml = DEVICE_CHOICES.filter(([key]) => !LOOK_KEYS.includes(key)).map(([key, label, options]) => chipsHtml('data-key', key, label, options, device[key] ?? options[0][0])).join('');
+  return `${backHtml}<div class="page-head"><h1 class="page-title">Advanced</h1></div>
     <section class="block"><h2 class="block-title">The library</h2>${sharedHtml(settings)}</section>
-    <section class="block"><h2 class="block-title">Lists</h2><p class="page-meta">Tap a name to rename it on every book that uses it.</p><div data-lists></div></section>
-    <section class="block"><h2 class="block-title">This device</h2>${deviceHtml(device)}</section>
+    <section class="block"><h2 class="block-title">This device</h2><p class="page-meta">For this device only.</p><div class="form">${deviceChoicesHtml}
+      <label class="field">Google Books key (optional). Without one Google Books refuses most lookups; Open Library works either way. A free key comes from Google Cloud's "Books API" page.
+        <input data-key-input="googleBooksKey" value="${escapeHtml(device.googleBooksKey || '')}" autocomplete="off" spellcheck="false"></label></div></section>
     <section class="block"><h2 class="block-title">Sync</h2>${syncHtml(state)}</section>
-    <section class="block"><h2 class="block-title">Trash</h2>${trashHtml(state.records)}</section>
     <section class="block"><h2 class="block-title">About</h2><dl class="facts">
       <dt>App version</dt><dd>${escapeHtml(APP_VERSION)}</dd>
       <dt>Data format</dt><dd>${escapeHtml(String(FORMAT_VERSION))}</dd>
       <dt>License</dt><dd>MIT</dd>
       <dt>Self-test</dt><dd><a href="tests/">Run the self-tests</a></dd>
     </dl><p class="page-meta">Created by Jakob Nath.</p></section>`;
-  renderLists(container.querySelector('[data-lists]'), state, actions);
+}
+
+export function render(container, state, actions) {
+  const { settings, device } = state;
+  const page = state.route.id;
+  if (page === 'trash') container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Trash</h1><p class="page-meta">Books and wishlist items moved here can be brought back at any time.</p></div><section class="block">${trashHtml(state.records)}</section>`;
+  else if (page === 'lists') {
+    container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Rename and merge</h1><p class="page-meta">Tap a name to rename it on every book that uses it. Choosing a name already in the list merges the two.</p></div><section class="block"><div data-lists></div></section>`;
+    renderLists(container.querySelector('[data-lists]'), state, actions);
+  } else if (page === 'advanced') container.innerHTML = advancedHtml(state);
+  else container.innerHTML = mainHtml(state);
 
   container.onsubmit = event => {
     if (!event.target.matches('[data-sync]')) return;

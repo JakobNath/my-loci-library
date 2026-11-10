@@ -42,3 +42,5 @@ Things Jakob has noticed while testing on his phones, kept for the interface rev
 - [x] Phone feel (scrolling, sizes, camera): good now.
 - [x] Wishlist: adding an item should find the book and its cover, not ask for everything by hand; an Amazon link should work. Done (0.8.5): a find box takes a title (results as you type, with small covers), an ISBN, or an Amazon link (its ISBN is read from the address; Amazon is never contacted). The item gets its cover, falling back to the work's cover when the edition has none, and "I bought it" carries the cover into the library.
 - [ ] Shelf view: to be reviewed once several dozen real books are on a shelf (build step 13.0).
+- [x] Settings was crowded, and the trash would take too much room; most settings are of no interest to everyone (2026-11-11). Done (0.8.6): a short main page, with Trash, Rename and merge, and Advanced on pages of their own.
+- [x] The book page left wide empty space beside the small cover (2026-11-11). Done (0.8.6): title, author, dates, shelf and Edit sit beside the cover.

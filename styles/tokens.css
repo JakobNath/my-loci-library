@@ -25,7 +25,7 @@
   /* 16 px body text: easier to read on phones, and iPhones do not zoom in on fields of 16 px or more. */
   --fs-base: 16px; --fs-small: 14px;
   --tap: 44px; /* the smallest comfortable touch target */ --fs-tile: 15px; --fs-brand: 19px;
-  --fs-h1: 26px; --fs-h1-wide: 34px; --fs-h2: 18px; --fs-detail: 30px;
+  --fs-h1: 26px; --fs-h1-wide: 34px; --fs-h2: 18px; --fs-detail: 30px; --fs-detail-narrow: 22px;
   --h1-weight: 600; --h2-weight: 600; --tile-title-weight: 600; --cover-title-weight: 500; --brand-weight: 600;
   --h1-tracking: -0.01em; --h2-tracking: 0; --brand-tracking: 0;
 
