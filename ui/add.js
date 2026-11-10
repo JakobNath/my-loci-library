@@ -39,6 +39,8 @@ export function render(container, state, actions) {
   let shelfKey = null; // the last shelf order given on the shelf being filled
   const added = [];
 
+  // With a USB scanner (Settings › This device) the scanner types the ISBN into the box, and presses Enter.
+  const usb = state.device.scanner === 'usb';
   const bindingOptionsHtml = state.settings.bindings.map(binding => `<option value="${attr(binding)}">`).join('');
   container.innerHTML = `
     <div id="scan">
@@ -46,7 +48,7 @@ export function render(container, state, actions) {
         <p class="page-meta">Scan the barcode on the back, or type an ISBN or a title.</p></div>
       <div class="camera" hidden><div class="camera-view"><video aria-label="Camera"></video><p class="camera-read" aria-live="polite"></p></div>
         <p class="preview" data-camera-status></p></div>
-      <div class="scan-actions"><button class="btn btn-primary btn-big" type="button" data-action="camera">Scan a barcode</button></div>
+      <div class="scan-actions"${usb ? ' hidden' : ''}><button class="btn btn-primary btn-big" type="button" data-action="camera">Scan a barcode</button></div>
       <form class="find" autocomplete="off"><input id="find" type="search" placeholder="ISBN or title" enterkeyhint="search">
         <button class="btn" type="submit">Look up</button></form>
       <p class="preview" data-shelf></p>
@@ -59,6 +61,7 @@ export function render(container, state, actions) {
   const stepArea = container.querySelector('#step');
   const find = container.querySelector('#find');
   showShelf();
+  if (usb) find.focus();
 
   // ---------- the shelf being filled ----------
 
@@ -257,7 +260,7 @@ export function render(container, state, actions) {
           ${fieldHtml('Pages, as printed', 'pages', found.pages)}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
-    const missing = [!found.authors.length && 'author', !found.publisher && 'publisher', !found.year && 'year'].filter(Boolean);
+    const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', prompts.has('year') && !found.year && 'year'].filter(Boolean);
     const coverHtml = found.cover && !found.cover.waiting ? `<img class="step-cover" src="${attr(found.cover.url)}" alt="" onerror="this.remove()">` : '';
     const detailsHtml = escapeHtml([found.authors.join(', '), [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
     const peopleHtml = escapeHtml(found.contributors.map(person => `${person.role} ${person.name}`).join(' · '));

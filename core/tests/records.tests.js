@@ -9,6 +9,7 @@ import { editionToCsl, cslName } from '../zotero.js';
 import { equal, same, ok, throws } from './check.js';
 import { SHARED_DEFAULTS, settingsToFileText } from '../settings.js';
 import { trashBook, restoreBook, trashedItems } from '../trash.js';
+import { listValues, renameValue } from '../lists.js';
 import { buildLibrary, viewEntries } from '../library.js';
 import { na28, na28Works, loeb36, loebWorks, plato, chadwick, confessions, augustine, byId } from './samples.js';
 
@@ -143,6 +144,7 @@ export const tests = [
       same(Object.keys(JSON.parse(text)), Object.keys(SHARED_DEFAULTS));
       equal(JSON.parse(text).currency, '€');
       ok(text.endsWith('}\n'), 'a newline at the end');
+      ok(!settingsToFileText({ syncKey: 'secret', theme: 'dark' }).includes('secret'), 'settings for one device, such as its sync key, are never written');
     },
   },
   {
@@ -178,6 +180,25 @@ export const tests = [
       equal(entry.value, 0, 'no value counted');
       same(viewEntries(library.entries, { location: ['Home', 'Office'] }), [], 'not on the shelf list');
       equal(viewEntries(library.entries, { status: 'gone' }).length, 1, 'still found when asked for');
+    },
+  },
+  {
+    name: 'managed lists: renaming a category, tag, binding or place edits every record using it, and renaming onto an existing name merges',
+    fn() {
+      const w = (id, category, tags) => newRecord('work', id, NOW_TEST, { title: id, category, tags });
+      const c = (id, binding, location) => newRecord('copy', id, NOW_TEST, { edition: chadwick.id, added: '2026-11-10', binding, location });
+      const records = [w('w0rk0000000a', 'Church Fathers', ['greek', 'Greek']), w('w0rk0000000b', 'Patristics', ['Greek']),
+        c('c0py0000000d', 'Hardback', ['Home', 'Office', 'Case 1']), c('c0py0000000e', 'Hardcover', ['Home', 'Office', 'Case 2']), c('c0py0000000f', 'Paperback', ['Home', 'Bedroom'])];
+      same(listValues(records, 'category').map(item => [item.value, item.count]), [['Church Fathers', 1], ['Patristics', 1]]);
+      const merged = renameValue(records, 'category', 'Church Fathers', 'Patristics', NOW_TEST);
+      equal(merged.length, 1);
+      equal(merged[0].category, 'Patristics');
+      equal(merged[0].changed.category, NOW_TEST, 'the change is stamped for sync');
+      same(renameValue(records, 'tag', 'greek', 'Greek', NOW_TEST)[0].tags, ['Greek'], 'a merged tag appears once');
+      same(renameValue(records, 'binding', 'Hardback', 'Hardcover', NOW_TEST).map(copy => copy.binding), ['Hardcover']);
+      same(listValues(records, 'place').map(item => item.value.join(' › ')), ['Home', 'Home › Bedroom', 'Home › Office', 'Home › Office › Case 1', 'Home › Office › Case 2']);
+      const moved = renameValue(records, 'place', ['Home', 'Office'], ['Home', 'Study'], NOW_TEST);
+      same(moved.map(copy => copy.location), [['Home', 'Study', 'Case 1'], ['Home', 'Study', 'Case 2']], 'everything inside the room moves with it');
     },
   },
 ];

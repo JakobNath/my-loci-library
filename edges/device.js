@@ -9,8 +9,10 @@ export const DEVICE_DEFAULTS = {
   view: 'grid', // grid or list
   coverSize: 'medium', // small, medium or large
   showLogos: false, // Logos books in the main Library view
-  sort: 'title',
-  scanSound: true, // a beep when a barcode is read
+  scanner: 'camera', // camera, or usb for a USB barcode scanner that types the ISBN
+  scanSound: true, // a beep and a buzz when a barcode is read
+  // The Library's sort is not set here: until this device picks one, the
+  // shared default sort (settings.json) applies.
 };
 
 /** This device's settings, with defaults for anything never set. */

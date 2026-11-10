@@ -129,10 +129,13 @@ const actions = {
   today: () => now().slice(0, 10),
   newId: () => makeId(crypto.getRandomValues(new Uint8Array(12))),
 
-  /** Change shared settings (PLAN.md, "Settings", "Shared"); they go to the data repository's settings.json. */
-  async saveSettings(changes) {
+  /**
+   * Change shared settings (PLAN.md, "Settings", "Shared"); they go to the data
+   * repository's settings.json. With redraw false the screen is left as it is.
+   */
+  async saveSettings(changes, { redraw = true } = {}) {
     state.settings = { ...state.settings, ...changes };
-    render();
+    if (redraw) render();
     if (!storage) return;
     await storage.saveMeta('settings', state.settings);
     await storage.saveMeta('settingsUnsent', true);

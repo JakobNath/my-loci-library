@@ -37,3 +37,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Laptop (the first live sync, which is also build step 4.1): make a fine-grained key for `my-loci-library-test-data` (Contents: read and write), then in the app's Settings › Sync type `JakobNath/my-loci-library-test-data`, paste the key, and tap "Connect and download". The 21 sample books (190 records) should appear, with nothing downloaded file by file (they all match `catalog.json`). Then add a book; within a few seconds the "unsent" badge should clear, and the test-data repository on GitHub should show one new commit with the new records and pictures.
 - [ ] Phone: connect to the same repository with a second key (one key per device). The laptop's new book should appear, with its cover. Edit its notes on the phone and its value on the laptop, both offline; reconnect both: the book should end up with both changes.
 - [ ] Either device: cancel a key on GitHub, then tap "Sync now": the app should say the key has expired or was cancelled, and keep the changes.
+
+## Phase 8
+
+- [ ] Phone: on the Library, tap Filter, pick a location and "Needs an original date", then save it as a view. The view's chip should appear above the toolbar, and tapping it later should bring back the same books in the same order. Once sync is connected, the saved view should also appear on the laptop after its next sync.
+- [ ] Phone: on the Wishlist, add an item with a note, then tap "I bought it". The entry form should open filled from the item, with the note in the copy's notes. After saving, the item should be gone from the Wishlist and listed in Settings › Trash.
+- [ ] Phone: in Settings › Lists, rename a place (a shelf, say). The books on it should show the new name on their pages and in the Library's location filter.

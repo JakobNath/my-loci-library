@@ -186,8 +186,8 @@ Prototype code, including the photo detection and enhancement, must be rewritten
 - [x] **8.1** Location paths, sorting by every field in `PLAN.md`, filters, and saved views.
 - [x] **8.2** Status rules: no longer owned (banner, faded, excluded from counts, shelf lists and totals); trash with restore.
 - [x] **8.3** Wishlist tab: standalone records, and "I bought it" opening a prefilled entry form that keeps the note.
-- [ ] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
-- [ ] **8.5** Settings page exactly as listed in `PLAN.md`: shared settings saved in the data repo's `settings.json`, device settings kept on the device.
+- [x] **8.4** Managed lists: rename and merge categories, tags, series, bindings and locations.
+- [x] **8.5** Settings page exactly as listed in `PLAN.md`: shared settings saved in the data repo's `settings.json`, device settings kept on the device.
 - [ ] **8.6 Interface review with Jakob.** Go through every screen on a phone, using the notes in `docs/plan/INTERFACE_NOTES.md`, and ask Jakob about each screen in turn (what feels clunky, too wordy, unclear or slow) before changing it. Fix what is agreed, keeping to the design in `docs/plan/DESIGN.md` and the size budget. Record each change under "Decisions" in `HOW_IT_WORKS.md`.
   **Check for 8.1–8.5:** a test for each item, and the sample books behave as their "What it tests" column says.
 

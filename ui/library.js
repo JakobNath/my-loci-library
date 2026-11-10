@@ -71,9 +71,10 @@ function filtersHtml(entries, view, savedViews) {
  */
 export function render(container, state, actions) {
   const { device, library, settings } = state;
-  const view = currentView(device);
+  // The shared default sort, and Logos shown or not, until this device chooses otherwise.
+  const view = currentView({ sort: settings.defaultSort.library, medium: device.showLogos ? 'all' : 'physical', ...device });
   const savedViews = settings.views || [];
-  const entries = viewEntries(library.entries, view);
+  const entries = viewEntries(library.entries, view, { anthologies: settings.anthologiesInShelfLists });
   const physicalCount = library.entries.filter(entry => entry.owned && !entry.isDigital).length;
   const filters = filterCount(view);
   const chipsHtml = MEDIUMS.map(([value, label]) => `<button class="chip${value === view.medium ? ' is-on' : ''}" data-action="medium" data-value="${value}">${escapeHtml(label)}</button>`).join('');
