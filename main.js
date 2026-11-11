@@ -282,13 +282,21 @@ async function syncConnection() {
  * whether to go on connecting.
  */
 async function emptyForAnotherCatalog(syncRepo, syncKey) {
+  const oldRepo = state.device.syncRepo;
+  const repoName = syncRepo.split('/').pop();
+  // Each key opens only the repositories chosen when it was made, so the old
+  // key never opens the new catalog: say so, rather than let GitHub refuse it.
+  if (syncKey === state.device.syncKey) {
+    return refuseSwitch(`This device's key was made for ${oldRepo}. Make a new key for ${syncRepo} (Settings › Advanced › Sync › "How to make a key"), paste it into "This device's key", and tap "Connect and download" again.`);
+  }
   const { connectToGitHub } = await import('./edges/sync-github.js');
   try {
     await connectToGitHub({ repo: syncRepo, key: syncKey }).check();
   } catch (error) {
-    state.syncStatus = `${error.message} Still connected to ${state.device.syncRepo}.`;
-    render();
-    return false;
+    if (error.status === 403 || error.status === 404) {
+      return refuseSwitch(`GitHub did not let this key open ${syncRepo}. Check the name, then make the key again: under "Repository access", choose "Only select repositories" and pick ${repoName}.`);
+    }
+    return refuseSwitch(error.message);
   }
   const unsent = (await storage.outbox()).length + ((await storage.meta('imageOutbox')) || []).length
     + ((await storage.meta('settingsUnsent')) ? 1 : 0);
@@ -317,6 +325,14 @@ async function emptyForAnotherCatalog(syncRepo, syncKey) {
   state.unsent = 0;
   showUnsent();
   return true;
+}
+
+// Moving to another repository did not happen: say why, and that nothing changed.
+function refuseSwitch(reason) {
+  state.syncStatus = `${reason} Nothing was changed; still connected to ${state.device.syncRepo}.`;
+  showNote(reason);
+  render();
+  return false;
 }
 
 // A sync a few seconds after the last save, so a stack of books goes up as one commit.

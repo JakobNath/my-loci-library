@@ -14,7 +14,7 @@ import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 
-export const APP_VERSION = '1.1.1';
+export const APP_VERSION = '1.1.2';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -85,7 +85,7 @@ function syncHtml(state) {
       </form>
       <details class="small"><summary>How to make a key</summary><ol>
         <li>Open <a class="link" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">GitHub's form for a new key</a> (sign in if asked). The name, a year's expiry and the permission "Contents: Read and write" are already filled in.</li>
-        <li>Under "Repository access", choose "Only select repositories", then pick your data repository from the list.</li>
+        <li>Under "Repository access", choose "Only select repositories", then pick your data repository from the list. The key opens only the repository picked here, so a key made for one catalog never opens another.</li>
         <li>Click "Generate token" at the bottom, and copy the code it shows (it starts with github_pat_).</li>
         <li>Paste it above and tap "Connect and download". The key stays on this device only. When it expires, make a new one the same way.</li>
       </ol></details>`;
@@ -112,8 +112,9 @@ function menuRowHtml(href, label, detail) {
 function mainHtml(state) {
   const { device } = state;
   const lookHtml = DEVICE_CHOICES.filter(([key]) => LOOK_KEYS.includes(key)).map(([key, label, options]) => chipsHtml('data-key', key, label, options, device[key] ?? options[0][0])).join('');
+  // The catalog's name is shown, so moving from the test catalog to the real one can be seen.
   const syncLine = !device.syncRepo ? 'Not connected yet. Advanced › Sync sets it up.'
-    : `${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Everything is sent.'}`;
+    : `Catalog: ${device.syncRepo.split('/').pop()}. ${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Everything is sent.'}`;
   const syncButtonHtml = device.syncRepo ? '<button class="btn" type="button" data-sync-now>Sync now</button>' : '';
   const backupLine = lastBackupLine(state.backupStatus) || 'No backup from the laptop yet (loci-backup, in the tools).';
   const reminder = archiveReminder(state.backupStatus, new Date().toISOString().slice(0, 10));
