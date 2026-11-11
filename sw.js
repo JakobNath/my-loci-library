@@ -15,7 +15,7 @@ const FILES = [
   'core/lookup.js', 'core/book-data.js', 'core/bible.js', 'core/matching.js', 'core/settings.js', 'core/trash.js', 'core/lists.js', 'core/value.js', 'core/exports.js', 'core/backup-status.js', 'core/outline.js',
   'edges/storage.js', 'edges/device.js', 'edges/lookup-openlibrary.js', 'edges/lookup-googlebooks.js', 'edges/camera.js', 'edges/photo.js', 'edges/sync-github.js',
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/save-file.js', 'ui/edit.js',
-  'ui/add.js', 'ui/images.js', 'ui/photo-editor.js', 'ui/field-help.js',
+  'ui/add.js', 'ui/add-questions.js', 'ui/images.js', 'ui/photo-editor.js', 'ui/field-help.js',
 ];
 
 self.addEventListener('install', event => {

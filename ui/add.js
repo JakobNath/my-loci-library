@@ -1,11 +1,13 @@
 // Batch add (PLAN.md, "Batch add"), one question per screen. Scan a barcode,
 // type an ISBN (a USB scanner types it too) or type a title; then, step by
 // step: is this the book, is it a collection (when a record lists contents),
-// is it the same work as one we have, when was it written, the cover, the
-// spine, the binding, where it goes, anything else.
+// is it the same work as one we have, when was it written, its original
+// language, category and tags, the translation, the cover, the spine, the
+// binding, where it goes, and this copy. Adding asks what only a person
+// knows; the lookups and the laptop fill catalog facts ("Needs details").
 // Steps with nothing to ask are skipped. The camera stays open for the whole
 // stack (paused during the steps), and the next scan is ready as soon as a
-// book is saved.
+// book is saved. The questions' own drawing is in ui/add-questions.js.
 
 import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy } from '../core/entry.js';
@@ -13,33 +15,23 @@ import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound } from '../core/book-data.js';
 import { isBible } from '../core/bible.js';
-import { normalizeForSearch } from '../core/search.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
-import { helpHtml, toggleHelp } from './field-help.js';
+import { toggleHelp } from './field-help.js';
+import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
-const attr = value => escapeHtml(value ?? '');
 
-// help: the field's name in FIELD_HELP (ui/field-help.js), for an "i" beside the label.
-function fieldHtml(label, name, value, { missing = false, list = '', type = 'text', help = false } = {}) {
-  const helpParts = help ? helpHtml(name) : { button: '', text: '' };
-  const labelHtml = help ? `<span class="field-label">${escapeHtml(label)}${helpParts.button}</span>` : escapeHtml(label);
-  return `<label class="field${missing ? ' is-missing' : ''}">${labelHtml}<input name="${name}" type="${type}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"${type === 'number' ? ' inputmode="decimal"' : ''}>${helpParts.text}</label>`;
-}
-
-// A big answer button: a main line and an optional smaller line under it.
-function choiceHtml(action, main, detail = '', value = '') {
-  return `<button type="button" class="choice-button" data-action="${action}" data-value="${attr(value)}"><span>${escapeHtml(main)}</span>`
-    + (detail ? `<small>${escapeHtml(detail)}</small>` : '') + '</button>';
-}
+const STEP_NAMES = {
+  book: 'The book', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
+  translation: 'Translation', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
+};
 
 /** Draw the batch add screen. Returns a cleanup that closes the camera. */
-const STEP_NAMES = { book: 'The book', contents: 'Contents', work: 'Same work?', date: 'Original date', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', extras: 'Anything else' };
 
 export function render(container, state, actions) {
   const prompts = new Set(state.settings.batchAddPrompts || ['title', 'subtitle', 'authors', 'datings', 'binding', 'publisher', 'year']);
@@ -176,11 +168,15 @@ export function render(container, state, actions) {
   // otherCover: a Google Books cover, used when Open Library's turns out to be missing.
   function startBook(found, workLookup, problem = '', otherCover = null) {
     const full = { ...emptyFound(''), ...found };
+    const translators = full.contributors.filter(person => person.role === 'translator').map(person => person.name);
     book = {
       found: full,
-      problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false, originalTitle: full.originalTitle,
+      problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
+      // What only a person knows, asked by the steps in ui/add-questions.js.
+      language: full.originalLanguage || '', originalTitle: full.originalTitle || '', category: '', tags: [],
+      translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
+      copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
       photos: {}, cover: { state: 'none' }, otherCover, binding: full.binding, location: (state.batchLocation || []).filter(Boolean),
-      extras: { series: full.series, seriesNumber: full.seriesNumber },
       // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
@@ -188,7 +184,7 @@ export function render(container, state, actions) {
     };
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
     const current = book;
-    Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (book.step === 'date') drawStep(); } });
+    Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (['date', 'language'].includes(book.step)) drawStep(); } });
     checkCover(current);
     goTo('book');
   }
@@ -222,14 +218,20 @@ export function render(container, state, actions) {
     const linked = book.works.find(work => work.id === book.workId);
     // A collection's works each have their own date, asked for later ("needs original date").
     const single = book.contents === null;
+    // A work already in the library keeps its own language, category and tags.
+    const ownWork = single && !linked;
+    const language = linked ? linked.originalLanguage : book.language;
     return [
       'book',
       book.contentsOffered ? 'contents' : null,
       single && book.works.length ? 'work' : null,
       single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
+      ownWork ? 'language' : null,
+      ownWork ? 'subjects' : null,
+      book.hasTranslator || (language && !isEnglish(language)) ? 'translation' : null,
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
-      'where', 'extras',
+      'where', 'copy',
     ].filter(Boolean);
   }
 
@@ -267,7 +269,11 @@ export function render(container, state, actions) {
   }
 
   function drawStep() {
-    const draw = { book: bookStep, contents: contentsStep, work: workStep, date: dateStep, cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, extras: extrasStep }[book.step];
+    const draw = {
+      book: bookStep, contents: contentsStep, work: workStep, date: dateStep,
+      language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices()),
+      translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
+    }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
     stepArea.oninput = event => { if (event.target.name === 'dating') showDatingPreview(); };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
@@ -334,15 +340,25 @@ export function render(container, state, actions) {
     const suggestions = book.work ? suggestOriginalDates(book.work, book.found.year) : [];
     const suggestionsHtml = suggestions.map(hint => choiceHtml('date', hint.text, hint.label, hint.text)).join('');
     const waitingHtml = book.work ? '' : '<p class="step-hint">Looking for the first publication…</p>';
-    const titleHtml = book.work && book.work.workTitle && normalizeForSearch(book.work.workTitle) !== normalizeForSearch(book.found.title)
-      ? `<p class="step-hint">${escapeHtml(`Original title on Open Library: ${book.work.workTitle}`)} <button type="button" class="chip" data-action="original-title">Use it</button></p>` : '';
     return `<h2 class="step-title">When was this work written?</h2>
       <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
-        <p class="preview" data-preview></p>${titleHtml}
+        <p class="preview" data-preview></p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know yet</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
+  }
+
+  // The categories in use, by name, and the tags in use, most used first.
+  function subjectChoices() {
+    const categories = new Set();
+    const tagCounts = new Map();
+    for (const work of state.library.worksById.values()) {
+      if (work.category) categories.add(work.category);
+      for (const tag of work.tags) tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+    }
+    const tags = [...tagCounts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([tag]) => tag);
+    return { categories: [...categories].sort((a, b) => a.localeCompare(b)), tags };
   }
 
   function showDatingPreview() {
@@ -407,20 +423,6 @@ export function render(container, state, actions) {
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
 
-  // 8. Anything else.
-  function extrasStep() {
-    const extras = book.extras;
-    const translated = book.found.contributors.some(person => person.role === 'translator');
-    return `<h2 class="step-title">Anything else?</h2><p class="step-hint">All optional. "Save the book" saves it and gets ready for the next one.</p>
-      <form class="form">
-        <label class="field">Notes: why we own it, a gift, its condition<textarea name="notes" rows="3">${escapeHtml(extras.notes || '')}</textarea></label>
-        <div class="field-row">${fieldHtml('Estimated value', 'value', extras.value, { type: 'number' })}${fieldHtml('Price paid', 'price', extras.price, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Series', 'series', extras.series, { help: true })}${fieldHtml('Number', 'seriesNumber', extras.seriesNumber)}</div>
-        <div class="field-row">${fieldHtml('Set', 'set', extras.set, { help: true })}${fieldHtml('Volume', 'volume', extras.volume)}</div>
-        ${translated ? fieldHtml('Translation first published (year)', 'translationFirstPublished', extras.translationFirstPublished, { type: 'number', help: true }) : ''}
-        <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Save the book</button></div></form>`;
-  }
-
   // ---------- answers ----------
 
   function readFields() {
@@ -438,9 +440,7 @@ export function render(container, state, actions) {
       const typed = [...stepArea.querySelectorAll('[name="where"]')].map(input => input.value.trim()).filter(Boolean);
       if (typed.length) book.location = typed;
     }
-    if (book.step === 'extras') {
-      for (const name of ['notes', 'value', 'price', 'series', 'seriesNumber', 'set', 'volume', 'translationFirstPublished']) book.extras[name] = value(name) ?? book.extras[name];
-    }
+    readQuestions(book, stepArea);
   }
 
   function answer(action, value) {
@@ -466,7 +466,11 @@ export function render(container, state, actions) {
       return next();
     }
     if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; return next(); }
-    if (action === 'original-title') { book.originalTitle = book.work.workTitle; stepArea.querySelector('[data-action="original-title"]').textContent = 'Used'; return; }
+    if (action === 'original-title') { book.originalTitle = book.work.workTitle; return drawStep(); }
+    // English needs no original title, so tapping it goes straight on.
+    if (action === 'language') { book.language = value; return isEnglish(value) ? next() : drawStep(); }
+    if (action === 'category') { book.category = book.category === value ? '' : value; return drawStep(); }
+    if (action === 'tag') { book.tags = book.tags.includes(value) ? book.tags.filter(tag => tag !== value) : [...book.tags, value]; return drawStep(); }
     if (action === 'binding') { book.binding = value; return next(); }
     if (action === 'place') {
       book.location = value ? value.split(' › ') : [];
@@ -492,14 +496,17 @@ export function render(container, state, actions) {
   const number = text => String(text || '').replace(/[^\d.]/g, '');
 
   async function saveBook() {
-    const { found, extras } = book;
+    const { found, copy } = book;
     const form = {
-      title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: found.contributors,
-      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(extras.translationFirstPublished),
-      series: extras.series || '', seriesNumber: extras.seriesNumber || '', set: extras.set || '', volume: extras.volume || '',
+      title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsWithTranslator(found.contributors, book.translator),
+      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(book.translationYear),
+      series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
-      work: { title: '', originalTitle: book.originalTitle, originalLanguage: found.originalLanguage, category: '', tags: [], datings: [{ text: book.dating, note: book.datingNote, working: true }] },
-      copy: { binding: book.binding, location: book.location, acquired: '', price: number(extras.price), value: number(extras.value), status: 'owned', markings: false, notes: extras.notes || '' },
+      work: {
+        title: '', originalTitle: isEnglish(book.language) ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
+        datings: [{ text: book.dating, note: book.datingNote, working: true }],
+      },
+      copy: { binding: book.binding, location: book.location, acquired: copy.acquired, price: number(copy.price), value: number(copy.value), status: 'owned', markings: copy.markings, notes: copy.notes },
     };
     const result = recordsFromForm(form, null, context());
     if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
