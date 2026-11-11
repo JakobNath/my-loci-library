@@ -30,7 +30,7 @@ function rowHtml(entry, style) {
 
 // The parts of a view kept on this device (edges/device.js); a saved view holds the same.
 const VIEW_KEYS = Object.keys(VIEW_DEFAULTS);
-const FILTER_KEYS = ['status', 'location', 'category', 'tag', 'needsDate'];
+const FILTER_KEYS = ['status', 'location', 'category', 'tag', 'needsDate', 'needsDetails'];
 const STATUS_CHOICES = [['owned', 'Owned'], ['gone', 'No longer owned'], ['all', 'Any status'],
   ...STATUSES.filter(status => status !== 'owned').map(status => [status, `Only ${status}`])];
 
@@ -55,12 +55,13 @@ function filtersHtml(entries, view, savedViews) {
   const saveHtml = saved
     ? `<button class="btn" data-action="forgetView" data-value="${escapeHtml(saved.name)}">Remove the saved view “${escapeHtml(saved.name)}”</button>`
     : '<input id="viewName" aria-label="Name for this view" placeholder="Name this view" autocomplete="off"><button class="btn" data-action="saveView">Save view</button>';
-  return `<div class="filters">
+  return `<div class="filters" hidden>
       <label class="field"><span>Location</span><select data-filter="location">${locationHtml}</select></label>
       <label class="field"><span>Category</span><select data-filter="category">${categoryHtml}</select></label>
       <label class="field"><span>Tag</span><select data-filter="tag">${tagHtml}</select></label>
       <label class="field"><span>Status</span><select data-filter="status">${statusHtml}</select></label>
       <label class="check"><input type="checkbox" data-filter="needsDate"${view.needsDate ? ' checked' : ''}> Needs an original date</label>
+      <label class="check"><input type="checkbox" data-filter="needsDetails"${view.needsDetails ? ' checked' : ''}> Needs details (publisher, year, pages, binding)</label>
       <div class="filter-actions"><button class="btn" data-action="clearFilters">Clear filters</button>${saveHtml}</div>
     </div>`;
 }
@@ -120,8 +121,16 @@ export function render(container, state, actions) {
     const key = event.target.dataset.filter;
     if (!key) return;
     const { value, checked } = event.target;
-    actions.setDevice({ [key]: key === 'needsDate' ? checked : key === 'location' ? JSON.parse(value) : value });
+    actions.setDevice({ [key]: event.target.type === 'checkbox' ? checked : key === 'location' ? JSON.parse(value) : value });
   };
+  // The panel's styles load with the later screens' stylesheet (start-up size); it shows once they are in.
+  // (The screen may have been redrawn by then, so the panel is looked up afresh.)
+  if (device.filtersOpen) {
+    actions.loadScreenStyles().then(() => {
+      const panel = container.querySelector('.filters');
+      if (panel) panel.hidden = false;
+    });
+  }
   const books = container.querySelector('#books');
   if (!entries.length) {
     books.innerHTML = library.entries.length

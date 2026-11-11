@@ -200,10 +200,7 @@ select, .field input, .field textarea, .field select { border: 1px solid var(--l
 
 /* Library filters and saved views */
 .saved-views { margin-bottom: var(--space-3); }
-.filters { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: var(--space-3); align-items: end; padding: var(--space-4); margin-bottom: var(--space-4); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
-.filters .check { min-height: var(--tap); }
-.filter-actions { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-.filter-actions input { flex: 1 1 160px; min-height: var(--tap); border: 1px solid var(--line); border-radius: var(--radius); padding: 7px 10px; background: var(--bg); color: var(--ink); }
+/* The filter panel is styled in screens.css, loaded when it is first opened (ui/library.js). */
 
 /* The book page's full-size view of the pictures is styled in screens.css,
    loaded when the cover is first tapped (ui/book.js). */

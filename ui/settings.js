@@ -6,7 +6,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { FORMAT_VERSION } from '../core/records.js';
-import { SORTS } from '../core/library.js';
+import { SORTS, missingDetails } from '../core/library.js';
 import { trashedItems, restoreBook, trashRecord } from '../core/trash.js';
 import { renderLists } from './lists.js';
 import { iconHtml } from './icons.js';
@@ -149,7 +149,12 @@ function mainHtml(state) {
   const reminder = archiveReminder(state.backupStatus, new Date().toISOString().slice(0, 10));
   const backupHtml = `<p class="page-meta">${escapeHtml(backupLine)}</p>${reminder ? `<p class="step-hint is-missing">${escapeHtml(reminder)}</p>` : ''}`;
   const trashCount = trashedItems(state.records).length;
+  // Books the laptop's nightly check has not completed yet, opened as a Library filter.
+  const needingDetails = state.library.entries.filter(entry => entry.owned && missingDetails(entry).length).length;
+  const needsDetailsText = needingDetails ? `${needingDetails} ${needingDetails === 1 ? 'book' : 'books'} still missing publisher, year, pages or binding` : 'every book has them';
+  const needsDetailsHtml = `<a class="menu-row" href="#/" data-needs-details><span>Needs details</span><span class="page-meta">${escapeHtml(needsDetailsText)}</span></a>`;
   const menuHtml = menuRowHtml('#/settings/guide', 'How the catalog is organized', 'works and editions, series and sets, categories and tags')
+    + needsDetailsHtml
     + menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
     + menuRowHtml('#/value', 'Value', 'what the books are worth, for insurance')
     + menuRowHtml('#/settings/export', 'Export', 'CSV, JSON, CSL-JSON, BibTeX')
@@ -227,6 +232,12 @@ export function render(container, state, actions) {
     if (exportButton) { exportCatalog(exportButton.dataset.export, state); return; }
     if (event.target.closest('[data-test-key]')) { testGoogleKey(container); return; }
     if (event.target.closest('[data-share-setup]')) { shareSetupLink(container, device); return; }
+    if (event.target.closest('[data-needs-details]')) {
+      event.preventDefault();
+      actions.setDevice({ needsDetails: true, medium: 'physical', status: 'owned', filtersOpen: true });
+      actions.go('#/');
+      return;
+    }
     const target = event.target.closest('[data-sync-now], [data-restore], [data-key], [data-shared], [data-lookup], [data-prompt]');
     if (!target) return;
     const { restore, key, shared, lookup, prompt } = target.dataset;
