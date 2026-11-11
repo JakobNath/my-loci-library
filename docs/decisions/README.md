@@ -10,7 +10,7 @@ They were kept in `HOW_IT_WORKS.md` under "Decisions" until 10 November 2026, th
 - [`speed-offline-size.md`](speed-offline-size.md): Speed, offline use and the size budget (13)
 - [`data-format.md`](data-format.md): Data format and records (6)
 - [`sync.md`](sync.md): Sync with GitHub (7)
-- [`screens.md`](screens.md): Screens: adding books, Library, book page, Wishlist, Settings, Value (19)
+- [`screens.md`](screens.md): Screens: adding books, Library, book page, Wishlist, Settings, Value (20)
 - [`book-data.md`](book-data.md): Book data: lookups, search and the three sources (9)
 - [`laptop-tools.md`](laptop-tools.md): Laptop tools: backup and the Logos importer (6)
 - [`zotero-and-citations.md`](zotero-and-citations.md): Zotero, citations and exports (13)

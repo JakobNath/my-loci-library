@@ -22,7 +22,7 @@ The app needs a key to read and write your repository. Make one for each phone, 
 4. Scroll to the bottom and click "Generate token".
 5. Copy the code it shows (it starts with `github_pat_`). GitHub shows it only once.
 
-The same steps, with the link, are in the app under Settings › Advanced › Sync › "How to make a key".
+The same steps, with the link, are in the app under Settings › Advanced › Sync, as three numbered steps.
 
 ## 3. Connect the app
 

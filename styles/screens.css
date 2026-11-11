@@ -98,6 +98,9 @@ label.btn { position: relative; }
 .menu-row:first-child { border-top: 0; }
 .menu-row .page-meta { margin: 0; font-weight: 400; }
 .settings-foot { text-align: center; }
+/* Settings › Advanced › Sync: the three steps sit well apart from the current status */
+.sync-connect { margin-top: var(--space-5); font-size: var(--fs-base); }
+.sync-connect + .page-meta { margin-bottom: var(--space-4); }
 
 /* Value view, and menu rows that are buttons (exports) */
 .value-total { margin: 0 0 var(--space-2); font: var(--h1-weight) var(--fs-h1)/1.2 var(--font-display); color: var(--ink); }

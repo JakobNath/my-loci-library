@@ -41,7 +41,7 @@ const fromBase64 = text => new TextDecoder().decode(Uint8Array.from(atob(text.re
 /** Plain words for what GitHub or the network said (PLAN.md: never fail silently). */
 function plainError(status, response, what) {
   if (status === 0) return new Error('No connection, so nothing was sent or received. Your changes are kept on this device and sent next time.');
-  if (status === 401) return new Error('Your sync key has expired or was cancelled. Make a new one (Settings › Sync explains how) and paste it in.');
+  if (status === 401) return new Error('Your sync key has expired or was cancelled. Make a new one (Settings › Advanced › Sync, steps 2 and 3) and paste it in.');
   if (status === 403 && response && response.headers.get('x-ratelimit-remaining') === '0') {
     const reset = new Date(Number(response.headers.get('x-ratelimit-reset')) * 1000);
     return new Error(`GitHub asks the app to wait until ${reset.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} before syncing again. Your changes are kept.`);

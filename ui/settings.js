@@ -14,7 +14,7 @@ import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 
-export const APP_VERSION = '1.1.2';
+export const APP_VERSION = '1.1.3';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -74,21 +74,39 @@ function sharedHtml(settings) {
     </div>`;
 }
 
+// Sync in two parts: what this device uses now, then connecting as three
+// numbered steps. Each GitHub key opens only the repository picked when it
+// was made, and GitHub's form cannot pick it in advance, so step 2 names the
+// repository typed in step 1 (Jakob found the earlier single form confusing,
+// 2026-11-10).
 function syncHtml(state) {
-  const statusHtml = escapeHtml(!state.device.syncRepo ? 'Not connected: this device keeps its own catalog until it is connected to the data repository.'
-    : `${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Nothing waiting to be sent.'}`);
-  return `<p class="page-meta">${statusHtml}</p>
+  const { syncRepo } = state.device;
+  const nowHtml = !syncRepo ? '<p class="page-meta">This device is not connected to a catalog yet. It keeps its own books until it is.</p>'
+    : `<dl class="facts"><dt>Catalog in use</dt><dd>${escapeHtml(syncRepo)}</dd>
+        <dt>Last sync</dt><dd>${escapeHtml(`${state.syncStatus || 'Not yet in this session.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Nothing waiting to be sent.'}`)}</dd></dl>
+      <div class="actions"><button class="btn" type="button" data-sync-now>Sync now</button></div>`;
+  const repoNameHtml = `<strong data-repo-name>${escapeHtml(syncRepo ? syncRepo.split('/').pop() : 'the catalog from step 1')}</strong>`;
+  return `${nowHtml}
+      <h3 class="block-title sync-connect">${syncRepo ? 'Connect to another catalog, or renew the key' : 'Connect to a catalog'}</h3>
+      <p class="page-meta">Three steps. A key works for one catalog only, so moving to another catalog needs a new key. If this device holds books from another catalog, the app asks before removing them from this device; they stay in that catalog.</p>
       <form class="form" data-sync>
-        <label class="field">Data repository (owner/name)<input name="repo" value="${escapeHtml(state.device.syncRepo || '')}" placeholder="JakobNath/my-loci-library-data" autocomplete="off" spellcheck="false"></label>
-        <label class="field">This device's key<input name="key" type="password" placeholder="${escapeHtml(state.device.syncKey ? 'saved on this device' : 'paste the key here')}" autocomplete="off"></label>
-        <div class="actions"><button class="btn btn-primary" type="submit">Connect and download</button><button class="btn" type="button" data-sync-now>Sync now</button></div>
-      </form>
-      <details class="small"><summary>How to make a key</summary><ol>
-        <li>Open <a class="link" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">GitHub's form for a new key</a> (sign in if asked). The name, a year's expiry and the permission "Contents: Read and write" are already filled in.</li>
-        <li>Under "Repository access", choose "Only select repositories", then pick your data repository from the list. The key opens only the repository picked here, so a key made for one catalog never opens another.</li>
-        <li>Click "Generate token" at the bottom, and copy the code it shows (it starts with github_pat_).</li>
-        <li>Paste it above and tap "Connect and download". The key stays on this device only. When it expires, make a new one the same way.</li>
-      </ol></details>`;
+        <fieldset><legend>Step 1 of 3: Which catalog</legend>
+          <label class="field">Catalog (owner/name on GitHub)<input name="repo" value="${escapeHtml(syncRepo || '')}" placeholder="JakobNath/my-loci-library-data" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        </fieldset>
+        <fieldset><legend>Step 2 of 3: Make a key for it</legend>
+          <a class="btn" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">Open GitHub to make a key</a>
+          <ol class="small">
+            <li>Sign in to GitHub if asked. The name, expiry and "Contents: Read and write" are already filled in.</li>
+            <li>Under "Repository access", choose "Only select repositories", then pick ${repoNameHtml}. This is the step that matters.</li>
+            <li>Change nothing else. Tap "Generate token" at the bottom, copy the code (it starts with github_pat_), and come back here.</li>
+          </ol>
+        </fieldset>
+        <fieldset><legend>Step 3 of 3: Paste the key and connect</legend>
+          <label class="field">The new key<input name="key" type="password" placeholder="paste the code here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p class="page-meta">The key stays on this device only. When it expires (after a year), make a new one the same way.</p>
+          <div class="actions"><button class="btn btn-primary" type="submit">Connect and download</button></div>
+        </fieldset>
+      </form>`;
 }
 
 // The trash: books and wishlist items moved there, each with Restore.
@@ -172,6 +190,12 @@ export function render(container, state, actions) {
     event.preventDefault();
     const form = new FormData(event.target);
     actions.connectSync(String(form.get('repo')), String(form.get('key')) || device.syncKey || '');
+  };
+  // Step 2 names the catalog as it is typed in step 1.
+  container.oninput = event => {
+    if (event.target.name !== 'repo') return;
+    const name = event.target.value.trim().split('/').pop();
+    container.querySelector('[data-repo-name]').textContent = name || 'the catalog from step 1';
   };
   container.onchange = event => {
     const { keyInput, sort } = event.target.dataset;

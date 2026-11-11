@@ -287,7 +287,7 @@ async function emptyForAnotherCatalog(syncRepo, syncKey) {
   // Each key opens only the repositories chosen when it was made, so the old
   // key never opens the new catalog: say so, rather than let GitHub refuse it.
   if (syncKey === state.device.syncKey) {
-    return refuseSwitch(`This device's key was made for ${oldRepo}. Make a new key for ${syncRepo} (Settings › Advanced › Sync › "How to make a key"), paste it into "This device's key", and tap "Connect and download" again.`);
+    return refuseSwitch(`This device's key was made for ${oldRepo}. Make a new key for ${syncRepo} (Settings › Advanced › Sync, step 2), paste it in step 3, and tap "Connect and download" again.`);
   }
   const { connectToGitHub } = await import('./edges/sync-github.js');
   try {
