@@ -34,11 +34,11 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 - [x] Settings: is the main page simple enough for Jakob's wife? Look at Value, Export and Trash.
 - [x] Search (the bar at the top): an author, a word from the notes, a Greek word.
 - [x] Offline: airplane mode on, keep using it, then reconnect and watch the unsent badge clear.
-- [ ] Send the notes, screen by screen, in any form; they are fixed in order of importance.
+- [x] Send the notes, screen by screen, in any form; they are fixed in order of importance. (10 November 2026: nothing to fix for now.)
 
 **2. Get ready for the real catalog** (one sitting, after the tour fixes)
 
-- [ ] Two-device check: edit one book's notes on the phone and another field on the laptop, both offline; reconnect both; the book should have both changes (`DEVICE_CHECKS.md`, Phase 7).
+- [x] Two-device check: edit one book's notes on the phone and another field on the laptop, both offline; reconnect both; the book should have both changes (`DEVICE_CHECKS.md`, Phase 7).
 - [ ] Daily backup: install Google Drive for desktop, then set up and schedule `loci-backup` (the tools README, "Setting up on a laptop" and "Running it every day").
 - [ ] Jakob's wife: show her the app, and add her phone with its own key (Settings › Advanced › Sync › "How to make a key").
 - [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
@@ -59,7 +59,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-1. Fix what Jakob's tour turns up (once he sends his notes).
+1. Switch to the real catalog safely: the app empties a device when it connects to a different catalog, keeping its keys (in progress, 10 November 2026).
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
 
