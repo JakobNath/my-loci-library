@@ -101,6 +101,9 @@ label.btn { position: relative; }
 /* Settings › Advanced › Sync: the three steps sit well apart from the current status */
 .sync-connect { margin-top: var(--space-5); font-size: var(--fs-base); }
 .sync-connect + .page-meta { margin-bottom: var(--space-4); }
+details.sync-connect > summary { color: var(--accent-ink); font: 600 var(--fs-base) var(--font-ui); cursor: pointer; }
+details.sync-connect > .page-meta { margin-bottom: var(--space-4); }
+.share-box { width: 100%; margin-top: var(--space-2); font: var(--fs-small) var(--font-mono); }
 
 /* Value view, and menu rows that are buttons (exports) */
 .value-total { margin: 0 0 var(--space-2); font: var(--h1-weight) var(--fs-h1)/1.2 var(--font-display); color: var(--ink); }

@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.3).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.4).
 
 ## Where things stand
 
@@ -11,9 +11,9 @@ Every build phase is done, from 1 to 14 (`docs/plan/archive/BUILD_PLAN_phases_1-
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly.
 - **Book search** (Wishlist and Add) shows specific editions with English titles, publishers and covers, and finds books by publisher or series.
 - **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built, tested on the test catalog, and checked on the phones.
-- **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect).
+- **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect). **1.1.4** uses one key for all devices, without an expiry date, and a "Share setup link" button: only the first device is set up by hand, the others open the link.
 
-All tests pass: 135 in the app (and 120 on the self-test page), 143 in the tools.
+All tests pass: 137 in the app (and 122 on the self-test page), 145 in the tools.
 
 ## Waiting on Jakob
 
@@ -41,12 +41,12 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [x] Two-device check: edit one book's notes on the phone and another field on the laptop, both offline; reconnect both; the book should have both changes (`DEVICE_CHECKS.md`, Phase 7).
 - [ ] Daily backup: install Google Drive for desktop, then set up and schedule `loci-backup` (the tools README, "Setting up on a laptop" and "Running it every day").
-- [ ] Jakob's wife: show her the app, and add her phone with its own key (Settings › Advanced › Sync, steps 1 to 3).
+- [ ] Jakob's wife: show her the app, and send her phone the setup link (Settings › Advanced › Sync › "Share setup link" on Jakob's phone, once it is on the real catalog).
 - [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
 
 **3. Start cataloging for real** (walked through together)
 
-- [ ] Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): reload to 1.1.3, then follow the three steps in Settings › Advanced › Sync; the app asks, then empties the device of the test catalog. This is also the device check "Moving to the real catalog" in `DEVICE_CHECKS.md`. The books added during the tour stay in the test catalog and are scanned again into the real one.
+- [ ] Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): reload to 1.1.4; on Jakob's phone follow the three steps in Settings › Advanced › Sync (one key, no expiry), then "Share setup link" to the laptop browser and his wife's phone; the app asks, then empties the device of the test catalog. This is also the device check "Moving to the real catalog" in `DEVICE_CHECKS.md`. The books added during the tour stay in the test catalog and are scanned again into the real one.
 - [x] Point the laptop tools at the real catalog: change `dataRepo` in the tools' `config.json`. (Done 10 November 2026.)
 - [ ] Import the whole Logos library: a full, unfiltered export, run with `--full`.
 - [ ] First real Zotero run: `loci-zotero.cmd` with no `--collection`. It sends into "My Loci Library" and, on that first run only, links books already in Zotero, keeping a copy of each before changing it.
@@ -75,6 +75,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 Choices made without Jakob, each with its reason in `docs/decisions/`:
 
+- Sync now uses one key for all our devices, without an expiry date, passed between devices by a setup link (Jakob's request; PLAN.md "Sync" changed to match).
 - Citation keys follow his Better BibTeX pattern (`Augustine1991`, with a, b, c for repeats). Keys already pinned in Zotero are kept.
 - Zotero fields hold only bibliographic data; the Loci link, with the shelf in its title, is attached under each book. Bibles are sent as one book, without sections.
 - Zotero is reached through its web API, because Zotero 7's local connection cannot write.

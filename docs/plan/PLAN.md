@@ -51,10 +51,10 @@ Three GitHub repositories keep code, data and laptop tools separate. The private
 - Each device keeps a full offline copy of the catalog and the grid thumbnails of physical books. Logos thumbnails are cached once seen, which keeps a phone's first download near 10 MB instead of 50 MB.
 - When online, the app reads and writes the private data repo through GitHub. Saving a batch (say, 30 books) makes one commit, not hundreds.
 - Devices load the combined catalog file plus any records newer than it, so startup stays fast as the library grows. Only the laptop builds the combined file (daily, through `loci-backup`, or on demand). Phones write single records and never rebuild it.
-- Access is one key per device (laptop, Jakob's phone, wife's phone), all on Jakob's GitHub account. Losing a phone means cancelling one key.
-- When a key expires, the app shows a plain message and a link to the renewal steps. It never fails silently.
+- Access is one key on Jakob's GitHub account, shared by our devices (laptop, Jakob's phone, wife's phone) and made without an expiry date, so setup is done once. The first device is set up by hand; each other device opens a setup link sent from one already connected (Settings › Advanced › Sync). The key is never put in a repository or in the app's code. Losing a phone means making a new key and sending the setup link again. (Changed on 10 November 2026 from one key per device, at Jakob's request: only the two of us use the app, and setup had to be far easier.)
+- If a key stops working, the app shows a plain message and the steps to make a new one. It never fails silently.
 - Conflicts: if both of us edit the same record offline, the newest edit wins per field. Git history keeps every older version.
-- First launch on a new device: one short setup screen to paste the key and choose the data repo, then the first download with a progress bar. Nothing more.
+- First launch on a new device: open the setup link, or (on the first device) one short setup screen to paste the key and choose the data repo; then the first download with a progress bar. Nothing more.
 - Colleagues use the same hosted app with their own private data repo and key. Each release is clearly labeled.
 
 **Backups**

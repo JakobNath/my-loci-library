@@ -9,7 +9,7 @@ import { buildLibrary, withSearchText } from './core/library.js';
 import { makeId } from './core/ids.js';
 import { withField } from './core/records.js';
 import { escapeHtml } from './core/html.js';
-import { SHARED_DEFAULTS, withDefaults, settingsToFileText, isAnotherCatalog } from './core/settings.js';
+import { SHARED_DEFAULTS, withDefaults, settingsToFileText, isAnotherCatalog, readSetupLink } from './core/settings.js';
 import { iconHtml, LOGO_HTML } from './ui/icons.js';
 import * as libraryScreen from './ui/library.js';
 import * as bookScreen from './ui/book.js';
@@ -441,7 +441,28 @@ addEventListener('online', () => syncNow());
 
 // ---------- starting up ----------
 
+/**
+ * A setup link from another device (Settings › Advanced › Sync, "Share setup
+ * link") connects this one. The keys are taken out of the address at once,
+ * so they stay neither on screen nor in the browser's history.
+ * Returns whether the address was a setup link.
+ */
+function takeSetupLink() {
+  const setup = readSetupLink(location.hash);
+  if (!setup) return false;
+  history.replaceState(null, '', '#/settings/advanced');
+  state.route = readRoute();
+  if (setup.googleBooksKey) {
+    state.device = { ...state.device, googleBooksKey: setup.googleBooksKey };
+    saveDeviceSettings(state.device);
+  }
+  render();
+  actions.connectSync(setup.repo, setup.key);
+  return true;
+}
+
 addEventListener('hashchange', () => {
+  if (takeSetupLink()) return;
   state.route = readRoute();
   state.query = '';
   search.value = '';
@@ -489,7 +510,7 @@ async function start() {
   });
   registerServiceWorker();
   showUnsent();
-  syncNow();
+  if (!takeSetupLink()) syncNow();
   remindAboutArchive();
 }
 

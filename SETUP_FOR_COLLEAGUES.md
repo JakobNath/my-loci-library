@@ -11,13 +11,13 @@ Created by Jakob Nath.
 
 This repository is your catalog. Every book you add becomes a small text file in it, and GitHub keeps every earlier version, so nothing you do in the app can be lost for good.
 
-## 2. A key for each device
+## 2. One key
 
-The app needs a key to read and write your repository. Make one for each phone, tablet or computer you will use, so a lost phone's key can be cancelled on its own.
+The app needs a key to read and write your repository. Make one, on the first device you set up; the others get it from that device with a setup link (section 3).
 
 1. Sign in to github.com in your browser.
-2. Open this link: https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write
-   It opens GitHub's form for a new key with a name, a year's expiry and the permission "Contents: Read and write" already filled in. You may change the name to the device's ("My phone").
+2. Open this link: https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+My+Loci+Library&expires_in=none&contents=write
+   It opens GitHub's form for a new key with a name, no expiry and the permission "Contents: Read and write" already filled in. (If you would rather have keys that expire, choose an expiry date here; the app tells you when one stops working.)
 3. Find "Repository access" and choose "Only select repositories". In the list that appears, pick `my-loci-library-data`.
 4. Scroll to the bottom and click "Generate token".
 5. Copy the code it shows (it starts with `github_pat_`). GitHub shows it only once.
@@ -28,7 +28,8 @@ The same steps, with the link, are in the app under Settings › Advanced › Sy
 
 1. Open https://jakobnath.github.io/my-loci-library/ on the device. On a phone, add it to the home screen (Safari: Share › Add to Home Screen; Chrome: menu › Add to Home screen) so it opens like an app, even with no connection.
 2. Settings › Advanced › Sync. Type your repository as `your-github-name/my-loci-library-data`, paste the key, and tap "Connect and download".
-3. Settings should then say "Connected". Do the same on each device, each with its own key.
+3. Settings should then show your repository under "Catalog in use".
+4. For each other phone, tablet or computer: on the connected device, tap "Share setup link" (Settings › Advanced › Sync), send the link to the other device by text or email, and open it there. It connects by itself, with the same keys. Anyone with the link can read and change your catalog, so send it only to your own devices.
 
 ## 4. Add books
 
@@ -40,9 +41,9 @@ Your changes are saved on the device at once and sent to GitHub a few seconds la
 
 Settings › Advanced › The library holds the choices that describe your catalog (date style, currency, what adding asks for). They are saved in your repository, so every device you use shares them.
 
-## When a key expires
+## If the key stops working
 
-The app says so in plain words and keeps every change on the device. Make a new key (step 2) and paste it in Settings › Advanced › Sync.
+The app says so in plain words and keeps every change on the device. Make a new key (section 2), paste it in Settings › Advanced › Sync on one device, and send the setup link to the others.
 
 ## Optional: the laptop tools
 

@@ -26,7 +26,7 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 
 1. Open the app on each phone and the laptop, open `tests/` (Settings › Advanced › About › Run the self-tests), and check that every line is green. On the laptop, also run `node --test` in both public repositories.
 2. Save the yearly archive (the tools README, "The yearly archive"), and open its `exports/catalog.html` to see that it reads.
-3. Check that each device's sync key has not expired (Settings shows "Connected"; GitHub lists the keys and their expiry dates under Settings › Developer settings).
+3. Check that sync works on each device (Settings › Advanced › Sync shows the catalog in use and a recent sync). All devices share one key without an expiry date; GitHub lists it under Settings › Developer settings.
 4. Look at `DEVICE_CHECKS.md` for anything left unchecked.
 
 Anything red names the file to look at. Fix it in `core/` first if the rule lives there, run the tests again, raise `VERSION` in `sw.js` and `APP_VERSION` in `ui/settings.js`, and push.
@@ -37,7 +37,9 @@ Anything red names the file to look at. Fix it in `core/` first if the rule live
 
 **Moving a device to another data repository** (from the test catalog to the real one, say): type the new name in Settings › Advanced › Sync, paste a key made for it, and tap "Connect and download". The app checks the new repository first, then asks before emptying this device's copy, so no record from the old catalog is sent to the new one. The old catalog stays on GitHub; the keys and this device's settings stay on the device (`connectSync` in `main.js`).
 
-**If GitHub refuses a key**, the app says so in plain words and keeps every change on the device. Make a new key the same way (the app's README, "Starting to catalog for real") and paste it in.
+**If GitHub refuses the key**, the app says so in plain words and keeps every change on the device. Make a new key on one device (Settings › Advanced › Sync, steps 1 to 3), then tap "Share setup link" there and open the link on each other device.
+
+**Setting up another device**: on a connected device, Settings › Advanced › Sync › "Share setup link". The link carries the catalog, the sync key and the Google Books key after the "#", which browsers never send to a server; opening it connects the device and takes the keys out of the address (`takeSetupLink` in `main.js`, `setupLink` in `core/settings.js`).
 
 **If a lookup service disappears** (Open Library, Google Books), adding books still works by typing; only the lookup file in `edges/` needs replacing. If a service used by `loci-enrich` disappears, the fields it would have filled simply stay as they are.
 

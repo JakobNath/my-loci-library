@@ -13,15 +13,18 @@ import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
+import { setupLink, guessDataRepo } from '../core/settings.js';
 
-export const APP_VERSION = '1.1.3';
+export const APP_VERSION = '1.1.4';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
-// GitHub's form for a new key, filled in by its address: a name, a year's expiry,
+// GitHub's form for a new key, filled in by its address: a name, no expiry,
 // and "Contents: Read and write" (GitHub Docs, "Pre-filling fine-grained personal
 // access token details using URL parameters"). Only the repository is left to choose.
-const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write';
+// One key serves all our devices and never expires, so setup is done once
+// (Jakob, 2026-11-10: only the two of us use the app; docs/decisions/sync.md).
+const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+My+Loci+Library&expires_in=none&contents=write';
 
 // Making a Google Books key, step by step (the same steps are in the tools
 // README). Google Cloud's pages move now and then;
@@ -74,39 +77,44 @@ function sharedHtml(settings) {
     </div>`;
 }
 
-// Sync in two parts: what this device uses now, then connecting as three
-// numbered steps. Each GitHub key opens only the repository picked when it
-// was made, and GitHub's form cannot pick it in advance, so step 2 names the
-// repository typed in step 1 (Jakob found the earlier single form confusing,
-// 2026-11-10).
+// Sync: what this device uses now; a setup link for the other devices, so
+// only the first device ever deals with GitHub; and connecting by hand as
+// three numbered steps. GitHub's form cannot pick the repository in advance,
+// so step 2 names the one typed in step 1 (Jakob found the earlier single
+// form confusing, and asked for a far easier setup, 2026-11-10).
 function syncHtml(state) {
   const { syncRepo } = state.device;
-  const nowHtml = !syncRepo ? '<p class="page-meta">This device is not connected to a catalog yet. It keeps its own books until it is.</p>'
+  const nowHtml = !syncRepo ? `<p class="page-meta">This device is not connected to a catalog yet. The easy way: on a device that is connected, open Settings › Advanced › Sync, tap "Share setup link", and open that link here. Setting up the very first device takes the three steps below.</p>`
     : `<dl class="facts"><dt>Catalog in use</dt><dd>${escapeHtml(syncRepo)}</dd>
         <dt>Last sync</dt><dd>${escapeHtml(`${state.syncStatus || 'Not yet in this session.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Nothing waiting to be sent.'}`)}</dd></dl>
-      <div class="actions"><button class="btn" type="button" data-sync-now>Sync now</button></div>`;
-  const repoNameHtml = `<strong data-repo-name>${escapeHtml(syncRepo ? syncRepo.split('/').pop() : 'the catalog from step 1')}</strong>`;
-  return `${nowHtml}
-      <h3 class="block-title sync-connect">${syncRepo ? 'Connect to another catalog, or renew the key' : 'Connect to a catalog'}</h3>
-      <p class="page-meta">Three steps. A key works for one catalog only, so moving to another catalog needs a new key. If this device holds books from another catalog, the app asks before removing them from this device; they stay in that catalog.</p>
-      <form class="form" data-sync>
+      <div class="actions"><button class="btn" type="button" data-sync-now>Sync now</button></div>
+      <h3 class="block-title sync-connect">Set up another phone or computer</h3>
+      <p class="page-meta">Send the other device a link, by text or email. Opening it there connects it to this catalog with the same keys. Nothing to type.</p>
+      <div class="actions"><button class="btn btn-primary" type="button" data-share-setup>Share setup link</button></div>
+      <p class="page-meta" data-share-result></p><input class="share-box" data-share-box readonly hidden aria-label="Setup link">`;
+  const repoNameHtml = `<strong data-repo-name>${escapeHtml((syncRepo || guessDataRepo(location.hostname)).split('/').pop() || 'the catalog from step 1')}</strong>`;
+  const stepsHtml = `<form class="form" data-sync>
         <fieldset><legend>Step 1 of 3: Which catalog</legend>
-          <label class="field">Catalog (owner/name on GitHub)<input name="repo" value="${escapeHtml(syncRepo || '')}" placeholder="JakobNath/my-loci-library-data" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="field">Catalog (owner/name on GitHub)<input name="repo" value="${escapeHtml(syncRepo || guessDataRepo(location.hostname))}" placeholder="JakobNath/my-loci-library-data" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
         </fieldset>
-        <fieldset><legend>Step 2 of 3: Make a key for it</legend>
+        <fieldset><legend>Step 2 of 3: Make one key, for all your devices</legend>
           <a class="btn" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">Open GitHub to make a key</a>
           <ol class="small">
-            <li>Sign in to GitHub if asked. The name, expiry and "Contents: Read and write" are already filled in.</li>
+            <li>Sign in to GitHub if asked. The name, "No expiration" and "Contents: Read and write" are already filled in.</li>
             <li>Under "Repository access", choose "Only select repositories", then pick ${repoNameHtml}. This is the step that matters.</li>
             <li>Change nothing else. Tap "Generate token" at the bottom, copy the code (it starts with github_pat_), and come back here.</li>
           </ol>
         </fieldset>
         <fieldset><legend>Step 3 of 3: Paste the key and connect</legend>
-          <label class="field">The new key<input name="key" type="password" placeholder="paste the code here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <p class="page-meta">The key stays on this device only. When it expires (after a year), make a new one the same way.</p>
+          <label class="field">The key<input name="key" type="password" placeholder="paste the code here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <p class="page-meta">The key does not expire. Other devices get it from this one with "Share setup link".</p>
           <div class="actions"><button class="btn btn-primary" type="submit">Connect and download</button></div>
         </fieldset>
       </form>`;
+  // Once connected, the steps are rarely needed, so they fold away.
+  return syncRepo
+    ? `${nowHtml}<details class="sync-connect"><summary>Connect to a different catalog, or use a new key</summary><p class="page-meta">If this device holds books from another catalog, the app asks before removing them from this device; they stay in that catalog.</p>${stepsHtml}</details>`
+    : `${nowHtml}${stepsHtml}`;
 }
 
 // The trash: books and wishlist items moved there, each with Restore.
@@ -207,6 +215,7 @@ export function render(container, state, actions) {
     const exportButton = event.target.closest('[data-export]');
     if (exportButton) { exportCatalog(exportButton.dataset.export, state); return; }
     if (event.target.closest('[data-test-key]')) { testGoogleKey(container); return; }
+    if (event.target.closest('[data-share-setup]')) { shareSetupLink(container, device); return; }
     const target = event.target.closest('[data-sync-now], [data-restore], [data-key], [data-shared], [data-lookup], [data-prompt]');
     if (!target) return;
     const { restore, key, shared, lookup, prompt } = target.dataset;
@@ -232,6 +241,33 @@ async function testGoogleKey(container) {
   const verdict = await checkGoogleBooksKey(container.querySelector('[data-key-input="googleBooksKey"]').value.trim());
   result.textContent = verdict.message;
   result.classList.toggle('is-missing', !verdict.works);
+}
+
+// "Share setup link": the phone's share sheet where there is one (feature
+// check: the Web Share API is missing in some desktop browsers), else the
+// clipboard, else the link shown in a box to copy by hand.
+async function shareSetupLink(container, device) {
+  const result = container.querySelector('[data-share-result]');
+  const link = setupLink(location.href.split('#')[0], { repo: device.syncRepo, key: device.syncKey, googleBooksKey: device.googleBooksKey });
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'My Loci Library', text: 'Open this on the other device to connect it to our catalog:', url: link });
+      result.textContent = 'Sent. Open the link on the other device; it connects by itself.';
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return; // the share sheet was closed: nothing to do
+    }
+  }
+  const copied = navigator.clipboard ? await navigator.clipboard.writeText(link).then(() => true, () => false) : false;
+  if (copied) {
+    result.textContent = 'Link copied. Paste it into a text or email to the other device, and open it there.';
+    return;
+  }
+  const box = container.querySelector('[data-share-box]');
+  box.value = link;
+  box.hidden = false;
+  box.select();
+  result.textContent = 'Copy this link, send it to the other device, and open it there.';
 }
 
 async function restoreItem(id, container, state, actions) {
