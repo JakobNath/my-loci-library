@@ -14,6 +14,13 @@
 .spine-text { writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; text-align: center; line-height: 1.12;
   font: 400 10px/1.12 var(--font-display); color: var(--ink); font-variant-ligatures: none; }
 .spine-foot { color: var(--ink-2); }
+/* Arrange: the book being moved is raised; the gaps it can go to are thin honey lines with a wide tap area. */
+.shelf-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); margin-bottom: var(--space-3); }
+.shelf.is-arranging .spine { cursor: pointer; transition: transform 0.15s; }
+.spine.is-picked { transform: translateY(calc(-1 * var(--space-3))); outline: 2px solid var(--pop); outline-offset: 1px; }
+.shelf-gap { flex: none; align-self: stretch; width: 22px; min-height: var(--tap); padding: 0; border: 0; cursor: pointer;
+  background: linear-gradient(var(--pop), var(--pop)) center / 2px 100% no-repeat; opacity: 0.55; }
+.shelf-gap:hover, .shelf-gap:focus-visible { opacity: 1; background-size: 4px 100%; }
 
 /* Batch add */
 .find { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
