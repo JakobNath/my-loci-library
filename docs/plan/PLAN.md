@@ -266,9 +266,9 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 **Library and Wishlist views**
 
 - A cover grid and a dense list view.
-- **Shelf view:** for a location, spines stand side by side like the real shelf. A book with no spine photo gets a drawn spine: an outline with a dashed edge and the title, with the volume or series number (or else the author's surname) at the foot. When the book has a cover image, online or our own, the edge takes a softened version of the cover's color; otherwise it stays plain gray. Sizes follow "Book sizes". The details are in `docs/plan/DESIGN.md`.
+- **Shelf view:** for a location, spines stand side by side like the real shelf. A book with no spine photo gets a drawn spine: an outline with a dashed edge and the title, with the volume or series number (or else the author's surname) at the foot. When the book has a cover image, online or our own, the edge takes a softened version of the cover's color; otherwise it stays plain gray. Sizes follow "Book sizes". The details are in `docs/plan/DESIGN.md`. **Arrange** moves a book along its shelf: tap the book, then the gap where it now stands; only that book's shelf order changes.
 - Sort by any field: title, subtitle, author, original date, edition year, binding, series, category, location, value, date added, and more.
-- Filters by format (physical or Logos), location, category, tags, status, and "needs original date".
+- Filters by format (physical or Logos), location, category, tags, status, "needs original date" and "needs details".
 - **Saved views,** such as "Office shelves by original date" or "Greek texts by author".
 - Shelf lists come from views sorted by original date. They are read on screen, not printed.
 
@@ -288,12 +288,30 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 
 **Batch add** (one screen for a whole stack or a single book; each book is reviewed as it is scanned, before the next scan)
 
+Adding works in two passes (Jakob's decision, 11 November 2026). When adding, the app asks only what a person with the book in hand knows, or what no catalog records. Catalog facts (pages as printed, height, place, series number, call numbers, editors' roles, subjects) come from the phone's lookups and the laptop's nightly check (`loci-enrich`). A "needs details" filter then shows what is still empty.
+
 1. Scan a barcode, or type an ISBN or title.
 2. The book is looked up in Open Library, falling back to Google Books. If neither finds it, manual entry opens.
 3. The app suggests a matching existing work ("Same work as *Confessions*?"), which we confirm with one tap. It never links automatically.
-4. Missing critical fields are highlighted, each skippable: title, subtitle, author, original date, binding, publisher and edition year.
+4. One question per screen, each skippable, with large one-tap answers:
+   - the original date;
+   - the original language (English, Latin, Greek, German, Hebrew, French, or typed), and the original title when it is not English;
+   - the category and tags, from those already used or typed new;
+   - for a translation, the translator and the year the translation first appeared;
+   - the cover and spine photos, the binding, and where it goes;
+   - this copy: when it was acquired, price paid, estimated value, writing or markings, and notes.
+   A work already in the library keeps its own language, category and tags, so those are not asked again. Missing title, author, publisher and year are pointed out (settings choose which).
 5. A found cover is saved automatically. If none was found, or it is wrong, take or choose a photo and line it up in the editor. Cover downloads and syncing run in the background and never hold up the next scan.
 6. Next book, or finish.
+
+**Adding a set.** A choice on the add screen. The set's shared facts are given once: title, publisher, year, edition, general editors and binding. Then, mixed as needed:
+
+- Scan or type each volume. It takes the set's facts and keeps its own looked-up year. Its volume label is suggested as the next number, and the previous volume's language, category and tags are offered again. Its own photos and shelf are asked as usual.
+- Paste the volumes held, one line each ("7 Plato", "8 Aristotle I"), and choose one shelf for them all. Photos and contents come later.
+
+Each volume stays its own edition, grouped by set title and volume label.
+
+**Needs details.** A Library filter, beside "needs original date", lists physical books still missing a publisher, year, pages or binding. Settings shows how many there are, and each such book's page says what is still missing, with a link to Edit.
 
 If a scanned ISBN is already in the catalog, the screen warns before adding: "You already have this edition. Add another copy?" Phone cameras are the main way to scan, including for the first 1,000+ books. A USB barcode scanner would also work on the laptop if one is ever bought, since it types the ISBN like a keyboard. No extra code is needed for that.
 

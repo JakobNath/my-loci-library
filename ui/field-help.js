@@ -90,7 +90,8 @@ const GUIDE = [
     title: 'Where the details come from',
     paragraphs: [
       'When a book is added, the phone asks Open Library and Google Books for its details and cover. Each night the laptop also asks the Library of Congress, which a phone cannot reach, and fills fields that are still empty: exact pages, height, translators and editors, call numbers. It never changes anything a person typed.',
-      'What only a person knows is ours to fill in: the original date, category and tags, where the book stands, and why we own it.',
+      'What only a person knows is ours to fill in, and adding a book asks for it: the original date and language, category and tags, the translation, where the book stands, and why we own it.',
+      'The Library\'s filter "Needs details", and the count in Settings, show the books still missing a publisher, year, pages or binding once the laptop has checked them. Each such book\'s page says what is missing. After a long scanning session, the laptop\'s check can be run at once with loci-enrich, rather than waiting for the night.',
     ],
   },
 ];

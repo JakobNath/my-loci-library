@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.2.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.3.0).
 
 ## Where things stand
 
@@ -13,8 +13,9 @@ Every build phase is done, from 1 to 14 (`docs/plan/archive/BUILD_PLAN_phases_1-
 - **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built, tested on the test catalog, and checked on the phones.
 - **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect). **1.1.4** uses one key for all devices, without an expiry date, and a "Share setup link" button: only the first device is set up by hand, the others open the link. **1.1.6** also takes a setup link pasted into step 3's key box, because an app on an iPhone's home screen keeps its data apart from Safari and cannot receive a tapped link.
 - **Version 1.2.0** (second tour fixes, 11 November 2026): straight spine photos, steadier magnifiers and a preview in the photo editor; new Library controls; covers that keep their own shape; a tighter grid caption; wishlist covers in search; an "i" beside unclear fields and a guide in Settings ("How the catalog is organized").
+- **Version 1.3.0** (second tour, part B: adding books, 11 November 2026). Adding asks what only a person knows: the original language and title, category and tags, the translation, and this copy (acquired, price, value, markings, notes). The laptop fills catalog facts, and "Needs details" (a Library filter, a line on the book page, a count in Settings) shows what is still empty. "Add a set of volumes" takes a set's facts once, then volumes scanned or pasted. "Arrange" in the shelf view moves a book along its shelf. The start-up code is 99.6 KB of 100 (407 bytes free), after moving the picture view's and filter panel's styles to `screens.css`.
 
-All tests pass: 143 in the app (and 131 on the self-test page), 151 in the tools.
+All tests pass: 149 in the app (and 137 on the self-test page), 157 in the tools.
 
 ## Waiting on Jakob
 
@@ -25,6 +26,10 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 - [x] **Update each phone to 1.1.0.** Open the app; when "New version · Reload" appears at the bottom, tap it (or close and reopen the app). Settings shows the version at the bottom. A phone still on 1.0.5 will say the catalog is in a newer format and wait, without changing anything, until it is reloaded.
 - [x] **Put the Google Books key on each phone** (once it has 1.1.0; one key serves every device). On the laptop, copy the key from the tools' `config.json` and send it to yourself in a way you trust. On each phone: Settings › Advanced, paste it into **Google Books key** under "This device", then tap **Test the key**; it should say "The key works", and otherwise says what to change.
 - [x] **Try the phone checks** for phase 14 in `DEVICE_CHECKS.md` (scan *Mere Christianity* or another book with a table of contents; scan a Bible; test the key).
+
+**1.3.0 on the phones**
+
+- [ ] Reload each phone to 1.3.0 (Settings shows the version at the bottom), then try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
 
 **1. Tour the app and note what needs work** (30 to 45 minutes, on the phone)
 
@@ -61,7 +66,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-0. **Second tour, part B: adding books** (Jakob's notes of 11 November 2026; part A, the looks and photo fixes, is done in 1.2.0). In progress, 11 November 2026, following the plan in the handoff: done and committed (not yet released) are Arrange in the shelf view and "Needs details" (filter, book page line, Settings count, with the filter panel's and picture view's styles moved to `screens.css` to stay within the size budget). Still to do: the new add steps (`ui/add-questions.js`), adding a set (`ui/add-set.js`), docs, version 1.3.0 and release. Do this before scanning in earnest, since it changes how books are entered. The design is settled in `handoffs/2026-11-11-second-tour.md`, "Session B": adding asks what only a person knows (original language with quick buttons, category, tags, translation details, acquired, markings), the laptop fills catalog facts, and a "Needs details" filter shows what is still empty (Jakob chose these two passes); "Adding a set" with the set's facts given once, then scanning or pasting the volumes held, each with its own shelf and photos; and moving a book along its shelf ("Arrange" in the shelf view). PLAN.md "Batch add" changes to match. App-store apps are closed (Jakob solved it).
+0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
@@ -77,6 +82,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 Choices made without Jakob, each with its reason in `docs/decisions/`:
 
+- Adding a book (1.3.0): "Needs details" lists physical books only (Logos details come from the Logos export) and follows the chosen sort; a set's volumes keep the year their lookup finds; tags are offered as chips up to the 20 most used (`docs/decisions/screens.md`).
 - Sync now uses one key for all our devices, without an expiry date, passed between devices by a setup link (Jakob's request; PLAN.md "Sync" changed to match).
 - Citation keys follow his Better BibTeX pattern (`Augustine1991`, with a, b, c for repeats). Keys already pinned in Zotero are kept.
 - Zotero fields hold only bibliographic data; the Loci link, with the shelf in its title, is attached under each book. Bibles are sent as one book, without sections.

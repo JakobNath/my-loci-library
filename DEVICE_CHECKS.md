@@ -79,3 +79,10 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: in the photo editor, hold a finger on the photo away from the outline. The straightened result should show while held and go away on letting go. Tap Preview: the same, until "Back to the outline" is tapped.
 - [ ] Phone: the Library's controls (Physical, Logos, All; Sort; Filter; the view switch) are easy to tap and read, in light and dark.
 - [ ] Phone: open Edit on a book and tap the "i" beside Series. One or two sentences should open under the field, without the keyboard appearing; tapping another "i" closes the first.
+
+## Adding books, second tour part B (1.3.0)
+
+- [ ] Phone: in a shelf view, tap Arrange, tap a book, then tap a gap further along. The book should move there at once. Close and reopen the app: it should still stand there, on the other phone too after a sync.
+- [ ] Phone: add a translated book (Latin, Greek or German). The language buttons should be easy to tap; tapping English should go straight to the next step, and any other should ask for the original title. The translation step should come up with the translator filled in when the lookup found one.
+- [ ] Phone: on Add, tap "Add a set of volumes", give the set's facts, and scan two volumes of it. The second should suggest the next volume number, and keep the first one's language, category and binding. Open the Library and come back to Add: the set should still be there. Tap "Finish the set" at the end.
+- [ ] Phone: paste a few volumes of a set ("7 Plato" and so on, one per line) and tap a shelf. They should appear on that shelf in the order pasted, each with the set's details.
