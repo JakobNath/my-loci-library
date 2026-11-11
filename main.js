@@ -256,6 +256,7 @@ const actions = {
   },
 
   showNote,
+  loadScreenStyles,
   go(hash) {
     location.hash = hash;
   },

@@ -143,7 +143,8 @@ export function render(container, state, actions) {
     ${viewerHtml}`;
   fillImages(container, actions.imageUrl);
   const viewer = container.querySelector('.viewer');
-  const enlarge = () => { if (viewer && viewer.showModal) viewer.showModal(); };
+  // The view's styles load with the later screens' stylesheet, first.
+  const enlarge = async () => { if (viewer && viewer.showModal) { await actions.loadScreenStyles(); viewer.showModal(); } };
   container.onclick = event => {
     if (event.target.closest('[data-action="enlarge"]')) enlarge();
     else if (viewer && viewer.open && event.target.closest('.viewer')) viewer.close();
