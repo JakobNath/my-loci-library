@@ -15,7 +15,7 @@ import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, guessDataRepo } from '../core/settings.js';
 
-export const APP_VERSION = '1.1.4';
+export const APP_VERSION = '1.1.5';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -24,7 +24,9 @@ const ON_OFF = [[true, 'On'], [false, 'Off']];
 // access token details using URL parameters"). Only the repository is left to choose.
 // One key serves all our devices and never expires, so setup is done once
 // (Jakob, 2026-11-10: only the two of us use the app; docs/decisions/sync.md).
-const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+My+Loci+Library&expires_in=none&contents=write';
+// GitHub refuses a second key with a name already used, so the name carries
+// the day it is made ("My Loci Library 2026-11-11").
+const keyLink = () => `https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library+${new Date().toISOString().slice(0, 10)}&description=Sync+for+My+Loci+Library&expires_in=none&contents=write`;
 
 // Making a Google Books key, step by step (the same steps are in the tools
 // README). Google Cloud's pages move now and then;
@@ -98,7 +100,7 @@ function syncHtml(state) {
           <label class="field">Catalog (owner/name on GitHub)<input name="repo" value="${escapeHtml(syncRepo || guessDataRepo(location.hostname))}" placeholder="JakobNath/my-loci-library-data" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
         </fieldset>
         <fieldset><legend>Step 2 of 3: Make one key, for all your devices</legend>
-          <a class="btn" href="${escapeHtml(KEY_LINK)}" target="_blank" rel="noopener">Open GitHub to make a key</a>
+          <a class="btn" href="${escapeHtml(keyLink())}" target="_blank" rel="noopener">Open GitHub to make a key</a>
           <ol class="small">
             <li>Sign in to GitHub if asked. The name, "No expiration" and "Contents: Read and write" are already filled in.</li>
             <li>Under "Repository access", choose "Only select repositories", then pick ${repoNameHtml}. This is the step that matters.</li>
