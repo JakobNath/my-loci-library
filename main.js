@@ -26,6 +26,7 @@ const state = {
   backupStatus: null, // backup-status.json from the laptop's loci-backup, once synced
   offlineReady: false,
   batchLocation: [], // the shelf being filled in batch add, kept while the app is open
+  batchSet: null, // the set being added in batch add ("Adding a set"), kept the same way
   syncStatus: '', // what the last sync did, in words
   unsent: 0, // changes made here and not yet sent to GitHub
 };
@@ -246,6 +247,9 @@ const actions = {
 
   setBatchLocation(parts) {
     state.batchLocation = parts;
+  },
+  setBatchSet(set) {
+    state.batchSet = set;
   },
 
   /** Change some fields of an edition, as from the cite toggle. */

@@ -10,7 +10,7 @@
 // book is saved. The questions' own drawing is in ui/add-questions.js.
 
 import { escapeHtml } from '../core/html.js';
-import { isbn13, isBookBarcode, recordsFromForm, anotherCopy } from '../core/entry.js';
+import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound } from '../core/book-data.js';
@@ -22,12 +22,13 @@ import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadO
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
+import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
 
 const STEP_NAMES = {
-  book: 'The book', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
+  book: 'The book', volume: 'Volume', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
   translation: 'Translation', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
 };
 
@@ -38,6 +39,10 @@ export function render(container, state, actions) {
   let scanner = null;
   let book = null; // the book being added: what was found and every answer so far
   let shelfKey = null; // the last shelf order given on the shelf being filled
+  // The set being added ("Adding a set", ui/add-set.js), until "Finish the set".
+  // main.js keeps it while the app is open, so a look at the Library mid-set loses nothing.
+  let setInfo = state.batchSet;
+  const keepSet = set => { setInfo = set; actions.setBatchSet(set); };
   const added = [];
 
   // With a USB scanner (Settings › This device) the scanner types the ISBN into the box, and presses Enter.
@@ -54,7 +59,9 @@ export function render(container, state, actions) {
       <form class="find" autocomplete="off"><input id="find" type="search" placeholder="ISBN or title" enterkeyhint="search">
         <button class="btn" type="submit">Look up</button></form>
       <p class="preview" data-shelf></p>
-      <p class="preview"><a class="link" href="#/new">Enter a book by hand instead</a></p>
+      <div data-set></div>
+      <p class="preview" data-other-ways><a class="link" href="#/new">Enter a book by hand instead</a>
+        · <button type="button" class="link" data-action="start-set">Add a set of volumes</button></p>
       <div id="added"></div>
     </div>
     <div id="step" hidden></div>
@@ -70,6 +77,15 @@ export function render(container, state, actions) {
   function showShelf() {
     const where = (state.batchLocation || []).filter(Boolean);
     container.querySelector('[data-shelf]').textContent = where.length ? `Filling: ${where.join(' › ')}. Each book goes after the last one added.` : '';
+    container.querySelector('[data-set]').innerHTML = setInfo ? setBannerHtml(setInfo) : '';
+    container.querySelector('[data-other-ways]').hidden = !!setInfo;
+  }
+
+  // The shelves to offer: the one being filled first, then the last few used.
+  function recentPlaces() {
+    const current = (state.batchLocation || []).filter(Boolean).join(' › ');
+    const recent = [...new Set(state.library.entries.flatMap(entry => entry.copies.map(copy => copy.location.join(' › '))).filter(Boolean))].slice(-4);
+    return [current, ...recent.filter(place => place !== current)].filter(Boolean);
   }
 
   function nextShelfOrder(location) {
@@ -167,13 +183,17 @@ export function render(container, state, actions) {
 
   // otherCover: a Google Books cover, used when Open Library's turns out to be missing.
   function startBook(found, workLookup, problem = '', otherCover = null) {
-    const full = { ...emptyFound(''), ...found };
+    const looked = { ...emptyFound(''), ...found };
+    // A volume of the set being added takes the set's shared facts, and the
+    // previous volume's language, category and tags are offered again.
+    const full = setInfo ? withSetFacts(looked, setInfo, setInfo.nextVolume) : looked;
+    const last = (setInfo && setInfo.last) || { language: '', category: '', tags: [] };
     const translators = full.contributors.filter(person => person.role === 'translator').map(person => person.name);
     book = {
       found: full,
       problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
       // What only a person knows, asked by the steps in ui/add-questions.js.
-      language: full.originalLanguage || '', originalTitle: full.originalTitle || '', category: '', tags: [],
+      language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
       copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
       photos: {}, cover: { state: 'none' }, otherCover, binding: full.binding, location: (state.batchLocation || []).filter(Boolean),
@@ -223,6 +243,7 @@ export function render(container, state, actions) {
     const language = linked ? linked.originalLanguage : book.language;
     return [
       'book',
+      setInfo ? 'volume' : null,
       book.contentsOffered ? 'contents' : null,
       single && book.works.length ? 'work' : null,
       single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
@@ -270,7 +291,7 @@ export function render(container, state, actions) {
 
   function drawStep() {
     const draw = {
-      book: bookStep, contents: contentsStep, work: workStep, date: dateStep,
+      book: bookStep, volume: () => volumeStepHtml(book, setInfo), contents: contentsStep, work: workStep, date: dateStep,
       language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices()),
       translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
@@ -412,10 +433,9 @@ export function render(container, state, actions) {
 
   // 7. Where it goes.
   function whereStep() {
-    const current = (state.batchLocation || []).filter(Boolean);
-    const recent = [...new Set(state.library.entries.flatMap(entry => entry.copies.map(copy => copy.location.join(' › '))).filter(Boolean))].slice(-4);
-    const placesHtml = [current.join(' › '), ...recent.filter(place => place !== current.join(' › '))].filter(Boolean)
-      .map((place, i) => choiceHtml('place', place, i === 0 && current.length ? 'The shelf you are filling: goes after the last book added' : '', place)).join('');
+    const isFilling = (state.batchLocation || []).filter(Boolean).length > 0;
+    const placesHtml = recentPlaces()
+      .map((place, i) => choiceHtml('place', place, i === 0 && isFilling ? 'The shelf you are filling: goes after the last book added' : '', place)).join('');
     const partsHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'where', book.location[i] || '')).join('');
     return `<h2 class="step-title">Where does it go?</h2><p class="step-hint">Tap a shelf you have used, or type a new place below.</p>
       <div class="choices">${placesHtml}${choiceHtml('place', 'No place yet', 'It can be shelved later', '')}</div>
@@ -433,6 +453,7 @@ export function render(container, state, actions) {
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
       book.works = suggestWorks(found.title, found.authors, state.library);
     }
+    if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
     if (book.step === 'binding' && value('binding')) book.binding = value('binding').trim();
@@ -457,6 +478,7 @@ export function render(container, state, actions) {
       book.fixing = false;
       return next();
     }
+    if (action === 'volume') { book.found.volume = value; return next(); }
     if (action === 'single') { book.contents = null; return next(); }
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
@@ -516,7 +538,77 @@ export function render(container, state, actions) {
     const records = result.records.map(record => (record.type === 'edition' ? withImages(record) : record.type === 'copy' ? { ...record, shelfOrder } : record));
     if (!(await actions.saveRecords(records, { soon: true }))) return;
     for (const [id, files] of book.imageFiles) actions.saveImageFiles(id, files);
+    // In a set, the next volume is suggested, and this one's answers are offered again.
+    if (setInfo) keepSet({ ...setInfo, nextVolume: nextVolumeLabel(found.volume), last: { language: book.language, category: book.category, tags: book.tags } });
     finishBook(found.title);
+  }
+
+  // ---------- adding a set (ui/add-set.js) ----------
+
+  const NEW_SET = { title: '', publisher: '', year: '', editionStatement: '', editors: [], binding: '', nextVolume: '', last: null, isMissingTitle: false };
+
+  // The set's shared facts, given once; then its volumes are scanned, typed or pasted.
+  function showSetForm(set = NEW_SET) {
+    scanArea.hidden = true;
+    stepArea.hidden = false;
+    stepArea.oninput = null;
+    stepArea.onchange = null;
+    stepArea.innerHTML = setFormHtml(set);
+    stepArea.onclick = event => {
+      if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
+      if (event.target.closest('[data-action="back"]')) finishBook();
+    };
+    stepArea.onsubmit = event => {
+      event.preventDefault();
+      const typed = readSetForm(stepArea, set);
+      if (!typed.title) { showSetForm({ ...typed, isMissingTitle: true }); return; }
+      keepSet({ ...typed, isMissingTitle: false });
+      finishBook();
+    };
+    stepArea.querySelector('input').focus();
+  }
+
+  function showPasteVolumes() {
+    scanArea.hidden = true;
+    stepArea.hidden = false;
+    stepArea.oninput = null;
+    stepArea.onchange = null;
+    stepArea.innerHTML = pasteStepHtml(setInfo, recentPlaces(), '');
+    const volumes = () => volumesFromLines(stepArea.querySelector('[name="volumes"]').value, setInfo.title);
+    stepArea.onclick = event => {
+      const button = event.target.closest('[data-action]');
+      if (!button) return;
+      if (button.dataset.action === 'back') finishBook();
+      if (button.dataset.action === 'paste-place') savePastedVolumes(volumes(), button.dataset.value ? button.dataset.value.split(' › ') : []);
+    };
+    stepArea.onsubmit = event => {
+      event.preventDefault();
+      savePastedVolumes(volumes(), [...stepArea.querySelectorAll('[name="where"]')].map(input => input.value.trim()).filter(Boolean));
+    };
+  }
+
+  // Each pasted line becomes its own edition with the set's facts, standing
+  // in line order on one shelf. Photos and contents come later.
+  async function savePastedVolumes(volumes, location) {
+    if (!volumes.length) { actions.showNote('Paste at least one volume, one per line.'); return; }
+    const records = [];
+    for (const { volume, title } of volumes) {
+      const form = {
+        title, subtitle: '', authors: [], contributors: setInfo.editors.map(name => ({ name, role: 'editor' })),
+        publisher: setInfo.publisher, place: '', year: setInfo.year, editionStatement: setInfo.editionStatement, translationFirstPublished: '',
+        series: '', seriesNumber: '', set: setInfo.title, volume, isbn: '', pages: '', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
+        work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [] },
+        copy: { binding: setInfo.binding, location, acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
+      };
+      const result = recordsFromForm(form, null, context());
+      if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
+      const shelfOrder = nextShelfOrder(location);
+      records.push(...result.records.map(record => (record.type === 'copy' ? { ...record, shelfOrder } : record)));
+    }
+    if (!(await actions.saveRecords(records, { soon: true }))) return;
+    if (location.length) actions.setBatchLocation(location);
+    keepSet({ ...setInfo, nextVolume: nextVolumeLabel(volumes[volumes.length - 1].volume) });
+    finishBook(`${volumes.length} ${volumes.length === 1 ? 'volume' : 'volumes'} of ${setInfo.title}`, location);
   }
 
   // The new edition's images (our photos, the checked online cover, or a waiting Google Books
@@ -546,9 +638,10 @@ export function render(container, state, actions) {
     };
   }
 
-  function finishBook(title) {
+  // location: where what was saved went, shown in the banner.
+  function finishBook(title, location = book ? book.location : []) {
     const banner = container.querySelector('[data-saved]');
-    const place = book && book.location && book.location.length ? ` on ${book.location.join(' › ')}` : '';
+    const place = location && location.length ? ` on ${location.join(' › ')}` : '';
     banner.textContent = title ? `✓ Saved: ${title}${place}. Ready for the next book.` : '';
     banner.hidden = !title;
     book = null;
@@ -570,6 +663,13 @@ export function render(container, state, actions) {
   container.querySelector('.find').onsubmit = event => {
     event.preventDefault();
     findBook(find.value);
+  };
+  scanArea.onclick = event => {
+    const button = event.target.closest('[data-action]');
+    const action = button ? button.dataset.action : '';
+    if (action === 'start-set') showSetForm();
+    else if (action === 'paste-volumes') showPasteVolumes();
+    else if (action === 'finish-set') { keepSet(null); showShelf(); }
   };
   container.querySelector('[data-action="camera"]').onclick = async event => {
     const box = container.querySelector('.camera');
