@@ -13,9 +13,9 @@ import { iconHtml } from './icons.js';
 import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
-import { setupLink, guessDataRepo } from '../core/settings.js';
+import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
 
-export const APP_VERSION = '1.1.5';
+export const APP_VERSION = '1.1.6';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -86,7 +86,7 @@ function sharedHtml(settings) {
 // form confusing, and asked for a far easier setup, 2026-11-10).
 function syncHtml(state) {
   const { syncRepo } = state.device;
-  const nowHtml = !syncRepo ? `<p class="page-meta">This device is not connected to a catalog yet. The easy way: on a device that is connected, open Settings › Advanced › Sync, tap "Share setup link", and open that link here. Setting up the very first device takes the three steps below.</p>`
+  const nowHtml = !syncRepo ? `<p class="page-meta">This device is not connected to a catalog yet. The easy way: on a device that is connected, open Settings › Advanced › Sync, tap "Share setup link", and open that link here (in an app added to an iPhone's home screen, copy the link and paste it into step 3 instead). Setting up the very first device takes the three steps below.</p>`
     : `<dl class="facts"><dt>Catalog in use</dt><dd>${escapeHtml(syncRepo)}</dd>
         <dt>Last sync</dt><dd>${escapeHtml(`${state.syncStatus || 'Not yet in this session.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Nothing waiting to be sent.'}`)}</dd></dl>
       <div class="actions"><button class="btn" type="button" data-sync-now>Sync now</button></div>
@@ -108,7 +108,7 @@ function syncHtml(state) {
           </ol>
         </fieldset>
         <fieldset><legend>Step 3 of 3: Paste the key and connect</legend>
-          <label class="field">The key<input name="key" type="password" placeholder="paste the code here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="field">The key, or a setup link<input name="key" type="password" placeholder="paste the code here" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <p class="page-meta">The key does not expire. Other devices get it from this one with "Share setup link".</p>
           <div class="actions"><button class="btn btn-primary" type="submit">Connect and download</button></div>
         </fieldset>
@@ -199,6 +199,12 @@ export function render(container, state, actions) {
     if (!event.target.matches('[data-sync]')) return;
     event.preventDefault();
     const form = new FormData(event.target);
+    // A pasted setup link connects as if it had been opened. An app on an
+    // iPhone's home screen keeps its data apart from Safari, and a link
+    // tapped in a message opens in Safari, so pasting is its only way in.
+    const pasted = String(form.get('key')).trim();
+    const hash = pasted.slice(pasted.indexOf('#'));
+    if (pasted.includes('#') && readSetupLink(hash)) { location.hash = hash; return; }
     actions.connectSync(String(form.get('repo')), String(form.get('key')) || device.syncKey || '');
   };
   // Step 2 names the catalog as it is typed in step 1.

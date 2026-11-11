@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.5).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.6).
 
 ## Where things stand
 
@@ -11,7 +11,7 @@ Every build phase is done, from 1 to 14 (`docs/plan/archive/BUILD_PLAN_phases_1-
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly.
 - **Book search** (Wishlist and Add) shows specific editions with English titles, publishers and covers, and finds books by publisher or series.
 - **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built, tested on the test catalog, and checked on the phones.
-- **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect). **1.1.4** uses one key for all devices, without an expiry date, and a "Share setup link" button: only the first device is set up by hand, the others open the link.
+- **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect). **1.1.4** uses one key for all devices, without an expiry date, and a "Share setup link" button: only the first device is set up by hand, the others open the link. **1.1.6** also takes a setup link pasted into step 3's key box, because an app on an iPhone's home screen keeps its data apart from Safari and cannot receive a tapped link.
 
 All tests pass: 137 in the app (and 122 on the self-test page), 145 in the tools.
 
@@ -41,7 +41,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [x] Two-device check: edit one book's notes on the phone and another field on the laptop, both offline; reconnect both; the book should have both changes (`DEVICE_CHECKS.md`, Phase 7).
 - [x] Daily backup: install Google Drive for desktop, then set up and schedule `loci-backup` (the tools README, "Setting up on a laptop" and "Running it every day"). (Done 11 November 2026: Drive mirrors My Drive to `C:\Users\Jakob\My Drive`; the backup goes to `My Drive\My Loci Library backup`; the Task Scheduler task "My Loci Library backup" runs daily at 12:30 and catches up a missed day. First run by hand and by the scheduler both succeeded.)
-- [ ] Jakob's wife: show her the app, and send her phone the setup link (Settings › Advanced › Sync › "Share setup link" on Jakob's phone, once it is on the real catalog).
+- [ ] Jakob's wife: show her the app, and send her phone the setup link (Settings › Advanced › Sync › "Share setup link" on Jakob's phone, once it is on the real catalog). Her phone is an iPhone: add the app to the home screen first, then copy the link from the message (press and hold, Copy) and paste it into step 3 in the home-screen app (`DEVICE_CHECKS.md`, "Moving to the real catalog").
 - [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
 
 **3. Start cataloging for real** (walked through together)
