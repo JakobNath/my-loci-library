@@ -24,7 +24,7 @@ const ON_OFF = [[true, 'On'], [false, 'Off']];
 const KEY_LINK = 'https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write';
 
 // Making a Google Books key, step by step (the same steps are in the tools
-// README and docs/plan/FOR_JAKOB.md). Google Cloud's pages move now and then;
+// README). Google Cloud's pages move now and then;
 // the two addresses below go straight to the right ones.
 const GOOGLE_KEY_GUIDE_HTML = `<details class="small"><summary>How to make a free key (about two minutes)</summary><ol>
   <li>Open <a class="link" href="https://console.cloud.google.com/apis/library/books.googleapis.com" target="_blank" rel="noopener">the Books API in Google Cloud</a> and sign in with any Google account. If it asks for a project, make one (any name, such as "My Loci Library"). Click "Enable".</li>
