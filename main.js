@@ -9,7 +9,7 @@ import { buildLibrary, withSearchText } from './core/library.js';
 import { makeId } from './core/ids.js';
 import { withField } from './core/records.js';
 import { escapeHtml } from './core/html.js';
-import { SHARED_DEFAULTS, withDefaults, settingsToFileText } from './core/settings.js';
+import { SHARED_DEFAULTS, withDefaults, settingsToFileText, isAnotherCatalog } from './core/settings.js';
 import { iconHtml, LOGO_HTML } from './ui/icons.js';
 import * as libraryScreen from './ui/library.js';
 import * as bookScreen from './ui/book.js';
@@ -219,9 +219,19 @@ const actions = {
     return imageUrls.get(key);
   },
 
-  /** Connect this device to a data repository, then download it (Settings › Sync). */
+  /**
+   * Connect this device to a data repository, then download it (Settings › Sync).
+   * Moving to another repository empties this device's copy first, after
+   * asking, so the old catalog's records are never sent to the new one.
+   */
   async connectSync(repo, key) {
-    state.device = { ...state.device, syncRepo: repo.trim(), syncKey: key.trim() };
+    const syncRepo = repo.trim();
+    const syncKey = key.trim();
+    if (syncing) { showNote('A sync is running. Try again in a moment.'); return; }
+    if (storage && isAnotherCatalog(state.device.syncRepo, syncRepo)) {
+      if (!(await emptyForAnotherCatalog(syncRepo, syncKey))) return;
+    }
+    state.device = { ...state.device, syncRepo, syncKey };
     saveDeviceSettings(state.device);
     try {
       await (await syncConnection()).check();
@@ -263,6 +273,50 @@ async function syncConnection() {
   if (!syncRepo || !syncKey) return null;
   const { connectToGitHub } = await import('./edges/sync-github.js');
   return connectToGitHub({ repo: syncRepo, key: syncKey });
+}
+
+/**
+ * Before moving to another repository: check the new one works (so a typo
+ * never empties the device), ask, then empty this device's copy. The old
+ * catalog stays on GitHub; keys and device settings stay here. Returns
+ * whether to go on connecting.
+ */
+async function emptyForAnotherCatalog(syncRepo, syncKey) {
+  const { connectToGitHub } = await import('./edges/sync-github.js');
+  try {
+    await connectToGitHub({ repo: syncRepo, key: syncKey }).check();
+  } catch (error) {
+    state.syncStatus = `${error.message} Still connected to ${state.device.syncRepo}.`;
+    render();
+    return false;
+  }
+  const unsent = (await storage.outbox()).length + ((await storage.meta('imageOutbox')) || []).length
+    + ((await storage.meta('settingsUnsent')) ? 1 : 0);
+  const lost = unsent ? ` ${unsent} changes made here were never sent to it and will be lost.` : '';
+  const question = `This device holds ${state.records.size} records from ${state.device.syncRepo}. `
+    + `They will be removed from this device; they stay in that repository.${lost}\n\n`
+    + `Connect to ${syncRepo} and start from its catalog?`;
+  if (!confirm(question)) return false;
+  // No sync may run while emptying: it would download the old catalog again.
+  clearTimeout(syncTimer);
+  syncing = true;
+  try {
+    await storage.clearCatalog();
+  } catch (error) {
+    showNote(error.message);
+    return false;
+  } finally {
+    syncing = false;
+  }
+  for (const url of imageUrls.values()) if (url) URL.revokeObjectURL(url);
+  imageUrls.clear();
+  state.records = new Map();
+  state.library = buildLibrary([]);
+  state.settings = SHARED_DEFAULTS;
+  state.backupStatus = null;
+  state.unsent = 0;
+  showUnsent();
+  return true;
 }
 
 // A sync a few seconds after the last save, so a stack of books goes up as one commit.

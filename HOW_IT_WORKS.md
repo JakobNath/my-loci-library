@@ -16,7 +16,7 @@ My Loci Library is three things: an app that runs in a browser, a private reposi
 
 All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service worker) keeps every file on the device so the app opens with no connection; raising its `VERSION` makes devices fetch a new version. `laptop/covers.html` is a page for the laptop only, which turns covers left in `images/inbox/` into the app's picture sizes.
 
-**The tests**: open `tests/index.html` on any device (it runs the core tests and the speed tests there), or run `node --test` in this folder (the same core tests, the sync tests against a stand-in for GitHub, and the architecture checks: each ring only reaches inward, each outside system is used by one edge, data put into a page is always escaped, the app stays within its size budget, and every file the app loads is kept for offline use).
+**The tests**: open `tests/index.html` on any device (it runs the core tests, the storage tests and the speed tests there), or run `node --test` in this folder (the same core tests, the sync tests against a stand-in for GitHub, and the architecture checks: each ring only reaches inward, each outside system is used by one edge, data put into a page is always escaped, the app stays within its size budget, and every file the app loads is kept for offline use).
 
 **The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-enrich` (fills empty book fields from the Library of Congress, Open Library and Google Books), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
 
@@ -34,6 +34,8 @@ Anything red names the file to look at. Fix it in `core/` first if the rule live
 **If the app's address ever changes** (a new domain, or a move away from GitHub Pages), the Loci links in Zotero must follow. Set `"appUrl"` in the tools' `config.json` to the new address, ending in a slash (for example `"https://books.example.org/"`), and run `loci-zotero` once: every item's link is part of what it compares, so every link is rewritten in that one run. Obsidian notes link to the Zotero items, not to Loci, so they need nothing.
 
 **If a phone loses its catalog** (the browser cleared its storage), open the app and connect sync again (Settings › Advanced › Sync): the catalog downloads from `catalog.json` and the files changed since.
+
+**Moving a device to another data repository** (from the test catalog to the real one, say): type the new name in Settings › Advanced › Sync, paste a key made for it, and tap "Connect and download". The app checks the new repository first, then asks before emptying this device's copy, so no record from the old catalog is sent to the new one. The old catalog stays on GitHub; the keys and this device's settings stay on the device (`connectSync` in `main.js`).
 
 **If GitHub refuses a key**, the app says so in plain words and keeps every change on the device. Make a new key the same way (the app's README, "Starting to catalog for real") and paste it in.
 

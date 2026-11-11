@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.1).
 
 ## Where things stand
 
@@ -10,9 +10,10 @@ Every build phase is done, from 1 to 14 (`docs/plan/archive/BUILD_PLAN_phases_1-
 - **Logos**: an export of 53 resources imported cleanly in a trial on a copy of the test data.
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly.
 - **Book search** (Wishlist and Add) shows specific editions with English titles, publishers and covers, and finds books by publisher or series.
-- **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built and tested on the test catalog.
+- **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built, tested on the test catalog, and checked on the phones.
+- **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`).
 
-All tests pass: 134 in the app (and 118 on the self-test page), 142 in the tools.
+All tests pass: 135 in the app (and 120 on the self-test page), 143 in the tools.
 
 ## Waiting on Jakob
 
@@ -45,7 +46,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 **3. Start cataloging for real** (walked through together)
 
-- [ ] Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): new keys for the real repository, and the sample books cleared from each device first.
+- [ ] Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): reload to 1.1.1, make a new key for the real repository, and connect; the app asks, then empties the device of the test catalog. This is also the device check "Moving to the real catalog" in `DEVICE_CHECKS.md`. The books added during the tour stay in the test catalog and are scanned again into the real one.
 - [ ] Point the laptop tools at the real catalog: change `dataRepo` in the tools' `config.json`.
 - [ ] Import the whole Logos library: a full, unfiltered export, run with `--full`.
 - [ ] First real Zotero run: `loci-zotero.cmd` with no `--collection`. It sends into "My Loci Library" and, on that first run only, links books already in Zotero, keeping a copy of each before changing it.
@@ -59,7 +60,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-1. Switch to the real catalog safely: the app empties a device when it connects to a different catalog, keeping its keys (in progress, 10 November 2026).
+1. Help Jakob with the daily backup and the switch to the real catalog (sections 2 and 3 above), and point the tools at it (asking first: it changes `config.json`).
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
 

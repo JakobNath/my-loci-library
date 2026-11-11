@@ -15,7 +15,7 @@ The app keeps its catalog in a private GitHub repository. During the build it us
 
 1. Make a key for this device: open https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+one+device&expires_in=366&contents=write while signed in to GitHub. The form opens with a name, a year's expiry and "Contents: Read and write" already set. Under "Repository access", choose "Only select repositories" and pick `my-loci-library-data`. Click "Generate token" and copy the code (it starts with `github_pat_`). The same steps are in the app, under Settings › Advanced › Sync › "How to make a key".
 2. In the app: Settings › Advanced › Sync. Type `JakobNath/my-loci-library-data`, paste the token, and tap "Connect and download".
-3. A device that was connected to the test data still holds the sample books. Before connecting it to the real catalog, clear the site's data for the app in the browser's settings (or use a private window once to check), so no sample book is sent to the real catalog.
+3. A device that was connected to the test data still holds the sample books. When it connects to the real catalog, the app first checks the new repository and key, then asks before removing the sample books from the device (version 1.1.1 and later). They stay in the test repository, and no sample book is sent to the real catalog. The device keeps its keys and settings.
 4. On the laptop, set `dataRepo` in the tools' `config.json` to the real repository's folder, and schedule `loci-backup` (see the tools README).
 
 Each device has its own token. When one expires, make a new one the same way; the catalog on the device is kept.

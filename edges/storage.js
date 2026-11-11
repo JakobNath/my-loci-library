@@ -103,6 +103,18 @@ export async function openStorage(name = DATABASE) {
       transaction.objectStore('meta').put(JSON.stringify(records), 'snapshot');
       return transactionDone(transaction);
     },
+    /**
+     * Empty this device's copy of the catalog: records, pictures, unsent
+     * changes and everything kept beside them (shared settings, fingerprints,
+     * backup status). Used before moving the device to another data
+     * repository. Device settings and keys live in localStorage and are kept.
+     */
+    async clearCatalog() {
+      const names = ['records', 'images', 'outbox', 'meta'];
+      const transaction = db.transaction(names, 'readwrite');
+      for (const name of names) transaction.objectStore(name).clear();
+      return transactionDone(transaction);
+    },
     /** IDs of records changed here and not yet sent. */
     async outbox() {
       return requestResult(db.transaction('outbox').objectStore('outbox').getAll());

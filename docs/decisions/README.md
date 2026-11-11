@@ -9,7 +9,7 @@ They were kept in `HOW_IT_WORKS.md` under "Decisions" until 10 November 2026, th
 - [`photos-and-scanning.md`](photos-and-scanning.md): Photos, covers, spines and scanning (16)
 - [`speed-offline-size.md`](speed-offline-size.md): Speed, offline use and the size budget (13)
 - [`data-format.md`](data-format.md): Data format and records (6)
-- [`sync.md`](sync.md): Sync with GitHub (5)
+- [`sync.md`](sync.md): Sync with GitHub (6)
 - [`screens.md`](screens.md): Screens: adding books, Library, book page, Wishlist, Settings, Value (19)
 - [`book-data.md`](book-data.md): Book data: lookups, search and the three sources (9)
 - [`laptop-tools.md`](laptop-tools.md): Laptop tools: backup and the Logos importer (6)

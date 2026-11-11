@@ -58,7 +58,12 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 ## Phase 14
 
-- [ ] Phone (1.1.0 or later): scan C. S. Lewis, *Mere Christianity* (9780060652920) or any book whose Open Library record lists contents. The first step should show the edition ("1st HarperCollins ed.") and pages as printed ("xx, 227"); the next step should ask "Is this a collection of works?" with the list filled in; "No, it is one work" should go on to the original date, and the binding step should have Paperback already chosen. Adding should feel as quick as before.
-- [ ] Phone: scan a Bible or Greek New Testament. No contents question should appear.
-- [ ] Phone: in Settings › Advanced, paste the Google Books key and tap "Test the key": it should say "The key works". Then change one letter of the key and test again: it should say Google does not know the key. Put the right key back.
-- [ ] Phone: after reloading to 1.1.0 (Settings shows "1.1.0" at the bottom, and Advanced › About shows data format 2), tap "Sync now". It should finish without a message about a newer format, and a book's page should still show everything it showed before. On a book added since, the edition facts may show a call number and subjects.
+- [x] Phone (1.1.0 or later): scan C. S. Lewis, *Mere Christianity* (9780060652920) or any book whose Open Library record lists contents. The first step should show the edition ("1st HarperCollins ed.") and pages as printed ("xx, 227"); the next step should ask "Is this a collection of works?" with the list filled in; "No, it is one work" should go on to the original date, and the binding step should have Paperback already chosen. Adding should feel as quick as before.
+- [x] Phone: scan a Bible or Greek New Testament. No contents question should appear.
+- [x] Phone: in Settings › Advanced, paste the Google Books key and tap "Test the key": it should say "The key works". Then change one letter of the key and test again: it should say Google does not know the key. Put the right key back.
+- [x] Phone: after reloading to 1.1.0 (Settings shows "1.1.0" at the bottom, and Advanced › About shows data format 2), tap "Sync now". It should finish without a message about a newer format, and a book's page should still show everything it showed before. On a book added since, the edition facts may show a call number and subjects.
+
+## Moving to the real catalog (1.1.1)
+
+- [ ] Each device (1.1.1 or later; Settings shows the version at the bottom): in Settings › Advanced › Sync, type `JakobNath/my-loci-library-data` and paste a key made for it, then tap "Connect and download". The app should ask whether to remove this device's records from the test catalog. Tap OK: the Library should be empty, Settings › Advanced should still hold the Google Books key, and `my-loci-library-data` on GitHub should get no sample books. Tap Cancel instead, and nothing should change.
+- [ ] Any device: type a repository name with a typo and tap "Connect and download". The app should say it cannot reach that repository, keep its books, and stay connected to the old one.
