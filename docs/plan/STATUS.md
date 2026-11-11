@@ -20,20 +20,20 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 **Phase 14 on the phones**
 
-- [ ] **Update each phone to 1.1.0.** Open the app; when "New version · Reload" appears at the bottom, tap it (or close and reopen the app). Settings shows the version at the bottom. A phone still on 1.0.5 will say the catalog is in a newer format and wait, without changing anything, until it is reloaded.
-- [ ] **Put the Google Books key on each phone** (once it has 1.1.0; one key serves every device). On the laptop, copy the key from the tools' `config.json` and send it to yourself in a way you trust. On each phone: Settings › Advanced, paste it into **Google Books key** under "This device", then tap **Test the key**; it should say "The key works", and otherwise says what to change.
-- [ ] **Try the phone checks** for phase 14 in `DEVICE_CHECKS.md` (scan *Mere Christianity* or another book with a table of contents; scan a Bible; test the key).
+- [x] **Update each phone to 1.1.0.** Open the app; when "New version · Reload" appears at the bottom, tap it (or close and reopen the app). Settings shows the version at the bottom. A phone still on 1.0.5 will say the catalog is in a newer format and wait, without changing anything, until it is reloaded.
+- [x] **Put the Google Books key on each phone** (once it has 1.1.0; one key serves every device). On the laptop, copy the key from the tools' `config.json` and send it to yourself in a way you trust. On each phone: Settings › Advanced, paste it into **Google Books key** under "This device", then tap **Test the key**; it should say "The key works", and otherwise says what to change.
+- [x] **Try the phone checks** for phase 14 in `DEVICE_CHECKS.md` (scan *Mere Christianity* or another book with a table of contents; scan a Bible; test the key).
 
 **1. Tour the app and note what needs work** (30 to 45 minutes, on the phone)
 
-- [ ] Add 5 to 10 real books, including one with no cover online, an old book without a barcode, and a translation (to try the original-date suggestions). Photos open the phone's own camera: use its flash button if the light is poor.
-- [ ] Open each book's page: the cover beside the title, tap the cover for the full-size view, tap the shelf link.
-- [ ] Library: try Filter (by location, and "Needs an original date"), save a view, change the sort.
-- [ ] Shelf view: open the shelf just filled.
-- [ ] Wishlist: add a book by title, and one by pasting an Amazon link.
-- [ ] Settings: is the main page simple enough for Jakob's wife? Look at Value, Export and Trash.
-- [ ] Search (the bar at the top): an author, a word from the notes, a Greek word.
-- [ ] Offline: airplane mode on, keep using it, then reconnect and watch the unsent badge clear.
+- [x] Add 5 to 10 real books, including one with no cover online, an old book without a barcode, and a translation (to try the original-date suggestions). Photos open the phone's own camera: use its flash button if the light is poor.
+- [x] Open each book's page: the cover beside the title, tap the cover for the full-size view, tap the shelf link.
+- [x] Library: try Filter (by location, and "Needs an original date"), save a view, change the sort.
+- [x] Shelf view: open the shelf just filled.
+- [x] Wishlist: add a book by title, and one by pasting an Amazon link.
+- [x] Settings: is the main page simple enough for Jakob's wife? Look at Value, Export and Trash.
+- [x] Search (the bar at the top): an author, a word from the notes, a Greek word.
+- [x] Offline: airplane mode on, keep using it, then reconnect and watch the unsent badge clear.
 - [ ] Send the notes, screen by screen, in any form; they are fixed in order of importance.
 
 **2. Get ready for the real catalog** (one sitting, after the tour fixes)
