@@ -60,7 +60,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-1. Help Jakob with the daily backup and the switch to the real catalog (sections 2 and 3 above). The tools already point at it.
+1. Help Jakob set up the daily backup (Google Drive for desktop, then `loci-backup` and its schedule; check Google's current instructions first), then finish the switch: his wife's phone and the laptop browser by setup link, and the full Logos import (sections 2 and 3 above). The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
 
