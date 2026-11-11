@@ -47,7 +47,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 **3. Start cataloging for real** (walked through together)
 
 - [ ] Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): reload to 1.1.1, make a new key for the real repository, and connect; the app asks, then empties the device of the test catalog. This is also the device check "Moving to the real catalog" in `DEVICE_CHECKS.md`. The books added during the tour stay in the test catalog and are scanned again into the real one.
-- [ ] Point the laptop tools at the real catalog: change `dataRepo` in the tools' `config.json`.
+- [x] Point the laptop tools at the real catalog: change `dataRepo` in the tools' `config.json`. (Done 10 November 2026.)
 - [ ] Import the whole Logos library: a full, unfiltered export, run with `--full`.
 - [ ] First real Zotero run: `loci-zotero.cmd` with no `--collection`. It sends into "My Loci Library" and, on that first run only, links books already in Zotero, keeping a copy of each before changing it.
 - [ ] Shelve and scan, one bookcase at a time. For the Book of Concord and similar collections, give each work its traditional author where there is one (Melanchthon for the Augsburg Confession and the Apology, Luther for the Smalcald Articles and the catechisms).
@@ -60,7 +60,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-1. Help Jakob with the daily backup and the switch to the real catalog (sections 2 and 3 above), and point the tools at it (asking first: it changes `config.json`).
+1. Help Jakob with the daily backup and the switch to the real catalog (sections 2 and 3 above). The tools already point at it.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
 
