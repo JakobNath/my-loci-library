@@ -1,5 +1,5 @@
 // The Settings screen (PLAN.md, "Settings"): a short main page (#/settings),
-// and the Trash, Rename and merge, and Advanced pages (#/settings/<page>).
+// and the guide, Trash, Rename and merge, Export and Advanced pages (#/settings/<page>).
 // Shared settings describe the library and go to the data repository's
 // settings.json; settings for this device stay in this browser. Defaults are
 // chosen so most people never need to open this screen.
@@ -14,8 +14,9 @@ import { saveFile } from './save-file.js';
 import { lastBackupLine, archiveReminder } from '../core/backup-status.js';
 import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
+import { guideHtml } from './field-help.js';
 
-export const APP_VERSION = '1.1.6';
+export const APP_VERSION = '1.2.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -148,7 +149,8 @@ function mainHtml(state) {
   const reminder = archiveReminder(state.backupStatus, new Date().toISOString().slice(0, 10));
   const backupHtml = `<p class="page-meta">${escapeHtml(backupLine)}</p>${reminder ? `<p class="step-hint is-missing">${escapeHtml(reminder)}</p>` : ''}`;
   const trashCount = trashedItems(state.records).length;
-  const menuHtml = menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
+  const menuHtml = menuRowHtml('#/settings/guide', 'How the catalog is organized', 'works and editions, series and sets, categories and tags')
+    + menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
     + menuRowHtml('#/value', 'Value', 'what the books are worth, for insurance')
     + menuRowHtml('#/settings/export', 'Export', 'CSV, JSON, CSL-JSON, BibTeX')
     + menuRowHtml('#/settings/lists', 'Rename and merge', 'categories, tags, series, bindings, places')
@@ -190,6 +192,7 @@ export function render(container, state, actions) {
     container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Rename and merge</h1><p class="page-meta">Tap a name to rename it on every book that uses it. Choosing a name already in the list merges the two.</p></div><section class="block"><div data-lists></div></section>`;
     renderLists(container.querySelector('[data-lists]'), state, actions);
   } else if (page === 'advanced') container.innerHTML = advancedHtml(state);
+  else if (page === 'guide') container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">How the catalog is organized</h1><p class="page-meta">What the parts of a book's record mean, and how to use them.</p></div><div class="guide">${guideHtml()}</div>`;
   else if (page === 'export') container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Export</h1><p class="page-meta">The whole catalog, every book owned or not, as a file on this device.</p></div>
     <nav class="menu">${exportsMenuHtml()}</nav>
     <p class="page-meta">A catalog that opens in any browser, with covers and no internet, is made on the laptop by loci-backup.</p>`;

@@ -4,6 +4,9 @@
 import { escapeHtml } from '../core/html.js';
 import { formatYearRange, workingDating } from '../core/dating.js';
 
+/** The shape of a cover slot, width over height (--cover-ratio in styles/tokens.css). */
+export const COVER_RATIO = 2 / 3;
+
 // A stable choice of tile color for a book, so it looks the same every time.
 function clothOf(id) {
   let sum = 0;
@@ -23,8 +26,19 @@ export function coverHtml(entry, size = 'm') {
   if (image) {
     // The picture is filled in by ui/images.js; its main color shows until it loads.
     const file = size === 'l' ? 'detail' : 'thumb';
-    return `<div class="cover has-image${size === 's' ? ' cover-s' : ''}${gone}" style="background:${escapeHtml(image.color || 'var(--surface-2)')}">`
-      + `<img data-image="${escapeHtml(image.id)}/${file}" alt=""></div>`;
+    const color = escapeHtml(image.color || 'var(--surface-2)');
+    const imgHtml = `<img data-image="${escapeHtml(image.id)}/${file}" alt="">`;
+    const ratio = Number(image.ratio) || 0;
+    if (!ratio) {
+      return `<div class="cover has-image${size === 's' ? ' cover-s' : ''}${gone}" style="background:${color}">${imgHtml}</div>`;
+    }
+    // The picture keeps its own shape inside a book-shaped slot, standing at
+    // its foot, so rows still line up; a squarer cover had shown a band of its
+    // color above it (Liddell and Scott, 2026-11-11). On the book page the slot
+    // takes the picture's shape, so a spine beside it is exactly as tall.
+    const slotStyle = size === 'l' ? ` style="aspect-ratio:${escapeHtml(String(ratio))}"` : '';
+    return `<div class="cover cover-slot${size === 's' ? ' cover-s' : ''}${gone}"${slotStyle}>`
+      + `<div class="cover-picture${ratio > COVER_RATIO ? ' is-wide' : ''}" style="aspect-ratio:${escapeHtml(String(ratio))};background:${color}">${imgHtml}</div></div>`;
   }
   return `<div class="cover ${clothOf(entry.id)}${size === 's' ? ' cover-s' : ''}${gone}" aria-hidden="true">`
     + `<p class="cover-title">${escapeHtml(entry.edition.title)}</p><span class="cover-rule"></span>`

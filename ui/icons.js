@@ -9,6 +9,8 @@ const PATHS = {
   grid: '<path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>',
   list: '<path d="M4 6h16M4 12h16M4 18h16"/>',
   shelf: '<path d="M5 4v15M8 6v13M11 4v15M15 7l3 12M3 20h18"/>',
+  filter: '<path d="M4 5h16l-6 7.5V19l-4-2v-4.5z"/>',
+  sort: '<path d="M7 4v16M4 17l3 3 3-3M17 20V4M14 7l3-3 3 3"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
 };
 

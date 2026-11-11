@@ -77,12 +77,12 @@ export function render(container, state, actions) {
   const entries = viewEntries(library.entries, view, { anthologies: settings.anthologiesInShelfLists });
   const physicalCount = library.entries.filter(entry => entry.owned && !entry.isDigital).length;
   const filters = filterCount(view);
-  const chipsHtml = MEDIUMS.map(([value, label]) => `<button class="chip${value === view.medium ? ' is-on' : ''}" data-action="medium" data-value="${value}">${escapeHtml(label)}</button>`).join('');
+  const mediumsHtml = MEDIUMS.map(([value, label]) => `<button class="${value === view.medium ? 'is-on' : ''}" aria-pressed="${value === view.medium}" data-action="medium" data-value="${value}">${escapeHtml(label)}</button>`).join('');
   const viewsHtml = savedViews.map((item, i) => `<button class="chip${sameView(item, view) ? ' is-on' : ''}" data-action="useView" data-value="${i}">${escapeHtml(item.name)}</button>`).join('');
   const sortHtml = Object.entries(SORTS).map(([key, sort]) => `<option value="${key}"${key === view.sort ? ' selected' : ''}>${escapeHtml(sort.label)}</option>`).join('');
-  const viewHtml = ['grid', 'list'].map(kind => `<button data-action="view" data-value="${kind}" class="${device.view === kind ? 'is-on' : ''}" aria-label="${kind === 'grid' ? 'Covers' : 'List'}">${iconHtml(kind)}</button>`).join('');
+  const viewHtml = ['grid', 'list'].map(kind => `<button data-action="view" data-value="${kind}" class="${device.view === kind ? 'is-on' : ''}" aria-pressed="${device.view === kind}" aria-label="${kind === 'grid' ? 'Covers' : 'List'}">${iconHtml(kind)}</button>`).join('');
   const countHtml = escapeHtml(`${physicalCount} books on the shelves${library.entries.length ? '' : ' · nothing added yet'}${filters ? ` · ${entries.length} shown` : ''}`);
-  const filterLabelHtml = escapeHtml(filters ? `Filters (${filters})` : 'Filter');
+  const filterCountHtml = filters ? `<span class="count-badge" aria-label="${escapeHtml(`${filters} on`)}">${escapeHtml(String(filters))}</span>` : '';
   const savedViewsHtml = viewsHtml ? `<div class="chips saved-views" aria-label="Saved views">${viewsHtml}</div>` : '';
   const panelHtml = device.filtersOpen ? filtersHtml(library.entries, view, savedViews) : '';
   container.innerHTML = `
@@ -92,11 +92,11 @@ export function render(container, state, actions) {
     </div>
     ${savedViewsHtml}
     <div class="toolbar">
-      <div class="chips">${chipsHtml}<button class="chip${filters || device.filtersOpen ? ' is-on' : ''}" data-action="filtersOpen" aria-expanded="${device.filtersOpen ? 'true' : 'false'}">${filterLabelHtml}</button></div>
+      <div class="segmented" role="group" aria-label="Which books">${mediumsHtml}</div>
       <div class="controls">
-        <label class="visually-hidden" for="sort">Sort by</label>
-        <select id="sort" data-filter="sort">${sortHtml}</select>
-        <div class="seg" role="group" aria-label="View">${viewHtml}<a href="#/shelves" aria-label="Shelves">${iconHtml('shelf')}</a></div>
+        <label class="sort-box">${iconHtml('sort')}<span class="visually-hidden">Sort by</span><select id="sort" data-filter="sort">${sortHtml}</select></label>
+        <button class="tool-button${filters || device.filtersOpen ? ' is-on' : ''}" data-action="filtersOpen" aria-expanded="${device.filtersOpen ? 'true' : 'false'}">${iconHtml('filter')}<span>Filter</span>${filterCountHtml}</button>
+        <div class="segmented is-icons" role="group" aria-label="View">${viewHtml}<a href="#/shelves" aria-label="Shelves">${iconHtml('shelf')}</a></div>
       </div>
     </div>
     ${panelHtml}
@@ -145,7 +145,9 @@ export function renderSearch(container, state, actions) {
   const total = results.length + wishes.length;
   const countHtml = escapeHtml(`${total ? `${total} found` : 'Nothing found'}${results.length >= 50 ? ' · showing the first 50' : ''}`);
   const resultsHtml = results.map(entry => rowHtml(entry, state.settings.dateStyle)).join('');
-  const wishesHtml = wishes.map(item => `<a class="row" href="#/wishlist"><span></span><span class="row-main"><span class="row-title">${escapeHtml(item.title)}</span>`
+  // A wishlist item has its own cover, drawn like a book's.
+  const wishCoverHtml = item => coverHtml({ id: item.id, owned: true, isWish: true, edition: { title: item.title, images: item.images }, authorLine: item.authors.join(', ') }, 's');
+  const wishesHtml = wishes.map(item => `<a class="row" href="#/wishlist">${wishCoverHtml(item)}<span class="row-main"><span class="row-title">${escapeHtml(item.title)}</span>`
     + `<span class="row-author">${escapeHtml(item.authors.join(', '))} <span class="badge badge-wish">Wishlist</span></span></span><span></span></a>`).join('');
   container.innerHTML = `<div class="page-head"><h1 class="page-title">Search</h1><p class="page-meta">${countHtml}</p></div>
     <div class="list">${resultsHtml}${wishesHtml}</div>`;

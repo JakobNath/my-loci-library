@@ -5,7 +5,7 @@
 import { escapeHtml } from '../core/html.js';
 import { formatYearRange, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
-import { coverHtml, dateLineHtml, badgesHtml } from './pieces.js';
+import { coverHtml, dateLineHtml, badgesHtml, COVER_RATIO } from './pieces.js';
 import { iconHtml } from './icons.js';
 import { fillImages } from './images.js';
 
@@ -103,12 +103,14 @@ export function render(container, state, actions) {
   ]);
   // The spine beside the cover, when there is a spine photo (PLAN.md, "Taking photos").
   const spine = edition.images.find(image => image.kind === 'spine');
-  // As tall as the cover, its width from the spine's shape: the cover box is 2 : 3,
-  // so the spine is (ratio × 1.5) times the cover's width; flex shares the room that way.
-  const spineShare = Math.round((Number(spine && spine.ratio) || 0.1) * 1.5 * 1000) / 1000;
+  const cover = edition.images.find(image => image.kind === 'cover' && !image.waiting);
+  // As tall as the cover, its width from the spine's shape: the cover box has the
+  // cover picture's shape (2 : 3 without one), so the spine is (spine ratio ÷ cover
+  // ratio) times the cover's width; flex shares the room that way.
+  const coverRatio = Number(cover && cover.ratio) || COVER_RATIO;
+  const spineShare = Math.round((Number(spine && spine.ratio) || 0.1) / coverRatio * 1000) / 1000;
   const spineHtml = spine ? `<div class="spine-photo" style="flex:${spineShare} 1 0"><img data-image="${escapeHtml(spine.id)}/detail" alt="Spine"></div>` : '';
   // On a phone the cover is small; tapping it shows the cover and spine full size (interface review).
-  const cover = edition.images.find(image => image.kind === 'cover' && !image.waiting);
   const viewerHtml = cover || spine ? `<dialog class="viewer" aria-label="Pictures"><div class="viewer-pictures">${cover ? `<img data-image="${escapeHtml(cover.id)}/detail" alt="Cover">` : ''}`
     + `${spine ? `<img class="viewer-spine" data-image="${escapeHtml(spine.id)}/detail" alt="Spine">` : ''}</div><p class="page-meta">Tap to close</p></dialog>` : '';
   const coverLabelHtml = cover || spine ? ' role="button" tabindex="0" aria-label="Show the pictures full size" data-action="enlarge"' : '';

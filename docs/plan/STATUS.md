@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 10 November 2026 (app version 1.1.6).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.2.0).
 
 ## Where things stand
 
@@ -12,8 +12,9 @@ Every build phase is done, from 1 to 14 (`docs/plan/archive/BUILD_PLAN_phases_1-
 - **Book search** (Wishlist and Add) shows specific editions with English titles, publishers and covers, and finds books by publisher or series.
 - **Phase 14** (better book data from the Library of Congress, Open Library and Google Books; data format version 2) is built, tested on the test catalog, and checked on the phones.
 - **Version 1.1.1**: a device already connected to one data repository and connected to another now checks the new one, asks, and empties its own copy first (keeping its keys), so no sample book can reach the real catalog (`docs/decisions/sync.md`). **1.1.2** names the problem when the key is the old one or does not open the new repository, and Settings shows the catalog's name. **1.1.3** lays out Sync as three numbered steps (which catalog, make a key for it, paste and connect). **1.1.4** uses one key for all devices, without an expiry date, and a "Share setup link" button: only the first device is set up by hand, the others open the link. **1.1.6** also takes a setup link pasted into step 3's key box, because an app on an iPhone's home screen keeps its data apart from Safari and cannot receive a tapped link.
+- **Version 1.2.0** (second tour fixes, 11 November 2026): straight spine photos, steadier magnifiers and a preview in the photo editor; new Library controls; covers that keep their own shape; a tighter grid caption; wishlist covers in search; an "i" beside unclear fields and a guide in Settings ("How the catalog is organized").
 
-All tests pass: 137 in the app (and 122 on the self-test page), 145 in the tools.
+All tests pass: 143 in the app (and 131 on the self-test page), 151 in the tools.
 
 ## Waiting on Jakob
 
@@ -60,10 +61,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
-0. **Second tour fixes** (notes from Jakob and his wife, 11 November 2026). Do these before scanning in earnest, since several change how books are entered.
-   - Fixes, one session: (a) photo editor: one magnifier for a cover, two for a spine; magnifiers must not jump sides when the finger crosses the middle, and must move clear of the thumb near the top; show a small preview of the straightened result after each drag. (b) Library grid: the gap between title, author and date is too large. (c) Search: wishlist results show no cover (`ui/library.js`, the wishlist rows). (d) The shelf-view button in the view switch is drawn wrong. (e) The Library's controls (Physical, Logos, All, Filter, sort, view) look like plain pills; redesign as a modern segmented control and buttons. (f) A cover photo wider than 2:3 (Liddell and Scott) shows a band of its main color above it on the grid and book page: the box is a fixed 2:3 and the color fills the gap. (g) One-line hints under unclear fields in the forms (series, set, volume, edition, translation first published, category, tags).
-   - Adding, next session: (h) after the review card, a short skippable step for the details now left to Edit: original language (quick buttons plus a box), translation first published when the book is a translation, category, tags. (i) Sets (Great Books 2nd ed., Everyman Gibbon, Luther's Works): carry set title, publisher, binding and location over to the next book and suggest the next volume label. (j) Shelf order: a way to move a book along its shelf after it is added.
-   - Answered in chat, no change: app-store apps stay out (PLAN "Never in the app"); Anna Karenina's Maude translation year goes in the edition's "Translation first published".
+0. **Second tour, part B: adding books** (Jakob's notes of 11 November 2026; part A, the looks and photo fixes, is done in 1.2.0). Do this before scanning in earnest, since it changes how books are entered. The design is settled in `handoffs/2026-11-11-second-tour.md`, "Session B": adding asks what only a person knows (original language with quick buttons, category, tags, translation details, acquired, markings), the laptop fills catalog facts, and a "Needs details" filter shows what is still empty (Jakob chose these two passes); "Adding a set" with the set's facts given once, then scanning or pasting the volumes held, each with its own shelf and photos; and moving a book along its shelf ("Arrange" in the shelf view). PLAN.md "Batch add" changes to match. App-store apps are closed (Jakob solved it).
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.

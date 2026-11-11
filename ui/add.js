@@ -19,13 +19,17 @@ import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
+import { helpHtml, toggleHelp } from './field-help.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
 const attr = value => escapeHtml(value ?? '');
 
-function fieldHtml(label, name, value, { missing = false, list = '', type = 'text' } = {}) {
-  return `<label class="field${missing ? ' is-missing' : ''}">${escapeHtml(label)}<input name="${name}" type="${type}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"${type === 'number' ? ' inputmode="decimal"' : ''}></label>`;
+// help: the field's name in FIELD_HELP (ui/field-help.js), for an "i" beside the label.
+function fieldHtml(label, name, value, { missing = false, list = '', type = 'text', help = false } = {}) {
+  const helpParts = help ? helpHtml(name) : { button: '', text: '' };
+  const labelHtml = help ? `<span class="field-label">${escapeHtml(label)}${helpParts.button}</span>` : escapeHtml(label);
+  return `<label class="field${missing ? ' is-missing' : ''}">${labelHtml}<input name="${name}" type="${type}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"${type === 'number' ? ' inputmode="decimal"' : ''}>${helpParts.text}</label>`;
 }
 
 // A big answer button: a main line and an optional smaller line under it.
@@ -268,6 +272,7 @@ export function render(container, state, actions) {
     stepArea.oninput = event => { if (event.target.name === 'dating') showDatingPreview(); };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
     stepArea.onclick = event => {
+      if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
       const button = event.target.closest('[data-action]');
       if (button) answer(button.dataset.action, button.dataset.value);
     };
@@ -410,9 +415,9 @@ export function render(container, state, actions) {
       <form class="form">
         <label class="field">Notes: why we own it, a gift, its condition<textarea name="notes" rows="3">${escapeHtml(extras.notes || '')}</textarea></label>
         <div class="field-row">${fieldHtml('Estimated value', 'value', extras.value, { type: 'number' })}${fieldHtml('Price paid', 'price', extras.price, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Series', 'series', extras.series)}${fieldHtml('Number', 'seriesNumber', extras.seriesNumber)}</div>
-        <div class="field-row">${fieldHtml('Set', 'set', extras.set)}${fieldHtml('Volume', 'volume', extras.volume)}</div>
-        ${translated ? fieldHtml('Translation first published (year)', 'translationFirstPublished', extras.translationFirstPublished, { type: 'number' }) : ''}
+        <div class="field-row">${fieldHtml('Series', 'series', extras.series, { help: true })}${fieldHtml('Number', 'seriesNumber', extras.seriesNumber)}</div>
+        <div class="field-row">${fieldHtml('Set', 'set', extras.set, { help: true })}${fieldHtml('Volume', 'volume', extras.volume)}</div>
+        ${translated ? fieldHtml('Translation first published (year)', 'translationFirstPublished', extras.translationFirstPublished, { type: 'number', help: true }) : ''}
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Save the book</button></div></form>`;
   }
 

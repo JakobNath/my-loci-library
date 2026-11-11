@@ -11,13 +11,17 @@ import { recordsFromForm, formFromWish } from '../core/entry.js';
 import { STATUSES, ROLES } from '../core/records.js';
 import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
+import { helpHtml, toggleHelp } from './field-help.js';
 
 const attr = value => escapeHtml(value ?? '');
 
-function fieldHtml(label, name, value, { type = 'text', list = '', wide = false, hint = '' } = {}) {
-  return `<label class="field"${wide ? ' style="grid-column:1/-1"' : ''}>${escapeHtml(label)}`
+// help: the field's name in FIELD_HELP (ui/field-help.js), for an "i" beside the label.
+function fieldHtml(label, name, value, { type = 'text', list = '', wide = false, hint = '', help = false } = {}) {
+  const helpParts = help ? helpHtml(name) : { button: '', text: '' };
+  const labelHtml = help ? `<span class="field-label">${escapeHtml(label)}${helpParts.button}</span>` : escapeHtml(label);
+  return `<label class="field"${wide ? ' style="grid-column:1/-1"' : ''}>${labelHtml}`
     + `<input name="${name}" type="${type}" value="${attr(value)}"${list ? ` list="${list}"` : ''}${type === 'number' ? ' inputmode="numeric"' : ''}>`
-    + (hint ? `<span class="preview">${escapeHtml(hint)}</span>` : '') + '</label>';
+    + (hint ? `<span class="preview">${escapeHtml(hint)}</span>` : '') + `${helpParts.text}</label>`;
 }
 
 function datalistsHtml(library, settings) {
@@ -90,19 +94,19 @@ export function render(container, state, actions) {
       </fieldset>
       <fieldset data-single${isAnthology ? ' hidden' : ''}><legend>The work</legend>
         ${datingsHtml}<button type="button" class="link" data-action="dating">Add another dating</button>
-        <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle)}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages' })}</div>
-        <div class="field-row">${fieldHtml('Category', 'category', work.category, { list: 'categories' })}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '))}</div>
+        <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}</div>
+        <div class="field-row">${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
       </fieldset>
       <fieldset><legend>Edition</legend>
         <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}${fieldHtml('Year', 'year', edition.year, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement)}${fieldHtml('Translation first published', 'translationFirstPublished', edition.translationFirstPublished, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series' })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
-        <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets' })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
-        <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Pages, as printed', 'pages', edition.pages)}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '))}</div>
+        <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}${fieldHtml('Translation first published', 'translationFirstPublished', edition.translationFirstPublished, { type: 'number', help: true })}</div>
+        <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series', help: true })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
+        <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets', help: true })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
+        <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
         <div class="field-row"><label class="field">Format<select name="medium"><option value="physical">Physical</option><option value="logos"${edition.medium === 'logos' ? ' selected' : ''}>Logos</option></select></label>${fieldHtml('Logos resource ID', 'logosId', edition.logosId)}</div>
       </fieldset>
       <fieldset><legend>Our copy</legend>
-        <div class="field-row">${fieldHtml('Binding', 'binding', copy.binding, { list: 'bindings' })}${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}</div>
+        <div class="field-row">${fieldHtml('Binding', 'binding', copy.binding, { list: 'bindings', help: true })}${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}</div>
         <div class="field-row">${locationHtml}</div>
         <div class="field-row">${fieldHtml('Price paid', 'price', copy.price, { type: 'number' })}${fieldHtml('Estimated value', 'value', copy.value, { type: 'number' })}
           <label class="field">Status<select name="status">${statusHtml}</select></label></div>
@@ -123,6 +127,7 @@ export function render(container, state, actions) {
     form.querySelector('[data-several]').hidden = !event.target.checked;
   };
   container.onclick = event => {
+    if (event.target.dataset.help) { toggleHelp(container, event.target); return; }
     const action = event.target.dataset.action;
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
     if (action === 'trash') moveToTrash(entry, state, actions);

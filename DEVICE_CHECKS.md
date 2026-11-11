@@ -70,3 +70,12 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Any device: type the new repository name but leave the key box empty, and tap "Connect and download". The app should say the key was made for the old catalog and ask for a new one, and change nothing. Settings' main page should start its sync line with "Catalog:" and the catalog's name.
 - [x] Phone (1.1.4 or later), once connected to the real catalog: Settings › Advanced › Sync › "Share setup link". The phone's share sheet should open; send the link to the other phone by text. On the other phone, open the link (in the browser the app is installed from). It should open Settings › Advanced, connect, and download the catalog; the address should end in `#/settings/advanced` with no key in it, and the Google Books key should be filled in.
 - [x] iPhone (1.1.6 or later), the app added to the home screen: an app on the home screen keeps its data apart from Safari, and a link tapped in a message opens in Safari. So in the message, press and hold the setup link and choose Copy (don't tap it). Open the app from the home screen, go to Settings › Advanced › Sync, paste the link into step 3's box ("The key, or a setup link") and tap "Connect and download". It should connect and download the catalog, and the Google Books key should be filled in.
+
+## Second tour fixes (1.2.0)
+
+- [ ] Phone: take a spine photo of a book held at a slight slant. Drag each long edge near its top and its foot to follow the spine; the top and bottom bars should stay where they are. Tap "Use photo": the spine should come out straight, with its lettering square.
+- [ ] Phone: line up a cover, dragging a top corner with the thumb. One magnifier should show, at the bottom of the photo, and stay there for the whole drag, even when the thumb crosses the middle.
+- [ ] Phone: line up a spine. Two magnifiers should show, away from the thumb, and not jump sides during a drag.
+- [ ] Phone: in the photo editor, hold a finger on the photo away from the outline. The straightened result should show while held and go away on letting go. Tap Preview: the same, until "Back to the outline" is tapped.
+- [ ] Phone: the Library's controls (Physical, Logos, All; Sort; Filter; the view switch) are easy to tap and read, in light and dark.
+- [ ] Phone: open Edit on a book and tap the "i" beside Series. One or two sentences should open under the field, without the keyboard appearing; tapping another "i" closes the first.

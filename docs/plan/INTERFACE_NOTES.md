@@ -44,3 +44,15 @@ Things Jakob has noticed while testing on his phones, kept for the interface rev
 - [ ] Shelf view: to be reviewed once several dozen real books are on a shelf (build step 13.0).
 - [x] Settings was crowded, and the trash would take too much room; most settings are of no interest to everyone (2026-11-11). Done (0.8.6): a short main page, with Trash, Rename and merge, and Advanced on pages of their own.
 - [x] The book page left wide empty space beside the small cover (2026-11-11). Done (0.8.6): title, author, dates, shelf and Edit sit beside the cover.
+
+## Second tour, Jakob and his wife (2026-11-11)
+
+- [x] Photo editor: the magnifiers jumped sides when dragging near the middle, a thumb covered them near the top, and a cover had two that looked different. Done (1.2.0): they stay put for a drag and sit away from the thumb; a cover has one.
+- [x] A way to see the result while lining up a photo. Done (1.2.0): hold the photo away from the outline, or tap Preview.
+- [x] Spine photos sometimes came out crooked. Done (1.2.0): a spine's edge moves only across itself; its ends can be tilted.
+- [x] Library grid: too much space between title and author. Done (1.2.0).
+- [x] Search: wishlist items had no cover. Done (1.2.0).
+- [x] The shelves button looked wrong, and the Library's buttons could look more modern than pills. Done (1.2.0): a segmented switch, Sort, a Filter button and an icon switch.
+- [x] A cover squarer than 2:3 (Liddell and Scott) showed a band of color above it. Done (1.2.0).
+- [x] Explain the fields (what is a series?) and how tags work, without crowding the screens. Done (1.2.0): an "i" beside unclear fields, and Settings › How the catalog is organized.
+- [ ] Adding should ask more of what only a person knows (original language and so on), rather than leaving it for Edit; sets of many volumes should be quick to add; books should be movable along a shelf; and what the laptop fills later should be clear. Planned for the next session: `handoffs/2026-11-11-second-tour.md`, "Session B".

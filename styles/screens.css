@@ -72,6 +72,8 @@ label.btn { position: relative; }
 .editor-canvas { touch-action: none; max-width: 100%; max-height: 100%; }
 .editor-loupes { position: absolute; top: var(--space-3); left: var(--space-3); display: flex; gap: var(--space-2); pointer-events: none; }
 .editor-loupes.is-right { left: auto; right: var(--space-3); }
+.editor-loupes.is-bottom { top: auto; bottom: var(--space-3); }
+.editor-hint { flex-basis: 100%; margin: 0; text-align: center; color: var(--scan-ink); opacity: 0.75; font: var(--fs-small)/1.3 var(--font-ui); }
 .editor-loupe { width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--pop); box-shadow: var(--shadow-cover); }
 
 /* Settings › Lists */
@@ -110,3 +112,32 @@ details.sync-connect > .page-meta { margin-bottom: var(--space-4); }
 button.menu-row { border: 0; border-top: 1px solid var(--line); background: none; text-align: start; cursor: pointer; width: 100%; }
 button.menu-row:first-child { border-top: 0; }
 .page-meta.is-missing { color: var(--warn-ink); }
+
+/* Forms, buttons and lists used only by screens loaded when first opened (moved from app.css to keep start-up small) */
+.btn-big { padding: 12px 24px; font-size: 17px; }
+.form { display: grid; gap: var(--space-4); }
+.form fieldset { border: 1px solid var(--card-line); border-radius: var(--radius-lg); background: var(--surface); padding: var(--space-4); margin: 0; display: grid; gap: var(--space-3); min-width: 0; }
+.form legend { font: var(--h2-weight) var(--fs-h2) var(--font-display); color: var(--accent-ink); padding: 0 var(--space-1); }
+.field textarea { min-height: 5em; resize: vertical; }
+.field input[type="checkbox"], .field input[type="radio"] { width: auto; }
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(9em, 1fr)); gap: var(--space-3); }
+.preview { margin: 0; font: var(--fs-small) var(--font-ui); color: var(--muted); }
+.preview strong { color: var(--accent-ink); }
+.preview.is-problem { color: var(--warn-ink); }
+.problems { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-ink); font: var(--fs-small) var(--font-ui); }
+.trash-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
+.trash-list li { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; }
+
+/* Field help: a small "i" beside a label opens one or two sentences under it (ui/field-help.js) */
+.field-label { display: inline-flex; align-items: center; gap: var(--space-2); }
+.field-row { align-items: start; }
+.help { position: relative; display: inline-flex; align-items: center; justify-content: center; flex: none; width: 22px; height: 22px; padding: 0; border: 1px solid var(--line);
+  border-radius: 50%; background: var(--surface); color: var(--accent-ink); font: italic 600 13px/1 var(--font-display); cursor: pointer; }
+.help[aria-expanded="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+/* A full-size touch target around the small circle */
+.help::after { content: ""; position: absolute; top: 50%; left: 50%; width: var(--tap); height: var(--tap); transform: translate(-50%, -50%); }
+.help-text { display: block; padding: var(--space-2) var(--space-3); border-left: 2px solid var(--pop); border-radius: 0 var(--radius) var(--radius) 0;
+  background: var(--surface-2); color: var(--ink-2); font: var(--fs-small)/1.45 var(--font-ui); }
+.guide p, .guide-points { margin: 0 0 var(--space-3); color: var(--ink-2); line-height: 1.55; }
+.guide-points { padding-left: 1.2em; }
+.guide-points li + li { margin-top: var(--space-2); }

@@ -11,6 +11,8 @@ const testFiles = [
   '../core/tests/lookup.tests.js',
   '../core/tests/book-data.tests.js',
   '../core/tests/exports.tests.js',
+  '../core/tests/outline.tests.js',
+  './covers.tests.js',
   './storage.tests.js',
   './speed.tests.js',
 ];

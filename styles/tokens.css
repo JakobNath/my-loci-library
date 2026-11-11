@@ -52,6 +52,8 @@
   --warn-bg: #f5ecdb; --warn-ink: #77581b; --warn-line: #e6d6b4;
   --fail-ink: #a3302a; /* failed self-tests and errors */
   --notes-bg: #fdfbf7; --chip-bg: #fdfbf7; --tabs-bg: #fdfbf7;
+  --seg-track: #ebe4d7; --seg-thumb: #fdfbf7; /* segmented switches: the track, and the chosen part raised on it */
+  --shadow-thumb: 0 1px 3px rgba(50, 40, 25, 0.16);
   --bar-bg: #2e4a3d; --bar-ink: #fdfbf7; --bar-line: transparent; --brand-ink: #fdfbf7;
   --search-bg: #fdfbf7; --search-line: transparent;
   --logo-pop: #dcb76f; --logo-bg: #2e4a3d;
@@ -83,6 +85,7 @@
     --warn-bg: #33291a; --warn-ink: #e3c27f; --warn-line: #514228;
     --fail-ink: #f08a7e;
     --notes-bg: #191d19; --chip-bg: #191d19; --tabs-bg: #151915;
+    --seg-track: #1b1f1b; --seg-thumb: #2f362f; --shadow-thumb: 0 1px 3px rgba(0, 0, 0, 0.45);
     --bar-bg: #1d3a2b; --bar-ink: #eef0ea; --bar-line: transparent; --brand-ink: #eef0ea;
     --search-bg: #16241b; --search-line: #2c4636;
     --logo-pop: #d4ad62; --logo-bg: #1d3a2b;
@@ -104,6 +107,7 @@
   --warn-bg: #33291a; --warn-ink: #e3c27f; --warn-line: #514228;
   --fail-ink: #f08a7e;
   --notes-bg: #191d19; --chip-bg: #191d19; --tabs-bg: #151915;
+  --seg-track: #1b1f1b; --seg-thumb: #2f362f; --shadow-thumb: 0 1px 3px rgba(0, 0, 0, 0.45);
   --bar-bg: #1d3a2b; --bar-ink: #eef0ea; --bar-line: transparent; --brand-ink: #eef0ea;
   --search-bg: #16241b; --search-line: #2c4636;
   --logo-pop: #d4ad62; --logo-bg: #1d3a2b;
