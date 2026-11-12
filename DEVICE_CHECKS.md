@@ -97,3 +97,11 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: add a collection no catalog lists (a Library of America or Everyman volume). "Is this the book?" should offer "Yes, and it holds several works"; tap it, type two or three works, one per line, then pick a language and a category once. On the book's page, tap "Edit the works": each work should already have that language and category.
 - [ ] Phone: on "Works in this book", type a date for one work and an original title for another, and fill "Same for all" with a tag. Save: the book page should show the dates, and every work the tag.
 - [ ] Phone: open Edit on a book holding one work, tick "This book holds several works", list two works and save. Settings › Trash should not show the old work as a book (it is a work, not a book), and searching its old title should find only the new works.
+
+## Format 3 and Wikidata (1.7.0)
+
+- [ ] Each phone, and the laptop's browser: reload to 1.7.0 (Settings shows the version at the bottom). Until a device is reloaded it may say the catalog is in a newer format and wait; that is expected, and it changes nothing.
+- [ ] Phone: add a Loeb Plato volume (9780674990401, Plato I). Under the contents, "Wikidata gives when 5 of these were written…" should appear within a few seconds; tap "Use these dates", and each line should end with its date. Save; on the book page each work shows its date.
+- [ ] Phone: scan a single work by a known author (a Penguin Classics novel). On "When was this work written?" the first suggestion should be Wikidata's date, labelled "(Wikidata)".
+- [ ] Phone: Settings › Advanced: turn "Original dates and titles from Wikidata" off; adding the same kind of book should then offer no Wikidata date. Turn it back on.
+- [ ] Phone, airplane mode on: adding a book still works, and the contents step says Wikidata could not be reached instead of waiting.
