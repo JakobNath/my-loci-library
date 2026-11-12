@@ -1,6 +1,6 @@
 // Known sets (phase 15, step 8): reading a set's list, finding a volume, and set gaps.
 
-import { parseKnownSet, findKnownVolume, contentsLinesOf, setGaps } from '../known-sets.js';
+import { parseKnownSet, findKnownVolume, contentsLinesOf, setGaps, wishesForGaps } from '../known-sets.js';
 import { parseContentsLines } from '../contents.js';
 import { equal, same, ok } from './check.js';
 
@@ -58,6 +58,21 @@ export const tests = [
     name: 'set gaps list the volumes held and missing, in the list\'s order',
     fn() {
       same(setGaps(parseKnownSet(SAMPLE), ['7']), { held: ['7'], missing: ['6'] });
+    },
+  },
+  {
+    name: 'a list says who checked it; without that line it counts as not checked',
+    fn() {
+      equal(parseKnownSet(SAMPLE).checked, '');
+      equal(parseKnownSet(SAMPLE.replace('isbn: 0852291639', 'isbn: 0852291639\nchecked: 2026-11-12 Jakob Nath')).checked, '2026-11-12 Jakob Nath');
+    },
+  },
+  {
+    name: 'missing volumes become wishlist items, one each, never twice',
+    fn() {
+      const set = parseKnownSet(SAMPLE);
+      const items = wishesForGaps(set, ['6', '7'], [{ title: 'Great Books of the Western World 7: Aristotle I', trashed: null }]);
+      same(items, [{ title: 'Great Books of the Western World 6: Plato', authors: 'Plato', publisher: 'Encyclopaedia Britannica', notes: '2nd ed., 1990' }]);
     },
   },
   {

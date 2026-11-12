@@ -2,8 +2,9 @@
 // one plain text file per set in sets/, read here. A volume of a known set,
 // scanned or typed, takes its works from the list, with authors, original
 // titles and languages, dates and translators, so nobody types them. The
-// lists are checked by a person before they are used, which is why their
-// dates may be saved without another tap (PLAN.md, "Original dates").
+// lists are checked by a person before they are used; a list says so with a
+// "checked:" line, and only then are its dates filled in without another tap
+// (PLAN.md, "Original dates"). Until then they are offered, like Wikidata's.
 //
 // The file format, described for people in DATA_FORMAT.md ("sets/"):
 //
@@ -14,6 +15,7 @@
 //   year: 1990
 //   edition: 2nd ed.
 //   isbn: 9780852291634           an ISBN printed on every volume (any number of lines)
+//   checked: 2026-11-12 Jakob Nath  who checked the list against its sources, and when
 //
 //   volume: 6 | Plato | isbn 9780852291634
 //   Plato — Euthyphro | Εὐθύφρων | Greek — c. 399–395 BC | trans. Benjamin Jowett | pp. 1–8
@@ -31,7 +33,7 @@ import { normalizeForSearch } from './search.js';
 // The parts of a line, separated by a bar with any spaces around it ("a | | b" has an empty middle part).
 const PARTS = /\s*\|\s*/;
 
-const HEADER_KEYS = { set: 'set', publisher: 'publisher', place: 'place', year: 'year', edition: 'editionStatement' };
+const HEADER_KEYS = { set: 'set', publisher: 'publisher', place: 'place', year: 'year', edition: 'editionStatement', checked: 'checked' };
 
 // "Author — Title", split on the first dash with spaces around it.
 function authorAndTitle(text) {
@@ -53,18 +55,18 @@ function workLine(line, number) {
 /**
  * Read a known set's file.
  * @param {string} text the file
- * @returns {{ set: string, publisher: string, place: string, year: string, editionStatement: string, isbns: string[],
+ * @returns {{ set: string, publisher: string, place: string, year: string, editionStatement: string, checked: string, isbns: string[],
  *   volumes: { label: string, title: string, isbns: string[], works: object[] }[], problems: string[] }}
  *   problems: lines that could not be read, in plain words (an empty list when the file is sound)
  */
 export function parseKnownSet(text) {
-  const result = { set: '', publisher: '', place: '', year: '', editionStatement: '', isbns: [], volumes: [], problems: [] };
+  const result = { set: '', publisher: '', place: '', year: '', editionStatement: '', checked: '', isbns: [], volumes: [], problems: [] };
   let volume = null;
   String(text || '').split(/\r?\n/).forEach((raw, i) => {
     const line = raw.trim();
     const number = i + 1;
     if (!line || line.startsWith('#')) return;
-    const header = line.match(/^(set|publisher|place|year|edition|isbn|volume):\s*(.*)$/i);
+    const header = line.match(/^(set|publisher|place|year|edition|checked|isbn|volume):\s*(.*)$/i);
     if (header) {
       const [, key, value] = header;
       if (key.toLowerCase() === 'volume') {
@@ -133,4 +135,25 @@ export function setGaps(set, heldLabels) {
   const held = new Set(heldLabels.map(labelKey));
   const labels = set.volumes.map(volume => volume.label);
   return { held: labels.filter(label => held.has(labelKey(label))), missing: labels.filter(label => !held.has(labelKey(label))) };
+}
+
+/**
+ * Wishlist items for a set's missing volumes ("Put the missing on the
+ * wishlist"), one per volume, leaving out any already on the wishlist.
+ * @param {ReturnType<parseKnownSet>} set
+ * @param {string[]} missing volume labels, from setGaps
+ * @param {object[]} wishes the wishlist items already there
+ * @returns {{ title: string, authors: string, publisher: string, notes: string }[]} values for wishFromForm (core/entry.js)
+ */
+export function wishesForGaps(set, missing, wishes) {
+  const have = new Set(wishes.filter(wish => !wish.trashed).map(wish => normalizeForSearch(wish.title)));
+  return set.volumes
+    .filter(volume => missing.includes(volume.label))
+    .map(volume => ({
+      title: `${set.set} ${volume.label}${volume.title ? `: ${volume.title}` : ''}`,
+      authors: [...new Set(volume.works.map(work => work.author).filter(Boolean))].slice(0, 4).join('; '),
+      publisher: set.publisher,
+      notes: [set.editionStatement, set.year].filter(Boolean).join(', '),
+    }))
+    .filter(item => !have.has(normalizeForSearch(item.title)));
 }
