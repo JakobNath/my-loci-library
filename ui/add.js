@@ -23,6 +23,7 @@ import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { lookUpWorks } from '../edges/lookup-wikidata.js';
 import { parseContentsLines } from '../core/contents.js';
+import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
@@ -665,7 +666,10 @@ export function render(container, state, actions) {
   // ---------- saving ----------
 
   function context() {
-    return { newId: actions.newId, now: actions.now(), today: actions.today(), authors: [...state.library.authorsById.values()], works: state.library.worksById };
+    // The works of our other volumes of the same known set, so a work spanning volumes (Gibbon) stays one work.
+    const set = book && book.knownVolume && normalizeForSearch(book.knownSet.set);
+    const setWorks = set ? state.library.entries.filter(entry => entry.edition.set && normalizeForSearch(entry.edition.set) === set).flatMap(entry => entry.works) : [];
+    return { newId: actions.newId, now: actions.now(), today: actions.today(), authors: [...state.library.authorsById.values()], works: state.library.worksById, setWorks };
   }
 
   const number = text => String(text || '').replace(/[^\d.]/g, '');

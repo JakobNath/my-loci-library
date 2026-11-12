@@ -309,10 +309,10 @@ publisher: Encyclopaedia Britannica
 place: Chicago
 year: 1990
 edition: 2nd ed.
-isbn: 9780852291634
+isbn: 9780852295311
 checked: 2026-11-12 Jakob Nath
 
-volume: 6 | Plato | isbn 9780852291634
+volume: 6 | Plato
 Plato — Euthyphro | Εὐθύφρων | Greek — c. 399–395 BC | trans. Benjamin Jowett | pp. 1–8
 Edgar Allan Poe — The Raven | | English — 1845 | piece
 ```
