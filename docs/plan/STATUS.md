@@ -51,7 +51,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 **The laptop admin page** (new, 12 November 2026)
 
-- [ ] Open it: double-click `admin.cmd` in the tools' `admin` folder. A window opens (leave it open) and the browser shows "My Loci Library · The laptop book". Read a chapter or two, and press "Check the sources" (it changes nothing). Choose its look (Open questions).
+- [ ] Open it: double-click `admin.cmd` in the tools' `admin` folder. A window opens (leave it open) and the browser shows "My Loci Library · The laptop book". Read a chapter or two, and press "Check the sources" (it changes nothing).
 - [ ] When a bookcase is ready to arrange: "Planning the shelves" on that page, with the shelves measured. Record the arrangement only once the books are moved.
 
 **Before the real Zotero run**
@@ -90,11 +90,11 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    12. [~] Known-set lists, one per session (Luther's Works 1–55 done, unchecked, 1.12.0; next: the Chicago Complete Greek Tragedies), for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
-3. Phase 16 (12 November 2026, the big run): built. The laptop admin page (`admin/` in the tools: the handbook read from the documents, and a button for each tool), the shelf planner and printed shelf lists on it, the colleague guide filled out, and an announcement drafted (`handoffs/2026-11-12-announcement-draft.md`, not posted). Left: Jakob's choice of the page's look (Open questions), the planner's first real use, and posting the announcement if he wants. Known-set lists (phase 15 step 12) continue one per session; see `handoffs/2026-11-12-big-run-progress.md`.
+3. Phase 16 (12 November 2026, the big run): built. The laptop admin page (`admin/` in the tools: the handbook read from the documents, and a button for each tool), the shelf planner and printed shelf lists on it, the colleague guide filled out, and an announcement drafted (`handoffs/2026-11-12-announcement-draft.md`, not posted). Left: the planner's first real use, and posting the announcement if he wants. Known-set lists (phase 15 step 12) continue one per session; see `handoffs/2026-11-12-big-run-progress.md`.
 
 ## Open questions for Jakob
 
-- **The admin page's look** (asked 12 November 2026, waiting): A "Reference book" (one column, serif, tools inside their chapter; recommended), B "Contents beside the text" (green bar, contents column), or C "Desk, then index" (tool tiles with their last run, then the handbook). Built as A meanwhile; the look lives in one stylesheet (`admin/page/admin.css` in the tools), so B or C is a small change.
+- **The admin page's look** (answered 12 November 2026): Jakob kept A, "Reference book" (one column, the app's book serif, tools inside their chapter).
 
 - **Settings › Value** by any level of a location: built (12 November 2026, "Totals by" on the Value page; `docs/decisions/screens.md`).
 - **Uncertain original dates** in Zotero: decided and built (12 November 2026): only an exact year goes to Zotero; "c. 397–400" is no longer cited as "orig. 397" (`docs/decisions/zotero-and-citations.md`).
