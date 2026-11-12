@@ -67,14 +67,19 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
-0a. **Anthologies and fuller book data** (Jakob, 11 November 2026, while adding the Everyman Montaigne; to be planned before scanning many collections). Handoff, with the decisions Jakob needs to make: `handoffs/2026-11-11-anthologies-and-book-data.md`. Found:
-   - Adding offers "Is this a collection?" only when a lookup lists contents. Otherwise the only way is Edit › "This book holds several works", which leaves the book's first work behind as an unused record. Fix: a plain "This book holds several works" choice in the add steps, and trash the unused work when a book is turned into a collection.
-   - The works inside a collection get only an author, title and date. Their original title, language, category and tags cannot be entered in the app, though PLAN.md ("Anthologies") says each is a full work. Fix: let each work in a collection have them.
-   - Jakob wants the Library of Congress, Open Library and Google Books to give as much as they can for every book added, without anyone needing to know what to do, and without waiting for the night. The phone cannot reach the Library of Congress (plain http, refuses calls from web pages). To weigh: running `loci-enrich` in GitHub Actions on the data repository after each sync, so results arrive within minutes. This needs a PLAN.md change, the Google Books key as a repository secret, and a trial of whether the Library of Congress answers GitHub's servers. The alternative is the laptop running it hourly. Either way, contents a source lists should be offered in the app for one-tap confirmation ("Contents found: 3 works. Use them?"), rather than only in the tool's report.
-   - Facts checked for Montaigne, *The Complete Works*, translated by Frame:
-     - The UK Everyman ISBN 9781857152593 is on Open Library (translator, introduction, 1376 pages) but not in the Library of Congress.
-     - The US Everyman ISBN 9781400040216 is in the Library of Congress as "The complete works : essays, travel journal, letters", "li, 1336 pages ; 21 cm", with no contents note.
-     - None of the three sources lists the essays one by one.
+0a. **Phase 15: anthologies and lasting sources** (planned with Jakob on 11 November 2026; PLAN.md, "Anthologies", "Original dates", "Book data", "Search"; decisions in `docs/decisions/book-data.md` and the others of that date; the full plan, live research answers and Jakob's 20 decisions in `handoffs/2026-11-12-sources-and-anthologies-phases.md`). Steps, ordered by risk; each is one session:
+   1. [x] Decisions into the documents: PLAN.md, the CLAUDE.md copies, decisions, `SOURCES.md`, the yearly check (11 November 2026).
+   2. [ ] Source groundwork: addresses and the app's identity in one place; backing off when refused; a laptop check that runs the recorded-answer tests against the live sources.
+   3. [ ] HathiTrust on the phone and the laptop: contents read by volume, set records, free-scan links (1.4.0).
+   4. [ ] The laptop's source files: raw answers and which source filled which field in `integrations/`; lookups by LCCN or OCLC number for books without an ISBN (tools only).
+   5. [ ] Collections made easy: "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book", unused works trashed (1.5.0).
+   6. [ ] Data format 3, on a branch: IDs, other titles, pieces, "cite", found contents (1.6.0, then the tools).
+   7. [ ] Wikidata: dates with one tap, original and other titles, IDs, "Possibly the same as", original-text marker (1.7.0).
+   8. [ ] Known sets: the lists' format, matching, set gaps, Logos matching, and the Great Books (1990) list (1.8.0).
+   9. [ ] Contents-page photos, the laptop page "Contents to enter", found contents offered on the book page (1.9.0).
+   10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.
+   11. [ ] Filling existing books from known lists (changes real records): a verified backup and a report first; undone with `git revert`.
+   12. [ ] Known-set lists, one per session, for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.

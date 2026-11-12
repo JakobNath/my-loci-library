@@ -24,7 +24,7 @@ My Loci Library is a lightweight, open-source catalog of our physical books and 
 - **The data outlives the app.** The catalog is plain text files we own, documented in `DATA_FORMAT.md`. The app is disposable and can be rebuilt from the spec.
 - **Lightweight above all.** Plain HTML, CSS and JavaScript with no frameworks, no build step and no npm packages. Any third-party code is copied into the repo, never loaded from the internet.
 - **Offline first.** Every device keeps a full copy. If sync or lookups stop working, search, adding, and exporting still work.
-- **External services are optional.** Open Library and Google Books only speed up entry. Manual entry always works.
+- **External services are optional.** Open Library, Google Books, HathiTrust and Wikidata only speed up entry and fill details; the Library of Congress is asked only by the laptop. Manual entry always works, and the catalog never depends on any of them staying open (`SOURCES.md`).
 - **Exports are the guarantee.** CSV, JSON, CSL-JSON, BibTeX, and a self-contained HTML catalog are always available.
 - **Extras live outside the app.** Logos import, Zotero sync, price estimating, and anything AI-related are separate laptop tools or done by hand. They never add weight to the main app.
 - **The phone app stays small and fast.** It reads, searches, adds and edits. Anything heavy (bulk cover processing, re-cropping from masters, the HTML catalog, building `catalog.json`) happens on the laptop, in a tool or in a separate laptop page the phone never loads. Speed is a main design goal: no lag, and search that feels instant.
@@ -82,6 +82,7 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 - Original language and original title (e.g., Latin, *Confessiones*), so search finds it under either title.
 - Original date: see the dates section.
 - Main category and topic tags.
+- From format version 3 (planned 11 November 2026): its Wikidata ID, when one is known, and other titles and standard abbreviations ("Ethica Nicomachea", "Eth. Nic."), all searched.
 
 **Edition**
 
@@ -117,6 +118,16 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 - The dates section explains how an anthology's date range is computed.
 - Each volume of a multi-volume set (Ante-Nicene Fathers 1–10) is its own edition, grouped by set title and volume label. A Bible is an anthology too, listing its 66 books (plus the Apocrypha when included), entered by pasting a book list kept with the documentation.
 
+*Decided with Jakob on 11 November 2026, after testing the sources against his own sets (Great Books, Loeb, Library of America, Everyman, Luther's Works):*
+
+- **Works, not chapters.** Every dialogue, play, treatise, story, poem, sermon and hymn in a book can be found, but chapters and excursuses are not recorded. Major works (dialogues, plays, treatises, stories, novels) are full works. Short pieces (poems, hymns, sermons, letters) are kept as a light list inside their book (title, author, date, pages, original title), so a Library of America volume with 120 pieces does not make 120 works to date and categorize; one tap makes a piece a full work when it is to be cited or linked to other editions. (Format version 3.)
+- **One work over several volumes.** When the author meant the volumes as one work (Schaff's *History of the Christian Church*, TDNT, Gerhard's *Loci theologici*, a commentary in two volumes), each volume is its own edition in a set, its own title is the edition's title, and its contents is the one work with the part as its extent ("vol. 3", "Loci 9–10"). The work's original date is a range over its parts (Schaff 1858–1910). This follows Chicago ("*volume title*, vol. 3 of *set*") and library cataloguing. When each volume is a separate work (the Concordia Commentary on Romans and on Isaiah) or a collection (Luther's Works), each volume holds its own works and the set only groups them.
+- **The same work in different books** is linked automatically only when a Wikidata ID or a checked known-set list proves it. Otherwise the app asks, with one tap ("Possibly the same as *Phaedo* in Loeb Plato I?"). Nothing is joined on a guess.
+- **Known sets.** For large sets whose contents no catalog lists (Library of America, Everyman's Library, Luther's Works) and for those it does (Great Books, Loeb), the app keeps checked contents lists, one plain text file per set, beside the Bible book list. Each names every volume of its set, and its works with author, original title and language, original date and pages when a source gives them. Adding a volume of a known set, by scanning it or by choosing the set and typing its volume numbers, fills its contents. A list is built once by research, every line checked against two sources, and a person checks the disagreements and a sample before it is used. When a new list is published, the laptop fills the matching books nobody has edited and reports what it did; a book whose contents a person already gave is offered the list with one tap. The lists are public, like the app, since titles and dates are facts.
+- **Contents no source knows.** Adding offers "Photograph the contents page" for a likely collection with no listed contents. The photo is kept with the book (an image of kind `contents`), and a laptop page, "Contents to enter", shows each one beside a box where the list is typed or pasted.
+- **Contents found later.** When the laptop's nightly check finds contents for a book entered as one work, the book's page offers them: "Contents found: 5 works. Review."
+- **Pages for each work** are kept when a source lists them, for citing a single piece.
+
 **Authors**
 
 One author record holds every name form (Augustine, Augustine of Hippo, Aurelius Augustinus), so searching any of them finds all his books. One form is marked preferred and sent to Zotero.
@@ -141,11 +152,13 @@ A wishlist item is a small standalone record, not linked to any existing work. I
 
 - Every record gets a random permanent ID that is never changed or reused. Each book also has its own address in the app, which Zotero items link to.
 - Every record carries a format version. An older copy of the app that meets newer data asks to be refreshed instead of changing anything.
-- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1. Version 2 adds each edition's catalogue numbers and subject headings (see "Book data").
+- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1. Version 2 adds each edition's catalogue numbers and subject headings (see "Book data"). Version 3 (planned 11 November 2026) adds a work's Wikidata ID and other titles, an edition's Open Library and HathiTrust IDs, short pieces inside a book, a "cite" mark on a work inside a book, and contents found by the laptop waiting to be confirmed. Outside identifiers stay fixed, named fields, the same in every file, rather than a free list.
 
 ## Original dates
 
 Original dates live on the work, are typed naturally, and are never auto-filled. Online sources usually give the date of a translation or edition, not when the work was written, so auto-filling would quietly add wrong dates.
+
+*Changed with Jakob on 11 November 2026:* a date is still always a person's choice, but the person can make it with one tap. Wikidata knows when most famous works were written or first published (tested: *Phaedo* c. 360 BC, *The Death of Ivan Ilyich* 1882–86, "The Raven" 1845, the Ninety-five Theses 1517). When adding a collection, the works' dates found there are shown filled in, marked "from Wikidata", and one tap ("Use these dates") accepts them all; each can be changed first. A date in a checked known-set list counts as set by a person, since a person checked the list. A disputed work (the *Didache*) keeps the datings a person gave it, and an existing dating is never replaced.
 
 **Typing a date**
 
@@ -247,13 +260,18 @@ Decided with Jakob on 10 November 2026, after testing all three sources against 
 | **Library of Congress** | The most exact cataloguing: pages as printed ("xxx, 1808 p."), height, translators and editors with their roles, edition, series and number, original title and language of a translation, contents of anthologies, subjects, call numbers | Laptop only: its service has no encrypted connection and refuses calls from web pages. Covers US-catalogued and academic books best; misses many others |
 | **Open Library** | The widest free coverage, covers, pages as printed (often copied from the Library of Congress), series, edition, binding ("Paperback"), sometimes height and a table of contents | Uneven: titles in the original language, duplicates, gaps |
 | **Google Books** | Newer books, better covers, thickness and height, a total page count | Needs a free key on each device (without one it is refused); gives no roles for translators or editors, and no pages as printed |
+| **HathiTrust** (added 11 November 2026) | University library records, often copied from the Library of Congress, reachable from a phone: contents of Loeb volumes and Great Books, original titles and languages, set records listing each volume's works; links to free full-view scans of older books | Holds only books university libraries have scanned, so it misses most new books; asked only by ISBN, LCCN or OCLC number, a few at a time |
+| **Wikidata** (added 11 November 2026) | When a work was written or first published, its original title, other titles, and a lasting ID that tells one work from another across editions | One query per book, never one per work (it refuses bursts); the author is always part of the query, since a title alone can match the wrong thing |
+
+**Where each runs** (decided 11 November 2026, after an outside review of the sources' future): the phone asks what helps while adding and allows calls from a web page (Open Library, Google Books, HathiTrust, Wikidata). Each identifies the app, backs off when refused, and never stops a book being entered by hand. The laptop does the rest: the Library of Congress, keeping each source's raw answer and which source filled which field (in the data repository's `integrations/` folder, not on the records), checking Wikidata IDs again from time to time (Wikidata merges items), looking up books without an ISBN by their LCCN or OCLC number, and anything in bulk. Each source's addresses, limits and terms are kept in `SOURCES.md` and checked once a year.
 
 **When they run**
 
 - **At scan time, on the phone:** Open Library's full edition record and, with a key, Google Books, both asked at the same moment as the lookups already made, so adding a book is no slower. They fill pages as printed, edition, series and number, place, height and thickness when given, and pre-select the binding when the record names one. When an anthology's contents are listed, the contents step offers them already filled in, to correct or accept; never for a Bible, whose books are cited by chapter and verse.
 - **Every night, on the laptop:** `loci-enrich` (which replaces `loci-sizes`) asks the Library of Congress, then Open Library and Google Books, for every book, and fills **empty fields only**: pages as printed, height, thickness, edition, series and number, place, translators and editors, original title and original language. It never changes a field a person has edited (it keeps what it last wrote, as the Logos importer does), never fills an original date, and only suggests the contents of anthologies. It writes a short report of what it filled, and commits once.
+- **At scan time, from 11 November 2026:** HathiTrust is asked at the same moment as the others, so a Loeb or Great Books volume's works are offered while adding. For a collection, one Wikidata query gives its works' original dates and titles, offered with one tap. The laptop also asks HathiTrust, and offers on the book's page any contents it finds that the phone did not.
 
-**When sources disagree:** for bibliographic facts the Library of Congress comes first, then Open Library, then Google Books; for thickness, height and covers, whichever source has them. A value is taken only from a record that lists the book's own ISBN.
+**When sources disagree:** for bibliographic facts the Library of Congress comes first, then HathiTrust, then Open Library, then Google Books; for thickness, height and covers, whichever source has them. A value is taken only from a record that lists the book's own ISBN.
 
 **Google Books key:** one free key, made once in Google Cloud by following the steps in the app (Settings › Advanced) and in the tools README, and pasted into each device and into the laptop's `config.json`. It stays on those devices and is never committed.
 
@@ -271,10 +289,13 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 - Filters by format (physical or Logos), location, category, tags, status, "needs original date" and "needs details".
 - **Saved views,** such as "Office shelves by original date" or "Greek texts by author".
 - Shelf lists come from views sorted by original date. They are read on screen, not printed.
+- **Set gaps** (added 11 November 2026): for a known set, which volumes we hold and which are missing ("Loeb Greek: missing 1, 3, 5"), with one tap to put the missing ones on the wishlist. Useful in a used bookstore.
+- **Original-text marker** (added 11 November 2026): a work's page shows which of our books hold its text in the original language, not only a translation ("Greek text: Loeb Plato I"). It is worked out from each edition's languages; nothing extra is stored.
 
 **Search** (works fully offline)
 
-- Searches title, subtitle, original title, author names (any form), contributors, series, ISBN, notes, tags, and the works inside anthologies.
+- Searches title, subtitle, original title, author names (any form), contributors, series, ISBN, notes, tags, and the works inside anthologies. From format version 3 it also searches a work's other titles and abbreviations.
+- Short pieces inside books (poems, hymns, sermons, letters) do not crowd the results: beneath them one folded line says "Also inside 2 books: *The Raven* — *Poetry and Tales*; …", opened with a tap. If phones cannot keep the speed targets with them, pieces are searched only on the laptop.
 - Accents are ignored and Greek is transliterated, so "logos" also finds λόγος.
 - Results group editions under their work ("*Confessions*: 3 editions"), expandable.
 - Owned and wishlist items appear together in search, clearly labeled. When browsing, they stay in separate tabs.
@@ -285,6 +306,8 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 - Comprehensive data: work, edition and copy fields; all datings; notes; value with its history; location.
 - Other editions of the same work, physical and Logos, listed together. An anthology lists its contents with each work's date, and any work lists the anthologies that contain it.
 - The "cite" toggle on Logos books, plus a "No longer in library" banner when relevant.
+- For an anthology, "Works in this book": one page to give every work its original title, language, date, category and tags, with "same for all" boxes for what they share; and "Cite this work" on each, which sends that piece to Zotero as a section.
+- A link to read a free full-view scan of the edition online, when HathiTrust has one (older public-domain books).
 
 **Batch add** (one screen for a whole stack or a single book; each book is reviewed as it is scanned, before the next scan)
 
@@ -301,6 +324,7 @@ Adding works in two passes (Jakob's decision, 11 November 2026). When adding, th
    - the cover and spine photos, the binding, and where it goes;
    - this copy: when it was acquired, price paid, estimated value, writing or markings, and notes.
    A work already in the library keeps its own language, category and tags, so those are not asked again. Missing title, author, publisher and year are pointed out (settings choose which).
+   For a collection (11 November 2026): "Is this the book?" also offers "Yes, and it holds several works", even when no source lists them; contents found by HathiTrust or a known set are offered filled in, with their dates from Wikidata or the list; the language, category and tags are asked once for all its works; and when no contents are known, "Photograph the contents page" is offered. Everyone gets the same steps; a step is left out only when a laptop source will surely fill it.
 5. A found cover is saved automatically. If none was found, or it is wrong, take or choose a photo and line it up in the editor. Cover downloads and syncing run in the background and never hold up the next scan.
 6. Next book, or finish.
 
@@ -367,7 +391,7 @@ All tools live in `my-loci-library-tools`, one independent folder each. They run
 2. Run the tool on that file. It matches rows by Logos resource ID and imports every resource type. It keeps every column Logos provides; columns without a matching field are stored on the record as extra Logos data.
 3. It adds new books. On later runs it never overwrites a field we have edited in Loci: it only updates Logos-supplied fields we haven't touched, and writes a report of what changed.
 4. An occasional full, unfiltered export lets it mark digital books that have disappeared from Logos as "no longer owned". Filtered exports never remove anything.
-5. It suggests links between digital editions and works we already have, for confirmation. Logos anthologies come in as single books, and their contents can be added later by hand.
+5. It suggests links between digital editions and works we already have, for confirmation. Logos anthologies come in as single books, and their contents can be added later by hand. From 11 November 2026, a Logos resource whose series or title matches a volume of a known set (Luther's Works 31, say) takes that volume's contents, as a scanned copy does.
 6. It fetches covers into the cover inbox, or generates a citation-style tile when none is found. The first import of about 4,000 covers is processed in batches over several sessions, with progress shown.
 
 The tool never reads Logos's internal database, which would break whenever Logos changes. BibTeX export is a fallback only, since Logos's BibTeX has been reported to break other tools.
@@ -377,6 +401,7 @@ The tool never reads Logos's internal database, which would break whenever Logos
 - Syncs one way, from Loci into a "My Loci Library" collection in Zotero.
 - Sends every physical book. Logos books go only when marked "cite", and wishlist items never go.
 - Creates one Zotero item per edition. Two copies of one edition become one item, and a Logos edition is its own item. Every work inside an anthology that is sent to Zotero also gets its own Zotero "book section" item linked to the anthology, so a single piece can be cited in Chicago form. Bibles are the exception (decided 2026-11-10): scripture is cited by book, chapter and verse, never as a section, so a Bible is sent as one book. This can mean a few thousand extra items, which Zotero handles fine.
+- *Changed with Jakob on 11 November 2026, not yet built:* a work inside a book is sent as a section only when "Cite this work" is tapped for it in Loci. With every story, poem and sermon now recorded, sending them all would add thousands of items with long citekey suffixes (Poe1984a … Poe1984dp), crowd Zotero's picker, and leave corrected mistakes behind as permanent "Loci: removed" items. Books are still always sent. This is to be built before the first real Zotero run.
 - Sets `original-date` so Chicago citations show the original date.
 - Attaches a link under each book that opens it in Loci, titled with the book's shelf location and refreshed every run. It never writes them into citation fields: Chicago prints URL and Loc. in Archive (decided 2026-11-10 after the first trial). Links use a fixed pattern containing only the record ID, so if the app's address ever changes, one run rewrites them all.
 - Keeps the current Better BibTeX citekey pattern, author + edition year (Adler1972). It pins every key so it never changes. Same-author, same-year books get Better BibTeX's usual suffixes (Augustine1997a, Augustine1997b), and pinning stops those from shifting when new books arrive.
@@ -394,6 +419,8 @@ Runs daily through Windows Task Scheduler (or cron on Linux). It handles the dai
 **loci-enrich** (formerly `loci-sizes`)
 
 Fills empty fields of every book from the Library of Congress, then Open Library and Google Books, found by ISBN (see "Book data"): pages as printed, height and thickness, edition, series, place, translators and editors, original title and language, and, from format version 2, catalogue numbers and subject headings. It never overwrites a field a person edited, never fills an original date, only suggests anthology contents, writes a short report of what it filled, and commits the changes to the data repo once. It runs daily after `loci-backup` and from a one-click shortcut on Windows and a matching command on Linux. If a source ever changes or disappears, nothing else depends on it: those fields simply stay as they are.
+
+From 11 November 2026 it also asks HathiTrust; keeps each source's raw answer and which source filled which field in the data repository (`integrations/`), so answers can be read again if a source changes; looks up books without an ISBN by LCCN or OCLC number; checks works' Wikidata IDs again from time to time; offers contents it finds on the book's page instead of only in its report; and applies a newly checked known-set list to matching books nobody has edited. A one-click shortcut runs it at any time, as well as nightly.
 
 **Price estimator** (later)
 
@@ -542,6 +569,10 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 - Lending, read/unread, and whose book it is (the format allows adding these).
 - Colleague setup polish and announcing the project.
 - Recompressing or enhancing covers on the laptop page, from masters.
+- Offline bulk matching from Open Library's monthly dumps and HathiTrust's HathiFiles, so a whole catalog can be matched without any live service. The files are several gigabytes and would need a careful streaming reader using only Node's own modules.
+- Language codes (`grc`, `la`) beside language names, mainly to tell Ancient from Modern Greek.
+- A table of contents below the level of works (chapters, excursuses). No free source lists them for most books.
+- A laptop admin page that gathers the tools' buttons in one place.
 
 **Never in the app**
 
@@ -570,6 +601,7 @@ The design prototypes come right after the foundations, so the look is chosen ea
 12. **Zotero companion.**
 13. **Release:** finish the docs, write the colleague setup guide, and tag version 1.0. The app and tools repos are public from phase 1, since GitHub Pages and open source both need that.
 14. **Better book data** (added 10 November 2026): the three sources together, fuller entries at scan time, `loci-enrich` on the laptop, an easy Google Books key, and data format version 2 with catalogue numbers and subjects. See "Book data".
-15. **Later:** price estimator and other deferred items.
+15. **Anthologies and lasting sources** (added 11 November 2026): the decisions above under "Anthologies", "Original dates", "Book data", "Search" and the Zotero companion, in small steps ordered by risk: the documents, the sources' groundwork, HathiTrust, the laptop's source files, easier collections, data format version 3, Wikidata, known sets, contents photos, Zotero sections on demand, filling existing books from known lists, and then one known-set list at a time. The steps are listed in `docs/plan/STATUS.md`.
+16. **Later:** price estimator and other deferred items.
 
 Sample books for phases 2 and 4: see `SAMPLE_BOOKS.md`.

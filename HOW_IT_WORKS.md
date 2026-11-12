@@ -18,7 +18,7 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 
 **The tests**: open `tests/index.html` on any device (it runs the core tests, the storage tests and the speed tests there), or run `node --test` in this folder (the same core tests, the sync tests against a stand-in for GitHub, and the architecture checks: each ring only reaches inward, each outside system is used by one edge, data put into a page is always escaped, the app stays within its size budget, and every file the app loads is kept for offline use).
 
-**The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-enrich` (fills empty book fields from the Library of Congress, Open Library and Google Books), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
+**The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-enrich` (fills empty book fields from the Library of Congress, Open Library and Google Books; the sources, their limits and terms are in `SOURCES.md`), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
 
 ## Looking after it
 
@@ -28,6 +28,7 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 2. Save the yearly archive (the tools README, "The yearly archive"), and open its `exports/catalog.html` to see that it reads.
 3. Check that sync works on each device (Settings › Advanced › Sync shows the catalog in use and a recent sync). All devices share one key without an expiry date; GitHub lists it under Settings › Developer settings.
 4. Look at `DEVICE_CHECKS.md` for anything left unchecked.
+5. Go through `SOURCES.md`: open each source's pages, compare their addresses, limits and terms with what is written there, run `loci-enrich` once and read its report for refused or failed sources, and update "Last checked". A source that has changed or closed only stops filling its fields; fix or remove its edge file, and say so in `SOURCES.md`.
 
 Anything red names the file to look at. Fix it in `core/` first if the rule lives there, run the tests again, raise `VERSION` in `sw.js` and `APP_VERSION` in `ui/settings.js`, and push.
 
