@@ -72,7 +72,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    1. [x] Decisions into the documents: PLAN.md, the CLAUDE.md copies, decisions, `SOURCES.md`, the yearly check (11 November 2026).
    2. [x] Source groundwork (tools only, 11 November 2026): every request names the tools, the addresses sit together in `loci-enrich/sources.mjs`, a refusing source rests for the rest of the run, and `check-sources` compares live answers with the recorded ones. The phone has nothing to change until it asks Wikidata (step 7), so there was no app release.
    3. [x] HathiTrust on the phone and the laptop: contents read by volume and set records (released as 1.4.0, 11 November 2026). The free-scan link moved to step 6, since it needs the HathiTrust ID that format 3 stores.
-   4. [ ] The laptop's source files: raw answers and which source filled which field in `integrations/`; lookups by LCCN or OCLC number for books without an ISBN (tools only).
+   4. [x] The laptop's source files (tools only, 11 November 2026): raw answers in `integrations/answers/`, the source of each value in `enrich.json`, and books without an ISBN asked by LCCN or OCLC number.
    5. [ ] Collections made easy: "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book", unused works trashed (1.5.0).
    6. [ ] Data format 3, on a branch: IDs, other titles, pieces, "cite", found contents (1.6.0, then the tools).
    7. [ ] Wikidata: dates with one tap, original and other titles, IDs, "Possibly the same as", original-text marker (1.7.0).

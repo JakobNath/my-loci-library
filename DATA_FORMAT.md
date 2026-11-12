@@ -60,6 +60,7 @@ my-loci-library-data/
   integrations/zotero-links.json   kept by the Zotero tool; the app never reads it
   integrations/logos-import.json   kept by the Logos importer; the app never reads it
   integrations/enrich.json         kept by loci-enrich; the app never reads it
+  integrations/answers/<id>.json.gz  each book's raw answers from the sources, kept by loci-enrich
 ```
 
 Each record's file name is its ID. Nothing else about a record is in its file name, so renaming a book never renames a file.
@@ -317,10 +318,18 @@ Kept by the Logos importer: for each Logos resource ID, the edition fields as th
 
 ## integrations/enrich.json
 
-Kept by the laptop tool `loci-enrich`: for each edition it asked about, the ISBN asked, the day, whether any source knew the book, and every value it wrote (`work.` before a field of the edition's work). A field it once wrote is never written again, so a value a person changed or cleared stays as they left it.
+Kept by the laptop tool `loci-enrich`: for each edition it asked about, what it asked by (the ISBN, or for a book without one `lccn:<number>` or `oclc:<number>`), the day, whether any source knew the book, every value it wrote (`work.` before a field of the edition's work), and which source gave each (`from`, added 11 November 2026; books asked before then lack it). A field it once wrote is never written again, so a value a person changed or cleared stays as they left it.
 
 ```json
-{ "format": 1, "books": { "chadw1ck1991": { "isbn": "9780199537822", "asked": "2026-11-10", "found": true, "wrote": { "height": 200, "work.originalLanguage": "Latin" } } } }
+{ "format": 1, "books": { "chadw1ck1991": { "isbn": "9780199537822", "asked": "2026-11-10", "found": true, "wrote": { "height": 200, "work.originalLanguage": "Latin" }, "from": { "height": "Library of Congress", "work.originalLanguage": "Library of Congress" } } } }
+```
+
+## integrations/answers/
+
+Kept by `loci-enrich` (added 11 November 2026): one file per edition asked, named by the edition's ID, holding the sources' answers exactly as they were sent, so they can be read again if a source changes its answers or closes. Each file is gzip-compressed JSON (any unzip tool opens it), written again only when an answer differs from the one kept. Google Books' answers are not kept. No person edits these files, and the app never reads them; if they are lost, nothing else is.
+
+```json
+{ "format": 1, "isbn": "9780199537822", "asked": "2026-11-11", "answers": { "HathiTrust": "{…}", "Library of Congress": "<?xml …", "Open Library": "{…}" } }
 ```
 
 ## backup-status.json
