@@ -132,6 +132,8 @@ details.sync-connect > .page-meta { margin-bottom: var(--space-4); }
 .share-box { width: 100%; margin-top: var(--space-2); font: var(--fs-small) var(--font-mono); }
 
 /* Value view, and menu rows that are buttons (exports) */
+.value-levels { margin: var(--space-4) 0 var(--space-2); }
+.value-levels + .chips { margin-bottom: var(--space-3); }
 .value-total { margin: 0 0 var(--space-2); font: var(--h1-weight) var(--fs-h1)/1.2 var(--font-display); color: var(--ink); }
 button.menu-row { border: 0; border-top: 1px solid var(--line); background: none; text-align: start; cursor: pointer; width: 100%; }
 button.menu-row:first-child { border-top: 0; }

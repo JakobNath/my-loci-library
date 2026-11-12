@@ -81,7 +81,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 ## Open questions for Jakob
 
-- **Settings › Value** (answered 12 November 2026): Jakob would like to sort and total by any level of a location: place, room, bookcase or shelf. To build.
+- **Settings › Value** by any level of a location: built (12 November 2026, "Totals by" on the Value page; `docs/decisions/screens.md`).
 - **Uncertain original dates** in Zotero: decided and built (12 November 2026): only an exact year goes to Zotero; "c. 397–400" is no longer cited as "orig. 397" (`docs/decisions/zotero-and-citations.md`).
 - **Anonymous pieces in Zotero**: Zotero's Chicago style puts the editor first for them; for now they are corrected by hand when citing. **Deferred by Jakob (12 November 2026).** When it comes up again, explain it at length, with pros and cons, and advise him as a classicist and theologian who writes for academic journals.
 - **A light for the barcode scanner**: Jakob would like it on iOS too (the app runs from the iPhone home screen). Research whether iOS Safari can turn on the torch from a web page; build it behind a feature check if it can, and say plainly if it cannot.
