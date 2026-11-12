@@ -46,6 +46,11 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 - [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.11.0, then try the checks from "Format 3 and Wikidata (1.7.0)" to "Same works and free scans (1.11.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
 - [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
+**The laptop admin page** (new, 12 November 2026)
+
+- [ ] Open it: double-click `admin.cmd` in the tools' `admin` folder. A window opens (leave it open) and the browser shows "My Loci Library · The laptop book". Read a chapter or two, and press "Check the sources" (it changes nothing). Choose its look (Open questions).
+- [ ] When a bookcase is ready to arrange: "Planning the shelves" on that page, with the shelves measured. Record the arrangement only once the books are moved.
+
 **Before the real Zotero run**
 
 - [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
@@ -82,7 +87,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    12. [ ] Known-set lists, one per session, for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
-3. Phase 16 (wanted, 12 November 2026): the laptop admin page with the project's documentation for a person, the shelf planner, printing shelf lists, colleague setup and announcing. See `handoffs/2026-11-12-big-run-plan.md`.
+3. Phase 16 (12 November 2026, the big run): built. The laptop admin page (`admin/` in the tools: the handbook read from the documents, and a button for each tool), the shelf planner and printed shelf lists on it, the colleague guide filled out, and an announcement drafted (`handoffs/2026-11-12-announcement-draft.md`, not posted). Left: Jakob's choice of the page's look (Open questions), the planner's first real use, and posting the announcement if he wants. Known-set lists (phase 15 step 12) continue one per session; see `handoffs/2026-11-12-big-run-progress.md`.
 
 ## Open questions for Jakob
 
