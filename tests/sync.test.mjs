@@ -113,18 +113,18 @@ test('an expired key, no connection, the GitHub rate limit and a newer data form
   }) });
   await assert.rejects(limited.check(), /asks the app to wait until/);
   await assert.rejects(offline.check(), /No connection/);
-  const future = { ...copy(9), format: 3 };
+  const future = { ...copy(9), format: 4 };
   github.commitFiles({ [recordPath(future)]: JSON.stringify(future, null, 2) + '\n' });
   const phone = device(github);
   await assert.rejects(phone.pull(), /newer data format/);
   assert.equal(phone.state.local.size, 0, 'nothing was written');
 });
 
-test('a catalog of version-1 files is read as version 2, and only edited records are sent in the new version', async () => {
+test('a catalog of version-1 files is read as the current version, and only edited records are sent in the new version', async () => {
   const github = fakeGitHub();
   // Two editions as the app's version 1 wrote them, before catalogue numbers and subjects existed.
   const asVersion1 = record => {
-    const { identifiers, subjects, ...rest } = record;
+    const { identifiers, subjects, foundContents, otherTitles, wikidata, ...rest } = record;
     return { ...rest, format: 1 };
   };
   const work = asVersion1(newRecord('work', ids(800), T0, { title: 'Confessions' }));
@@ -135,8 +135,8 @@ test('a catalog of version-1 files is read as version 2, and only edited records
   const phone = device(github);
   await phone.pull();
   assert.equal(github.calls.filter(call => call.includes('/git/blobs/')).length, 1, 'catalog.json still saves downloads: only the edition not in it is fetched');
-  for (const record of phone.state.local.values()) assert.equal(record.format, 2);
-  assert.deepEqual(phone.state.local.get(ids(1)).identifiers, { lccn: null, oclc: null, lcc: null, ddc: null });
+  for (const record of phone.state.local.values()) assert.equal(record.format, 3);
+  assert.deepEqual(phone.state.local.get(ids(1)).identifiers, { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null });
   // Two devices edit the same edition; both changes survive the merge.
   const laptop = device(github);
   await laptop.pull();
@@ -145,6 +145,6 @@ test('a catalog of version-1 files is read as version 2, and only edited records
   await phone.send();
   await laptop.send();
   const sent = JSON.parse(github.fileText(recordPath(editions[0])));
-  assert.deepEqual([sent.format, sent.subjects, sent.pages], [2, ['Christian saints'], 'xxviii, 311']);
+  assert.deepEqual([sent.format, sent.subjects, sent.pages], [3, ['Christian saints'], 'xxviii, 311']);
   assert.equal(JSON.parse(github.fileText(recordPath(editions[1]))).format, 1, 'a record nobody edited keeps its file as it was');
 });

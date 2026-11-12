@@ -29,6 +29,7 @@ function datingsHtml(work, style) {
 
 function contentsHtml(entry, style) {
   const pieces = entry.edition.contents.map((piece, i) => {
+    if (piece.piece) return `<li class="piece"><span class="piece-title">${escapeHtml(piece.piece.title)}</span><span class="piece-date">${escapeHtml(piece.piece.date || '')}</span><span class="piece-meta">${escapeHtml(piece.piece.author || '')}</span></li>`;
     const work = entry.works.find(w => w.id === piece.work);
     if (!work) return '';
     const dating = workingDating(work);

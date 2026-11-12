@@ -638,10 +638,10 @@ export function render(container, state, actions) {
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
     const measured = book.photos.spine && book.photos.spine.height;
-    const { lccn, oclc, lcc, ddc } = book.found.identifiers;
+    const { lccn, oclc, lcc, ddc, openLibrary, hathiTrust } = book.found.identifiers;
     return {
       ...edition, images,
-      identifiers: { lccn: lccn || null, oclc: oclc || null, lcc: lcc || null, ddc: ddc || null }, subjects: book.found.subjects,
+      identifiers: { lccn: lccn || null, oclc: oclc || null, lcc: lcc || null, ddc: ddc || null, openLibrary: openLibrary || null, hathiTrust: hathiTrust || null }, subjects: book.found.subjects,
       ...(height ? { height, heightSource: 'catalog' } : {}),
       ...(thickness ? { thickness, thicknessSource: 'catalog' } : {}),
       ...(measured ? { height: measured, heightSource: 'measured' } : {}),

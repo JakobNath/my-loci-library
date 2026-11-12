@@ -6,7 +6,7 @@
 // used is shown on each line. Open this page on a phone to check the phone.
 
 import { newRecord } from '../core/records.js';
-import { buildLibrary, withSearchText, viewEntries, searchEntries } from '../core/library.js';
+import { buildLibrary, withSearchText, viewEntries, searchEntries, searchPieces } from '../core/library.js';
 import { openStorage, deleteStorage } from '../edges/storage.js';
 import { recordsFromForm } from '../core/entry.js';
 import { SHARED_DEFAULTS } from '../core/settings.js';
@@ -108,6 +108,20 @@ export const tests = [
       const queries = ['g', 'gr', 'gra', 'grace', 'grace ps', 'logos', 'volume 9999', 'author 12'];
       const slowest = Math.max(...queries.map(query => time(() => searchEntries(library, query)).ms));
       return check(slowest, BUDGET.search, 'the slowest search');
+    },
+  },
+  {
+    name: 'searching 20,000 pieces inside books, per keystroke (10 ms laptop, 100 ms phone)',
+    fn() {
+      // 200 of the books each hold 100 short pieces (poems, hymns, sermons), as a large Library of America shelf might.
+      let n = 0;
+      const withPieces = catalog.map(record => (record.type !== 'edition' || n >= 200 ? record : {
+        ...record, contents: [...record.contents, ...Array.from({ length: 100 }, (_, i) => ({ work: null, piece: { title: `Poem ${++n * 1000 + i} of the evening`, author: 'A. Poet', originalTitle: null, date: '1845' }, extent: 'complete', translator: null, pages: null, cite: false }))],
+      }));
+      const pieced = buildLibrary(withPieces);
+      const queries = ['p', 'po', 'poem', 'poem 1', 'evening', 'raven'];
+      const slowest = Math.max(...queries.map(query => time(() => searchPieces(pieced, query)).ms));
+      return check(slowest, BUDGET.search, 'the slowest search of pieces');
     },
   },
   {
