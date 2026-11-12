@@ -221,7 +221,12 @@ export function render(container, state, actions) {
     book.knownSet = known ? known.set : null;
     book.knownVolume = null;
     if (known && known.volume && !setInfo) useKnownVolume(known.set, known.volume);
-    else if (known && !setInfo) Object.assign(book.found, { title: '', authors: [], contents: [], pages: '', subjects: [], contributors: [] });
+    // What the lookup says for a shared ISBN describes some other volume, or another printing: set aside, and the list's set facts used.
+    else if (known && !setInfo) {
+      const { title, subtitle, authors, contents, pages, subjects, contributors, year, publisher, place, editionStatement, series, seriesNumber, identifiers } = emptyFound('');
+      Object.assign(book.found, { title, subtitle, authors, contents, pages, subjects, contributors, year, publisher, place, editionStatement, series, seriesNumber, identifiers, cover: null });
+      book.otherCover = null;
+    }
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
     const current = book;
     Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (['date', 'language'].includes(book.step)) drawStep(); } });

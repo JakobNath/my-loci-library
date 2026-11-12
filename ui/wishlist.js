@@ -238,7 +238,7 @@ export function render(container, state, actions) {
       const wishes = wishesForGaps(gap.set, gap.missing, state.library.wishlist.map(wish => wish.item));
       const records = wishes.map(values => wishFromForm(values, null, { newId: actions.newId, now: actions.now() }).record);
       if (!records.length) { actions.showNote('Every missing volume is already on the wishlist.'); return; }
-      if (await actions.saveRecords(records)) actions.showNote(`Put ${records.length} missing volumes of ${gap.set.set} on the wishlist.`);
+      if (await actions.saveRecords(records)) actions.showNote(`Put ${records.length} missing ${records.length === 1 ? 'volume' : 'volumes'} of ${gap.set.set} on the wishlist.`);
       draw();
       return;
     }
