@@ -45,7 +45,7 @@ main { max-width: var(--page-max); margin: 0 auto; padding: var(--space-3) var(-
 .page-meta { margin: var(--space-1) 0 0; color: var(--muted); font: var(--fs-small) var(--font-ui); }
 .toolbar { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
 .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
-.chip { border: 1px solid var(--line); background: var(--chip-bg); color: var(--ink-2); padding: 5px 12px; border-radius: var(--radius-pill); font: var(--fs-small)/1.3 var(--font-ui); cursor: pointer; }
+.chip { border: 1px solid var(--line); background: var(--chip-bg); color: var(--ink-2); padding: 5px 12px; border-radius: var(--radius-pill); font: var(--fs-small)/1.3 var(--font-ui); cursor: pointer; min-height: 36px; }
 .chip.is-on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 /* The Library's controls: a segmented switch for which books, then sort, filter and the view switch. */
 .toolbar > .segmented { flex: 1 1 100%; }
@@ -68,9 +68,7 @@ main { max-width: var(--page-max); margin: 0 auto; padding: var(--space-3) var(-
 .count-badge { min-width: 20px; padding: 0 6px; border-radius: var(--radius-pill); background: var(--pop-soft); color: var(--pop-ink); font: 600 12px/20px var(--font-ui); text-align: center; }
 select, .field input, .field textarea, .field select { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 7px 10px; color: var(--ink); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: 9px 16px; border-radius: var(--radius-btn);
-  border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 var(--fs-base)/1.2 var(--font-ui); cursor: pointer; }
-.btn { min-height: var(--tap); }
-.chip { min-height: 36px; }
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 var(--fs-base)/1.2 var(--font-ui); cursor: pointer; min-height: var(--tap); }
 .link { border: 0; background: none; color: var(--accent-ink); cursor: pointer; padding: 0; font: var(--fs-small) var(--font-ui); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 .empty { color: var(--muted); font: var(--fs-small) var(--font-ui); padding: var(--space-5) 0; }

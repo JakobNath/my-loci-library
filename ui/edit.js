@@ -8,10 +8,11 @@ import { escapeHtml } from '../core/html.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
 import { contentsLine } from '../core/contents.js';
 import { recordsFromForm, formFromWish } from '../core/entry.js';
-import { STATUSES, ROLES } from '../core/records.js';
+import { STATUSES, ROLES, withField } from '../core/records.js';
 import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 import { helpHtml, toggleHelp } from './field-help.js';
+import { fillImages } from './images.js';
 
 const attr = value => escapeHtml(value ?? '');
 
@@ -86,6 +87,14 @@ export function render(container, state, actions) {
   const titleHtml = entry ? 'Edit book' : wish ? 'Add the book you bought' : 'Add a book';
   const historyRowsHtml = (copy.valueHistory || []).map(point => `<label class="check"><input type="checkbox" name="dropHistory" value="${attr(point.date)}"> Delete ${escapeHtml(`${point.date}: ${point.value}`)}</label>`).join('');
   const historyHtml = historyRowsHtml ? `<details class="small"><summary>Value history</summary>${historyRowsHtml}</details>` : '';
+  // A photo of the contents page, taken while adding, shown above the box it is typed into.
+  const contentsPhoto = (edition.images || []).find(image => image.kind === 'contents');
+  const contentsPhotoHtml = contentsPhoto ? `<img class="contents-photo" data-image="${attr(contentsPhoto.id)}/detail" alt="The contents page">` : '';
+  const photoHintHtml = contentsPhoto && !isAnthology ? '<p class="page-meta">A photo of the contents page is kept with this book. Tick "This book holds several works" to type them beside it.</p>' : '';
+  // Works a library catalog lists inside a book entered as one work (found by the laptop, DATA_FORMAT.md "foundContents").
+  const found = (edition.foundContents || []).map(piece => (piece.author ? `${piece.author} — ${piece.title}` : piece.title));
+  const foundHtml = entry && found.length ? `<div class="found-contents"><p>${escapeHtml(`A library catalog lists ${found.length} works inside this book: ${found.slice(0, 4).join('; ')}${found.length > 4 ? '; …' : ''}`)}</p>
+    <div class="actions"><button class="btn" type="button" data-action="use-found">Use these works</button><button class="btn" type="button" data-action="decline-found">Not these</button></div></div>` : '';
   const worksLinkHtml = isAnthology ? `<a class="link" href="#/edit/${attr(entry.id)}/works">Give each work its original title, language, date, category and tags</a>` : '';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   container.innerHTML = `${backHtml}
@@ -95,10 +104,11 @@ export function render(container, state, actions) {
       <fieldset><legend>Book</legend>
         ${fieldHtml('Title', 'title', edition.title, { wide: true })}
         ${fieldHtml('Subtitle', 'subtitle', edition.subtitle, { wide: true })}
-        <label class="check"><input type="checkbox" name="several"${isAnthology ? ' checked' : ''}> This book holds several works (an anthology)</label>
+        ${foundHtml}
+        <label class="check"><input type="checkbox" name="several"${isAnthology ? ' checked' : ''}> This book holds several works (an anthology)</label>${photoHintHtml}
         <div data-single${isAnthology ? ' hidden' : ''}>${fieldHtml('Authors (separate with ;)', 'authors', authorsText, { list: 'authors', wide: true })}</div>
         <label class="field" data-several${isAnthology ? '' : ' hidden'}>Contents: one work per line, as "Author — Title — date" (author and date optional). A table of contents can be pasted here.
-          <textarea name="contents" rows="8">${escapeHtml(contentsText)}</textarea></label>
+          ${contentsPhotoHtml}<textarea name="contents" rows="8">${escapeHtml(contentsText)}</textarea></label>
         ${worksLinkHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
@@ -129,6 +139,8 @@ export function render(container, state, actions) {
     </form>`;
 
   const form = container.querySelector('form');
+  fillImages(container, actions.imageUrl);
+  let foundAccepted = false;
   form.querySelectorAll('[name="datingText"]').forEach(showPreview);
   container.oninput = event => { if (event.target.name === 'datingText') showPreview(event.target); };
   container.onchange = event => {
@@ -142,6 +154,19 @@ export function render(container, state, actions) {
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
     if (action === 'trash') moveToTrash(entry, state, actions);
     if (action === 'contributor') event.target.insertAdjacentHTML('beforebegin', contributorRowHtml({ name: '', role: 'translator' }));
+    // The found works go into the contents box, to be checked and saved; declining forgets them.
+    if (action === 'use-found') {
+      const several = form.querySelector('[name="several"]');
+      several.checked = true;
+      several.dispatchEvent(new Event('change', { bubbles: true }));
+      // Added below any works already listed, leaving out titles already there.
+      const box = form.querySelector('[name="contents"]');
+      const have = box.value.trim();
+      box.value = [have, ...found.filter(line => !have.includes(line.split(' — ').pop()))].filter(Boolean).join('\n');
+      foundAccepted = true;
+      event.target.closest('.found-contents').innerHTML = '<p>Check the list in the contents box below, then Save.</p>';
+    }
+    if (action === 'decline-found') actions.saveEdition(entry.id, { foundContents: [] });
   };
   container.onsubmit = async event => {
     event.preventDefault();
@@ -158,6 +183,11 @@ export function render(container, state, actions) {
     }
     // A wishlist item just bought leaves the wishlist (to the trash, so nothing is lost),
     // and its cover becomes the new book's cover: the same picture files, under the same ID.
+    // Found works once used are no longer waiting.
+    if (foundAccepted) {
+      const edited = result.records.find(record => record.type === 'edition') || entry.edition;
+      result.records = [...result.records.filter(record => record !== edited), withField(edited, 'foundContents', [], actions.now())];
+    }
     if (wishRecord && wish) {
       result.records = result.records.map(record => (record.type === 'edition' ? { ...record, images: wishRecord.images } : record));
       result.records.push(trashRecord(wishRecord, actions.today(), actions.now()));

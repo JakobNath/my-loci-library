@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contents to enter · My Loci Library</title>
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../styles/tokens.css">
+<link rel="stylesheet" href="../styles/app.css">
+</head>
+<body>
+<main>
+  <div class="page-head"><h1 class="page-title">Contents to enter</h1>
+    <p class="page-meta">A laptop page, never loaded by phones. It lists the books whose contents page was photographed while adding, because no catalog listed the works inside.</p></div>
+  <section class="block">
+    <p>Open a book: its entry form shows the photo of the contents page above the contents box. Tick "This book holds several works", type or paste the works, one per line ("Author — Title — date", author and date optional), and save. The book then leaves this list.</p>
+    <p class="preview">Open this page in the same browser as the app on this laptop, after the app has synced.</p>
+    <p class="preview" id="status">Reading the catalog on this laptop…</p>
+  </section>
+  <div class="list" id="results"></div>
+</main>
+<script type="module">
+  // The laptop's "Contents to enter" page (PLAN.md, "Contents no source knows").
+  // It only lists; the typing happens in the app's own entry form, so there is
+  // one way to turn lines into works (core/entry.js).
+  import { openStorage } from '../edges/storage.js';
+  import { escapeHtml } from '../core/html.js';
+
+  const results = document.getElementById('results');
+  const status = document.getElementById('status');
+  const storage = await openStorage();
+  const records = (await storage.allRecords()).filter(record => !record.trashed);
+  // Waiting: a contents photo, and not yet more than one work.
+  const waiting = records.filter(record => record.type === 'edition'
+    && record.images.some(image => image.kind === 'contents') && record.contents.length < 2)
+    .sort((a, b) => a.title.localeCompare(b.title));
+  status.textContent = waiting.length ? `${waiting.length} ${waiting.length === 1 ? 'book' : 'books'} waiting.` : 'Nothing waiting: every photographed contents page has been entered.';
+  for (const edition of waiting) {
+    const photo = edition.images.find(image => image.kind === 'contents');
+    const thumb = await storage.image(`${photo.id}/thumb`);
+    const pictureHtml = thumb ? `<span class="cover cover-s has-image"><img src="${escapeHtml(URL.createObjectURL(thumb))}" alt=""></span>` : '<span></span>';
+    results.insertAdjacentHTML('beforeend', `<a class="row" href="../index.html#/edit/${escapeHtml(edition.id)}">${pictureHtml}`
+      + `<span class="row-main"><span class="row-title">${escapeHtml(edition.title)}</span>`
+      + `<span class="row-author">${escapeHtml([edition.publisher, edition.year].filter(Boolean).join(', ') || 'Open to enter its contents')}</span></span><span></span></a>`);
+  }
+</script>
+</body>
+</html>

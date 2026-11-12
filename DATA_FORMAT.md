@@ -222,7 +222,7 @@ Each entry:
 | Field | Type | Meaning |
 | --- | --- | --- |
 | `id` | text | The image's own ID. Its files are `images/thumb/<id>.jpg`, `images/detail/<id>.jpg` and, for our own photos, `images/master/<id>.jpg`. |
-| `kind` | text | `cover` or `spine`. Later kinds can be added without changing the format. |
+| `kind` | text | `cover`, `spine`, or `contents` (a photo of a contents page, taken while adding when no catalog lists the works; 1.10.0). Later kinds can be added without changing the format. |
 | `source` | text | `photo` (ours), `openlibrary`, `googlebooks`, `logos`, or `generated` (a citation-style tile). |
 | `color` | text or null | For a cover: its main color as `#rrggbb`, worked out once when it was saved. Used for the edge of a drawn spine. |
 | `ratio` | number or null | The image's width divided by its height. For a spine photo this gives the book's thickness from its height. |

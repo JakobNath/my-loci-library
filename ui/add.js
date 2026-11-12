@@ -474,10 +474,16 @@ export function render(container, state, actions) {
     const hint = book.contentsOffered
       ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
       : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC"). A table of contents can be pasted and tidied here.';
+    // With no contents known, a photo of the contents page is kept with the book, to be typed
+    // in later beside it, on the laptop's "Contents to enter" page (PLAN.md, "Contents no source knows").
+    const photo = book.photos.contents;
+    const photoHtml = book.contentsOffered ? ''
+      : photo ? `<p class="step-hint"><img class="step-cover" src="${attr(photo.preview)}" alt="The contents page"> ${escapeHtml('The photo of the contents page is kept with the book. Type the works now, or later on the laptop ("Contents to enter"), and leave the box empty to save the book for now.')}</p>`
+      : '<label class="choice-button"><span>Photograph the contents page</span><small>Kept with the book, so the works can be typed in later on the laptop</small><input type="file" accept="image/*" capture="environment" data-photo="contents" hidden></label>';
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>
       <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
-        <div class="choices">${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
+        <div class="choices">${photoHtml}${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
   }
 
@@ -661,6 +667,16 @@ export function render(container, state, actions) {
 
   async function takePhoto(kind, file) {
     if (!file) return;
+    // A contents page needs no lining up: it is kept as taken, large enough to read.
+    if (kind === 'contents') {
+      const box = stepArea.querySelector('[name="contents"]');
+      if (box) book.contentsText = box.value;
+      const { readPicture, imageFiles } = await import('../edges/photo.js');
+      const files = await imageFiles(await readPicture(file), { master: true, kind });
+      book.photos.contents = { ...files, preview: URL.createObjectURL(files.thumb) };
+      drawStep();
+      return;
+    }
     const { editPhoto } = await import('./photo-editor.js');
     const size = estimateSize({ ...book.found, images: [], height: null, thickness: null, series: null, set: null }, { binding: book.binding });
     const files = await editPhoto(file, kind, { heightHint: `~${Math.round(size.height.mm / 10)} cm · ${size.height.source}` });
@@ -798,6 +814,7 @@ export function render(container, state, actions) {
     else if (book.cover.state === 'found') add('cover', book.cover.source, book.cover.files, false);
     else if (book.cover.state === 'waiting') images.push({ id: actions.newId(), kind: 'cover', source: book.cover.source, color: null, ratio: null, master: false, waiting: book.cover.url });
     if (book.photos.spine) add('spine', 'photo', book.photos.spine, true);
+    if (book.photos.contents) add('contents', 'photo', book.photos.contents, true);
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
     const measured = book.photos.spine && book.photos.spine.height;

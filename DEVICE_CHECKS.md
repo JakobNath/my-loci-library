@@ -117,3 +117,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Jakob's phone (Android): Add › Scan a barcode. A "Light" button should appear under the camera; tap it: the phone's light comes on and the button is lit; tap again: it goes off. "Stop the camera" turns it off too.
 - [ ] His wife's iPhone, in the home-screen app (iOS 17.4 or later; Settings › General › About shows the version): the same. If no Light button appears, or it says "This camera has no light", note the iOS version: then this iPhone cannot do it from a web page, and the phone's own camera (with its flash) is still used for cover and spine photos.
 - [ ] Phone: Settings › Value › "Totals by": tap Place, Room, Bookcase and Shelf in turn; the list below should total by each. Download the CSV after choosing Bookcase: its totals at the end should be by bookcase.
+
+## Contents photos and found works (1.10.0)
+
+- [ ] Phone: add a book that holds several works but whose contents no catalog lists (an old anthology without a barcode, or a title typed in). At "Is this the book?" tap "Yes, and it holds several works". The next step should offer "Photograph the contents page": take the photo, and a small copy of it should appear with a note. Leave the box empty and finish adding.
+- [ ] Laptop, in Firefox with the app synced: open `https://jakobnath.github.io/my-loci-library/laptop/contents.html`. The book should be listed; open it: the entry form should show the photo of the contents page under "This book holds several works" once ticked. Type two lines, save: the book should leave the list.
+- [ ] After a laptop `loci-enrich` run that reports "works found inside": the book's page says "Still missing: works found inside"; Edit shows "A library catalog lists … works"; "Use these works" fills the contents box, and Save makes them works.

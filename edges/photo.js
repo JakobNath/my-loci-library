@@ -10,8 +10,8 @@
 // lettering to be read on a phone; a cover's detail image is sized for a
 // phone screen at full sharpness (interface review, 2026-11-10).
 export const IMAGE_SETTINGS = {
-  thumbHeight: { cover: 200, spine: 600 }, // grid thumbnail and shelf spine, kept on every device
-  detailHeight: { cover: 1000, spine: 1600 }, // book page, loaded when opened
+  thumbHeight: { cover: 200, spine: 600, contents: 200 }, // grid thumbnail and shelf spine, kept on every device
+  detailHeight: { cover: 1000, spine: 1600, contents: 1600 }, // book page (a contents page: the entry form), loaded when opened
   masterLongSide: 1600, // our own photos only, never sent to phones
   workingLongSide: 3000, // a camera photo is read at most this large before straightening
   quality: { thumb: 0.8, detail: 0.85, master: 0.9 },
@@ -169,7 +169,7 @@ const jpeg = (canvas, quality) => new Promise((resolve, reject) => {
  * The image files for one cover or spine. A detail image is never enlarged
  * beyond its source (Open Library covers are often only 500 px tall).
  * @param {HTMLCanvasElement} picture upright and cropped
- * @param {{ master?: boolean, kind?: 'cover'|'spine' }} [options] master: also keep the large copy (our own photos)
+ * @param {{ master?: boolean, kind?: 'cover'|'spine'|'contents' }} [options] master: also keep the large copy (our own photos)
  * @returns {Promise<{ thumb: Blob, detail: Blob, master: Blob|null, color: string, ratio: number }>}
  *   ratio: width ÷ height, which gives a spine's thickness from its height
  */

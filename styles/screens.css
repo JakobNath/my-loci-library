@@ -133,6 +133,8 @@ details.sync-connect > .page-meta { margin-bottom: var(--space-4); }
 .share-box { width: 100%; margin-top: var(--space-2); font: var(--fs-small) var(--font-mono); }
 
 /* Value view, and menu rows that are buttons (exports) */
+.contents-photo { display: block; width: 100%; max-width: 640px; margin: var(--space-2) 0; border-radius: var(--radius); }
+.found-contents { border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-3) var(--space-4); margin-bottom: var(--space-3); }
 .value-levels { margin: var(--space-4) 0 var(--space-2); }
 .value-levels + .chips { margin-bottom: var(--space-3); }
 .value-total { margin: 0 0 var(--space-2); font: var(--h1-weight) var(--fs-h1)/1.2 var(--font-display); color: var(--ink); }
