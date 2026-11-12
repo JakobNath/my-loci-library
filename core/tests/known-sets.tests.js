@@ -1,7 +1,8 @@
 // Known sets (phase 15, step 8): reading a set's list, finding a volume, and set gaps.
 
-import { parseKnownSet, findKnownVolume, contentsLinesOf, setGaps, wishesForGaps } from '../known-sets.js';
+import { parseKnownSet, findKnownVolume, contentsLinesOf, setGaps, wishesForGaps, recordsForKnownVolume } from '../known-sets.js';
 import { parseContentsLines } from '../contents.js';
+import { validateRecord } from '../validate.js';
 import { equal, same, ok } from './check.js';
 
 // A small list in the format of sets/*.txt (two volumes of a made-up printing).
@@ -65,6 +66,21 @@ export const tests = [
     fn() {
       equal(parseKnownSet(SAMPLE).checked, '');
       equal(parseKnownSet(SAMPLE.replace('isbn: 0852291639', 'isbn: 0852291639\nchecked: 2026-11-12 Jakob Nath')).checked, '2026-11-12 Jakob Nath');
+    },
+  },
+  {
+    name: 'a volume made without the entry form gets its works from the list, dated only when the list is checked',
+    fn() {
+      let counter = 0;
+      const context = { newId: () => `kv${String(++counter).padStart(10, '0')}`, now: '2026-11-12T12:00:00Z', authorIds: names => names.map(name => `a-${name}`) };
+      const aristotle = parseKnownSet(SAMPLE).volumes[1];
+      const unchecked = recordsForKnownVolume(parseKnownSet(SAMPLE), aristotle, context);
+      same(unchecked.works.map(work => [work.title, work.authors, work.originalTitle, work.originalLanguage, work.datings.length]), [['Categories', ['a-Aristotle'], 'Κατηγορίαι', 'Greek', 0]]);
+      same(unchecked.contents.map(entry => [entry.work, entry.piece && entry.piece.title, entry.translator]), [[unchecked.works[0].id, null, 'E. M. Edghill'], [null, 'The Raven', null]]);
+      const checked = parseKnownSet(SAMPLE.replace('edition: 2nd ed.', 'edition: 2nd ed.\nchecked: 2026-11-12 Jakob Nath'));
+      const dated = recordsForKnownVolume(checked, checked.volumes[1], context).works[0];
+      same([dated.datings[0].text, dated.datings[0].note], ['4th c. BC', 'from the Great Books of the Western World list']);
+      same(validateRecord(dated), []);
     },
   },
   {

@@ -26,6 +26,8 @@ import { parseContentsLines } from '../core/contents.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
+import { findKnownVolume, contentsLinesOf } from '../core/known-sets.js';
+import { loadKnownSets } from './known-sets.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
@@ -47,6 +49,9 @@ export function render(container, state, actions) {
   let setInfo = state.batchSet;
   const keepSet = set => { setInfo = set; actions.setBatchSet(set); };
   const added = [];
+  // The known sets' lists (ui/known-sets.js), read while the camera starts; a book scanned before they arrive is added without them.
+  let knownSets = [];
+  loadKnownSets().then(sets => { knownSets = sets; });
 
   // With a USB scanner (Settings › This device) the scanner types the ISBN into the box, and presses Enter.
   const usb = state.device.scanner === 'usb';
@@ -210,12 +215,51 @@ export function render(container, state, actions) {
       wikidata: new Map(), wikidataAsked: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
       fixing: !found.source, // not found online: the details are asked for at once
     };
+    // A volume of a known set takes its works from the list. One found by its own ISBN is used at once;
+    // an ISBN the whole set shares (Great Books) asks which volume first. While adding a set, the volume step decides.
+    const known = findKnownVolume(knownSets, { isbn: full.isbn, set: full.set, volume: full.volume });
+    book.knownSet = known ? known.set : null;
+    book.knownVolume = null;
+    if (known && known.volume && !setInfo) useKnownVolume(known.set, known.volume);
+    else if (known && !setInfo) Object.assign(book.found, { title: '', authors: [], contents: [], pages: '', subjects: [], contributors: [] });
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
     const current = book;
     Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (['date', 'language'].includes(book.step)) drawStep(); } });
     checkCover(current);
-    if (full.title && full.authors[0]) askWikidata(current, [full.title], full.authors[0]);
-    goTo('book');
+    if (!book.knownSet && full.title && full.authors[0]) askWikidata(current, [full.title], full.authors[0]);
+    goTo(steps()[0]);
+  }
+
+  // A volume of a known set: its title, authors and works come from the list
+  // (core/known-sets.js); a checked list's dates come with them.
+  function useKnownVolume(set, volume) {
+    const found = book.found;
+    book.knownSet = set;
+    book.knownVolume = volume;
+    Object.assign(found, {
+      set: set.set, volume: volume.label, title: volume.title || found.title,
+      authors: [...new Set(volume.works.map(work => work.author).filter(Boolean))],
+      contents: volume.works.map(work => ({ title: work.title, author: work.author })),
+      publisher: found.publisher || set.publisher, place: found.place || set.place, year: found.year || set.year,
+      editionStatement: found.editionStatement || set.editionStatement,
+      sources: [...new Set([...(found.sources || []), `the list of ${set.set}`])],
+    });
+    book.contentsOffered = true;
+    book.contents = null;
+    book.contentsText = set.checked ? contentsLinesOf(volume) : volume.works.map(work => [work.author, work.title].filter(Boolean).join(' — ')).join('\n');
+    const languages = [...new Set(volume.works.map(work => work.originalLanguage).filter(Boolean))];
+    if (languages.length === 1) book.language = languages[0];
+    const translators = [...new Set(volume.works.map(work => work.translator).filter(Boolean))];
+    if (translators.length === 1) Object.assign(book, { translator: translators[0], hasTranslator: true });
+    book.works = suggestWorks(found.title, found.authors, state.library);
+  }
+
+  // A volume chosen or typed: from a known set's list when it has one, otherwise as typed.
+  function chooseVolume(label) {
+    book.found.volume = label;
+    const known = label ? findKnownVolume(book.knownSet ? [book.knownSet] : knownSets, { set: book.found.set || (book.knownSet || {}).set, volume: label }) : null;
+    if (known && known.volume) useKnownVolume(known.set, known.volume);
+    else book.knownVolume = null;
   }
 
   // A found cover is downloaded and checked now, so the cover step can say
@@ -250,7 +294,10 @@ export function render(container, state, actions) {
     // A work already in the library keeps its own language, category and tags.
     const ownWork = single && !linked;
     const language = linked ? linked.originalLanguage : book.language;
+    // A volume of a known set that shares one ISBN is asked which volume first, so "Is this the book?" shows the right one.
+    const askVolumeFirst = book.knownSet && !book.knownVolume && !setInfo && !book.volumeSkipped;
     return [
+      askVolumeFirst ? 'volume' : null,
       'book',
       setInfo ? 'volume' : null,
       book.contentsOffered || book.severalChosen ? 'contents' : null,
@@ -301,7 +348,7 @@ export function render(container, state, actions) {
 
   function drawStep() {
     const draw = {
-      book: bookStep, volume: () => volumeStepHtml(book, setInfo), contents: contentsStep, work: workStep, date: dateStep,
+      book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), contents: contentsStep, work: workStep, date: dateStep,
       language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices()),
       translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
@@ -344,6 +391,16 @@ export function render(container, state, actions) {
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
 
+  // Which volume of a known set: its volumes as the list names them.
+  function knownVolumeStep() {
+    const set = book.knownSet;
+    const next = setInfo && setInfo.nextVolume ? ` Next after the last one added: ${setInfo.nextVolume}.` : '';
+    const choicesHtml = set.volumes.map(volume => choiceHtml('volume', volume.title ? `${volume.label} · ${volume.title}` : volume.label, '', volume.label)).join('');
+    return `<h2 class="step-title">${escapeHtml(`Which volume of ${set.set} is this?`)}</h2>
+      <p class="step-hint">${escapeHtml(`The number on the spine.${next} Its works are then taken from the list.`)}</p>
+      <div class="choices">${choicesHtml}${choiceHtml('volume-other', 'Not in the list', 'Type its details instead')}</div>${backHtml()}`;
+  }
+
   // Ask Wikidata about some works of this book, once for each list of titles; draw the step again when it answers.
   function askWikidata(current, titles, author) {
     const lookups = state.settings.lookups || {};
@@ -379,12 +436,30 @@ export function render(container, state, actions) {
       + `<button type="button" class="chip" data-action="wikidata-dates">Use these dates</button></div>`;
   }
 
+  // The dates of a list nobody has checked yet: offered with one tap, like Wikidata's (PLAN.md, "Original dates").
+  const listDateOf = title => ((book.knownVolume.works.find(work => work.title === title) || {}).date || '');
+  function listDatesHtml(text) {
+    const offered = parseContentsLines(text).filter(piece => !piece.date && listDateOf(piece.title));
+    if (!offered.length) return '';
+    const sample = offered.slice(0, 3).map(piece => `${piece.title} ${listDateOf(piece.title)}`).join('; ') + (offered.length > 3 ? '; …' : '');
+    return `<div class="field"><p class="step-hint">${escapeHtml(`The list, not yet checked by a person, gives when ${offered.length} of these were written: ${sample}.`)}</p>`
+      + '<button type="button" class="chip" data-action="list-dates">Use these dates</button></div>';
+  }
+
   // 2. A collection of works? When a record lists contents, or the person said so.
   function contentsStep() {
     const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
     const listed = listedWorks(lines);
-    askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
-    const datesHtml = wikidataDatesHtml(lines);
+    const set = book.knownVolume && book.knownSet;
+    // A known set's list gives the dates itself (filled in when checked, offered when not), so Wikidata is not asked.
+    if (!set) askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
+    const datesHtml = set ? listDatesHtml(lines) : wikidataDatesHtml(lines);
+    if (set) {
+      return `<h2 class="step-title">The works in this volume</h2>
+        <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator.`)}</p>
+        <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
+          <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
+    }
     const hint = book.contentsOffered
       ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
       : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC"). A table of contents can be pasted and tidied here.';
@@ -536,14 +611,20 @@ export function render(container, state, actions) {
       book.fixing = false;
       return next();
     }
-    if (action === 'volume') { book.found.volume = value; return next(); }
+    if (action === 'volume') { chooseVolume(value); return next(); }
+    if (action === 'volume-other') {
+      // Without the list: the person types the volume's details, as for a book not found online.
+      Object.assign(book, { volumeSkipped: true, knownVolume: null, fixing: !setInfo });
+      return next();
+    }
     if (action === 'single') { book.contents = null; return next(); }
-    if (action === 'wikidata-dates') {
-      // Each listed work without a date gets Wikidata's, as if typed; they can still be changed before going on.
+    if (action === 'wikidata-dates' || action === 'list-dates') {
+      // Each listed work without a date gets the offered one, as if typed; they can still be changed before going on.
+      const dateOf = action === 'list-dates' ? listDateOf : title => (book.wikidata.get(title) || {}).date || '';
       book.contentsText = (book.contentsText ?? '').split('\n').map(line => {
         const [piece] = parseContentsLines(line);
-        const work = piece && !piece.date && book.wikidata.get(piece.title);
-        return work && work.date ? `${line.trimEnd()} — ${work.date}` : line;
+        const date = piece && !piece.date && dateOf(piece.title);
+        return date ? `${line.trimEnd()} — ${date}` : line;
       }).join('\n');
       return drawStep();
     }
@@ -600,6 +681,7 @@ export function render(container, state, actions) {
       publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(book.translationYear),
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
+      knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, working: true }],

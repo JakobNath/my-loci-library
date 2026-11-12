@@ -148,6 +148,14 @@ test('the service worker keeps every file the app loads, so it opens offline', (
   assert.deepEqual(missing, [], 'add these to FILES in sw.js');
 });
 
+test('every known set\'s list is in sets/, named in ui/known-sets.js and kept by the service worker', () => {
+  const named = [...read('ui/known-sets.js').matchAll(/'(sets\/[\w.-]+\.txt)'/g)].map(match => match[1]);
+  const inFolder = existsSync(join(root, 'sets')) ? readdirSync(join(root, 'sets')).filter(name => name.endsWith('.txt')).map(name => `sets/${name}`) : [];
+  assert.deepEqual(named.sort(), inFolder.sort(), 'name each list in KNOWN_SET_FILES');
+  const sw = read('sw.js');
+  assert.deepEqual(named.filter(file => !sw.includes(`'${file}'`)), [], 'add these to FILES in sw.js');
+});
+
 test('the size check counts code, not comments, and follows imports', () => {
   assert.equal(codeSize('// a note\nconst a = 1; // why\n/* more */\n'), 'const a = 1; \n'.length);
   assert.equal(codeSize("const url = 'https://example.org';"), "const url = 'https://example.org';".length);

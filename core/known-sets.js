@@ -27,7 +27,8 @@
 // "piece" (a short work kept inside the book: a poem, hymn, sermon or letter).
 // Empty parts keep their separators.
 
-import { isbn13 } from './entry.js';
+import { isbn13, datingsFromRows } from './entry.js';
+import { newRecord } from './records.js';
 import { normalizeForSearch } from './search.js';
 
 // The parts of a line, separated by a bar with any spaces around it ("a | | b" has an empty middle part).
@@ -156,4 +157,31 @@ export function wishesForGaps(set, missing, wishes) {
       notes: [set.editionStatement, set.year].filter(Boolean).join(', '),
     }))
     .filter(item => !have.has(normalizeForSearch(item.title)));
+}
+
+/**
+ * The works and contents of a known set's volume, as records, for a book made
+ * without the entry form (a Logos resource of the set, on the laptop). Each
+ * work gets the list's original title and language, and, when the list is
+ * checked, its date; a piece stays inside the contents.
+ * @param {ReturnType<parseKnownSet>} set
+ * @param {object} volume one of set.volumes
+ * @param {{ newId: () => string, now: string, authorIds: (names: string[]) => string[] }} context
+ *   authorIds: the IDs of authors by name, making any not yet in the catalog
+ * @returns {{ works: object[], contents: object[] }}
+ */
+export function recordsForKnownVolume(set, volume, { newId, now, authorIds }) {
+  const works = [];
+  const contents = volume.works.map(item => {
+    const entry = { work: null, piece: null, extent: 'complete', translator: item.translator || null, pages: item.pages || null, cite: false };
+    if (item.piece) return { ...entry, piece: { title: item.title, author: item.author || null, originalTitle: item.originalTitle || null, date: item.date || null } };
+    const reading = set.checked && item.date ? datingsFromRows([{ text: item.date, working: true, note: `from the ${set.set} list` }]) : { datings: [] };
+    const work = newRecord('work', newId(), now, {
+      title: item.title, authors: authorIds(item.author ? item.author.split(/\s+and\s+/) : []),
+      originalTitle: item.originalTitle || null, originalLanguage: item.originalLanguage || null, datings: reading.datings,
+    });
+    works.push(work);
+    return { ...entry, work: work.id };
+  });
+  return { works, contents };
 }
