@@ -20,6 +20,23 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 
 **The laptop tools** (`my-loci-library-tools`, with its own README): `loci-backup` (daily backup, monthly snapshot of the exports and an HTML catalog, yearly archive), `loci-enrich` (fills empty book fields from the Library of Congress, Open Library and Google Books; the sources, their limits and terms are in `SOURCES.md`), `logos-to-my-loci-library` (Logos import) and `my-loci-library-to-zotero` (one-way sending to Zotero). They run on Node with nothing installed beyond it, and read the laptop's `config.json`.
 
+## What happens when you add a book
+
+The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js`) asks one question per screen. The steps, in order:
+
+1. **Find the book.** Scan the barcode, type the ISBN, or type a title. For an ISBN the phone asks Open Library and HathiTrust at the same moment, and Google Books too when a key is set or something is still missing. Open Library's facts come first; HathiTrust fills what Open Library lacks and gives the best list of the works inside a book; Google Books fills the rest. The same edition already in the catalog is noticed, and only another copy is added. A volume of a known set (`sets/`, such as Great Books) takes its title and works from the list; when the whole set shares one ISBN, the app asks "Which volume?" first.
+2. **Is this the book?** The found title, authors, publisher and cover, with "Fix details" for anything wrong. A book not found online is typed in from the title page.
+3. **Contents**, only when a source lists works inside the book or the person says it holds several works. Each line becomes a work; Wikidata may offer their original dates ("Use these dates").
+4. **Same work?**, only when the catalog already holds a work with this title, such as another translation of the *Confessions*.
+5. **Original date**, for a single work. Suggestions (from the lookup, Wikidata, or a checked known-set list) are offered, never saved without a tap.
+6. **Original language, category and tags**, once for the book (or once for all of a collection's works), unless the work is already held.
+7. **Translation**, only for a translated book: the original title and the translator.
+8. **Cover, spine, binding** (binding only when asked for in Settings), then **Place** (the shelf, with the last ones used offered) and **This copy** (acquired, price, value, markings, notes).
+
+**What is saved.** Nothing is written until the last step. Then the app saves four kinds of record together (`DATA_FORMAT.md`): the **work** or works (the text as written: original title, language, date), the **edition** (this printing: publisher, year, ISBN, contents, cover), the **copy** (the object on the shelf: place, binding, price) and any new **author**. They go to the device's own store at once and to GitHub at the next sync.
+
+**The rules behind it.** Original dates are set by a person, never saved from a lookup without a tap. Steps with nothing to ask are left out, so a simple book takes a few taps. Catalog facts the lookups miss (pages, series, size) are not asked: the laptop's `loci-enrich` fills them later, and "Needs details" shows what is still empty. A book can always be entered by hand when every lookup fails.
+
 ## Looking after it
 
 **The yearly ten-minute check.** Once a year (the app's yearly archive reminder is a good moment):

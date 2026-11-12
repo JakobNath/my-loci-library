@@ -26,50 +26,29 @@ All tests pass: 182 in the app (and 169 on the self-test page), 196 in the tools
 
 Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
-**Phase 14 on the phones**
+**Done** (one line each; the details are in git history)
 
-- [x] **Update each phone to 1.1.0.** Open the app; when "New version · Reload" appears at the bottom, tap it (or close and reopen the app). Settings shows the version at the bottom. A phone still on 1.0.5 will say the catalog is in a newer format and wait, without changing anything, until it is reloaded.
-- [x] **Put the Google Books key on each phone** (once it has 1.1.0; one key serves every device). On the laptop, copy the key from the tools' `config.json` and send it to yourself in a way you trust. On each phone: Settings › Advanced, paste it into **Google Books key** under "This device", then tap **Test the key**; it should say "The key works", and otherwise says what to change.
-- [x] **Try the phone checks** for phase 14 in `DEVICE_CHECKS.md` (scan *Mere Christianity* or another book with a table of contents; scan a Bible; test the key).
+- [x] Phase 14 on the phones: each phone on 1.1.0 or later, the Google Books key on each, phase 14's phone checks tried.
+- [x] The first tour of the app (10 November 2026): nothing to fix.
+- [x] Ready for the real catalog (11 November 2026): the two-device check, the daily backup (Task Scheduler, 12:30, into `My Drive › My Loci Library backup`), and his wife's iPhone set up by setup link.
 
 **1.3.0 on the phones**
 
-- [ ] Reload each phone to 1.3.0 (Settings shows the version at the bottom), then try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
+- [ ] Try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
 
 **1.8.0 on every device** (published 12 November 2026; includes 1.7.0)
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.8.0, then try "Format 3 and Wikidata (1.7.0)" and "Known sets (1.8.0)" in `DEVICE_CHECKS.md`.
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.8.0, then try "Format 3 and Wikidata (1.7.0)" and "Known sets (1.8.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
 - [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
-**1.7.0 on every device** (published 12 November 2026)
+**Before the real Zotero run**
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.7.0. A device still on 1.5.0 that meets a record edited on 1.7.0 says the catalog is in a newer format and waits, changing nothing, until it is reloaded.
-- [ ] On the laptop, the tools are already updated in the tools folder; nothing to do there unless they were copied elsewhere.
-- [ ] Try the checks under "Format 3 and Wikidata (1.7.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet.
-
-**1. Tour the app and note what needs work** (30 to 45 minutes, on the phone)
-
-- [x] Add 5 to 10 real books, including one with no cover online, an old book without a barcode, and a translation (to try the original-date suggestions). Photos open the phone's own camera: use its flash button if the light is poor.
-- [x] Open each book's page: the cover beside the title, tap the cover for the full-size view, tap the shelf link.
-- [x] Library: try Filter (by location, and "Needs an original date"), save a view, change the sort.
-- [x] Shelf view: open the shelf just filled.
-- [x] Wishlist: add a book by title, and one by pasting an Amazon link.
-- [x] Settings: is the main page simple enough for Jakob's wife? Look at Value, Export and Trash.
-- [x] Search (the bar at the top): an author, a word from the notes, a Greek word.
-- [x] Offline: airplane mode on, keep using it, then reconnect and watch the unsent badge clear.
-- [x] Send the notes, screen by screen, in any form; they are fixed in order of importance. (10 November 2026: nothing to fix for now.)
-
-**2. Get ready for the real catalog** (one sitting, after the tour fixes)
-
-- [x] Two-device check: edit one book's notes on the phone and another field on the laptop, both offline; reconnect both; the book should have both changes (`DEVICE_CHECKS.md`, Phase 7).
-- [x] Daily backup: install Google Drive for desktop, then set up and schedule `loci-backup` (the tools README, "Setting up on a laptop" and "Running it every day"). (Done 11 November 2026: Drive mirrors My Drive to `C:\Users\Jakob\My Drive`; the backup goes to `My Drive\My Loci Library backup`; the Task Scheduler task "My Loci Library backup" runs daily at 12:30 and catches up a missed day. First run by hand and by the scheduler both succeeded.)
-- [x] Jakob's wife: show her the app, and send her phone the setup link (Settings › Advanced › Sync › "Share setup link" on Jakob's phone, once it is on the real catalog). Her phone is an iPhone: add the app to the home screen first, then copy the link from the message (press and hold, Copy) and paste it into step 3 in the home-screen app (`DEVICE_CHECKS.md`, "Moving to the real catalog"). (Done 11 November 2026, on 1.1.6.)
 - [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
 
 **3. Start cataloging for real** (walked through together)
 
-- [x] (11 November 2026: all three devices are on the real catalog: Jakob's phone by hand, the laptop's Firefox and his wife's iPhone home-screen app by setup link. The real catalog holds only real books: 5 books and 2 wishlist items.) Switch each device to `my-loci-library-data` (the app's README, "Starting to catalog for real"): reload to 1.1.4; on Jakob's phone follow the three steps in Settings › Advanced › Sync (one key, no expiry), then "Share setup link" to the laptop browser and his wife's phone; the app asks, then empties the device of the test catalog. This is also the device check "Moving to the real catalog" in `DEVICE_CHECKS.md`. The books added during the tour stay in the test catalog and are scanned again into the real one.
-- [x] Point the laptop tools at the real catalog: change `dataRepo` in the tools' `config.json`. (Done 10 November 2026.)
+- [x] Every device on the real catalog (11 November 2026): Jakob's phone by hand, the laptop's Firefox and his wife's iPhone by setup link.
+- [x] The laptop tools point at the real catalog (`dataRepo` in `config.json`, 10 November 2026).
 - [ ] Import the whole Logos library: a full, unfiltered export, run with `--full`.
 - [ ] First real Zotero run: `loci-zotero.cmd` with no `--collection`. It sends into "My Loci Library" and, on that first run only, links books already in Zotero, keeping a copy of each before changing it.
 - [ ] Shelve and scan, one bookcase at a time. For the Book of Concord and similar collections, give each work its traditional author where there is one (Melanchthon for the Augsburg Confession and the Apology, Luther for the Smalcald Articles and the catechisms).
