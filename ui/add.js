@@ -144,7 +144,9 @@ export function render(container, state, actions) {
   async function lookUpIsbn(isbn) {
     if (scanner) scanner.pause();
     find.value = '';
-    const duplicates = editionsWithIsbn(isbn, state.library.entries);
+    // An ISBN a whole known set shares (Great Books) names no one edition: the volumes held are shown in "Which volume?" instead.
+    const sharedBySet = knownSets.some(set => set.isbns.includes(isbn));
+    const duplicates = sharedBySet ? [] : editionsWithIsbn(isbn, state.library.entries);
     if (duplicates.length) return askAboutDuplicate(duplicates[0]);
     // The work search is asked once, alongside: for date suggestions, and for authors the edition record lacks.
     const workSearch = searchWork(isbn);
@@ -401,7 +403,9 @@ export function render(container, state, actions) {
   function knownVolumeStep() {
     const set = book.knownSet;
     const next = setInfo && setInfo.nextVolume ? ` Next after the last one added: ${setInfo.nextVolume}.` : '';
-    const choicesHtml = set.volumes.map(volume => choiceHtml('volume', volume.title ? `${volume.label} · ${volume.title}` : volume.label, '', volume.label)).join('');
+    const held = new Set(state.library.entries.filter(entry => entry.edition.set && normalizeForSearch(entry.edition.set) === normalizeForSearch(set.set)).map(entry => normalizeForSearch(entry.edition.volume || '')));
+    const choicesHtml = set.volumes.map(volume => choiceHtml('volume', volume.title ? `${volume.label} · ${volume.title}` : volume.label,
+      held.has(normalizeForSearch(volume.label)) ? 'Already in the library: this adds another copy' : '', volume.label)).join('');
     return `<h2 class="step-title">${escapeHtml(`Which volume of ${set.set} is this?`)}</h2>
       <p class="step-hint">${escapeHtml(`The number on the spine.${next} Its works are then taken from the list.`)}</p>
       <div class="choices">${choicesHtml}${choiceHtml('volume-other', 'Not in the list', 'Type its details instead')}</div>${backHtml()}`;
