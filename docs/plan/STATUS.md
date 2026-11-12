@@ -67,6 +67,14 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
+0a. **Anthologies and fuller book data** (Jakob, 11 November 2026, while adding the Everyman Montaigne; to be planned before scanning many collections). Found:
+   - Adding offers "Is this a collection?" only when a lookup lists contents. Otherwise the only way is Edit › "This book holds several works", which leaves the book's first work behind as an unused record. Fix: a plain "This book holds several works" choice in the add steps, and trash the unused work when a book is turned into a collection.
+   - The works inside a collection get only an author, title and date. Their original title, language, category and tags cannot be entered in the app, though PLAN.md ("Anthologies") says each is a full work. Fix: let each work in a collection have them.
+   - Jakob wants the Library of Congress, Open Library and Google Books to give as much as they can for every book added, without anyone needing to know what to do, and without waiting for the night. The phone cannot reach the Library of Congress (plain http, refuses calls from web pages). To weigh: running `loci-enrich` in GitHub Actions on the data repository after each sync, so results arrive within minutes. This needs a PLAN.md change, the Google Books key as a repository secret, and a trial of whether the Library of Congress answers GitHub's servers. The alternative is the laptop running it hourly. Either way, contents a source lists should be offered in the app for one-tap confirmation ("Contents found: 3 works. Use them?"), rather than only in the tool's report.
+   - Facts checked for Montaigne, *The Complete Works*, translated by Frame:
+     - The UK Everyman ISBN 9781857152593 is on Open Library (translator, introduction, 1376 pages) but not in the Library of Congress.
+     - The US Everyman ISBN 9781400040216 is in the Library of Congress as "The complete works : essays, travel journal, letters", "li, 1336 pages ; 21 cm", with no contents note.
+     - None of the three sources lists the essays one by one.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
