@@ -129,3 +129,8 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: open a book that has other editions in the catalog: "Other editions and collections" should appear at the foot of the page, as before, a moment after the page opens.
 - [ ] Phone: add a second translation of a work already in the catalog that Wikidata knows (for example another *Phaedo*, if Plato I is held). "Same work?" should offer it, saying "Wikidata names both as one work".
 - [ ] Phone: for a book published in 1930 or earlier with a HathiTrust record (found while adding, or filled in on the laptop), "Read it free online" should appear on its page and open HathiTrust.
+
+## Luther's Works list (1.12.0)
+
+- [ ] Phone: scan a volume of Luther's Works with an ISBN on its back (say volume 31, Career of the Reformer I). "Is this the book?" should show the volume's title, and the works step its works from the list (ten for volume 31, beginning with the Disputation Against Scholastic Theology). Save, and check the book page.
+- [ ] Phone: scan a second Genesis volume (any of 1 to 8) after a first: "Lectures on Genesis" should stay one work, listed under both books.

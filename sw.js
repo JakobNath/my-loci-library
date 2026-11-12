@@ -6,7 +6,7 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v1.11.0';
+const VERSION = 'v1.12.0';
 const FILES = [
   './', 'index.html', 'main.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css', 'styles/screens.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
@@ -17,7 +17,7 @@ const FILES = [
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/book-more.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/save-file.js', 'ui/edit.js',
   'ui/add.js', 'ui/add-questions.js', 'ui/add-set.js', 'ui/works.js', 'ui/images.js', 'ui/photo-editor.js', 'ui/field-help.js', 'ui/known-sets.js',
   // The known sets' lists (ui/known-sets.js), read when adding and on the wishlist.
-  'sets/great-books-1990.txt',
+  'sets/great-books-1990.txt', 'sets/luthers-works.txt',
 ];
 
 self.addEventListener('install', event => {

@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.11.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.12.0).
 
 ## Where things stand
 
@@ -25,7 +25,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 - **Version 1.10.0** (phase 15, step 9, 12 November 2026): "Photograph the contents page" while adding a collection no catalog lists; the laptop page "Contents to enter" (`laptop/contents.html`), each book opening its entry form with the photo above the contents box; works `loci-enrich` finds inside a one-work book wait as "works found inside" (the book page's Still missing line), and the entry form offers "Use these works" or "Not these".
 - **Version 1.11.0** (phase 15 loose ends, 12 November 2026): "Possibly the same as…" (a held work with the same Wikidata item is offered, never joined without a tap); "Read it free online" at HathiTrust for books published in 1930 or earlier with a HathiTrust record; the book page's lower part loads a moment later (`ui/book-more.js`), freeing about 970 bytes of start-up budget. The laptop re-checks stored Wikidata IDs every 90 days, and a new Logos volume of a known set joins a work spanning volumes. Wikidata's new query address is still closed; check again in early December 2026 (`SOURCES.md`).
 
-All tests pass: 186 in the app (and 174 on the self-test page), 203 in the tools.
+- **Version 1.12.0** (phase 15, step 12, first list, 12 November 2026): the Luther's Works list (American Edition, volumes 1–55, 194 works, each volume's own ISBN), not yet checked by Jakob, so its dates are offered rather than filled in. The laptop tools gained the admin page, the shelf planner and printed shelf lists the same day.
+
+All tests pass: 186 in the app (and 174 on the self-test page), 217 in the tools.
 
 ## Waiting on Jakob
 
@@ -41,9 +43,10 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [ ] Try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
 
-**1.11.0 on every device** (published 12 November 2026; includes 1.7.0 to 1.10.0)
+**1.12.0 on every device** (published 12 November 2026; includes 1.7.0 to 1.11.0)
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.11.0, then try the checks from "Format 3 and Wikidata (1.7.0)" to "Same works and free scans (1.11.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.12.0, then try the checks from "Format 3 and Wikidata (1.7.0)" to "Luther's Works list (1.12.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
+- [ ] **Check the Luther's Works list** with the volumes at hand (`handoffs/2026-11-12-luthers-works-check.md`): which volumes you own (and the new series 56–82?), the disagreements, the thin spots, and ten lines. Then a working session adds its `checked:` line.
 - [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
 **The laptop admin page** (new, 12 November 2026)
@@ -84,7 +87,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    9. [x] Contents-page photos, the laptop page "Contents to enter", found works offered in the entry form (released as 1.10.0, 12 November 2026; 1.9.0 went to the big run's phases 2 to 4).
    10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.
    11. [ ] Filling existing books from known lists (changes real records): a verified backup and a report first; undone with `git revert`.
-   12. [ ] Known-set lists, one per session, for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
+   12. [~] Known-set lists, one per session (Luther's Works 1–55 done, unchecked, 1.12.0; next: the Chicago Complete Greek Tragedies), for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
 3. Phase 16 (12 November 2026, the big run): built. The laptop admin page (`admin/` in the tools: the handbook read from the documents, and a button for each tool), the shelf planner and printed shelf lists on it, the colleague guide filled out, and an announcement drafted (`handoffs/2026-11-12-announcement-draft.md`, not posted). Left: Jakob's choice of the page's look (Open questions), the planner's first real use, and posting the announcement if he wants. Known-set lists (phase 15 step 12) continue one per session; see `handoffs/2026-11-12-big-run-progress.md`.
