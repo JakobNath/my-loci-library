@@ -69,7 +69,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
 0a. **Phase 15: anthologies and lasting sources** (planned with Jakob on 11 November 2026; PLAN.md, "Anthologies", "Original dates", "Book data", "Search"; decisions in `docs/decisions/book-data.md` and the others of that date; the full plan, live research answers and Jakob's 20 decisions in `handoffs/2026-11-12-sources-and-anthologies-phases.md`). Steps, ordered by risk; each is one session:
    1. [x] Decisions into the documents: PLAN.md, the CLAUDE.md copies, decisions, `SOURCES.md`, the yearly check (11 November 2026).
-   2. [ ] Source groundwork: addresses and the app's identity in one place; backing off when refused; a laptop check that runs the recorded-answer tests against the live sources.
+   2. [x] Source groundwork (tools only, 11 November 2026): every request names the tools, the addresses sit together in `loci-enrich/sources.mjs`, a refusing source rests for the rest of the run, and `check-sources` compares live answers with the recorded ones. The phone has nothing to change until it asks Wikidata (step 7), so there was no app release.
    3. [ ] HathiTrust on the phone and the laptop: contents read by volume, set records, free-scan links (1.4.0).
    4. [ ] The laptop's source files: raw answers and which source filled which field in `integrations/`; lookups by LCCN or OCLC number for books without an ISBN (tools only).
    5. [ ] Collections made easy: "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book", unused works trashed (1.5.0).

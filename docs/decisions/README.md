@@ -12,5 +12,5 @@ They were kept in `HOW_IT_WORKS.md` under "Decisions" until 10 November 2026, th
 - [`sync.md`](sync.md): Sync with GitHub (9)
 - [`screens.md`](screens.md): Screens: adding books, Library, book page, Wishlist, Settings, Value (21)
 - [`book-data.md`](book-data.md): Book data: lookups, search and the sources (12)
-- [`laptop-tools.md`](laptop-tools.md): Laptop tools: backup and the Logos importer (6)
+- [`laptop-tools.md`](laptop-tools.md): Laptop tools: backup, the Logos importer and the sources (7)
 - [`zotero-and-citations.md`](zotero-and-citations.md): Zotero, citations and exports (14)
