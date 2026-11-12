@@ -9,7 +9,7 @@ Created by Jakob Nath.
 1. Make a free account at github.com if you do not have one.
 2. Click "+" (top right) › New repository. Name it `my-loci-library-data`. Choose **Private**. Tick "Add a README file". Click "Create repository".
 
-This repository is your catalog. Every book you add becomes a small text file in it, and GitHub keeps every earlier version, so nothing you do in the app can be lost for good.
+This repository is your catalog. Nothing else needs to go in it: the app adds its folders and files as you add books. Every book you add becomes a small text file in it, and GitHub keeps every earlier version, so nothing you do in the app can be lost for good.
 
 ## 2. One key
 
@@ -41,10 +41,26 @@ Your changes are saved on the device at once and sent to GitHub a few seconds la
 
 Settings › Advanced › The library holds the choices that describe your catalog (date style, currency, what adding asks for). They are saved in your repository, so every device you use shares them.
 
+## Optional: a Google Books key
+
+The app finds most books through Open Library and HathiTrust, which need no key. Google Books fills some gaps (a cover, a missing publisher) but refuses most requests without a free key of your own. Settings › Advanced › "Google Books key" has the steps (about two minutes, with any Google account) and a "Test the key" button. One key serves all your devices, and the setup link carries it to them. Without one the app works the same, with a few more fields left for you to type.
+
+## Logos
+
+If you use Logos, its library can be imported in one go on a laptop (the laptop tools below, "logos-to-my-loci-library"): export the library from Logos as a spreadsheet and run the import. Logos books appear beside the physical ones, marked as Logos, and are kept out of the insurance value.
+
+## New versions
+
+The app updates itself. When a new version is published, a line "New version · Reload" appears at the bottom; tap it, or close the app and open it again. Settings shows the version at the bottom. Your catalog is never changed by an update without the app saying so.
+
+## Leaving, or keeping a copy
+
+Your catalog is plain text that any program can read (the format is described in `DATA_FORMAT.md` in the app's repository). On GitHub, your repository's "Code" › "Download ZIP" gives you all of it; Settings › Export in the app saves a spreadsheet (CSV), a JSON file, or a bibliography (CSL-JSON or BibTeX) for Zotero and other reference managers.
+
 ## If the key stops working
 
 The app says so in plain words and keeps every change on the device. Make a new key (section 2), paste it in Settings › Advanced › Sync on one device, and send the setup link to the others.
 
 ## Optional: the laptop tools
 
-Backups to Google Drive, catalog heights for the shelf view, Logos import and sending books to Zotero are separate tools for a laptop with Node installed. They are at https://github.com/JakobNath/my-loci-library-tools, with instructions in their README. The app works fully without them; GitHub's history is already a backup of every change.
+Backups to Google Drive, filling in catalog details (pages, sizes, series), Logos import, sending books to Zotero, a shelf planner and printed shelf lists are separate tools for a laptop with Node installed (nothing else to install). They are at https://github.com/JakobNath/my-loci-library-tools, with instructions in their README; their admin page (`admin/admin.cmd` on Windows, `admin/admin.sh` on Linux) gathers them on one page with the whole handbook. The app works fully without them; GitHub's history is already a backup of every change.
