@@ -37,6 +37,15 @@ The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js`) 
 
 **The rules behind it.** Original dates are set by a person, never saved from a lookup without a tap. Steps with nothing to ask are left out, so a simple book takes a few taps. Catalog facts the lookups miss (pages, series, size) are not asked: the laptop's `loci-enrich` fills them later, and "Needs details" shows what is still empty. A book can always be entered by hand when every lookup fails.
 
+## Sync between devices
+
+Every device (each phone, and the browser on the laptop) keeps a whole copy of the catalog, so the app works with no connection. When it is online it sends what changed and fetches what other devices changed, through GitHub, into the private data repository. All of this lives in one file, `edges/sync-github.js`; nothing else in the app talks to GitHub.
+
+- **What travels.** One small JSON file per record. A batch of books saved together goes as one commit. A new device first downloads `catalog.json` (the whole catalog in one file, rebuilt each day by the laptop's backup) and then only the records changed since. Pictures follow in the background: the small grid pictures to every device, the larger ones when a book's page is opened.
+- **When two devices change the same book** while apart, the newest edit wins field by field: notes typed on one phone and a shelf changed on the other both survive. Git keeps every older version.
+- **The key.** One GitHub key, made once without an expiry date, opens the data repository for all our devices. The first device is set up by hand (Settings › Advanced › Sync); every other device opens a setup link sent from one already connected. The key lives only on the devices and in those links, never in a repository.
+- **"Unsent".** The badge at the top counts changes not yet sent. They stay on the device until a sync succeeds; nothing is lost while offline.
+
 ## Looking after it
 
 **The yearly ten-minute check.** Once a year (the app's yearly archive reminder is a good moment):

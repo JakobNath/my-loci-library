@@ -86,6 +86,8 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 ## Open questions for Jakob
 
+- **The admin page's look** (asked 12 November 2026, waiting): A "Reference book" (one column, serif, tools inside their chapter; recommended), B "Contents beside the text" (green bar, contents column), or C "Desk, then index" (tool tiles with their last run, then the handbook). Built as A meanwhile; the look lives in one stylesheet (`admin/page/admin.css` in the tools), so B or C is a small change.
+
 - **Settings › Value** by any level of a location: built (12 November 2026, "Totals by" on the Value page; `docs/decisions/screens.md`).
 - **Uncertain original dates** in Zotero: decided and built (12 November 2026): only an exact year goes to Zotero; "c. 397–400" is no longer cited as "orig. 397" (`docs/decisions/zotero-and-citations.md`).
 - **Anonymous pieces in Zotero**: Zotero's Chicago style puts the editor first for them; for now they are corrected by hand when citing. **Deferred by Jakob (12 November 2026).** When it comes up again, explain it at length, with pros and cons, and advise him as a classicist and theologian who writes for academic journals.
