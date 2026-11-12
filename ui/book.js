@@ -5,7 +5,7 @@
 import { escapeHtml } from '../core/html.js';
 import { formatYearRange, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
-import { missingDetails } from '../core/library.js';
+import { missingDetails, originalTextHolders } from '../core/library.js';
 import { coverHtml, dateLineHtml, badgesHtml, COVER_RATIO } from './pieces.js';
 import { iconHtml } from './icons.js';
 import { fillImages } from './images.js';
@@ -29,7 +29,8 @@ function datingsHtml(work, style) {
 
 function contentsHtml(entry, style) {
   const pieces = entry.edition.contents.map((piece, i) => {
-    if (piece.piece) return `<li class="piece"><span class="piece-title">${escapeHtml(piece.piece.title)}</span><span class="piece-date">${escapeHtml(piece.piece.date || '')}</span><span class="piece-meta">${escapeHtml(piece.piece.author || '')}</span></li>`;
+    // A piece (a poem, hymn or sermon kept inside the book) shows its title and date as given; its author is the book's.
+    if (piece.piece) return `<li class="piece"><span class="piece-title">${escapeHtml(piece.piece.title)}</span><span class="piece-date">${escapeHtml(piece.piece.date || '')}</span></li>`;
     const work = entry.works.find(w => w.id === piece.work);
     if (!work) return '';
     const dating = workingDating(work);
@@ -63,9 +64,13 @@ function relatedHtml(entry, library) {
   const workIds = new Set(entry.edition.contents.map(piece => piece.work));
   const others = library.entries.filter(other => other.id !== entry.id && other.edition.contents.some(piece => workIds.has(piece.work)));
   if (!others.length) return '';
+  // Beside other editions of one work: which of them print it in its original language ("Greek text: Plato I").
+  const work = entry.works.length === 1 && entry.works[0];
+  const held = work ? originalTextHolders(work, library).map(holder => holder.edition.title) : [];
+  const originalHtml = held.length ? `<p class="muted">${escapeHtml(`${work.originalLanguage} text: ${held.join('; ')}`)}</p>` : '';
   const linksHtml = others.map(other => `<a href="#/book/${escapeHtml(other.id)}">${escapeHtml(other.edition.title)}`
     + `${other.edition.subtitle ? ': ' + escapeHtml(other.edition.subtitle) : ''} <span class="muted">${escapeHtml([other.edition.publisher, other.edition.year].filter(Boolean).join(', '))}</span> ${badgesHtml(other)}</a>`).join('');
-  return `<section class="block related"><h2 class="block-title">Other editions and collections</h2>${linksHtml}</section>`;
+  return `<section class="block related"><h2 class="block-title">Other editions and collections</h2>${originalHtml}${linksHtml}</section>`;
 }
 
 /** Draw the book page for state.route.id. */

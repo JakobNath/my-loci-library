@@ -69,7 +69,6 @@ main { max-width: var(--page-max); margin: 0 auto; padding: var(--space-3) var(-
 select, .field input, .field textarea, .field select { border: 1px solid var(--line); background: var(--surface); border-radius: var(--radius); padding: 7px 10px; color: var(--ink); }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: 9px 16px; border-radius: var(--radius-btn);
   border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 var(--fs-base)/1.2 var(--font-ui); cursor: pointer; }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn { min-height: var(--tap); }
 .chip { min-height: 36px; }
 .link { border: 0; background: none; color: var(--accent-ink); cursor: pointer; padding: 0; font: var(--fs-small) var(--font-ui); }
