@@ -357,6 +357,10 @@ Kept by the laptop tool `loci-enrich`: for each edition it asked about, what it 
 { "format": 1, "books": { "chadw1ck1991": { "isbn": "9780199537822", "asked": "2026-11-10", "found": true, "wrote": { "height": 200, "work.originalLanguage": "Latin" }, "from": { "height": "Library of Congress", "work.originalLanguage": "Library of Congress" } } } }
 ```
 
+## integrations/shelves.txt
+
+Written by the shelf planner on the laptop's admin page when an arrangement is recorded: each shelf's inside width, one per line, as `Home › Office › Case 1 › Shelf 1 = 80` (centimeters), so the widths are offered again next time. Lines starting with `#` are notes. A person may edit it by hand.
+
 ## integrations/answers/
 
 Kept by `loci-enrich` (added 11 November 2026): one file per edition asked, named by the edition's ID, holding the sources' answers exactly as they were sent, so they can be read again if a source changes its answers or closes. Each file is gzip-compressed JSON (any unzip tool opens it), written again only when an answer differs from the one kept. Google Books' answers are not kept. No person edits these files, and the app never reads them; if they are lost, nothing else is.

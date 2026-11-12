@@ -288,7 +288,7 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 - Sort by any field: title, subtitle, author, original date, edition year, binding, series, category, location, value, date added, and more.
 - Filters by format (physical or Logos), location, category, tags, status, "needs original date" and "needs details".
 - **Saved views,** such as "Office shelves by original date" or "Greek texts by author".
-- Shelf lists come from views sorted by original date. They are read on screen, not printed.
+- Shelf lists come from views sorted by original date, read on screen; from 12 November 2026 they can also be printed from the laptop's admin page, shelf by shelf, in shelf order or by original date.
 - **Set gaps** (added 11 November 2026): for a known set, which volumes we hold and which are missing ("Loeb Greek: missing 1, 3, 5"), with one tap to put the missing ones on the wishlist. Useful in a used bookstore.
 - **Original-text marker** (added 11 November 2026): a work's page shows which of our books hold its text in the original language, not only a translation ("Greek text: Loeb Plato I"). It is worked out from each edition's languages; nothing extra is stored.
 
