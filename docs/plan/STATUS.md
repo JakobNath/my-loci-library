@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.7.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.8.0).
 
 ## Where things stand
 
@@ -18,7 +18,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 - **Version 1.5.0** (phase 15, step 5, 11 November 2026): "Yes, and it holds several works" when adding; a collection's language, category and tags asked once for all its works; "Works in this book" ("Edit the works" on the book page) gives each work its original title, language, date, category and tags; a work a book no longer lists goes to the trash unless another book holds it. Start-up code: 219 bytes free.
 - **Version 1.7.0** (phase 15, steps 6 and 7, 12 November 2026; there was no 1.6.0, as format 3 and Wikidata were published together): data format 3 (other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; version-2 files stay as stored until edited), the "Also inside" search line, and original dates, titles and IDs offered from Wikidata while adding, each date confirmed with one tap. The laptop tools were updated the same day, and now stop with "Update the tools first" on any record newer than they know (the backup still runs).
 
-All tests pass: 170 in the app (and 157 on the self-test page), 182 in the tools.
+- **Version 1.8.0** (phase 15, step 8, 12 November 2026): known sets. A volume of a known set takes its works from the list; a set that prints one ISBN on every volume (Great Books) asks "Which volume?" first and marks the volumes already held; a work printed across volumes (Gibbon, the Summa) stays one work; the Wishlist shows set gaps with "Put the missing on the wishlist"; new Logos volumes of a known set take its works. The first list is Great Books of the Western World (1990): 61 volumes, 358 works, not yet checked by Jakob, so its dates are offered with one tap rather than filled in.
+
+All tests pass: 182 in the app (and 169 on the self-test page), 196 in the tools.
 
 ## Waiting on Jakob
 
@@ -33,6 +35,11 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 **1.3.0 on the phones**
 
 - [ ] Reload each phone to 1.3.0 (Settings shows the version at the bottom), then try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
+
+**1.8.0 on every device** (published 12 November 2026; includes 1.7.0)
+
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.8.0, then try "Format 3 and Wikidata (1.7.0)" and "Known sets (1.8.0)" in `DEVICE_CHECKS.md`.
+- [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
 **1.7.0 on every device** (published 12 November 2026)
 
@@ -84,7 +91,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    5. [x] Collections made easy (released as 1.5.0, 11 November 2026): "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book" ("Edit the works" on the book page), unused works trashed.
    6. [x] Data format 3 (published in 1.7.0, 12 November 2026): other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; `migrate` from version 2; the "Also inside" search line (20,000 pieces searched in 6 ms); record checks moved to `core/validate.js`. The free-scan link (needs the stored HathiTrust ID) is still to do.
    7. [x] Wikidata (published in 1.7.0, 12 November 2026): one query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. Still to do: "Possibly the same as", the laptop's re-check of stored IDs. The original-text marker is built on the `known-sets` branch.
-   8. [~] Known sets: the lists' format, matching, set gaps, Logos matching, and the Great Books (1990) list (1.8.0). The core (list format, reading, finding a volume, set gaps) and the original-text marker are on the app's `known-sets` branch (built on what is now 1.7.0). Built and tried in the preview on the `known-sets` branches of the app and the tools (12 November 2026): "Which volume?" for a shared set ISBN, a listed volume's works when adding, set gaps on the Wishlist with "Put the missing on the wishlist", new Logos volumes of a known set, and a `checked:` line (a list's dates are only offered until a person checks it). `sets/great-books-1990.txt` is on the branch (61 volumes, 358 works; not yet checked, so its dates are only offered), and a work across volumes (Gibbon, the Summa) stays one work. **Waiting on Jakob** (`handoffs/2026-11-12-great-books-check.md`): first, which edition he owns. The ISBN noted overnight, 0-85229-163-9, is the 1952 first edition's (54 volumes, numbered differently); the list is for 1990 (0-85229-531-6). Then the disagreements and 10 random lines, and the `checked:` line. Then release 1.8.0: merge `known-sets` into the app's `main`, raise the version, then the tools. If he owns the 1952 edition, a 1952 list is needed before the Great Books part is useful; the rest of 1.8.0 can still be released. Filling books already in the catalog is step 11.
+   8. [x] Known sets (released as 1.8.0, 12 November 2026): the list format with a `checked:` line, "Which volume?", a listed volume's works when adding, one work across volumes, set gaps on the Wishlist, new Logos volumes, and the Great Books (1990) list. Jakob owns the 1990 edition; the list answers to both its ISBN (0-85229-531-6) and the 1952 one (0-85229-163-9), until the printed one is known (`docs/decisions/book-data.md`). Waiting on Jakob's check of the list (above). Filling books already in the catalog is step 11.
    9. [ ] Contents-page photos, the laptop page "Contents to enter", found contents offered on the book page (1.9.0).
    10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.
    11. [ ] Filling existing books from known lists (changes real records): a verified backup and a report first; undone with `git revert`.
