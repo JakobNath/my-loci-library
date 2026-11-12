@@ -43,6 +43,7 @@
 .find { display: flex; gap: var(--space-2); margin-bottom: var(--space-4); }
 .find input { flex: 1; min-width: 0; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--surface); color: var(--ink); }
 .camera { margin-bottom: var(--space-4); text-align: center; }
+.camera [aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .camera-view { position: relative; display: inline-block; width: 100%; max-width: 640px; }
 .camera-read { position: absolute; left: 0; right: 0; bottom: var(--space-3); margin: 0; opacity: 0; transition: opacity 0.2s;
   font: 600 var(--fs-base) var(--font-ui); color: var(--on-accent); }

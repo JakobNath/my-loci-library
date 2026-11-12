@@ -111,3 +111,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: scan a volume of Great Books of the Western World (the 1990 second edition, 60 volumes; its set ISBN is 0-85229-531-6). "Which volume of Great Books of the Western World is this?" should come first; tap the number on the spine. "Is this the book?" should then show that volume's title, and the next step its works from the list. Save, and check the book page lists the works.
 - [ ] Phone, airplane mode on: the same scan still offers the volumes (the list is kept on the phone), though nothing is found online.
 - [ ] Phone: Wishlist. With one or more Great Books volumes in the catalog, a line "Great Books of the Western World: … held · missing …" should appear above the list. Open it and tap "Put the missing on the wishlist"; each missing volume appears once. Tap it again: it should say they are already on the wishlist. (Remove the items afterwards if you don't want them.)
+
+## Scanner light and Value levels (1.9.0)
+
+- [ ] Jakob's phone (Android): Add › Scan a barcode. A "Light" button should appear under the camera; tap it: the phone's light comes on and the button is lit; tap again: it goes off. "Stop the camera" turns it off too.
+- [ ] His wife's iPhone, in the home-screen app (iOS 17.4 or later; Settings › General › About shows the version): the same. If no Light button appears, or it says "This camera has no light", note the iOS version: then this iPhone cannot do it from a web page, and the phone's own camera (with its flash) is still used for cover and spine photos.
+- [ ] Phone: Settings › Value › "Totals by": tap Place, Room, Bookcase and Shelf in turn; the list below should total by each. Download the CSV after choosing Bookcase: its totals at the end should be by bookcase.

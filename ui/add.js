@@ -63,7 +63,8 @@ export function render(container, state, actions) {
       <div class="page-head"><h1 class="page-title">Add books</h1>
         <p class="page-meta">Scan the barcode on the back, or type an ISBN or a title.</p></div>
       <div class="camera" hidden><div class="camera-view"><video aria-label="Camera"></video><p class="camera-read" aria-live="polite"></p></div>
-        <p class="preview" data-camera-status></p></div>
+        <p class="preview" data-camera-status></p>
+        <button class="btn" type="button" data-action="light" aria-pressed="false" hidden>Light</button></div>
       <div class="scan-actions"${usb ? ' hidden' : ''}><button class="btn btn-primary btn-big" type="button" data-action="camera">Scan a barcode</button></div>
       <form class="find" autocomplete="off"><input id="find" type="search" placeholder="ISBN or title" enterkeyhint="search">
         <button class="btn" type="submit">Look up</button></form>
@@ -846,7 +847,8 @@ export function render(container, state, actions) {
   container.querySelector('[data-action="camera"]').onclick = async event => {
     const box = container.querySelector('.camera');
     const status = box.querySelector('[data-camera-status]');
-    if (scanner) { scanner.stop(); scanner = null; box.hidden = true; event.target.textContent = 'Scan a barcode'; return; }
+    const light = box.querySelector('[data-action="light"]');
+    if (scanner) { scanner.stop(); scanner = null; box.hidden = true; light.hidden = true; light.setAttribute('aria-pressed', 'false'); event.target.textContent = 'Scan a barcode'; return; }
     box.hidden = false;
     event.target.textContent = 'Stop the camera';
     status.textContent = 'Starting the camera…';
@@ -854,6 +856,18 @@ export function render(container, state, actions) {
       const { startScanner } = await import('../edges/camera.js');
       scanner = await startScanner(box.querySelector('video'), isbn => { showRead(box, isbn); setTimeout(() => lookUpIsbn(isbn), 500); }, { sound: state.device.scanSound !== false });
       status.textContent = 'Hold the barcode inside the frame.';
+      // The Light button, only where the camera has a light (edges/camera.js).
+      light.hidden = !scanner.hasLight;
+      light.onclick = async () => {
+        const on = light.getAttribute('aria-pressed') !== 'true';
+        try {
+          await scanner.setLight(on);
+          light.setAttribute('aria-pressed', String(on));
+        } catch {
+          light.hidden = true;
+          status.textContent = 'This camera has no light. Hold the book near a lamp.';
+        }
+      };
     } catch (error) {
       status.textContent = error.message;
       event.target.textContent = 'Scan a barcode';

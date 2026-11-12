@@ -83,7 +83,7 @@ function cameraError(error) {
  * @param {HTMLVideoElement} video
  * @param {(isbn: string) => void} onIsbn called with each new book ISBN read
  * @param {{ sound?: boolean }} [options] sound: a short beep on each read (a device setting)
- * @returns {Promise<{ decoderName: string, pause: () => void, resume: () => void, stop: () => void }>}
+ * @returns {Promise<{ decoderName: string, hasLight: boolean, setLight: (on: boolean) => Promise<void>, pause: () => void, resume: () => void, stop: () => void }>}
  */
 export async function startScanner(video, onIsbn, { sound = true } = {}) {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -107,6 +107,15 @@ export async function startScanner(video, onIsbn, { sound = true } = {}) {
   if (track.getCapabilities && (track.getCapabilities().focusMode || []).includes('continuous')) {
     track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(() => {});
   }
+  // The camera's light, for dim rooms: Chrome on Android, and Safari on iPhones
+  // since iOS 17.4 (WebKit added the "torch" setting in October 2023;
+  // docs/decisions/photos-and-scanning.md). Feature check: "torch" is not
+  // Baseline, so the Light button shows only where the camera or the browser
+  // says it has one; elsewhere nothing changes. A browser that knows "torch"
+  // but whose camera has none (a laptop) shows the button, and setLight then fails.
+  const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+  const supported = navigator.mediaDevices.getSupportedConstraints ? navigator.mediaDevices.getSupportedConstraints() : {};
+  const hasLight = Boolean(capabilities.torch || supported.torch);
   video.srcObject = stream;
   video.setAttribute('playsinline', '');
   video.muted = true;
@@ -143,6 +152,9 @@ export async function startScanner(video, onIsbn, { sound = true } = {}) {
 
   return {
     decoderName: decoder.name,
+    hasLight,
+    // Rejects when this camera has no light after all (some iPads, a front camera).
+    setLight(on) { return track.applyConstraints({ advanced: [{ torch: on }] }); },
     pause() { paused = true; },
     resume() { paused = false; },
     stop() {
