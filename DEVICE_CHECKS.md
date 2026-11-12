@@ -86,3 +86,8 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: add a translated book (Latin, Greek or German). The language buttons should be easy to tap; tapping English should go straight to the next step, and any other should ask for the original title. The translation step should come up with the translator filled in when the lookup found one.
 - [ ] Phone: on Add, tap "Add a set of volumes", give the set's facts, and scan two volumes of it. The second should suggest the next volume number, and keep the first one's language, category and binding. Open the Library and come back to Add: the set should still be there. Tap "Finish the set" at the end.
 - [ ] Phone: paste a few volumes of a set ("7 Plato" and so on, one per line) and tap a shelf. They should appear on that shelf in the order pasted, each with the set's details.
+
+## HathiTrust while adding (1.4.0)
+
+- [ ] Phone: scan a Loeb volume (or type its ISBN, such as 9780674996076 for The Apostolic Fathers I). "Found on" should name HathiTrust, and the next step should offer that volume's works (I Clement, II Clement, Ignatius, Polycarp, Didache). Tap "Back to scanning" if you don't want to keep it.
+- [ ] Phone: Settings › Advanced: "And in HathiTrust" can be turned off and on; with it off, the same scan finds the book on Open Library only.

@@ -13,13 +13,14 @@ import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
-import { mergeFound } from '../core/book-data.js';
+import { mergeFound, withLibraryContents } from '../core/book-data.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
+import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
@@ -140,22 +141,25 @@ export function render(container, state, actions) {
     // The work search is asked once, alongside: for date suggestions, and for authors the edition record lacks.
     const workSearch = searchWork(isbn);
     const work = lookUpWork(isbn, fetch, workSearch).catch(() => NO_WORK);
-    const lookups = state.settings.lookups || { openLibrary: true, googleBooks: true };
+    const lookups = state.settings.lookups || { openLibrary: true, hathiTrust: true, googleBooks: true };
     const key = state.device.googleBooksKey || '';
     const problems = [];
     const ask = (lookUp, name) => lookUp().catch(error => { problems.push(error.message); return null; }).then(found => ({ found, name }));
-    // Open Library and, with a key, Google Books are asked at the same moment, so asking both is no slower.
+    // HathiTrust, Open Library and, with a key, Google Books are asked at the same moment, so asking all is no slower.
+    // Open Library comes first here: HathiTrust's record may describe an older printing with the same ISBN,
+    // so it fills only what Open Library lacks, except the works inside, which it lists best (core/book-data.js).
     const asking = [];
     if (lookups.openLibrary !== false) asking.push(ask(() => lookUpOpenLibrary(isbn, fetch, workSearch), 'Open Library'));
+    if (lookups.hathiTrust !== false) asking.push(ask(() => lookUpHathiTrust(isbn), 'HathiTrust'));
     if (lookups.googleBooks !== false && key) asking.push(ask(() => lookUpGoogleBooks(isbn, key), 'Google Books'));
-    showMessage(`Looking up ISBN ${isbn} on ${asking.length > 1 ? 'Open Library and Google Books' : asking.length ? 'Open Library' : 'Google Books'}…`);
+    showMessage(`Looking up ISBN ${isbn}…`);
     const answers = await Promise.all(asking);
-    let found = mergeFound(answers.map(answer => answer.found));
+    let found = withLibraryContents(mergeFound(answers.map(answer => answer.found)), answers.map(answer => answer.found));
     // Without a key Google Books mostly refuses, so it is asked only when Open Library lacks something.
     if (!key && (!found || !found.authors.length || !found.publisher) && lookups.googleBooks !== false) {
       showMessage(found ? 'Some details are missing; asking Google Books too…' : `Not on Open Library; trying Google Books…`);
       answers.push(await ask(() => lookUpGoogleBooks(isbn, ''), 'Google Books'));
-      found = mergeFound(answers.map(answer => answer.found));
+      found = withLibraryContents(mergeFound(answers.map(answer => answer.found)), answers.map(answer => answer.found));
     }
     const sources = answers.filter(answer => answer.found).map(answer => answer.name);
     const google = answers.find(answer => answer.name === 'Google Books' && answer.found);

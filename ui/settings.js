@@ -16,7 +16,7 @@ import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
 import { guideHtml } from './field-help.js';
 
-export const APP_VERSION = '1.3.0';
+export const APP_VERSION = '1.4.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -68,6 +68,7 @@ function selectHtml(name, label, options, current) {
 function sharedHtml(settings) {
   const promptsHtml = PROMPTS.map(([value, text]) => `<button class="chip${settings.batchAddPrompts.includes(value) ? ' is-on' : ''}" data-prompt="${value}" aria-pressed="${settings.batchAddPrompts.includes(value) ? 'true' : 'false'}">${escapeHtml(text)}</button>`).join('');
   const lookupsHtml = chipsHtml('data-lookup', 'openLibrary', 'Look up books in Open Library', ON_OFF, settings.lookups.openLibrary)
+    + chipsHtml('data-lookup', 'hathiTrust', 'And in HathiTrust (contents of older and scholarly books)', ON_OFF, settings.lookups.hathiTrust)
     + chipsHtml('data-lookup', 'googleBooks', 'Then in Google Books', ON_OFF, settings.lookups.googleBooks);
   const sortsHtml = selectHtml('library', 'Library sorted by', Object.entries(SORTS).map(([key, sort]) => [key, sort.label]), settings.defaultSort.library)
     + selectHtml('wishlist', 'Wishlist sorted by', WISHLIST_SORTS, settings.defaultSort.wishlist);

@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lookUpOpenLibrary, lookUpWork, searchWork } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
+import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { mergeFound } from '../core/book-data.js';
 import * as lewis from '../core/tests/answers/9780060652920.js';
 import * as anna from '../core/tests/answers/9781857150582.js';
@@ -62,4 +63,15 @@ test('without a key Google Books is asked once, and a failed work search still f
   assert.equal(asked.length, 1);
   const found = await lookUpOpenLibrary(plato.isbn, fetchFn, Promise.resolve(null));
   assert.deepEqual([found.title, found.authors], ['Complete Works', []]);
+});
+
+test('HathiTrust is asked once by ISBN, and its record gives a Loeb volume\'s works; a refusal is a plain message', async () => {
+  const fathers = await import('../core/tests/answers/9780674996076.js');
+  const asked = [];
+  const fetchFn = async url => { asked.push(url); return { ok: true, status: 200, text: async () => fathers.hathiTrust }; };
+  const found = await lookUpHathiTrust(fathers.isbn, fetchFn);
+  assert.deepEqual(asked, [`https://catalog.hathitrust.org/api/volumes/full/isbn/${fathers.isbn}.json`]);
+  assert.deepEqual([found.set, found.volume, found.contents.length], ['The Apostolic Fathers', '1', 5]);
+  const busy = async () => ({ ok: false, status: 429, text: async () => '' });
+  await assert.rejects(lookUpHathiTrust(fathers.isbn, busy), /busy/);
 });
