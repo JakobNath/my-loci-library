@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.5.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.7.0).
 
 ## Where things stand
 
@@ -16,8 +16,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 - **Version 1.3.0** (second tour, part B: adding books, 11 November 2026). Adding asks what only a person knows: the original language and title, category and tags, the translation, and this copy (acquired, price, value, markings, notes). The laptop fills catalog facts, and "Needs details" (a Library filter, a line on the book page, a count in Settings) shows what is still empty. "Add a set of volumes" takes a set's facts once, then volumes scanned or pasted. "Arrange" in the shelf view moves a book along its shelf. The start-up code is 99.6 KB of 100 (407 bytes free), after moving the picture view's and filter panel's styles to `screens.css`.
 - **Version 1.4.0** (phase 15, step 3, 11 November 2026): adding a book also asks HathiTrust, so a Loeb volume's works are offered while adding (The Apostolic Fathers I: I Clement, II Clement, Ignatius, Polycarp, Didache), and a volume of a set is recorded with its set and volume number. The laptop asks HathiTrust too, names itself to every source, rests a source that refuses, and has a `check-sources` command.
 - **Version 1.5.0** (phase 15, step 5, 11 November 2026): "Yes, and it holds several works" when adding; a collection's language, category and tags asked once for all its works; "Works in this book" ("Edit the works" on the book page) gives each work its original title, language, date, category and tags; a work a book no longer lists goes to the trash unless another book holds it. Start-up code: 219 bytes free.
+- **Version 1.7.0** (phase 15, steps 6 and 7, 12 November 2026; there was no 1.6.0, as format 3 and Wikidata were published together): data format 3 (other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; version-2 files stay as stored until edited), the "Also inside" search line, and original dates, titles and IDs offered from Wikidata while adding, each date confirmed with one tap. The laptop tools were updated the same day, and now stop with "Update the tools first" on any record newer than they know (the backup still runs).
 
-All tests pass: 149 in the app (and 137 on the self-test page), 157 in the tools.
+All tests pass: 170 in the app (and 157 on the self-test page), 182 in the tools.
 
 ## Waiting on Jakob
 
@@ -32,6 +33,12 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 **1.3.0 on the phones**
 
 - [ ] Reload each phone to 1.3.0 (Settings shows the version at the bottom), then try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
+
+**1.7.0 on every device** (published 12 November 2026)
+
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.7.0. A device still on 1.5.0 that meets a record edited on 1.7.0 says the catalog is in a newer format and waits, changing nothing, until it is reloaded.
+- [ ] On the laptop, the tools are already updated in the tools folder; nothing to do there unless they were copied elsewhere.
+- [ ] Try the checks under "Format 3 and Wikidata (1.7.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet.
 
 **1. Tour the app and note what needs work** (30 to 45 minutes, on the phone)
 
@@ -75,9 +82,9 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    3. [x] HathiTrust on the phone and the laptop: contents read by volume and set records (released as 1.4.0, 11 November 2026). The free-scan link moved to step 6, since it needs the HathiTrust ID that format 3 stores.
    4. [x] The laptop's source files (tools only, 11 November 2026): raw answers in `integrations/answers/`, the source of each value in `enrich.json`, and books without an ISBN asked by LCCN or OCLC number.
    5. [x] Collections made easy (released as 1.5.0, 11 November 2026): "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book" ("Edit the works" on the book page), unused works trashed.
-   6. [~] Data format 3: **built and tested on the `format-3` branches of the app and the tools (12 November 2026), not merged or published.** Other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; `migrate` from version 2; the "Also inside" search line (20,000 pieces searched in 6 ms); record checks moved to `core/validate.js`. Waiting for Jakob to look before merging: publish the app (1.6.0) first, then merge the tools, as for version 2. The free-scan link (needs the stored HathiTrust ID) is still to do.
-   7. [~] Wikidata: **built on the `wikidata` branches (on top of `format-3`, 12 November 2026), not merged.** One query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. Still to do: "Possibly the same as", the original-text marker, the laptop's re-check of stored IDs.
-   8. [ ] Known sets: the lists' format, matching, set gaps, Logos matching, and the Great Books (1990) list (1.8.0).
+   6. [x] Data format 3 (published in 1.7.0, 12 November 2026): other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; `migrate` from version 2; the "Also inside" search line (20,000 pieces searched in 6 ms); record checks moved to `core/validate.js`. The free-scan link (needs the stored HathiTrust ID) is still to do.
+   7. [x] Wikidata (published in 1.7.0, 12 November 2026): one query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. Still to do: "Possibly the same as", the laptop's re-check of stored IDs. The original-text marker is built on the `known-sets` branch.
+   8. [~] Known sets: the lists' format, matching, set gaps, Logos matching, and the Great Books (1990) list (1.8.0). The core (list format, reading, finding a volume, set gaps) and the original-text marker are on the app's `known-sets` branch (built on what is now 1.7.0). The overnight Great Books research was lost to the usage limit and is being done again (12 November 2026). Still to do: the known-set screens, the laptop filling, Logos matching.
    9. [ ] Contents-page photos, the laptop page "Contents to enter", found contents offered on the book page (1.9.0).
    10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.
    11. [ ] Filling existing books from known lists (changes real records): a verified backup and a report first; undone with `git revert`.
