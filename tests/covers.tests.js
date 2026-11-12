@@ -3,6 +3,7 @@
 // Runs on the self-test page only, since it checks screen markup.
 
 import { coverHtml } from '../ui/pieces.js';
+import { freeScanHtml } from '../ui/book-more.js';
 import { ok } from '../core/tests/check.js';
 
 const entryWithCover = (ratio, color = '#262a45') => ({
@@ -30,6 +31,15 @@ export const tests = [
     name: 'a cover with no stored shape is drawn as before',
     fn() {
       ok(coverHtml(entryWithCover(null)).includes('cover has-image'), 'the old drawing is kept');
+    },
+  },
+  {
+    name: 'the free-scan link shows only for a book with a HathiTrust record, published 96 or more years ago',
+    fn() {
+      const edition = year => ({ year, identifiers: { hathiTrust: '001234567' } });
+      ok(freeScanHtml(edition(1930), 2026).includes('Record/001234567'), 'published in 1930: public domain in 2026');
+      ok(freeScanHtml(edition(1931), 2026) === '', 'published in 1931: not yet');
+      ok(freeScanHtml({ year: 1900, identifiers: { hathiTrust: null } }, 2026) === '', 'no record, no link');
     },
   },
 ];

@@ -11,7 +11,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
-import { editionsWithIsbn, suggestWorks } from '../core/matching.js';
+import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound, withLibraryContents } from '../core/book-data.js';
 import { isBible } from '../core/bible.js';
@@ -420,6 +420,9 @@ export function render(container, state, actions) {
     current.wikidataAsked = key;
     lookUpWorks(titles, author).then(found => {
       for (const [title, work] of found) current.wikidata.set(title, work);
+      // "Possibly the same as…": a work already held under the same Wikidata item is offered in "Same work?".
+      const held = current.contents === null && sameWikidataWorks(found, state.library.worksById).get(current.found.title);
+      if (held && !current.works.includes(held)) { current.works.push(held); current.sameItem = held.id; }
       if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
     }).catch(error => {
       current.wikidataProblem = { key, message: error.message };
@@ -457,6 +460,19 @@ export function render(container, state, actions) {
       + '<button type="button" class="chip" data-action="list-dates">Use these dates</button></div>';
   }
 
+  // "Possibly the same as…" in a collection: works Wikidata names with the same item as works already held.
+  function sameWorksHtml(pieces) {
+    const same = sameWikidataWorks(book.wikidata, state.library.worksById);
+    const matches = pieces.filter(piece => same.has(piece.title)).map(piece => ({ title: piece.title, work: same.get(piece.title) }));
+    if (!matches.length) return '';
+    const holder = work => (state.library.entries.find(entry => entry.works.includes(work)) || { edition: { title: '' } }).edition.title;
+    const names = matches.map(match => `${match.title}${holder(match.work) ? ` (in ${holder(match.work)})` : ''}`).join('; ');
+    if (book.sameWorks) return `<p class="step-hint">${escapeHtml(`Joined to the works you already have: ${names}.`)}</p>`;
+    book.sameMatches = matches;
+    return `<div class="field"><p class="step-hint">${escapeHtml(`Possibly the same as works you already have (Wikidata names them as one): ${names}.`)}</p>`
+      + '<button type="button" class="chip" data-action="join-same">Yes, the same works</button></div>';
+  }
+
   // 2. A collection of works? When a record lists contents, or the person said so.
   function contentsStep() {
     const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
@@ -464,7 +480,7 @@ export function render(container, state, actions) {
     const set = book.knownVolume && book.knownSet;
     // A known set's list gives the dates itself (filled in when checked, offered when not), so Wikidata is not asked.
     if (!set) askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
-    const datesHtml = set ? listDatesHtml(lines) : wikidataDatesHtml(lines);
+    const datesHtml = (set ? listDatesHtml(lines) : wikidataDatesHtml(lines)) + (set ? '' : sameWorksHtml(listed.pieces));
     if (set) {
       return `<h2 class="step-title">The works in this volume</h2>
         <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator.`)}</p>
@@ -491,7 +507,8 @@ export function render(container, state, actions) {
   function workStep() {
     const optionsHtml = book.works.map(work => {
       const dating = workingDating(work);
-      return choiceHtml('work', `Yes, the same work as ${work.title}`, dating ? `${dating.text}${work.originalTitle ? ' · ' + work.originalTitle : ''}` : 'already in the library', work.id);
+      const detail = dating ? `${dating.text}${work.originalTitle ? ' · ' + work.originalTitle : ''}` : 'already in the library';
+      return choiceHtml('work', `Yes, the same work as ${work.title}`, work.id === book.sameItem ? `Wikidata names both as one work · ${detail}` : detail, work.id);
     }).join('');
     return `<h2 class="step-title">Is this the same work as one you have?</h2>
       <p class="step-hint">If this is another edition or translation of a work you already have, they share its original date and are shown together.</p>
@@ -645,6 +662,10 @@ export function render(container, state, actions) {
       }).join('\n');
       return drawStep();
     }
+    if (action === 'join-same') {
+      book.sameWorks = Object.fromEntries((book.sameMatches || []).map(match => [normalizeForSearch(match.title), match.work.id]));
+      return drawStep();
+    }
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
       const hint = [...wikidataSuggestion(), ...suggestOriginalDates(book.work, book.found.year)].find(item => item.text === value);
@@ -712,6 +733,7 @@ export function render(container, state, actions) {
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
+      sameWorks: book.contents !== null ? book.sameWorks || null : null,
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, working: true }],

@@ -5,7 +5,7 @@
 import { escapeHtml } from '../core/html.js';
 import { formatYearRange, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
-import { missingDetails, originalTextHolders } from '../core/library.js';
+import { missingDetails } from '../core/library.js';
 import { coverHtml, dateLineHtml, badgesHtml, COVER_RATIO } from './pieces.js';
 import { iconHtml } from './icons.js';
 import { fillImages } from './images.js';
@@ -57,20 +57,6 @@ function copiesHtml(entry, currency) {
       ['Markings', copy.markings ? 'Writing or markings when acquired' : ''],
     ])}</div>`;
   }).join('');
-}
-
-// Other editions of the same works, and anthologies that contain a work here.
-function relatedHtml(entry, library) {
-  const workIds = new Set(entry.edition.contents.map(piece => piece.work));
-  const others = library.entries.filter(other => other.id !== entry.id && other.edition.contents.some(piece => workIds.has(piece.work)));
-  if (!others.length) return '';
-  // Beside other editions of one work: which of them print it in its original language ("Greek text: Plato I").
-  const work = entry.works.length === 1 && entry.works[0];
-  const held = work ? originalTextHolders(work, library).map(holder => holder.edition.title) : [];
-  const originalHtml = held.length ? `<p class="muted">${escapeHtml(`${work.originalLanguage} text: ${held.join('; ')}`)}</p>` : '';
-  const linksHtml = others.map(other => `<a href="#/book/${escapeHtml(other.id)}">${escapeHtml(other.edition.title)}`
-    + `${other.edition.subtitle ? ': ' + escapeHtml(other.edition.subtitle) : ''} <span class="muted">${escapeHtml([other.edition.publisher, other.edition.year].filter(Boolean).join(', '))}</span> ${badgesHtml(other)}</a>`).join('');
-  return `<section class="block related"><h2 class="block-title">Other editions and collections</h2>${originalHtml}${linksHtml}</section>`;
 }
 
 /** Draw the book page for state.route.id. */
@@ -150,9 +136,11 @@ export function render(container, state, actions) {
     ${piecesHtml}
     <section class="block"><h2 class="block-title">Edition</h2>${editionHtml}</section>
     <section class="block"><h2 class="block-title">${copiesTitleHtml}</h2>${copiesHtml(entry, state.settings.currency)}</section>
-    ${relatedHtml(entry, state.library)}
+    <div data-more></div>
     ${viewerHtml}`;
   fillImages(container, actions.imageUrl);
+  // Other editions and the free-scan link, a moment later (ui/book-more.js).
+  import('./book-more.js').then(more => more.fillMore(container.querySelector('[data-more]'), entry, state.library)).catch(() => {});
   const viewer = container.querySelector('.viewer');
   // The view's styles load with the later screens' stylesheet, first.
   const enlarge = async () => { if (viewer && viewer.showModal) { await actions.loadScreenStyles(); viewer.showModal(); } };

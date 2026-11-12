@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.9.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.11.0).
 
 ## Where things stand
 
@@ -22,7 +22,10 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.9.0** (the big run, phases 2 to 4, 12 November 2026): a "Light" button on the scanner where the phone has one (Android, and iPhones from about iOS 17.4); "Totals by" place, room, bookcase or shelf on the Value page and in its CSV; only an exact original year goes to Zotero, so "c. 397–400" is no longer cited as "orig. 397" (the CSL-JSON and BibTeX exports now carry spans and "circa"). The tools were updated the same day.
 
-All tests pass: 184 in the app (and 171 on the self-test page), 199 in the tools.
+- **Version 1.10.0** (phase 15, step 9, 12 November 2026): "Photograph the contents page" while adding a collection no catalog lists; the laptop page "Contents to enter" (`laptop/contents.html`), each book opening its entry form with the photo above the contents box; works `loci-enrich` finds inside a one-work book wait as "works found inside" (the book page's Still missing line), and the entry form offers "Use these works" or "Not these".
+- **Version 1.11.0** (phase 15 loose ends, 12 November 2026): "Possibly the same as…" (a held work with the same Wikidata item is offered, never joined without a tap); "Read it free online" at HathiTrust for books published in 1930 or earlier with a HathiTrust record; the book page's lower part loads a moment later (`ui/book-more.js`), freeing about 970 bytes of start-up budget. The laptop re-checks stored Wikidata IDs every 90 days, and a new Logos volume of a known set joins a work spanning volumes. Wikidata's new query address is still closed; check again in early December 2026 (`SOURCES.md`).
+
+All tests pass: 186 in the app (and 174 on the self-test page), 203 in the tools.
 
 ## Waiting on Jakob
 
@@ -38,9 +41,9 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [ ] Try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
 
-**1.9.0 on every device** (published 12 November 2026; includes 1.7.0 and 1.8.0)
+**1.11.0 on every device** (published 12 November 2026; includes 1.7.0 to 1.10.0)
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.9.0, then try "Format 3 and Wikidata (1.7.0)", "Known sets (1.8.0)" and "Scanner light and Value levels (1.9.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.11.0, then try the checks from "Format 3 and Wikidata (1.7.0)" to "Same works and free scans (1.11.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
 - [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
 **Before the real Zotero run**
@@ -70,8 +73,8 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    3. [x] HathiTrust on the phone and the laptop: contents read by volume and set records (released as 1.4.0, 11 November 2026). The free-scan link moved to step 6, since it needs the HathiTrust ID that format 3 stores.
    4. [x] The laptop's source files (tools only, 11 November 2026): raw answers in `integrations/answers/`, the source of each value in `enrich.json`, and books without an ISBN asked by LCCN or OCLC number.
    5. [x] Collections made easy (released as 1.5.0, 11 November 2026): "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book" ("Edit the works" on the book page), unused works trashed.
-   6. [x] Data format 3 (published in 1.7.0, 12 November 2026): other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; `migrate` from version 2; the "Also inside" search line (20,000 pieces searched in 6 ms); record checks moved to `core/validate.js`. The free-scan link (needs the stored HathiTrust ID) is still to do.
-   7. [x] Wikidata (published in 1.7.0, 12 November 2026): one query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. Still to do: "Possibly the same as", the laptop's re-check of stored IDs. The original-text marker is built on the `known-sets` branch.
+   6. [x] Data format 3 (published in 1.7.0, 12 November 2026): other titles and Wikidata IDs on works, Open Library and HathiTrust IDs on editions, pieces and "cite" in contents, found contents; `migrate` from version 2; the "Also inside" search line (20,000 pieces searched in 6 ms); record checks moved to `core/validate.js`. The free-scan link followed in 1.11.0.
+   7. [x] Wikidata (published in 1.7.0, 12 November 2026): one query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. "Possibly the same as" and the laptop's re-check of stored IDs followed in 1.11.0. The original-text marker is built on the `known-sets` branch.
    8. [x] Known sets (released as 1.8.0, 12 November 2026): the list format with a `checked:` line, "Which volume?", a listed volume's works when adding, one work across volumes, set gaps on the Wishlist, new Logos volumes, and the Great Books (1990) list. Jakob owns the 1990 edition; the list answers to both its ISBN (0-85229-531-6) and the 1952 one (0-85229-163-9), until the printed one is known (`docs/decisions/book-data.md`). Waiting on Jakob's check of the list (above). Filling books already in the catalog is step 11.
    9. [x] Contents-page photos, the laptop page "Contents to enter", found works offered in the entry form (released as 1.10.0, 12 November 2026; 1.9.0 went to the big run's phases 2 to 4).
    10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.

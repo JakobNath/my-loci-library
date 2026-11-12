@@ -123,3 +123,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: add a book that holds several works but whose contents no catalog lists (an old anthology without a barcode, or a title typed in). At "Is this the book?" tap "Yes, and it holds several works". The next step should offer "Photograph the contents page": take the photo, and a small copy of it should appear with a note. Leave the box empty and finish adding.
 - [ ] Laptop, in Firefox with the app synced: open `https://jakobnath.github.io/my-loci-library/laptop/contents.html`. The book should be listed; open it: the entry form should show the photo of the contents page under "This book holds several works" once ticked. Type two lines, save: the book should leave the list.
 - [ ] After a laptop `loci-enrich` run that reports "works found inside": the book's page says "Still missing: works found inside"; Edit shows "A library catalog lists … works"; "Use these works" fills the contents box, and Save makes them works.
+
+## Same works and free scans (1.11.0)
+
+- [ ] Phone: open a book that has other editions in the catalog: "Other editions and collections" should appear at the foot of the page, as before, a moment after the page opens.
+- [ ] Phone: add a second translation of a work already in the catalog that Wikidata knows (for example another *Phaedo*, if Plato I is held). "Same work?" should offer it, saying "Wikidata names both as one work".
+- [ ] Phone: for a book published in 1930 or earlier with a HathiTrust record (found while adding, or filled in on the laptop), "Read it free online" should appear on its page and open HathiTrust.

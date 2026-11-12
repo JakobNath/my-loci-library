@@ -8,6 +8,9 @@
 import { fromHathiTrust } from '../core/marc.js';
 
 const API = 'https://catalog.hathitrust.org/api/volumes/full';
+
+/** The page of one HathiTrust record, for a person to open (the book page's free-scan link). */
+export const recordPage = record => `https://catalog.hathitrust.org/Record/${encodeURIComponent(record)}`;
 const TIMEOUT = 8000; // milliseconds, as for the other lookups, so a slow answer never holds up scanning
 
 /**
