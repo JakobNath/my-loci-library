@@ -560,27 +560,32 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 
 ## Deferred and out of scope
 
+*Changed with Jakob on 12 November 2026:* the admin page, the shelf planner and the colleague setup moved from "if wanted" to wanted; five items were dropped; printing shelf lists is allowed once the admin page and the shelf planner exist.
+
+**Wanted next (phase 16)**
+
+- **A laptop admin page**, essential: one timeless page on the laptop that gathers the tools' buttons and holds the project's documentation, written for a person: what each part is, how it works, how to fix it. Plain, durable and quiet in look, like a well-made reference book.
+- **A laptop shelf planner:** suggests ways to arrange the library by chosen criteria (author, original date, subject), fits books to shelves using their thicknesses and each shelf's width, lists the moves, and records the new locations and shelf order once the books are moved.
+- **Printing shelf lists**, from the admin page and the shelf planner, once both exist.
+- **Colleague setup polish and announcing the project.**
+
 **Later, if wanted**
 
 - The price estimator script.
-- Title-page photo recognition for books without an ISBN.
-- Shelf photos: one photo of a whole shelf giving every book's relative size, and perhaps its spine image.
-- A laptop shelf planner: suggests ways to arrange the library by chosen criteria (author, original date, subject), fits books to shelves using their thicknesses and each shelf's width, lists the moves, and records the new locations and shelf order once the books are moved.
-- Lending, read/unread, and whose book it is (the format allows adding these).
-- Colleague setup polish and announcing the project.
-- Recompressing or enhancing covers on the laptop page, from masters.
-- Offline bulk matching from Open Library's monthly dumps and HathiTrust's HathiFiles, so a whole catalog can be matched without any live service. The files are several gigabytes and would need a careful streaming reader using only Node's own modules.
 - Language codes (`grc`, `la`) beside language names, mainly to tell Ancient from Modern Greek.
-- A table of contents below the level of works (chapters, excursuses). No free source lists them for most books.
-- A laptop admin page that gathers the tools' buttons in one place.
+- **Kept as the emergency plan, not built:** offline bulk matching from Open Library's monthly dumps and HathiTrust's HathiFiles, so a whole catalog can be matched without any live service. Built only if a source closes, changes its rules or refuses us (the yearly source check would show it). The files are several gigabytes and would need a careful streaming reader using only Node's own modules.
+
+**Dropped (12 November 2026)**
+
+- Title-page photo recognition; shelf photos giving each book's size; recompressing or enhancing covers; a table of contents below the level of works.
+- Lending, read or unread, and whose book it is: written in a copy's notes instead.
 
 **Never in the app**
 
 - AI features of any kind, including "copy AI prompt" buttons. AI help is done by hand outside the app.
-- Direct links to Zotero, Obsidian, or Logos. Those go only through laptop tools.
+- Direct links to Zotero, Obsidian, or Logos. Those go only through laptop tools. (Confirmed with Jakob on 12 November 2026: Zotero already links back to each book in Loci, and an "Open in Zotero" link was not wanted.)
 - Accounts, a hosted server, or app-store apps.
 - Ratings, social features, or reading trackers.
-- Printing shelf lists.
 
 ## Build phases (draft order)
 

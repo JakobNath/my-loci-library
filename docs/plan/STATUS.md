@@ -98,14 +98,15 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    12. [ ] Known-set lists, one per session, for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
 2. Build step 13.0 changes, after his shelf view review.
-3. Phase 15 (later, only when Jakob asks): the price estimator, and recognising a book from a photo of its title page.
+3. Phase 16 (wanted, 12 November 2026): the laptop admin page with the project's documentation for a person, the shelf planner, printing shelf lists, colleague setup and announcing. See `handoffs/2026-11-12-big-run-plan.md`.
 
 ## Open questions for Jakob
 
-- **Settings › Value** shows totals by room (the first two parts of a location, Home › Office). Totals by bookcase or by shelf instead?
-- **Uncertain original dates** ("c. 110"): Zotero has no field for "circa". Leave as is, or mark them somehow?
-- **Anonymous pieces in Zotero**: Zotero's Chicago style puts the editor first for them; for now they are corrected by hand when citing.
-- **A light for the barcode scanner** works only in Chrome on Android, which the plan rules out. Parked unless Jakob wants it as a recorded exception.
+- **Settings › Value** (answered 12 November 2026): Jakob would like to sort and total by any level of a location: place, room, bookcase or shelf. To build.
+- **Uncertain original dates** ("c. 110") in Zotero (12 November 2026): research what classics and theology journals expect in Chicago notes, decide without asking Jakob, record it, and build it.
+- **Anonymous pieces in Zotero**: Zotero's Chicago style puts the editor first for them; for now they are corrected by hand when citing. **Deferred by Jakob (12 November 2026).** When it comes up again, explain it at length, with pros and cons, and advise him as a classicist and theologian who writes for academic journals.
+- **A light for the barcode scanner**: Jakob would like it on iOS too (the app runs from the iPhone home screen). Research whether iOS Safari can turn on the torch from a web page; build it behind a feature check if it can, and say plainly if it cannot.
+- **Google Books' branding terms** (from the overnight report): **deferred by Jakob (12 November 2026).** When it comes up again, explain it at length, with pros and cons, and advise him as a classicist and theologian who writes for academic journals.
 
 ## Decisions to look over
 
