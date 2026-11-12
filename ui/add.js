@@ -21,6 +21,8 @@ import { estimateSize } from '../core/sizes.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
+import { lookUpWorks } from '../edges/lookup-wikidata.js';
+import { parseContentsLines } from '../core/contents.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
@@ -205,12 +207,14 @@ export function render(container, state, actions) {
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
       severalChosen: false, // "Yes, and it holds several works", when no source listed them
+      wikidata: new Map(), wikidataAsked: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
       fixing: !found.source, // not found online: the details are asked for at once
     };
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
     const current = book;
     Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (['date', 'language'].includes(book.step)) drawStep(); } });
     checkCover(current);
+    if (full.title && full.authors[0]) askWikidata(current, [full.title], full.authors[0]);
     goTo('book');
   }
 
@@ -340,15 +344,53 @@ export function render(container, state, actions) {
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
 
+  // Ask Wikidata about some works of this book, once for each list of titles; draw the step again when it answers.
+  function askWikidata(current, titles, author) {
+    const lookups = state.settings.lookups || {};
+    const key = `${author}|${titles.join('|')}`;
+    if (lookups.wikidata === false || !titles.length || current.wikidataAsked === key) return;
+    current.wikidataAsked = key;
+    lookUpWorks(titles, author).then(found => {
+      for (const [title, work] of found) current.wikidata.set(title, work);
+      if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
+    }).catch(error => {
+      current.wikidataProblem = { key, message: error.message };
+      if (book === current && book.step === 'contents') drawStep();
+    });
+  }
+
+  // The works listed in the contents box, and their most common author (the book's when none is given).
+  function listedWorks(text) {
+    const pieces = parseContentsLines(text);
+    const counts = new Map();
+    for (const piece of pieces) if (piece.author) counts.set(piece.author, (counts.get(piece.author) || 0) + 1);
+    const author = [...counts].sort((a, b) => b[1] - a[1]).map(([name]) => name)[0] || book.found.authors[0] || '';
+    return { pieces, author };
+  }
+
+  // Wikidata's dates for listed works still without one, offered with one tap (PLAN.md, "Original dates").
+  function wikidataDatesHtml(text) {
+    const offered = parseContentsLines(text).filter(piece => !piece.date && (book.wikidata.get(piece.title) || {}).date);
+    // A problem is shown only when it came from asking about these works, not about the book's own title.
+    const problem = book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
+    if (!offered.length) return problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '';
+    const list = offered.map(piece => `${piece.title} ${book.wikidata.get(piece.title).date}`).join('; ');
+    return `<div class="field"><p class="step-hint">${escapeHtml(`Wikidata gives when ${offered.length} of these were written or first published: ${list}.`)}</p>`
+      + `<button type="button" class="chip" data-action="wikidata-dates">Use these dates</button></div>`;
+  }
+
   // 2. A collection of works? When a record lists contents, or the person said so.
   function contentsStep() {
     const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
+    const listed = listedWorks(lines);
+    askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
+    const datesHtml = wikidataDatesHtml(lines);
     const hint = book.contentsOffered
       ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
       : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC"). A table of contents can be pasted and tidied here.';
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>
-      <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>
+      <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
         <div class="choices">${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
   }
@@ -364,10 +406,16 @@ export function render(container, state, actions) {
       <div class="choices">${optionsHtml}${choiceHtml('work', 'No, a different work', '', '')}</div>${backHtml()}`;
   }
 
+  // Wikidata's date for this one work, offered first when it knows one.
+  function wikidataSuggestion() {
+    const work = book.wikidata.get(book.found.title);
+    return work && work.date ? [{ text: work.date, label: 'written or first published (Wikidata)' }] : [];
+  }
+
   // 3. When was it written?
   function dateStep() {
     const year = book.found.year ? `the ${book.found.year} printing` : 'this printing';
-    const suggestions = book.work ? suggestOriginalDates(book.work, book.found.year) : [];
+    const suggestions = [...wikidataSuggestion(), ...(book.work ? suggestOriginalDates(book.work, book.found.year) : [])];
     const suggestionsHtml = suggestions.map(hint => choiceHtml('date', hint.text, hint.label, hint.text)).join('');
     const waitingHtml = book.work ? '' : '<p class="step-hint">Looking for the first publication…</p>';
     return `<h2 class="step-title">When was this work written?</h2>
@@ -490,9 +538,18 @@ export function render(container, state, actions) {
     }
     if (action === 'volume') { book.found.volume = value; return next(); }
     if (action === 'single') { book.contents = null; return next(); }
+    if (action === 'wikidata-dates') {
+      // Each listed work without a date gets Wikidata's, as if typed; they can still be changed before going on.
+      book.contentsText = (book.contentsText ?? '').split('\n').map(line => {
+        const [piece] = parseContentsLines(line);
+        const work = piece && !piece.date && book.wikidata.get(piece.title);
+        return work && work.date ? `${line.trimEnd()} — ${work.date}` : line;
+      }).join('\n');
+      return drawStep();
+    }
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
-      const hint = suggestOriginalDates(book.work, book.found.year).find(item => item.text === value);
+      const hint = [...wikidataSuggestion(), ...suggestOriginalDates(book.work, book.found.year)].find(item => item.text === value);
       book.dating = value;
       book.datingNote = hint ? `suggested: ${hint.label}` : '';
       return next();
@@ -527,6 +584,15 @@ export function render(container, state, actions) {
 
   const number = text => String(text || '').replace(/[^\d.]/g, '');
 
+  // A new work Wikidata knows gets its ID, its other titles and (if none was given) its original title,
+  // and a date taken from Wikidata says so in its note (DATA_FORMAT.md, "Datings").
+  function withWikidata(record) {
+    const known = record.type === 'work' && !state.library.worksById.has(record.id) && book.wikidata.get(record.title);
+    if (!known) return record;
+    const datings = record.datings.map(dating => (dating.text === known.date && !dating.note ? { ...dating, note: 'from Wikidata' } : dating));
+    return { ...record, wikidata: known.wikidata, otherTitles: known.otherTitles, originalTitle: record.originalTitle || known.originalTitle || null, datings };
+  }
+
   async function saveBook() {
     const { found, copy } = book;
     const form = {
@@ -542,6 +608,7 @@ export function render(container, state, actions) {
     };
     const result = recordsFromForm(form, null, context());
     if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
+    result.records = result.records.map(withWikidata);
     // The shelf the book went to becomes the shelf being filled.
     if (book.location.length) actions.setBatchLocation(book.location);
     const shelfOrder = nextShelfOrder(book.location);
@@ -638,10 +705,10 @@ export function render(container, state, actions) {
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
     const measured = book.photos.spine && book.photos.spine.height;
-    const { lccn, oclc, lcc, ddc } = book.found.identifiers;
+    const { lccn, oclc, lcc, ddc, openLibrary, hathiTrust } = book.found.identifiers;
     return {
       ...edition, images,
-      identifiers: { lccn: lccn || null, oclc: oclc || null, lcc: lcc || null, ddc: ddc || null }, subjects: book.found.subjects,
+      identifiers: { lccn: lccn || null, oclc: oclc || null, lcc: lcc || null, ddc: ddc || null, openLibrary: openLibrary || null, hathiTrust: hathiTrust || null }, subjects: book.found.subjects,
       ...(height ? { height, heightSource: 'catalog' } : {}),
       ...(thickness ? { thickness, thicknessSource: 'catalog' } : {}),
       ...(measured ? { height: measured, heightSource: 'measured' } : {}),

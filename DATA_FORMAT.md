@@ -2,7 +2,7 @@
 
 This file describes every record and field in the catalog. It is the most important document in the project: if the app is ever lost, the data can be read, and a new app written, from this file alone.
 
-Format version: **2** (November 2026). Version 1 records are still read; see "Format versions".
+Format version: **3** (November 2026). Version 1 and 2 records are still read; see "Format versions".
 
 ## The idea in one paragraph
 
@@ -82,7 +82,7 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 2. |
+| `format` | number | The format version this record was written in. Currently 3. |
 | `type` | text | `work`, `edition`, `copy`, `author` or `wishlist`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
@@ -100,11 +100,13 @@ An app that meets a record whose `format` is higher than it knows asks to be ref
 | `subtitle` | text or null | | |
 | `authors` | list of author IDs | | In order. Empty for anonymous works (the *Didache*). |
 | `originalTitle` | text or null | | The title in its original language: "Confessiones". Searched too. |
+| `otherTitles` | list of text | | Other titles and standard abbreviations it is known by: "Ethica Nicomachea", "Eth. Nic.". All searched. (Version 3.) |
 | `originalLanguage` | text or null | | "Latin", "Greek", "German"... |
 | `datings` | list of datings | | When the work was written; see "Datings". Empty until a person adds one. Never filled from a lookup. |
 | `sortYear` | number or null | | Our own choice of year to sort by, when we hold an opinion. Null means: the earliest year of the working dating. |
 | `category` | text or null | | One broad grouping: "Patristics". |
 | `tags` | list of text | | Free topic labels: "Christology". |
+| `wikidata` | text or null | | The work's Wikidata ID, "Q244161" for *Phaedo*, when known. Two works with the same ID are the same work. (Version 3.) |
 
 ### Datings
 
@@ -165,6 +167,7 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `identifiers` | object | | The edition's catalogue numbers, from library records; see "Identifiers". (Version 2.) |
 | `languages` | list of text | | The languages printed in it. Two make a diglot ("Greek", "English"), three a triglot. |
 | `subjects` | list of text | | Subject headings from library records, as the library writes them: "Christian saints -- Algeria -- Hippo (Extinct city) -- Biography". (Version 2.) |
+| `foundContents` | list | | Works a library record lists for a book entered as one work, waiting for a person to confirm them: `{ "author": "Plato", "title": "Phaedo", "extent": null }`. Written by the laptop tool `loci-enrich`; emptied when the person accepts or declines them. (Version 3.) |
 | `pages` | text or null | | The pages as printed: "xxviii, 311", or "89–132" for a journal issue. The app counts them (339; 44). |
 | `height` | number or null | | In millimeters. |
 | `heightSource` | text or null | | `measured` (a person) or `catalog` (a library record, Open Library or Google Books). |
@@ -180,7 +183,7 @@ Estimated sizes are never stored. When height or thickness is null, the app work
 
 ### Identifiers
 
-An object with four keys, always in this order, each text or null when unknown:
+An object with six keys, always in this order, each text or null when unknown (`openLibrary` and `hathiTrust` from version 3):
 
 | Key | Meaning |
 | --- | --- |
@@ -188,9 +191,11 @@ An object with four keys, always in this order, each text or null when unknown:
 | `oclc` | OCLC (WorldCat) number: "228195188". |
 | `lcc` | Library of Congress call number: "BR65.A6 E5 2008". |
 | `ddc` | Dewey decimal number, without the slashes some catalogues print: "891.733". |
+| `openLibrary` | Open Library's edition ID: "OL23154103M". |
+| `hathiTrust` | HathiTrust's record number: "003879580". It gives the link to a free scan of the book, when HathiTrust has one. |
 
 ```json
-"identifiers": { "lccn": "2008491261", "oclc": "228195188", "lcc": "BR65.A6 E5 2008", "ddc": "270.2092" }
+"identifiers": { "lccn": "2008491261", "oclc": "228195188", "lcc": "BR65.A6 E5 2008", "ddc": "270.2092", "openLibrary": "OL23154103M", "hathiTrust": null }
 ```
 
 ### Contents
@@ -199,10 +204,14 @@ Each entry:
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `work` | work ID | The work. |
+| `work` | work ID or null | The work; null for a piece (below). |
+| `piece` | object or null | A short work kept inside this book instead of as a work record (version 3): a poem, hymn, sermon or letter. See below. Null for a work. |
 | `extent` | text | `complete`, `selections`, or a free range: "Books I–IV". |
 | `translator` | text or null | Only when this piece's translator differs from the edition's. |
 | `pages` | text or null | Where it is in the book: "1–55". |
+| `cite` | true or false | Send this work to Zotero as a section of the book (version 3). |
+
+A **piece** holds `title` (required), `author` (a name as typed, or null), `originalTitle` (or null) and `date` (the original date as typed or listed, read by the date parser when shown, or null). A library volume of short poems or sermons would otherwise make hundreds of works, each to be dated and categorized; a piece can be made a full work at any time, and then its entry holds the work's ID instead.
 
 An anthology's date range is not stored. It is worked out from the working datings of its contents: from the earliest sort year to the latest year among them.
 
@@ -353,6 +362,7 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 
 - Version 1 (November 2026): the first format.
 - Version 2 (November 2026): each edition gained `identifiers` and `subjects`. A version-1 edition is read as version 2 with `identifiers` all null and `subjects` empty; any other version-1 record only changes its `format`. Nothing else changes, and a version-1 file stays as it is until the record is next saved.
+- Version 3 (November 2026): each work gained `otherTitles` and `wikidata`; each edition gained `foundContents` and the identifiers `openLibrary` and `hathiTrust`; each contents entry gained `piece` and `cite`, and its `work` may be null for a piece. A version-2 work is read with no other titles and no Wikidata ID; a version-2 edition with both new identifiers null, nothing found, and every contents entry a work (`piece` null) not cited. Other records only change their `format`. A version-2 file stays as it is until the record is next saved.
 - Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
 - When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
@@ -362,13 +372,14 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 2,
+  "format": 3,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
   "subtitle": "The Teaching of the Twelve Apostles",
   "authors": [],
   "originalTitle": "Διδαχή",
+  "otherTitles": ["The Teaching of the Twelve Apostles"],
   "originalLanguage": "Greek",
   "datings": [
     { "text": "c. 50–70", "earliest": 50, "latest": 70, "certainty": "circa", "kind": null, "note": "early dating", "working": false },
@@ -377,6 +388,7 @@ A work with a disputed dating (sample book #10):
   "sortYear": null,
   "category": "Patristics",
   "tags": ["Church order"],
+  "wikidata": "Q210752",
   "trashed": null,
   "created": "2026-11-09T14:00:00Z",
   "changed": {}
@@ -387,14 +399,14 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 2,
+  "format": 3,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
   "subtitle": null,
   "contents": [
-    { "work": "m4t7h3w2q9zk", "extent": "complete", "translator": null, "pages": null },
-    { "work": "m4rk8x2p6ywa", "extent": "complete", "translator": null, "pages": null }
+    { "work": "m4t7h3w2q9zk", "piece": null, "extent": "complete", "translator": null, "pages": null, "cite": false },
+    { "work": "m4rk8x2p6ywa", "piece": null, "extent": "complete", "translator": null, "pages": null, "cite": false }
   ],
   "contributors": [
     { "name": "Barbara Aland", "role": "editor" },
@@ -410,9 +422,10 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "set": null,
   "volume": null,
   "isbn": "9783438051400",
-  "identifiers": { "lccn": null, "oclc": null, "lcc": null, "ddc": null },
+  "identifiers": { "lccn": null, "oclc": null, "lcc": null, "ddc": null, "openLibrary": null, "hathiTrust": null },
   "languages": ["Greek"],
   "subjects": [],
+  "foundContents": [],
   "pages": "89*, 890",
   "height": null,
   "heightSource": null,
@@ -435,7 +448,7 @@ A copy:
 
 ```json
 {
-  "format": 2,
+  "format": 3,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
@@ -460,7 +473,7 @@ An author:
 
 ```json
 {
-  "format": 2,
+  "format": 3,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -476,7 +489,7 @@ A wishlist item:
 
 ```json
 {
-  "format": 2,
+  "format": 3,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",

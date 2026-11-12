@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import { lookUpOpenLibrary, lookUpWork, searchWork } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
+import { lookUpWorks } from '../edges/lookup-wikidata.js';
 import { mergeFound } from '../core/book-data.js';
 import * as lewis from '../core/tests/answers/9780060652920.js';
 import * as anna from '../core/tests/answers/9781857150582.js';
@@ -74,4 +75,20 @@ test('HathiTrust is asked once by ISBN, and its record gives a Loeb volume\'s wo
   assert.deepEqual([found.set, found.volume, found.contents.length], ['The Apostolic Fathers', '1', 5]);
   const busy = async () => ({ ok: false, status: 429, text: async () => '' });
   await assert.rejects(lookUpHathiTrust(fathers.isbn, busy), /busy/);
+});
+
+test('Wikidata is asked once for a whole book, names the app, and a slow or busy answer is a plain message', async () => {
+  const { plato } = await import('../core/tests/answers/wikidata.js');
+  const asked = [];
+  const fetchFn = async (url, options) => { asked.push({ url, options }); return { ok: true, status: 200, json: async () => JSON.parse(plato.answer) }; };
+  const found = await lookUpWorks(plato.titles, plato.author, fetchFn);
+  assert.equal(asked.length, 1);
+  assert.equal(asked[0].options.method, 'POST');
+  assert.match(asked[0].options.headers['Api-User-Agent'], /^MyLociLibrary/);
+  assert.equal(found.get('Phaedo').date, 'c. 360 BC');
+  const busy = async () => ({ ok: false, status: 429, json: async () => ({}) });
+  await assert.rejects(lookUpWorks(plato.titles, plato.author, busy), /busy/);
+  const slow = async () => { const error = new Error('signal timed out'); error.name = 'TimeoutError'; throw error; };
+  await assert.rejects(lookUpWorks(plato.titles, plato.author, slow), /did not answer in time/);
+  assert.equal((await lookUpWorks(['Didache'], '', fetchFn)).size, 0, 'nothing asked without an author');
 });

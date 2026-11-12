@@ -56,6 +56,7 @@ const SERVICES = [
   ['openlibrary.org', 'edges/lookup-openlibrary.js'],
   ['googleapis.com/books', 'edges/lookup-googlebooks.js'],
   ['hathitrust.org', 'edges/lookup-hathitrust.js'],
+  ['wikidata.org', 'edges/lookup-wikidata.js'],
   ['indexedDB', 'edges/storage.js'],
 ];
 export function serviceProblems(file, text) {
