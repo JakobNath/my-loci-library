@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.8.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.9.0).
 
 ## Where things stand
 
@@ -20,7 +20,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.8.0** (phase 15, step 8, 12 November 2026): known sets. A volume of a known set takes its works from the list; a set that prints one ISBN on every volume (Great Books) asks "Which volume?" first and marks the volumes already held; a work printed across volumes (Gibbon, the Summa) stays one work; the Wishlist shows set gaps with "Put the missing on the wishlist"; new Logos volumes of a known set take its works. The first list is Great Books of the Western World (1990): 61 volumes, 358 works, not yet checked by Jakob, so its dates are offered with one tap rather than filled in.
 
-All tests pass: 182 in the app (and 169 on the self-test page), 196 in the tools.
+- **Version 1.9.0** (the big run, phases 2 to 4, 12 November 2026): a "Light" button on the scanner where the phone has one (Android, and iPhones from about iOS 17.4); "Totals by" place, room, bookcase or shelf on the Value page and in its CSV; only an exact original year goes to Zotero, so "c. 397–400" is no longer cited as "orig. 397" (the CSL-JSON and BibTeX exports now carry spans and "circa"). The tools were updated the same day.
+
+All tests pass: 184 in the app (and 171 on the self-test page), 199 in the tools.
 
 ## Waiting on Jakob
 
@@ -36,9 +38,9 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [ ] Try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
 
-**1.8.0 on every device** (published 12 November 2026; includes 1.7.0)
+**1.9.0 on every device** (published 12 November 2026; includes 1.7.0 and 1.8.0)
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.8.0, then try "Format 3 and Wikidata (1.7.0)" and "Known sets (1.8.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
+- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.9.0, then try "Format 3 and Wikidata (1.7.0)", "Known sets (1.8.0)" and "Scanner light and Value levels (1.9.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
 - [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
 
 **Before the real Zotero run**
