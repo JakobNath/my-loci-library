@@ -12,7 +12,7 @@ My Loci Library is three things: an app that runs in a browser, a private reposi
 
 - `core/`: pure functions, with no screen, storage or network. The data format, dates, search, sorting, merging, exports. Every rule worth testing lives here, and its tests are in `core/tests/`. The laptop tools use a copy of this folder.
 - `edges/`: one file for each outside system: `storage.js` (the device's own copy, in IndexedDB), `sync-github.js` (GitHub), `lookup-openlibrary.js` and `lookup-googlebooks.js` (book lookups), `camera.js` (scanning), `photo.js` (pictures), `device.js` (this device's settings). If an outside system changes, only its edge changes.
-- `ui/` and `main.js`: the screens. `main.js` holds the app's state, turns the address after "#" into a screen, and hands each screen the actions it may take. The Library and book pages load at once; Add, the entry form, the shelf view, Wishlist, Settings and Value load the first time they are opened, with `styles/screens.css`.
+- `ui/` and `main.js`: the screens. `main.js` holds the app's state, turns the address after "#" into a screen, and hands each screen the actions it may take. The Library and book pages load at once; Add, the entry form (with "Works in this book", `ui/works.js`, at `#/edit/<id>/works`), the shelf view, Wishlist, Settings and Value load the first time they are opened, with `styles/screens.css`.
 
 All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service worker) keeps every file on the device so the app opens with no connection; raising its `VERSION` makes devices fetch a new version. `laptop/covers.html` is a page for the laptop only, which turns covers left in `images/inbox/` into the app's picture sizes.
 

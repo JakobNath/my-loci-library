@@ -37,7 +37,7 @@ function contentsHtml(entry, style) {
     return `<li class="piece"><span class="piece-title">${escapeHtml(work.title)}</span><span class="piece-date${dating ? '' : ' is-missing'}">${date}</span>`
       + `<span class="piece-meta">${escapeHtml(meta)}</span></li>`;
   });
-  return `<section class="block"><h2 class="block-title">Contents · ${dateLineHtml(entry, style)}</h2><ol class="contents">${pieces.join('')}</ol></section>`;
+  return `<section class="block"><h2 class="block-title">Contents · ${dateLineHtml(entry, style)}</h2><ol class="contents">${pieces.join('')}</ol><a class="link" href="#/edit/${escapeHtml(entry.id)}/works">Edit the works</a></section>`;
 }
 
 function copiesHtml(entry, currency) {

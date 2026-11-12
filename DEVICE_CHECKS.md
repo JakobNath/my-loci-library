@@ -91,3 +91,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 - [ ] Phone: scan a Loeb volume (or type its ISBN, such as 9780674996076 for The Apostolic Fathers I). "Found on" should name HathiTrust, and the next step should offer that volume's works (I Clement, II Clement, Ignatius, Polycarp, Didache). Tap "Back to scanning" if you don't want to keep it.
 - [ ] Phone: Settings › Advanced: "And in HathiTrust" can be turned off and on; with it off, the same scan finds the book on Open Library only.
+
+## Collections made easy (1.5.0)
+
+- [ ] Phone: add a collection no catalog lists (a Library of America or Everyman volume). "Is this the book?" should offer "Yes, and it holds several works"; tap it, type two or three works, one per line, then pick a language and a category once. On the book's page, tap "Edit the works": each work should already have that language and category.
+- [ ] Phone: on "Works in this book", type a date for one work and an original title for another, and fill "Same for all" with a tag. Save: the book page should show the dates, and every work the tag.
+- [ ] Phone: open Edit on a book holding one work, tick "This book holds several works", list two works and save. Settings › Trash should not show the old work as a book (it is a work, not a book), and searching its old title should find only the new works.

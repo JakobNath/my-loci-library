@@ -58,9 +58,17 @@ function contributorRowHtml(person) {
 /**
  * Draw the form for a new book (#/new), one bought from the wishlist
  * (#/new/<wishlist item id>), or an existing one (#/edit/<edition id>).
+ * "Works in this book" (#/edit/<edition id>/works) is its own page, ui/works.js,
+ * reached through this screen so the app's start-up code does not grow.
  */
 export function render(container, state, actions) {
-  const entry = state.route.name === 'edit' ? state.library.entries.find(item => item.id === state.route.id) : null;
+  const [routeId, part] = state.route.id.split('/');
+  if (state.route.name === 'edit' && part === 'works') {
+    import('./works.js').then(module => module.render(container, state, actions))
+      .catch(error => actions.showNote(`This page could not be loaded (${error.message}). Check the connection once; after that it works offline.`));
+    return;
+  }
+  const entry = state.route.name === 'edit' ? state.library.entries.find(item => item.id === routeId) : null;
   const wishRecord = state.route.name === 'new' ? state.records.get(state.route.id) : null;
   const wish = wishRecord && wishRecord.type === 'wishlist' ? formFromWish(wishRecord) : null;
   const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], medium: 'physical' };
@@ -78,6 +86,7 @@ export function render(container, state, actions) {
   const titleHtml = entry ? 'Edit book' : wish ? 'Add the book you bought' : 'Add a book';
   const historyRowsHtml = (copy.valueHistory || []).map(point => `<label class="check"><input type="checkbox" name="dropHistory" value="${attr(point.date)}"> Delete ${escapeHtml(`${point.date}: ${point.value}`)}</label>`).join('');
   const historyHtml = historyRowsHtml ? `<details class="small"><summary>Value history</summary>${historyRowsHtml}</details>` : '';
+  const worksLinkHtml = isAnthology ? `<a class="link" href="#/edit/${attr(entry.id)}/works">Give each work its original title, language, date, category and tags</a>` : '';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   container.innerHTML = `${backHtml}
     <div class="page-head"><h1 class="page-title">${titleHtml}</h1><p class="page-meta">Fill in what you know; everything but the title can wait.</p></div>
@@ -90,6 +99,7 @@ export function render(container, state, actions) {
         <div data-single${isAnthology ? ' hidden' : ''}>${fieldHtml('Authors (separate with ;)', 'authors', authorsText, { list: 'authors', wide: true })}</div>
         <label class="field" data-several${isAnthology ? '' : ' hidden'}>Contents: one work per line, as "Author — Title — date" (author and date optional). A table of contents can be pasted here.
           <textarea name="contents" rows="8">${escapeHtml(contentsText)}</textarea></label>
+        ${worksLinkHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
       <fieldset data-single${isAnthology ? ' hidden' : ''}><legend>The work</legend>
@@ -136,7 +146,9 @@ export function render(container, state, actions) {
   container.onsubmit = async event => {
     event.preventDefault();
     const existing = entry ? { edition: entry.edition, copy: entry.copies[0] || null, works: entry.works } : null;
-    const result = recordsFromForm(readForm(form), existing, { newId: actions.newId, now: actions.now(), today: actions.today(), authors: [...state.library.authorsById.values()] });
+    // A work this book no longer lists is trashed only when no other book holds it.
+    const usedElsewhere = workId => state.library.entries.some(other => other !== entry && other.edition.contents.some(piece => piece.work === workId));
+    const result = recordsFromForm(readForm(form), existing, { newId: actions.newId, now: actions.now(), today: actions.today(), authors: [...state.library.authorsById.values()], usedElsewhere });
     const problems = form.querySelector('.problems');
     if (result.problems.length) {
       problems.textContent = result.problems.join(' ');

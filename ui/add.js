@@ -204,6 +204,7 @@ export function render(container, state, actions) {
       // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
+      severalChosen: false, // "Yes, and it holds several works", when no source listed them
       fixing: !found.source, // not found online: the details are asked for at once
     };
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
@@ -248,11 +249,12 @@ export function render(container, state, actions) {
     return [
       'book',
       setInfo ? 'volume' : null,
-      book.contentsOffered ? 'contents' : null,
+      book.contentsOffered || book.severalChosen ? 'contents' : null,
       single && book.works.length ? 'work' : null,
       single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
-      ownWork ? 'language' : null,
-      ownWork ? 'subjects' : null,
+      // A collection is asked its language, category and tags once, for all its new works.
+      ownWork || !single ? 'language' : null,
+      ownWork || !single ? 'subjects' : null,
       book.hasTranslator || (language && !isEnglish(language)) ? 'translation' : null,
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
@@ -334,15 +336,18 @@ export function render(container, state, actions) {
       <div class="found">${coverHtml}<div><p class="found-title">${escapeHtml(found.title)}</p><p class="found-sub">${escapeHtml(found.subtitle)}</p>
         <p class="found-meta">${detailsHtml}</p><p class="found-meta">${peopleHtml}</p></div></div>
       ${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. Tap "Fix details" to add.`)}</p>` : ''}
-      <div class="choices">${choiceHtml('yes', 'Yes, this is it')}${choiceHtml('fix', 'Fix details', missing.length ? `Add the ${missing.join(', ')}` : 'Correct the title, author or year')}
+      <div class="choices">${choiceHtml('yes', 'Yes, this is it')}${book.contentsOffered ? '' : choiceHtml('several', 'Yes, and it holds several works', 'Collected works or an anthology: list them next')}${choiceHtml('fix', 'Fix details', missing.length ? `Add the ${missing.join(', ')}` : 'Correct the title, author or year')}
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
 
-  // 2. A collection of works? Only when a record lists contents.
+  // 2. A collection of works? When a record lists contents, or the person said so.
   function contentsStep() {
     const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
-    return `<h2 class="step-title">Is this a collection of works?</h2>
-      <p class="step-hint">The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.</p>
+    const hint = book.contentsOffered
+      ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
+      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC"). A table of contents can be pasted and tidied here.';
+    return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
+      <p class="step-hint">${escapeHtml(hint)}</p>
       <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>
         <div class="choices">${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
@@ -472,7 +477,8 @@ export function render(container, state, actions) {
     readFields();
     if (action === 'back') return back();
     if (action === 'fix') { book.fixing = true; return drawStep(); }
-    if (action === 'yes' || action === 'next') { book.fixing = false; return next(); }
+    if (action === 'yes' || action === 'next') { book.fixing = false; if (action === 'yes') book.severalChosen = false; return next(); }
+    if (action === 'several') { book.fixing = false; book.severalChosen = true; return next(); }
     if (action === 'done') {
       if (book.step === 'book' && !book.found.title) return drawStep();
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
@@ -529,7 +535,7 @@ export function render(container, state, actions) {
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       work: {
-        title: '', originalTitle: isEnglish(book.language) ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
+        title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, working: true }],
       },
       copy: { binding: book.binding, location: book.location, acquired: copy.acquired, price: number(copy.price), value: number(copy.value), status: 'owned', markings: copy.markings, notes: copy.notes },

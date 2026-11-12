@@ -51,11 +51,15 @@ export function languageStepHtml(book) {
   const workTitle = book.work && book.work.workTitle;
   const suggestionHtml = foreign && workTitle && workTitle !== book.originalTitle && normalizeForSearch(workTitle) !== normalizeForSearch(book.found.title)
     ? `<p class="step-hint">${escapeHtml(`Open Library's title for the work: ${workTitle}`)} <button type="button" class="chip" data-action="original-title">Use it</button></p>` : '';
-  return `<h2 class="step-title">What language was this work first written in?</h2>
-    <p class="step-hint">The work's own language, not this book's: Latin for a translation of Augustine. Tap one, or type another below.</p>
+  // A collection is asked once for all its works; each work's own original title is given later, in "Works in this book".
+  const many = book.contents !== null;
+  const hint = many ? 'For every work in this book; a work first written in another language can be changed later on the book page, under "Edit the works".'
+    : "The work's own language, not this book's: Latin for a translation of Augustine. Tap one, or type another below.";
+  return `<h2 class="step-title">${escapeHtml(many ? 'What language were these works first written in?' : 'What language was this work first written in?')}</h2>
+    <p class="step-hint">${escapeHtml(hint)}</p>
     <div class="chips">${chipsHtml}</div>
     <form class="form">${fieldHtml('Another language', 'originalLanguage', other, { help: true })}
-      ${foreign ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml : ''}
+      ${foreign && !many ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml : ''}
       ${navHtml()}</form>`;
 }
 
@@ -72,7 +76,7 @@ export function subjectsStepHtml(book, choices) {
   const tagsHtml = tags.map(tag => chipHtml('tag', tag, book.tags.includes(tag))).join('');
   const tagListHtml = `<datalist id="tagList">${choices.tags.map(tag => `<option value="${attr(tag)}">`).join('')}</datalist>`;
   return `<h2 class="step-title">Category and tags</h2>
-    <p class="step-hint">One broad group for the work, and the topics it is about. Every edition of the work shares them. Both can wait.</p>
+    <p class="step-hint">${escapeHtml(book.contents !== null ? 'For every work in this book: one broad group, and the topics they are about. Each work can be given its own later, under "Edit the works". Both can wait.' : 'One broad group for the work, and the topics it is about. Every edition of the work shares them. Both can wait.')}</p>
     <form class="form">
       ${categoriesHtml ? `<div class="field">Category<div class="chips">${categoriesHtml}</div></div>` : ''}
       ${fieldHtml(categoriesHtml ? 'Or a new category' : 'Category', 'category', '', { help: true })}

@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.4.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 11 November 2026 (app version 1.5.0).
 
 ## Where things stand
 
@@ -15,6 +15,7 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 - **Version 1.2.0** (second tour fixes, 11 November 2026): straight spine photos, steadier magnifiers and a preview in the photo editor; new Library controls; covers that keep their own shape; a tighter grid caption; wishlist covers in search; an "i" beside unclear fields and a guide in Settings ("How the catalog is organized").
 - **Version 1.3.0** (second tour, part B: adding books, 11 November 2026). Adding asks what only a person knows: the original language and title, category and tags, the translation, and this copy (acquired, price, value, markings, notes). The laptop fills catalog facts, and "Needs details" (a Library filter, a line on the book page, a count in Settings) shows what is still empty. "Add a set of volumes" takes a set's facts once, then volumes scanned or pasted. "Arrange" in the shelf view moves a book along its shelf. The start-up code is 99.6 KB of 100 (407 bytes free), after moving the picture view's and filter panel's styles to `screens.css`.
 - **Version 1.4.0** (phase 15, step 3, 11 November 2026): adding a book also asks HathiTrust, so a Loeb volume's works are offered while adding (The Apostolic Fathers I: I Clement, II Clement, Ignatius, Polycarp, Didache), and a volume of a set is recorded with its set and volume number. The laptop asks HathiTrust too, names itself to every source, rests a source that refuses, and has a `check-sources` command.
+- **Version 1.5.0** (phase 15, step 5, 11 November 2026): "Yes, and it holds several works" when adding; a collection's language, category and tags asked once for all its works; "Works in this book" ("Edit the works" on the book page) gives each work its original title, language, date, category and tags; a work a book no longer lists goes to the trash unless another book holds it. Start-up code: 219 bytes free.
 
 All tests pass: 149 in the app (and 137 on the self-test page), 157 in the tools.
 
@@ -73,7 +74,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    2. [x] Source groundwork (tools only, 11 November 2026): every request names the tools, the addresses sit together in `loci-enrich/sources.mjs`, a refusing source rests for the rest of the run, and `check-sources` compares live answers with the recorded ones. The phone has nothing to change until it asks Wikidata (step 7), so there was no app release.
    3. [x] HathiTrust on the phone and the laptop: contents read by volume and set records (released as 1.4.0, 11 November 2026). The free-scan link moved to step 6, since it needs the HathiTrust ID that format 3 stores.
    4. [x] The laptop's source files (tools only, 11 November 2026): raw answers in `integrations/answers/`, the source of each value in `enrich.json`, and books without an ISBN asked by LCCN or OCLC number.
-   5. [ ] Collections made easy: "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book", unused works trashed (1.5.0).
+   5. [x] Collections made easy (released as 1.5.0, 11 November 2026): "Yes, and it holds several works", language, category and tags once for a collection, "Works in this book" ("Edit the works" on the book page), unused works trashed.
    6. [ ] Data format 3, on a branch: IDs, other titles, pieces, "cite", found contents (1.6.0, then the tools).
    7. [ ] Wikidata: dates with one tap, original and other titles, IDs, "Possibly the same as", original-text marker (1.7.0).
    8. [ ] Known sets: the lists' format, matching, set gaps, Logos matching, and the Great Books (1990) list (1.8.0).
