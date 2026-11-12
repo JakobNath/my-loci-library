@@ -9,6 +9,7 @@ import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
+import { parseKnownSet } from '../core/known-sets.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const SIZE_BUDGET = 100 * 1024; // PLAN.md, "Small and fast"
@@ -154,6 +155,8 @@ test('every known set\'s list is in sets/, named in ui/known-sets.js and kept by
   assert.deepEqual(named.sort(), inFolder.sort(), 'name each list in KNOWN_SET_FILES');
   const sw = read('sw.js');
   assert.deepEqual(named.filter(file => !sw.includes(`'${file}'`)), [], 'add these to FILES in sw.js');
+  // A list with a line that cannot be read is not used at all (ui/known-sets.js), so each must read cleanly.
+  for (const file of inFolder) assert.deepEqual(parseKnownSet(read(file)).problems, [], file);
 });
 
 test('the size check counts code, not comments, and follows imports', () => {
