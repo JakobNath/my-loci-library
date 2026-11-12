@@ -165,3 +165,7 @@ button.menu-row:first-child { border-top: 0; }
 .guide p, .guide-points { margin: 0 0 var(--space-3); color: var(--ink-2); line-height: 1.55; }
 .guide-points { padding-left: 1.2em; }
 .guide-points li + li { margin-top: var(--space-2); }
+
+/* The main button of a form. Only screens loaded when opened have one (Add, the entry form, Settings,
+   "Works in this book"), so it moved here from app.css on 12 November 2026 to make room at start-up. */
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }

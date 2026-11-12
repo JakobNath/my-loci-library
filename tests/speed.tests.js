@@ -12,6 +12,7 @@ import { recordsFromForm } from '../core/entry.js';
 import { SHARED_DEFAULTS } from '../core/settings.js';
 import * as libraryScreen from '../ui/library.js';
 import * as bookScreen from '../ui/book.js';
+import { parseKnownSet, findKnownVolume } from '../core/known-sets.js';
 
 const BOOKS = 10000;
 const NOW = '2026-11-09T12:00:00Z';
@@ -73,8 +74,8 @@ function deviceIsSlow() {
 const IS_PHONE = matchMedia('(pointer: coarse)').matches;
 const SLOW = IS_PHONE || deviceIsSlow();
 const BUDGET = SLOW
-  ? { label: 'phone targets', start: 1000, search: 100, book: 100, sort: 500, scroll: 50, save: 200 }
-  : { label: 'laptop budgets', start: 300, search: 10, book: 16, sort: 100, scroll: 16, save: 50 };
+  ? { label: 'phone targets', start: 1000, search: 100, book: 100, sort: 500, scroll: 50, save: 200, list: 50 }
+  : { label: 'laptop budgets', start: 300, search: 10, book: 16, sort: 100, scroll: 16, save: 50, list: 10 };
 
 function check(ms, limit, what) {
   if (ms > limit) throw new Error(`${what} took ${ms.toFixed(1)} ms; the limit is ${limit} ms (${BUDGET.label})`);
@@ -122,6 +123,15 @@ export const tests = [
       const queries = ['p', 'po', 'poem', 'poem 1', 'evening', 'raven'];
       const slowest = Math.max(...queries.map(query => time(() => searchPieces(pieced, query)).ms));
       return check(slowest, BUDGET.search, 'the slowest search of pieces');
+    },
+  },
+  {
+    // Read once when the add screen opens; finding a volume follows each scan of the set.
+    name: 'reading the Great Books list and finding a volume in it (10 ms laptop, 50 ms phone)',
+    async fn() {
+      const text = await fetch('../sets/great-books-1990.txt').then(response => response.text());
+      const { ms } = time(() => findKnownVolume([parseKnownSet(text)], { isbn: '9780852295311', set: 'Great Books of the Western World', volume: '54' }));
+      return check(ms, BUDGET.list, 'reading the list');
     },
   },
   {

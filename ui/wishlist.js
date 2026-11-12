@@ -3,6 +3,9 @@
 // an Amazon link, whose ISBN is read from the address); the details and cover
 // come from Open Library, then Google Books. "I bought it" opens the normal
 // entry form filled from the item, and the item then leaves the wishlist.
+// Above the list, "set gaps": for each known set we hold a volume of, the
+// volumes we lack, with one tap to put them on the wishlist (PLAN.md,
+// "Library and Wishlist views"), for a used bookstore.
 
 import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
@@ -12,6 +15,8 @@ import { trashRecord } from '../core/trash.js';
 import { searchOpenLibrary, lookUpOpenLibrary, downloadOpenLibraryCover, openLibraryCoverUrlById } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { fillImages } from './images.js';
+import { setGaps, wishesForGaps } from '../core/known-sets.js';
+import { loadKnownSets } from './known-sets.js';
 
 const SORTS = [['added', 'Newest'], ['title', 'Title'], ['author', 'Author']];
 const sortKey = {
@@ -81,6 +86,25 @@ export function render(container, state, actions) {
   let candidates = [];
   let searchTimer = null;
   let asked = 0; // the newest search; older answers arriving late are ignored
+  let knownSets = []; // the known sets' lists, drawn as set gaps once read
+  loadKnownSets().then(sets => { knownSets = sets; if (sets.length) draw(); });
+
+  // Each known set we hold at least one volume of, with the volumes missing.
+  function gaps() {
+    return knownSets.map(set => {
+      const held = state.library.entries.filter(entry => entry.edition.set && normalizeForSearch(entry.edition.set) === normalizeForSearch(set.set)).map(entry => entry.edition.volume || '');
+      return { set, held, missing: held.length ? setGaps(set, held).missing : [] };
+    }).filter(gap => gap.missing.length);
+  }
+
+  function gapsHtml() {
+    return gaps().map(({ set, missing }) => {
+      const shown = missing.slice(0, 12).join(', ') + (missing.length > 12 ? ', …' : '');
+      const titles = set.volumes.filter(volume => missing.includes(volume.label)).map(volume => (volume.title ? `${volume.label} ${volume.title}` : volume.label)).join('; ');
+      return `<details class="block"><summary>${escapeHtml(`${set.set}: ${set.volumes.length - missing.length} of ${set.volumes.length} held · missing ${shown}`)}</summary>`
+        + `<p class="step-hint">${escapeHtml(titles)}</p><button class="btn" data-action="gaps" data-value="${escapeHtml(set.set)}">Put the missing on the wishlist</button></details>`;
+    }).join('');
+  }
 
   function draw() {
     const sort = state.device.wishSort || state.settings.defaultSort.wishlist;
@@ -88,10 +112,12 @@ export function render(container, state, actions) {
     const sortHtml = SORTS.map(([value, label]) => `<button class="chip${value === sort ? ' is-on' : ''}" data-action="sort" data-value="${value}">${escapeHtml(label)}</button>`).join('');
     const listHtml = items.map(item => (editing === item.id ? formHtml(item, null) : itemHtml(item))).join('');
     const countHtml = escapeHtml(`${items.length} wanted`);
+    const setGapsHtml = editing ? '' : gapsHtml();
     const newHtml = editing === 'find' ? FIND_HTML : editing === 'new' ? formHtml(null, draft) : '';
     const addButtonHtml = editing === 'find' || editing === 'new' ? '' : '<button class="btn btn-primary" data-action="find">Add to wishlist</button>';
     container.innerHTML = `<div class="page-head"><h1 class="page-title">Wishlist</h1><p class="page-meta">${countHtml}</p></div>
       <div class="toolbar"><div class="chips">${sortHtml}</div>${addButtonHtml}</div>
+      ${setGapsHtml}
       ${newHtml}
       ${listHtml || (editing ? '' : '<p class="empty">Nothing on the wishlist yet.</p>')}`;
     fillImages(container, actions.imageUrl);
@@ -203,6 +229,17 @@ export function render(container, state, actions) {
       const candidate = candidates[Number(value)];
       // Each result is one edition: with its ISBN, its full details and cover are looked up.
       useBook({ isbn: candidate.isbn || undefined, title: candidate.title, authors: candidate.authors, cover: candidate.cover });
+      return;
+    }
+    if (action === 'gaps') {
+      // One wishlist item per missing volume; a volume already wished for is not added again.
+      const gap = gaps().find(item => item.set.set === value);
+      if (!gap) return;
+      const wishes = wishesForGaps(gap.set, gap.missing, state.library.wishlist.map(wish => wish.item));
+      const records = wishes.map(values => wishFromForm(values, null, { newId: actions.newId, now: actions.now() }).record);
+      if (!records.length) { actions.showNote('Every missing volume is already on the wishlist.'); return; }
+      if (await actions.saveRecords(records)) actions.showNote(`Put ${records.length} missing ${records.length === 1 ? 'volume' : 'volumes'} of ${gap.set.set} on the wishlist.`);
+      draw();
       return;
     }
     if (action === 'remove') {

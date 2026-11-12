@@ -160,7 +160,7 @@ export function renderSearch(container, state, actions) {
     + `<span class="row-author">${escapeHtml(item.authors.join(', '))} <span class="badge badge-wish">Wishlist</span></span></span><span></span></a>`).join('');
   // Pieces inside books (poems, hymns, sermons) stay folded under the results, so everyday searches stay plain.
   const inside = searchPieces(state.library, state.query);
-  const insideHtml = inside.length ? `<details class="block"><summary>${escapeHtml(`Also inside ${new Set(inside.map(hit => hit.entry)).size} books: ${inside.slice(0, 2).map(hit => `${hit.piece.title} — ${hit.entry.edition.title}`).join('; ')}${inside.length > 2 ? '; …' : ''}`)}</summary>`
+  const insideHtml = inside.length ? `<details class="block"><summary>${escapeHtml(`Also inside books: ${inside[0].piece.title} — ${inside[0].entry.edition.title}${inside.length > 1 ? `, and ${inside.length - 1} more` : ''}`)}</summary>`
     + inside.map(hit => `<a class="row" href="#/book/${escapeHtml(hit.entry.id)}"><span class="row-main"><span class="row-title">${escapeHtml(hit.piece.title)}</span><span class="row-author">${escapeHtml(`in ${hit.entry.edition.title}`)}</span></span></a>`).join('') + '</details>' : '';
   container.innerHTML = `<div class="page-head"><h1 class="page-title">Search</h1><p class="page-meta">${countHtml}</p></div>
     <div class="list">${resultsHtml}${wishesHtml}</div>${insideHtml}`;

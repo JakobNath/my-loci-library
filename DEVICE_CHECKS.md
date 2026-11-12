@@ -105,3 +105,9 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: scan a single work by a known author (a Penguin Classics novel). On "When was this work written?" the first suggestion should be Wikidata's date, labelled "(Wikidata)".
 - [ ] Phone: Settings › Advanced: turn "Original dates and titles from Wikidata" off; adding the same kind of book should then offer no Wikidata date. Turn it back on.
 - [ ] Phone, airplane mode on: adding a book still works, and the contents step says Wikidata could not be reached instead of waiting.
+
+## Known sets (1.8.0)
+
+- [ ] Phone: scan a volume of Great Books of the Western World (the 1990 second edition, 60 volumes; its set ISBN is 0-85229-531-6). "Which volume of Great Books of the Western World is this?" should come first; tap the number on the spine. "Is this the book?" should then show that volume's title, and the next step its works from the list. Save, and check the book page lists the works.
+- [ ] Phone, airplane mode on: the same scan still offers the volumes (the list is kept on the phone), though nothing is found online.
+- [ ] Phone: Wishlist. With one or more Great Books volumes in the catalog, a line "Great Books of the Western World: … held · missing …" should appear above the list. Open it and tap "Put the missing on the wishlist"; each missing volume appears once. Tap it again: it should say they are already on the wishlist. (Remove the items afterwards if you don't want them.)

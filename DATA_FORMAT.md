@@ -299,6 +299,30 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
 - Keys are written in the order shown. A key missing from the file takes the value shown here.
 - Categories, tags, series, places and the like are not stored here: they are the values found on the records, and renaming one edits those records.
 
+## sets/ (in the app, not in the catalog)
+
+Known sets: checked contents lists of large sets (Great Books of the Western World, Luther's Works, Loeb), one plain text file each in the app's `sets/` folder, public like the app, since titles and dates are facts. Adding a volume of a known set takes its works from the list (PLAN.md, "Anthologies"). They are read by `core/known-sets.js`. A line starting with `#` is a note.
+
+```
+set: Great Books of the Western World
+publisher: Encyclopaedia Britannica
+place: Chicago
+year: 1990
+edition: 2nd ed.
+isbn: 9780852295311
+checked: 2026-11-12 Jakob Nath
+
+volume: 6 | Plato
+Plato — Euthyphro | Εὐθύφρων | Greek — c. 399–395 BC | trans. Benjamin Jowett | pp. 1–8
+Edgar Allan Poe — The Raven | | English — 1845 | piece
+```
+
+- The set lines give the set's shared facts. An `isbn:` line is an ISBN printed on every volume (Great Books prints one for the whole set); a volume's own ISBNs follow its label and title on its `volume:` line.
+- Each work line is "Author — Title", then, separated by `|`: the original title, "Language — original date" (as a person types a date), and any of `trans. <translator>`, `pp. <pages>` and `piece` (a short work kept inside the book's contents rather than as a work). An empty part keeps its separators.
+- Every list is checked before it is used: each line against two sources, and the disagreements and a sample by a person. The person then adds the `checked:` line, with the date and their name. Only a list with that line has its dates filled in without another tap (each marked "from the <set> list" in its dating's note); a list without it offers its dates, and a person accepts them with one tap, as for Wikidata's.
+- A list with any line that cannot be read is not used at all, since a half-read list could give a volume the wrong works. The tests read every list in `sets/`.
+- Each list is named in `ui/known-sets.js` and kept by the service worker, so it works offline. The laptop tools keep a copy, made by `update-core`.
+
 ## catalog.json
 
 All records in one file, so a device can load the catalog with one download:
