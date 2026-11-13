@@ -74,6 +74,8 @@ Anything red names the file to look at. Fix it in `core/` first if the rule live
 
 **The laptop is stuck.** A laptop tool stops with "The laptop and a phone changed the same record at the same time". This is rare: it needs a phone and the laptop to change the very same book within the same few minutes. Nothing is lost. The laptop's change is the last commit in its copy of the data repository; the phone's is on GitHub. The simplest way out is to let the phone's version win and run the tool again: in the data repository's folder on the laptop, run `git fetch`, then `git reset --hard origin/main`. That discards only the laptop's one unsent commit (usually book data that `loci-enrich` will fill again on its next run). Then start the tool again.
 
+**"… is working on the catalog."** A laptop tool stops with this when another tool (often the scheduled backup) is running: only one at a time may change the catalog. Wait for it to finish and start again. The lock is the file `.git/loci-tools.lock` in the data repository; one left by a tool that crashed is taken over by itself, and one older than 12 hours always is. If a tool still refuses and nothing is running, delete that file.
+
 ## Verified approaches
 
 Results of the phase 4 experiments.

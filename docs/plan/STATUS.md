@@ -35,7 +35,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Versions 1.14.2 to 1.14.5** (the first whole-project audit, 13 November 2026). 1.14.2: opening a book and saving it again no longer loses its pieces, dating notes, translators or a work's own title, and two works with one title by different authors stay two. 1.14.3: a sync no longer drops what is saved while it runs, syncs again when the app comes back to the front, and redraws the screen only when it brought something; a double tap no longer saves twice; notes no longer hide each other; failures no screen caught are shown; the size budget is no longer enforced, only printed. 1.14.4: leaving a half-added book or a changed form asks first; the scanner rests while a question or form is open and does not read the same book again at once; the Library returns to where it was after a book. 1.14.5: search orders every match before cutting the list and finds a book by publisher, year, volume or shelf; "Pages" sorts by count; of two books added the same day the later is first; dates such as "43 BC – 17" are read; a pasted contents line keeps its subtitle. The laptop tools were made safe against a phone saving during a run, a failed data fill, a partial "whole library" Logos export, and overwriting books already in Zotero. The audit's findings, what is still open, and the order of work are in the private workspace's `handoffs/2026-11-13-audit.md`; that order comes before the "Next tasks" below.
 
-All tests pass: 224 in the app (and 207 on the self-test page), 254 in the tools.
+The same day the tools gained the rest of the audit's safety fixes: a book a source missed is asked again within a week, a corrected ISBN clears what the old one filled, and only one tool at a time changes the catalog.
+
+All tests pass: 224 in the app (and 207 on the self-test page), 262 in the tools.
 
 ## Waiting on Jakob
 
