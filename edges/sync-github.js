@@ -18,7 +18,7 @@ import { recordToFileText, FORMAT_VERSION, migrate } from '../core/records.js';
 import { mergeRecords } from '../core/merge.js';
 
 const API = 'https://api.github.com';
-const FOLDERS = { work: 'works', edition: 'editions', copy: 'copies', author: 'authors', wishlist: 'wishlist' };
+const FOLDERS = { work: 'works', edition: 'editions', copy: 'copies', author: 'authors', wishlist: 'wishlist', set: 'sets' };
 const TYPE_OF_FOLDER = Object.fromEntries(Object.entries(FOLDERS).map(([type, folder]) => [folder, type]));
 const PARALLEL = 6; // downloads at once: fast, and gentle on GitHub's limits
 

@@ -148,3 +148,19 @@ test('a catalog of version-1 files is read as the current version, and only edit
   assert.deepEqual([sent.format, sent.subjects, sent.pages], [FORMAT_VERSION, ['Christian saints'], 'xxviii, 311']);
   assert.equal(JSON.parse(github.fileText(recordPath(editions[1]))).format, 1, 'a record nobody edited keeps its file as it was');
 });
+
+test('a set record goes up in sets/ and reaches the other device; one in catalog.json needs no download', async () => {
+  const github = fakeGitHub();
+  const set = newRecord('set', ids(700), T0, { title: 'Luther\'s Works', shortTitle: 'LW', volumes: 55, value: 900 });
+  github.commitFiles({ 'catalog.json': JSON.stringify({ format: 1, built: T0, works: [], editions: [], copies: [], authors: [], wishlist: [], sets: [set] }), [recordPath(set)]: recordToFileText(set) });
+  assert.equal(recordPath(set), `sets/${ids(700)}.json`);
+  const phone = device(github);
+  await phone.pull();
+  assert.equal(github.calls.filter(call => call.includes('/git/blobs/')).length, 0, 'taken from catalog.json');
+  assert.equal(phone.state.local.get(ids(700)).shortTitle, 'LW');
+  phone.edit(withField(phone.state.local.get(ids(700)), 'valueAsSet', true, '2026-11-12T09:00:00Z'));
+  await phone.send();
+  const laptop = device(github);
+  await laptop.pull();
+  assert.equal(laptop.state.local.get(ids(700)).valueAsSet, true);
+});
