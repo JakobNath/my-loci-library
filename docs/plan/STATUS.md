@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.12.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.13.0).
 
 ## Where things stand
 
@@ -27,7 +27,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.12.0** (phase 15, step 12, first list, 12 November 2026): the Luther's Works list (American Edition, volumes 1–55, 194 works, each volume's own ISBN), not yet checked by Jakob, so its dates are offered rather than filled in. The laptop tools gained the admin page, the shelf planner and printed shelf lists the same day.
 
-All tests pass: 186 in the app (and 174 on the self-test page), 217 in the tools.
+- **Version 1.13.0** (his wife's issues, part A, 12 November 2026): no more "24–5" for Dumas (dates written year first are read right) and no "first published 1479" for Ovid (a printing by 1500 is never offered as the original date); the date step says when Wikidata did not answer; "Choose a saved photo" beside every "Take a photo"; a Pictures section on the book page (take, choose or remove the cover and spine); the spine lined up by a dot at its top and foot and its sides; "Not all the same" languages for a collection. It also published the 1992 Greek tragedies list, with Jakob's yes (unchecked, so its dates are only offered).
+
+All tests pass: 192 in the app (and 180 on the self-test page), 223 in the tools.
 
 ## Waiting on Jakob
 
@@ -85,7 +87,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 **The order from 12 November 2026** (agreed with Jakob):
 
 1. His wife's issues with the app (reported 12 November 2026; findings in the workspace's `handoffs/2026-11-12-wife-issues.md`, Jakob's choices in `docs/decisions/`), in three sessions, one after another:
-   - A. [ ] No format change: date suggestions (Dumas's ISO dates, no "first published" for printings up to 1500), "Choose a saved photo", a Pictures section on the book page, the spine outline by top and bottom dots, "Not all the same" languages for a collection. Release 1.13.0.
+   - A. [x] Released as 1.13.0, 12 November 2026. No format change: date suggestions (Dumas's ISO dates, no "first published" for printings up to 1500), "Choose a saved photo", a Pictures section on the book page, the spine outline by top and bottom dots, "Not all the same" languages for a collection. Release 1.13.0.
    - B. [ ] Data format 4, on a branch: bindings from three lists in Settings (binding, material, extras), a set record (title, short form AE/LW, editors, volumes, price, value, notes), the Value page counting a set once, old binding text read into the lists. Plan mode, xhigh effort.
    - C. [ ] Luther's Works volumes 56 on (the newer Concordia volumes) added to `sets/luthers-works.txt`.
 2. Phase 15 step 10: Zotero sections only for works marked "Cite this work". Approved by Jakob on 12 November 2026.
@@ -97,12 +99,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 The longer list below is the full record.
 
-**Before any release:** `main` holds unreleased commits of 12 November 2026:
-
-- the 1992 Greek tragedies list;
-- the range dates in the Great Books and Luther's Works lists.
-
-Jakob wants the Greek tragedies list released only after his check. A release before then should either tell him that it carries the list too (harmless: its dates are only offered with one tap) and ask, or leave `sets/complete-greek-tragedies-1992.txt` unregistered for that release.
+**Released in 1.13.0:** the 1992 Greek tragedies list and the range dates in the Great Books and Luther's Works lists went out with 1.13.0, with Jakob's yes. The Greek tragedies list is still unchecked, so its dates are only offered until he adds its `checked:` line.
 
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
 0a. **Phase 15: anthologies and lasting sources** (planned with Jakob on 11 November 2026; PLAN.md, "Anthologies", "Original dates", "Book data", "Search"; decisions in `docs/decisions/book-data.md` and the others of that date; the full plan, live research answers and Jakob's 20 decisions in `handoffs/2026-11-12-sources-and-anthologies-phases.md`). Steps, ordered by risk; each is one session:
