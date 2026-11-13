@@ -94,6 +94,13 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 The longer list below is the full record.
 
+**Before any release:** `main` holds unreleased commits of 12 November 2026:
+
+- the 1992 Greek tragedies list;
+- the range dates in the Great Books and Luther's Works lists.
+
+Jakob wants the Greek tragedies list released only after his check. A release before then should either tell him that it carries the list too (harmless: its dates are only offered with one tap) and ask, or leave `sets/complete-greek-tragedies-1992.txt` unregistered for that release.
+
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
 0a. **Phase 15: anthologies and lasting sources** (planned with Jakob on 11 November 2026; PLAN.md, "Anthologies", "Original dates", "Book data", "Search"; decisions in `docs/decisions/book-data.md` and the others of that date; the full plan, live research answers and Jakob's 20 decisions in `handoffs/2026-11-12-sources-and-anthologies-phases.md`). Steps, ordered by risk; each is one session:
    1. [x] Decisions into the documents: PLAN.md, the CLAUDE.md copies, decisions, `SOURCES.md`, the yearly check (11 November 2026).
