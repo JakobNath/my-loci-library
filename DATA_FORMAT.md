@@ -211,7 +211,7 @@ Each entry:
 | `extent` | text | `complete`, `selections`, or a free range: "Books I–IV". |
 | `translator` | text or null | Only when this piece's translator differs from the edition's. |
 | `pages` | text or null | Where it is in the book: "1–55". |
-| `cite` | true or false | Send this work to Zotero as a section of the book (version 3). |
+| `cite` | true or false | Planned as "send this work to Zotero as a section of the book" (version 3). Not used since 13 November 2026, when Zotero was given books only; always false, and kept so records stay the same shape. |
 
 A **piece** holds `title` (required), `author` (a name as typed, or null), `originalTitle` (or null) and `date` (the original date as typed or listed, read by the date parser when shown, or null). A library volume of short poems or sermons would otherwise make hundreds of works, each to be dated and categorized; a piece can be made a full work at any time, and then its entry holds the work's ID instead.
 
