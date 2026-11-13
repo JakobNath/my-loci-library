@@ -1,31 +1,35 @@
 // "Adding a set" on the add screen (PLAN.md, "Batch add"): the set's shared
 // facts are given once, then its volumes are scanned one by one or pasted as
-// a list. Each volume stays its own edition, with the set's title and its
-// volume label. This file draws the set's screens and reads them; ui/add.js
-// runs the flow and saves.
+// a list, and at the end what the whole set cost and is worth. Each volume
+// stays its own edition, with the set's title and its volume label, linked to
+// the set's own record (data format 4). This file draws the set's screens and
+// reads them; ui/add.js runs the flow and saves.
 
 import { escapeHtml } from '../core/html.js';
 import { fieldHtml, choiceHtml, navHtml } from './add-questions.js';
+import { bindingChoicesHtml } from './binding-choices.js';
+import { helpHtml } from './field-help.js';
 
-/** The set's facts, asked once (the set's binding is suggested from the bindings list). */
-export function setFormHtml(set) {
+/** The set's facts, asked once; its binding is chosen from the three lists in Settings. */
+export function setFormHtml(set, settings) {
   return `<h2 class="step-title">Adding a set</h2>
     <p class="step-hint">What every volume shares, given once: Luther's Works, or Great Books of the Western World. Each volume is then its own book, with its own photos and shelf.</p>
     <form class="form">${fieldHtml('Set title', 'set', set.title, { help: true, missing: set.isMissingTitle })}
+      <div class="field-row">${fieldHtml('Short form', 'shortTitle', set.shortTitle, { help: true, hint: 'LW or AE' })}${fieldHtml('Volumes in the set', 'volumes', set.volumes, { type: 'number', hint: 'all of them, not only ours' })}</div>
       <div class="field-row">${fieldHtml('Publisher', 'publisher', set.publisher)}${fieldHtml('Year', 'year', set.year, { type: 'number', hint: 'a volume\'s own year wins when it is found' })}</div>
       ${fieldHtml('Edition', 'editionStatement', set.editionStatement, { help: true })}
       ${fieldHtml('General editors (separate with ;)', 'editors', set.editors.join('; '), { hint: 'Adler for Great Books; Pelikan; Lehmann for Luther\'s Works' })}
-      ${fieldHtml('Binding', 'binding', set.binding, { list: 'bindings', help: true })}
+      ${bindingChoicesHtml(set, settings)}
       ${navHtml('Start adding volumes')}</form>`;
 }
 
-/** The set's facts as typed. */
+/** The set's facts as typed (its binding is read with readBindingChoices). */
 export function readSetForm(stepArea, set) {
   const value = name => stepArea.querySelector(`[name="${name}"]`).value.trim();
   return {
     ...set,
-    title: value('set'), publisher: value('publisher'), year: value('year'), editionStatement: value('editionStatement'),
-    editors: value('editors').split(';').map(name => name.trim()).filter(Boolean), binding: value('binding'),
+    title: value('set'), shortTitle: value('shortTitle'), volumes: value('volumes').replace(/[^\d]/g, ''), publisher: value('publisher'), year: value('year'),
+    editionStatement: value('editionStatement'), editors: value('editors').split(';').map(name => name.trim()).filter(Boolean),
   };
 }
 
@@ -36,6 +40,21 @@ export function setBannerHtml(set) {
     <p class="step-hint">${escapeHtml(`Scan or type each volume you have, or paste a list of them.${next}`)}</p>
     <div class="step-nav"><button type="button" class="btn" data-action="paste-volumes">Paste the volumes held</button>
       <button type="button" class="btn" data-action="finish-set">Finish the set</button></div></section>`;
+}
+
+/**
+ * At "Finish the set": what the whole set cost and is worth, for a set bought
+ * whole or nearly so (core/value.js counts it once). All may be left empty.
+ * @param {object} record the set's own record
+ */
+export function finishSetHtml(record) {
+  const amount = value => (value === null || value === undefined ? '' : String(value));
+  const help = helpHtml('valueAsSet');
+  return `<h2 class="step-title">${escapeHtml(`The whole set: ${record.title}`)}</h2>
+    <p class="step-hint">If the set was bought together, what was paid for it and what it is worth now. Volumes bought one at a time keep their own price and value instead; leave these empty if that is how this set was gathered.</p>
+    <form class="form"><div class="field-row">${fieldHtml('Price paid', 'price', amount(record.price), { type: 'number' })}${fieldHtml('Value', 'value', amount(record.value), { type: 'number' })}</div>
+      <label class="check"><input type="checkbox" name="valueAsSet"${record.valueAsSet ? ' checked' : ''}> Count one value for the whole set${help.button}${help.text}</label>
+      ${navHtml('Save and finish')}</form>`;
 }
 
 // Which volume a scanned book is: the next one suggested, or typed.

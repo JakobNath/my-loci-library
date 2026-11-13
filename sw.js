@@ -14,7 +14,7 @@ const FILES = [
   'core/search.js', 'core/records.js', 'core/bindings.js', 'core/merge.js', 'core/shelf-order.js', 'core/zotero.js', 'core/library.js', 'core/contents.js', 'core/entry.js',
   'core/lookup.js', 'core/book-data.js', 'core/marc.js', 'core/wikidata.js', 'core/bible.js', 'core/matching.js', 'core/settings.js', 'core/trash.js', 'core/lists.js', 'core/value.js', 'core/exports.js', 'core/backup-status.js', 'core/outline.js', 'core/known-sets.js', 'core/sets.js',
   'edges/storage.js', 'edges/device.js', 'edges/lookup-openlibrary.js', 'edges/lookup-googlebooks.js', 'edges/lookup-hathitrust.js', 'edges/lookup-wikidata.js', 'edges/camera.js', 'edges/photo.js', 'edges/sync-github.js',
-  'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/book-more.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/save-file.js', 'ui/edit.js',
+  'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/book-more.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/set.js', 'ui/binding-choices.js', 'ui/save-file.js', 'ui/edit.js',
   'ui/add.js', 'ui/add-questions.js', 'ui/add-set.js', 'ui/works.js', 'ui/images.js', 'ui/photo-editor.js', 'ui/photo-buttons.js', 'ui/book-photos.js', 'ui/field-help.js', 'ui/known-sets.js',
   // The known sets' lists (ui/known-sets.js), read when adding and on the wishlist.
   'sets/great-books-1990.txt', 'sets/luthers-works.txt', 'sets/complete-greek-tragedies-1992.txt',

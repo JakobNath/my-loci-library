@@ -18,6 +18,10 @@ export function render(container, state) {
   const levelsHtml = VALUE_LEVELS.map(level => `<button type="button" class="chip${level.depth === depth ? ' is-on' : ''}" data-depth="${level.depth}" aria-pressed="${level.depth === depth}">${escapeHtml(level.label)}</button>`).join('');
   const rowsHtml = summary.byPlace.map(row => `<dt>${escapeHtml(row.place)}</dt><dd>${escapeHtml(`${money(row.total)} · ${row.count} ${row.count === 1 ? 'book' : 'books'}${row.missing ? `, ${row.missing} with no value` : ''}`)}</dd>`).join('');
   const missingHtml = escapeHtml(summary.missing ? `${summary.missing} of ${summary.count} books have no value yet, so the real total is higher. Add values in each book's Edit form.` : 'Every book has a value.');
+  // Each set with its own value is counted once, under the place holding most of its volumes (core/value.js).
+  const setRowsHtml = summary.sets.map(({ set, place, volumes }) => `<dt><a href="#/set/${escapeHtml(set.id)}">${escapeHtml(set.title)}</a></dt>`
+    + `<dd>${escapeHtml(`${money(set.value)} · ${volumes} ${volumes === 1 ? 'volume' : 'volumes'}, counted under ${place}${set.valueAsSet ? '' : ', with any volumes bought alone counted on their own'}`)}</dd>`).join('');
+  const setsHtml = setRowsHtml ? `<p class="page-meta">Sets valued as a whole, each counted once:</p><dl class="facts">${setRowsHtml}</dl>` : '';
   const logosHtml = summary.logosCount ? `<section class="block"><h2 class="block-title">Logos</h2><p class="value-total">${escapeHtml(money(summary.logosTotal))}</p>
       <p class="page-meta">${escapeHtml(`${summary.logosCount} digital books. Kept out of the total above: digital licenses are not usually insured as personal property.`)}</p></section>` : '';
   container.innerHTML = `<a class="back" href="#/settings">${iconHtml('back')} Settings</a>
@@ -25,7 +29,7 @@ export function render(container, state) {
     <section class="block"><h2 class="block-title">Books on the shelves</h2><p class="value-total">${escapeHtml(money(summary.total))}</p>
       <p class="page-meta">${missingHtml}</p>
       <p class="page-meta value-levels" id="value-levels">Totals by</p><div class="chips" role="group" aria-labelledby="value-levels">${levelsHtml}</div>
-      <dl class="facts">${rowsHtml}</dl>
+      <dl class="facts">${rowsHtml}</dl>${setsHtml}
       <div class="actions"><button class="btn btn-primary" type="button" data-action="csv">Download for an insurance agent (CSV)</button></div></section>
     ${logosHtml}`;
   container.onclick = async event => {

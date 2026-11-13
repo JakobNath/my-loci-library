@@ -160,7 +160,7 @@ function mainHtml(state) {
     + menuRowHtml('#/settings/trash', 'Trash', trashCount ? `${trashCount} ${trashCount === 1 ? 'item' : 'items'}` : 'empty')
     + menuRowHtml('#/value', 'Value', 'what the books are worth, for insurance')
     + menuRowHtml('#/settings/export', 'Export', 'CSV, JSON, CSL-JSON, BibTeX')
-    + menuRowHtml('#/settings/lists', 'Rename and merge', 'categories, tags, series, bindings, places')
+    + menuRowHtml('#/settings/lists', 'Rename and merge', 'categories, tags, series, bindings, materials, extras, places')
     + menuRowHtml('#/settings/advanced', 'Advanced', 'shared settings, scanning, sync setup, about');
   const offline = state.offlineReady ? 'Ready to use offline.' : 'Not yet stored for offline use.';
   return `<div class="page-head"><h1 class="page-title">Settings</h1></div>

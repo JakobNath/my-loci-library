@@ -6,6 +6,7 @@ import { escapeHtml } from '../core/html.js';
 import { formatYearRange, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
 import { missingDetails } from '../core/library.js';
+import { bindingText } from '../core/bindings.js';
 import { coverHtml, dateLineHtml, badgesHtml, COVER_RATIO } from './pieces.js';
 import { iconHtml } from './icons.js';
 import { fillImages } from './images.js';
@@ -43,10 +44,13 @@ function contentsHtml(entry, style) {
 }
 
 function copiesHtml(entry, currency) {
+  // A volume of a set with its own value is counted with the set (core/value.js, copyValueOf).
+  const set = entry.set && entry.set.value !== null ? entry.set : null;
   return entry.copies.map(copy => {
     const history = copy.valueHistory.length > 1 ? copy.valueHistory.map(point => `${point.date}: ${money(currency, point.value)}`).join(', ') : '';
-    const head = `<div class="copy-head"><span>${escapeHtml(copy.binding || (entry.isDigital ? 'Logos' : 'Copy'))}</span>`
-      + `<span class="copy-value">${escapeHtml(copy.value !== null ? money(currency, copy.value) : 'No value yet')}</span></div>`;
+    const value = set && (set.valueAsSet || copy.value === null) ? 'Valued with the set' : copy.value !== null ? money(currency, copy.value) : 'No value yet';
+    const head = `<div class="copy-head"><span>${escapeHtml(bindingText(copy) || (entry.isDigital ? 'Logos' : 'Copy'))}</span>`
+      + `<span class="copy-value">${escapeHtml(value)}</span></div>`;
     return `<div class="copy">${head}${factsHtml([
       ['Location', copy.location.join(' › ')],
       ['Status', copy.status === 'owned' ? '' : copy.status],

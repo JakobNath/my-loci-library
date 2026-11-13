@@ -41,7 +41,7 @@ const note = document.getElementById('note');
 // ---------- routes ----------
 
 // Screens other than the Library and a book's page (Add, the entry form, the
-// shelf view, Wishlist, Settings, Value) load the first time they are opened,
+// shelf view, Wishlist, Settings, Value, a set's page) load the first time they are opened,
 // with their stylesheet, so opening the app stays fast (PLAN.md, "Small and
 // fast"; the exception to the code style is recorded in HOW_IT_WORKS.md).
 let screenStyles = null;
@@ -76,6 +76,7 @@ const renderShelfScreen = screenLoadedWhenOpened(() => import('./ui/shelf.js'));
 const renderWishlistScreen = screenLoadedWhenOpened(() => import('./ui/wishlist.js'));
 const renderSettingsScreen = screenLoadedWhenOpened(() => import('./ui/settings.js'));
 const renderValueScreen = screenLoadedWhenOpened(() => import('./ui/value.js'));
+const renderSetScreen = screenLoadedWhenOpened(() => import('./ui/set.js'));
 
 const ROUTES = {
   '': libraryScreen.render,
@@ -85,6 +86,7 @@ const ROUTES = {
   wishlist: renderWishlistScreen,
   settings: renderSettingsScreen,
   value: renderValueScreen,
+  set: renderSetScreen,
   add: renderAddScreen,
   new: renderEditScreen,
   edit: renderEditScreen,

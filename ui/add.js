@@ -28,9 +28,12 @@ import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
-import { setFormHtml, readSetForm, setBannerHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
+import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 import { findKnownVolume, contentsLinesOf } from '../core/known-sets.js';
 import { loadKnownSets } from './known-sets.js';
+import { readBindingText } from '../core/bindings.js';
+import { setFromForm, editionsOfSet, linkEditionsToSet } from '../core/sets.js';
+import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
 const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLAN.md)
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
@@ -58,7 +61,6 @@ export function render(container, state, actions) {
 
   // With a USB scanner (Settings › This device) the scanner types the ISBN into the box, and presses Enter.
   const usb = state.device.scanner === 'usb';
-  const bindingOptionsHtml = state.settings.bindings.map(binding => `<option value="${attr(binding)}">`).join('');
   container.innerHTML = `
     <div id="scan">
       <p class="saved-banner" data-saved role="status" hidden></p>
@@ -76,8 +78,7 @@ export function render(container, state, actions) {
         · <button type="button" class="link" data-action="start-set">Add a set of volumes</button></p>
       <div id="added"></div>
     </div>
-    <div id="step" hidden></div>
-    <datalist id="bindings">${bindingOptionsHtml}</datalist>`;
+    <div id="step" hidden></div>`;
   const scanArea = container.querySelector('#scan');
   const stepArea = container.querySelector('#step');
   const find = container.querySelector('#find');
@@ -191,7 +192,9 @@ export function render(container, state, actions) {
       if (!button) return;
       if (button.dataset.action === 'back') return finishBook();
       const location = (state.batchLocation || []).filter(Boolean);
-      const copy = anotherCopy(entry.id, { binding: entry.binding, location, shelfOrder: nextShelfOrder(location) }, context());
+      // The new copy starts with the binding of the copy already held.
+      const held = entry.copies.find(copy => copy.binding || copy.material || copy.extras.length) || { binding: null, material: null, extras: [] };
+      const copy = anotherCopy(entry.id, { binding: held.binding, material: held.material, extras: held.extras, location, shelfOrder: nextShelfOrder(location) }, context());
       if (await actions.saveRecords([copy], { soon: true })) finishBook(`Another copy of ${entry.edition.title}`);
     };
   }
@@ -206,6 +209,10 @@ export function render(container, state, actions) {
     const full = setInfo ? withSetFacts(looked, setInfo, setInfo.nextVolume) : looked;
     const last = (setInfo && setInfo.last) || { language: '', category: '', tags: [] };
     const translators = full.contributors.filter(person => person.role === 'translator').map(person => person.name);
+    // The record's one word ("Leather Bound") read into the three parts; a set's own choices win.
+    const parts = readBindingText(full.binding);
+    if (full.material) parts.material = full.material;
+    if (full.extras && full.extras.length) parts.extras = full.extras;
     book = {
       found: full,
       problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
@@ -213,7 +220,7 @@ export function render(container, state, actions) {
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
       copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
-      photos: {}, cover: { state: 'none' }, otherCover, binding: full.binding, location: (state.batchLocation || []).filter(Boolean),
+      photos: {}, cover: { state: 'none' }, otherCover, ...parts, location: (state.batchLocation || []).filter(Boolean),
       // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
@@ -371,7 +378,8 @@ export function render(container, state, actions) {
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
       const button = event.target.closest('[data-action]');
-      if (button) answer(button.dataset.action, button.dataset.value);
+      if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
+      else if (button) answer(button.dataset.action, button.dataset.value);
     };
     stepArea.onsubmit = event => { event.preventDefault(); answer('done'); };
     showDatingPreview();
@@ -599,12 +607,11 @@ export function render(container, state, actions) {
         ${choiceHtml('next', book.photos.spine ? 'Use this photo' : 'Skip')}</div>${backHtml()}`;
   }
 
-  // 6. The binding.
+  // 6. The binding: one binding, a material if it matters, and any extras.
   function bindingStep() {
-    const listHtml = state.settings.bindings.map(binding => `<button type="button" class="chip chip-big${book.binding === binding ? ' is-on' : ''}" data-action="binding" data-value="${attr(binding)}">${escapeHtml(binding)}</button>`).join('');
     const named = book.found.binding ? ` The record online says ${book.found.binding}.` : '';
-    return `<h2 class="step-title">What binding is this copy?</h2><p class="step-hint">${escapeHtml(`Tap one, or type another below.${named}`)}</p><div class="chips">${listHtml}</div>
-      <form class="form">${fieldHtml('Something else', 'binding', state.settings.bindings.includes(book.binding) ? '' : book.binding, { list: 'bindings' })}
+    return `<h2 class="step-title">What binding is this copy?</h2><p class="step-hint">${escapeHtml(`Tap what fits; any row can stay empty.${named}`)}</p>
+      <form class="form">${bindingChoicesHtml(book, state.settings)}
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
 
@@ -633,7 +640,7 @@ export function render(container, state, actions) {
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
-    if (book.step === 'binding' && value('binding')) book.binding = value('binding').trim();
+    if (book.step === 'binding') Object.assign(book, readBindingChoices(stepArea));
     if (book.step === 'where') {
       const typed = [...stepArea.querySelectorAll('[name="where"]')].map(input => input.value.trim()).filter(Boolean);
       if (typed.length) book.location = typed;
@@ -692,7 +699,6 @@ export function render(container, state, actions) {
     if (action === 'same-language') { book.workLanguages = null; return drawStep(); }
     if (action === 'category') { book.category = book.category === value ? '' : value; return drawStep(); }
     if (action === 'tag') { book.tags = book.tags.includes(value) ? book.tags.filter(tag => tag !== value) : [...book.tags, value]; return drawStep(); }
-    if (action === 'binding') { book.binding = value; return next(); }
     if (action === 'place') {
       book.location = value ? value.split(' › ') : [];
       return next();
@@ -729,6 +735,14 @@ export function render(container, state, actions) {
 
   const number = text => String(text || '').replace(/[^\d.]/g, '');
 
+  // The set's own record for a volume, when the set has one (the set being added, or one with the same title).
+  function setRecordFor(title) {
+    if (setInfo && setInfo.setRecord) return setInfo.setRecord;
+    const wanted = normalizeForSearch(title || '');
+    const set = wanted && [...state.library.setsById.values()].find(record => normalizeForSearch(record.title) === wanted);
+    return set ? set.id : null;
+  }
+
   // A new work Wikidata knows gets its ID, its other titles and (if none was given) its original title,
   // and a date taken from Wikidata says so in its note (DATA_FORMAT.md, "Datings").
   function withWikidata(record) {
@@ -748,11 +762,15 @@ export function render(container, state, actions) {
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
       workLanguages: book.contents !== null ? book.workLanguages || null : null,
+      setRecord: setRecordFor(found.set),
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, working: true }],
       },
-      copy: { binding: book.binding, location: book.location, acquired: copy.acquired, price: number(copy.price), value: number(copy.value), status: 'owned', markings: copy.markings, notes: copy.notes },
+      copy: {
+        binding: book.binding, material: book.material, extras: book.extras, location: book.location,
+        acquired: copy.acquired, price: number(copy.price), value: number(copy.value), status: 'owned', markings: copy.markings, notes: copy.notes,
+      },
     };
     const result = recordsFromForm(form, null, context());
     if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
@@ -770,7 +788,10 @@ export function render(container, state, actions) {
 
   // ---------- adding a set (ui/add-set.js) ----------
 
-  const NEW_SET = { title: '', publisher: '', year: '', editionStatement: '', editors: [], binding: '', nextVolume: '', last: null, isMissingTitle: false };
+  const NEW_SET = {
+    title: '', shortTitle: '', volumes: '', publisher: '', year: '', editionStatement: '', editors: [], binding: null, material: null, extras: [],
+    setRecord: null, nextVolume: '', last: null, isMissingTitle: false,
+  };
 
   // The set's shared facts, given once; then its volumes are scanned, typed or pasted.
   function showSetForm(set = NEW_SET) {
@@ -778,19 +799,70 @@ export function render(container, state, actions) {
     stepArea.hidden = false;
     stepArea.oninput = null;
     stepArea.onchange = null;
-    stepArea.innerHTML = setFormHtml(set);
+    stepArea.innerHTML = setFormHtml(set, state.settings);
+    stepArea.onclick = event => {
+      if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
+      const chip = event.target.closest('[data-action="binding-part"]');
+      if (chip) toggleBindingChip(chip);
+      if (event.target.closest('[data-action="back"]')) finishBook();
+    };
+    stepArea.onsubmit = async event => {
+      event.preventDefault();
+      const typed = { ...readSetForm(stepArea, set), ...readBindingChoices(stepArea) };
+      if (!typed.title) { showSetForm({ ...typed, isMissingTitle: true }); return; }
+      const setRecord = await saveSetRecord(typed);
+      if (!setRecord) return;
+      keepSet({ ...typed, title: setRecord.title, setRecord: setRecord.id, isMissingTitle: false });
+      finishBook();
+    };
+    stepArea.querySelector('input').focus();
+  }
+
+  // The set's own record: the one already kept under this title, with what
+  // was typed now added, or a new one. Volumes already in the library under
+  // the same set title are linked to it as well.
+  async function saveSetRecord(typed) {
+    const wanted = normalizeForSearch(typed.title);
+    const existing = [...state.library.setsById.values()].find(record => normalizeForSearch(record.title) === wanted) || null;
+    const amount = value => (value === null ? '' : String(value));
+    const form = existing ? {
+      title: existing.title, shortTitle: typed.shortTitle || existing.shortTitle, editors: (typed.editors.length ? typed.editors : existing.editors).join('; '),
+      volumes: typed.volumes || amount(existing.volumes), price: amount(existing.price), value: amount(existing.value), valueAsSet: existing.valueAsSet, notes: existing.notes,
+    } : { title: typed.title, shortTitle: typed.shortTitle, editors: typed.editors.join('; '), volumes: typed.volumes };
+    const { record, problems } = setFromForm(form, existing, { newId: actions.newId, now: actions.now(), today: actions.today() });
+    if (problems.length) { actions.showNote(problems.join(' ')); return null; }
+    const linked = linkEditionsToSet(editionsOfSet(state.library.editionsById.values(), record), record, actions.now());
+    const changed = [...(record !== existing ? [record] : []), ...linked];
+    if (changed.length && !(await actions.saveRecords(changed))) return null;
+    return record;
+  }
+
+  // "Finish the set": what the whole set cost and is worth, then back to scanning.
+  function showFinishSet() {
+    const record = setInfo.setRecord && state.records.get(setInfo.setRecord);
+    if (!record) { keepSet(null); showShelf(); return; }
+    scanArea.hidden = true;
+    stepArea.hidden = false;
+    stepArea.oninput = null;
+    stepArea.onchange = null;
+    stepArea.innerHTML = finishSetHtml(record);
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
       if (event.target.closest('[data-action="back"]')) finishBook();
     };
-    stepArea.onsubmit = event => {
+    stepArea.onsubmit = async event => {
       event.preventDefault();
-      const typed = readSetForm(stepArea, set);
-      if (!typed.title) { showSetForm({ ...typed, isMissingTitle: true }); return; }
-      keepSet({ ...typed, isMissingTitle: false });
+      const value = name => stepArea.querySelector(`[name="${name}"]`);
+      const form = {
+        title: record.title, shortTitle: record.shortTitle, editors: record.editors.join('; '), volumes: record.volumes === null ? '' : String(record.volumes),
+        price: number(value('price').value), value: number(value('value').value), valueAsSet: value('valueAsSet').checked, notes: record.notes,
+      };
+      const result = setFromForm(form, record, { newId: actions.newId, now: actions.now(), today: actions.today() });
+      if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
+      if (result.record !== record && !(await actions.saveRecords([result.record]))) return;
+      keepSet(null);
       finishBook();
     };
-    stepArea.querySelector('input').focus();
   }
 
   function showPasteVolumes() {
@@ -821,9 +893,9 @@ export function render(container, state, actions) {
       const form = {
         title, subtitle: '', authors: [], contributors: setInfo.editors.map(name => ({ name, role: 'editor' })),
         publisher: setInfo.publisher, place: '', year: setInfo.year, editionStatement: setInfo.editionStatement, translationFirstPublished: '',
-        series: '', seriesNumber: '', set: setInfo.title, volume, isbn: '', pages: '', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
+        series: '', seriesNumber: '', set: setInfo.title, volume, setRecord: setInfo.setRecord, isbn: '', pages: '', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
         work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [] },
-        copy: { binding: setInfo.binding, location, acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
+        copy: { binding: setInfo.binding, material: setInfo.material, extras: setInfo.extras, location, acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
       };
       const result = recordsFromForm(form, null, context());
       if (result.problems.length) { actions.showNote(result.problems.join(' ')); return; }
@@ -895,7 +967,7 @@ export function render(container, state, actions) {
     const action = button ? button.dataset.action : '';
     if (action === 'start-set') showSetForm();
     else if (action === 'paste-volumes') showPasteVolumes();
-    else if (action === 'finish-set') { keepSet(null); showShelf(); }
+    else if (action === 'finish-set') showFinishSet();
   };
   container.querySelector('[data-action="camera"]').onclick = async event => {
     const box = container.querySelector('.camera');

@@ -17,7 +17,11 @@ export const FIELD_HELP = {
   set: 'One work or collection in several volumes, such as Luther\'s Works or Great Books of the Western World. Each volume is its own book here; its volume goes in Volume.',
   pages: 'Copied as printed, roman numerals and all, such as "xxviii, 311". The app works out the total.',
   languages: 'Every language the text is printed in. "Greek, English" marks a book with the original and a translation side by side.',
-  binding: 'How this copy is bound: hardcover, paperback, leather, cloth. It also helps the shelf view draw the book at about the right size.',
+  binding: 'How this copy is bound: hardcover, paperback, mass-market paperback. It also helps the shelf view draw the book at about the right size. The choices are kept in Settings › Rename and merge.',
+  material: 'What the cover is made of, when it matters: cloth, leather or bonded leather. Leave it empty for an ordinary printed cover.',
+  extras: 'What came with this copy, such as a dust jacket or a slipcase. Tap each that applies.',
+  shortTitle: 'The set\'s usual abbreviation, used to cite a volume: LW or AE for Luther\'s Works. Searching "LW 31" finds volume 31.',
+  valueAsSet: 'On: only the set\'s own value counts, once, as for a set bought whole. The volumes keep their own prices and values, which are not counted while this is on. Off: each volume counts its own value, and the set\'s value counts for the volumes bought with it.',
 };
 
 /**

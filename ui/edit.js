@@ -13,6 +13,7 @@ import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
+import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
 const attr = value => escapeHtml(value ?? '');
 
@@ -26,7 +27,7 @@ function fieldHtml(label, name, value, { type = 'text', list = '', wide = false,
 }
 
 function datalistsHtml(library, settings) {
-  const sets = { authors: new Set(), publishers: new Set(), places: new Set(), series: new Set(), sets: new Set(), languages: new Set(), categories: new Set(), bindings: new Set(settings.bindings) };
+  const sets = { authors: new Set(), publishers: new Set(), places: new Set(), series: new Set(), sets: new Set(), languages: new Set(), categories: new Set() };
   const locations = [new Set(), new Set(), new Set(), new Set()];
   for (const author of library.authorsById.values()) sets.authors.add(author.name);
   for (const entry of library.entries) {
@@ -35,7 +36,6 @@ function datalistsHtml(library, settings) {
     e.languages.forEach(language => sets.languages.add(language));
     entry.works.forEach(work => work.category && sets.categories.add(work.category));
     for (const copy of entry.copies) {
-      if (copy.binding) sets.bindings.add(copy.binding);
       copy.location.forEach((part, i) => locations[i] && locations[i].add(part));
     }
   }
@@ -73,7 +73,7 @@ export function render(container, state, actions) {
   const wishRecord = state.route.name === 'new' ? state.records.get(state.route.id) : null;
   const wish = wishRecord && wishRecord.type === 'wishlist' ? formFromWish(wishRecord) : null;
   const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], medium: 'physical' };
-  const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: '', location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
+  const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: null, material: null, extras: [], location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
   const isAnthology = entry ? entry.works.length > 1 : false;
   const work = entry && entry.works.length === 1 ? entry.works[0] : { title: '', originalTitle: '', originalLanguage: '', datings: [], category: '', tags: [] };
   const authorsText = entry && !isAnthology ? entry.authors.map(author => author.name).join('; ') : wish ? wish.authorsText : '';
@@ -97,6 +97,9 @@ export function render(container, state, actions) {
     <div class="actions"><button class="btn" type="button" data-action="use-found">Use these works</button><button class="btn" type="button" data-action="decline-found">Not these</button></div></div>` : '';
   const worksLinkHtml = isAnthology ? `<a class="link" href="#/edit/${attr(entry.id)}/works">Give each work its original title, language, date, category and tags</a>` : '';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
+  // A volume of a set with its own value (core/value.js): say how this copy's value is counted.
+  const set = entry && entry.set && entry.set.value !== null ? entry.set : null;
+  const valueHint = !set ? '' : set.valueAsSet ? `Not counted: ${set.title} is valued as a whole set` : `Leave empty if bought with ${set.title}`;
   container.innerHTML = `${backHtml}
     <div class="page-head"><h1 class="page-title">${titleHtml}</h1><p class="page-meta">Fill in what you know; everything but the title can wait.</p></div>
     <form class="form" novalidate>
@@ -126,9 +129,10 @@ export function render(container, state, actions) {
         <div class="field-row"><label class="field">Format<select name="medium"><option value="physical">Physical</option><option value="logos"${edition.medium === 'logos' ? ' selected' : ''}>Logos</option></select></label>${fieldHtml('Logos resource ID', 'logosId', edition.logosId)}</div>
       </fieldset>
       <fieldset><legend>Our copy</legend>
-        <div class="field-row">${fieldHtml('Binding', 'binding', copy.binding, { list: 'bindings', help: true })}${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}</div>
+        ${bindingChoicesHtml(copy, state.settings)}
+        <div class="field-row">${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}</div>
         <div class="field-row">${locationHtml}</div>
-        <div class="field-row">${fieldHtml('Price paid', 'price', copy.price, { type: 'number' })}${fieldHtml('Estimated value', 'value', copy.value, { type: 'number' })}
+        <div class="field-row">${fieldHtml('Price paid', 'price', copy.price, { type: 'number' })}${fieldHtml('Estimated value', 'value', copy.value, { type: 'number', hint: valueHint })}
           <label class="field">Status<select name="status">${statusHtml}</select></label></div>
         ${historyHtml}
         <label class="check"><input type="checkbox" name="markings"${copy.markings ? ' checked' : ''}> Writing or markings when acquired</label>
@@ -151,6 +155,7 @@ export function render(container, state, actions) {
   container.onclick = event => {
     if (event.target.dataset.help) { toggleHelp(container, event.target); return; }
     const action = event.target.dataset.action;
+    if (action === 'binding-part') toggleBindingChip(event.target);
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
     if (action === 'trash') moveToTrash(entry, state, actions);
     if (action === 'contributor') event.target.insertAdjacentHTML('beforebegin', contributorRowHtml({ name: '', role: 'translator' }));
@@ -237,7 +242,7 @@ function readForm(form) {
       datings: data.getAll('datingText').map((value, i) => ({ text: value.toString(), note: (data.getAll('datingNote')[i] || '').toString().trim(), working: i === working })),
     },
     copy: {
-      binding: text('binding'), location: data.getAll('location').map(part => part.toString().trim()), acquired: text('acquired'),
+      ...readBindingChoices(form), location: data.getAll('location').map(part => part.toString().trim()), acquired: text('acquired'),
       price: text('price'), value: text('value'), status: text('status') || 'owned', markings: !!data.get('markings'), notes: (data.get('notes') || '').toString(),
       dropHistory: data.getAll('dropHistory').map(String),
     },
