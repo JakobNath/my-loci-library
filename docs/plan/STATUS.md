@@ -69,7 +69,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 **Before the real Zotero run**
 
-- [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection (also on the checking-hour sheet, LT-2).
+- [x] Clear the Zotero trial: "Loci test" cleared in Zotero (Jakob, 13 November 2026; checking-hour item LT-2 is answered).
 - [ ] Phase 15 step 10 built (below), so that works inside books go to Zotero only when "Cite this work" is tapped.
 
 **3. Start cataloging for real** (walked through together)
