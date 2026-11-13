@@ -79,7 +79,7 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 - [x] Clear the Zotero trial: "Loci test" cleared in Zotero (Jakob, 13 November 2026; checking-hour item LT-2 is answered).
 - [x] Phase 15 step 10 built (13 November 2026): only books go to Zotero, never sections.
-- [ ] Clear the trial items before the real run: in Zotero, delete the collections "Loci test" and "My Loci Library" together with their items (28 items, all made by the companion in trials; nothing of Jakob's own is in them). Then a working session deletes `integrations/zotero-links.json` in the data repository, so the real first run links the books already in Zotero.
+- [x] Cleared on 13 November 2026: Jakob deleted both collections and their 28 items in Zotero (checked through the web API), and the links file was removed from the data repository. The next run is a true first run. Was: clear the trial items before the real run: in Zotero, delete the collections "Loci test" and "My Loci Library" together with their items (28 items, all made by the companion in trials; nothing of Jakob's own is in them). Then a working session deletes `integrations/zotero-links.json` in the data repository, so the real first run links the books already in Zotero.
 
 **3. Start cataloging for real** (walked through together)
 
