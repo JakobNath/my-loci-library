@@ -298,6 +298,11 @@ const actions = {
     if (await actions.saveRecords([record])) render();
   },
 
+  /** Say what would be lost by leaving this screen now ('' when nothing would). */
+  setDraft(text) {
+    draftNote = text;
+  },
+
   showNote,
   loadScreenStyles,
   go(hash) {
@@ -425,18 +430,40 @@ function takeSetupLink() {
   return true;
 }
 
+// A screen holding something not yet saved (a book half added, a form being
+// typed) says so through actions.setDraft. Leaving it then asks first, since
+// drawing another screen throws the answers and photos away.
+let draftNote = '';
+let shownHash = location.hash;
+let isGoingBack = false;
+const mayLeave = () => !draftNote || confirm(`${draftNote}\n\nLeave this screen without saving it?`);
+
+let libraryScroll = 0; // how far down the Library was, to return there after looking at a book
+
 addEventListener('hashchange', () => {
+  if (isGoingBack) { isGoingBack = false; return; }
+  if (!mayLeave()) {
+    // Stay: put the address back as it was, without drawing anything.
+    isGoingBack = true;
+    location.hash = shownHash;
+    return;
+  }
+  draftNote = '';
+  shownHash = location.hash;
   if (takeSetupLink()) return;
+  if (state.route.name === '' && !state.query) libraryScroll = scrollY;
   state.route = readRoute();
   state.query = '';
   search.value = '';
   render();
-  scrollTo(0, 0);
+  scrollTo(0, state.route.name === '' ? libraryScroll : 0);
 });
 
 // The search box is never redrawn while typing; only the results below it
 // are. A search takes a few milliseconds, so it runs on every keystroke.
 search.addEventListener('input', () => {
+  if (!mayLeave()) { search.value = ''; return; }
+  draftNote = '';
   state.query = search.value;
   render();
 });

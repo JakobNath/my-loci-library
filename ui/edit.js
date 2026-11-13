@@ -149,7 +149,11 @@ export function render(container, state, actions) {
   fillImages(container, actions.imageUrl);
   let foundAccepted = false;
   form.querySelectorAll('[name="datingText"]').forEach(showPreview);
-  container.oninput = event => { if (event.target.name === 'datingText') showPreview(event.target); };
+  container.oninput = event => {
+    // Once something is typed, leaving the form asks first (main.js).
+    actions.setDraft('This form has changes that are not saved.');
+    if (event.target.name === 'datingText') showPreview(event.target);
+  };
   container.onchange = event => {
     if (event.target.name !== 'several') return;
     form.querySelectorAll('[data-single]').forEach(part => { part.hidden = event.target.checked; });
@@ -201,6 +205,7 @@ export function render(container, state, actions) {
       result.records.push(trashRecord(wishRecord, actions.today(), actions.now()));
     }
     if (await actions.saveRecords(result.records)) {
+      actions.setDraft('');
       actions.showNote(wish ? 'Added to the library, and taken off the wishlist' : 'Saved');
       actions.go(`#/book/${result.editionId}`);
     }
@@ -210,6 +215,7 @@ export function render(container, state, actions) {
 // Deleting moves the book to the trash (PLAN.md, "Status"); Settings › Trash restores it.
 async function moveToTrash(entry, state, actions) {
   if (await actions.saveRecords(trashBook(state.records, entry.id, actions.today(), actions.now()))) {
+    actions.setDraft('');
     actions.showNote('Moved to the trash. Settings › Trash brings it back.');
     actions.go('#/');
   }

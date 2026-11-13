@@ -85,6 +85,19 @@ export function render(container, state, actions) {
   showShelf();
   if (usb) find.focus();
 
+  // Whenever a question or a form takes the place of the scan area, the camera
+  // stops reading, so a book lying in view cannot start a new lookup under it.
+  function hideScanArea() {
+    scanArea.hidden = true;
+    if (scanner) scanner.pause();
+  }
+  // The barcode last dealt with is not read again for a few seconds, so "Not
+  // this time" with the book still in view does not look it up again at once.
+  const SAME_BOOK_REST = 6000; // ms; long enough to move the book away
+  let rested = { isbn: '', until: 0 };
+  let lastIsbn = '';
+  let hasLeft = false; // the screen was left; a camera still starting must be stopped when it arrives
+
   // ---------- the shelf being filled ----------
 
   function showShelf() {
@@ -115,7 +128,7 @@ export function render(container, state, actions) {
   // ---------- finding the book ----------
 
   function showMessage(text) {
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     stepArea.innerHTML = `<p class="empty">${escapeHtml(text)}</p>`;
   }
@@ -147,6 +160,7 @@ export function render(container, state, actions) {
 
   async function lookUpIsbn(isbn) {
     if (scanner) scanner.pause();
+    lastIsbn = isbn;
     find.value = '';
     // An ISBN a whole known set shares (Great Books) names no one edition: the volumes held are shown in "Which volume?" instead.
     const sharedBySet = knownSets.some(set => set.isbns.includes(isbn));
@@ -182,7 +196,7 @@ export function render(container, state, actions) {
 
   function askAboutDuplicate(entry) {
     const where = entry.copies.map(copy => copy.location.join(' › ')).filter(Boolean)[0] || 'no place yet';
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     stepArea.innerHTML = `<h2 class="step-title">You already have this edition</h2>
       <p class="step-hint">${escapeHtml(entry.edition.title)} · ${escapeHtml(where)}</p>
@@ -228,6 +242,8 @@ export function render(container, state, actions) {
       wikidata: new Map(), wikidataAsked: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
       fixing: !found.source, // not found online: the details are asked for at once
     };
+    // Leaving the screen now would lose the answers and photos, so main.js asks first.
+    actions.setDraft(`"${full.title || 'The book being added'}" is not saved yet.`);
     // A volume of a known set takes its works from the list. One found by its own ISBN is used at once;
     // an ISBN the whole set shares (Great Books) asks which volume first. While adding a set, the volume step decides.
     const known = findKnownVolume(knownSets, { isbn: full.isbn, set: full.set, volume: full.volume });
@@ -335,7 +351,7 @@ export function render(container, state, actions) {
 
   function goTo(step) {
     book.step = step;
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     drawStep();
     stepArea.scrollIntoView({ block: 'start' });
@@ -686,7 +702,8 @@ export function render(container, state, actions) {
     }
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
-      const hint = [...wikidataSuggestion(), ...suggestOriginalDates(book.work, book.found.year)].find(item => item.text === value);
+      // book.work is still empty while Open Library has not answered.
+      const hint = [...wikidataSuggestion(), ...(book.work ? suggestOriginalDates(book.work, book.found.year) : [])].find(item => item.text === value);
       book.dating = value;
       book.datingNote = hint ? `suggested: ${hint.label}` : '';
       return next();
@@ -707,6 +724,14 @@ export function render(container, state, actions) {
 
   async function takePhoto(kind, file) {
     if (!file) return;
+    try {
+      await readPhoto(kind, file);
+    } catch (error) {
+      actions.showNote(`That picture could not be used (${error.message}). Try taking it again, or choose another.`);
+    }
+  }
+
+  async function readPhoto(kind, file) {
     // A contents page needs no lining up: it is kept as taken, large enough to read.
     if (kind === 'contents') {
       const box = stepArea.querySelector('[name="contents"]');
@@ -795,7 +820,7 @@ export function render(container, state, actions) {
 
   // The set's shared facts, given once; then its volumes are scanned, typed or pasted.
   function showSetForm(set = NEW_SET) {
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     stepArea.oninput = null;
     stepArea.onchange = null;
@@ -841,7 +866,7 @@ export function render(container, state, actions) {
   function showFinishSet() {
     const record = setInfo.setRecord && state.records.get(setInfo.setRecord);
     if (!record) { keepSet(null); showShelf(); return; }
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     stepArea.oninput = null;
     stepArea.onchange = null;
@@ -866,7 +891,7 @@ export function render(container, state, actions) {
   }
 
   function showPasteVolumes() {
-    scanArea.hidden = true;
+    hideScanArea();
     stepArea.hidden = false;
     stepArea.oninput = null;
     stepArea.onchange = null;
@@ -943,6 +968,8 @@ export function render(container, state, actions) {
     banner.textContent = title ? `✓ Saved: ${title}${place}. Ready for the next book.` : '';
     banner.hidden = !title;
     book = null;
+    actions.setDraft('');
+    rested = { isbn: lastIsbn, until: Date.now() + SAME_BOOK_REST };
     stepArea.hidden = true;
     stepArea.innerHTML = '';
     scanArea.hidden = false;
@@ -979,7 +1006,14 @@ export function render(container, state, actions) {
     status.textContent = 'Starting the camera…';
     try {
       const { startScanner } = await import('../edges/camera.js');
-      scanner = await startScanner(box.querySelector('video'), isbn => { showRead(box, isbn); setTimeout(() => lookUpIsbn(isbn), 500); }, { sound: state.device.scanSound !== false });
+      const onIsbn = isbn => {
+        if (scanArea.hidden || (isbn === rested.isbn && Date.now() < rested.until)) return;
+        showRead(box, isbn);
+        setTimeout(() => { if (!scanArea.hidden) lookUpIsbn(isbn); }, 500);
+      };
+      const started = await startScanner(box.querySelector('video'), onIsbn, { sound: state.device.scanSound !== false });
+      if (hasLeft) { started.stop(); return; }
+      scanner = started;
       status.textContent = 'Hold the barcode inside the frame.';
       // The Light button, only where the camera has a light (edges/camera.js).
       light.hidden = !scanner.hasLight;
@@ -998,7 +1032,10 @@ export function render(container, state, actions) {
       event.target.textContent = 'Scan a barcode';
     }
   };
-  return () => { if (scanner) scanner.stop(); };
+  return () => {
+    hasLeft = true;
+    if (scanner) scanner.stop();
+  };
 }
 
 // A green flash and check mark over the camera when a barcode is read.

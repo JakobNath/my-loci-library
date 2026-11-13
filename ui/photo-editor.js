@@ -232,10 +232,16 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
       if (action === 'use') {
         event.target.disabled = true;
         event.target.textContent = 'Saving…';
-        const files = await imageFiles(straighten(picture, outline), { master: true, kind });
-        const measured = Number(overlay.querySelector('[data-action="height"]')?.value || 0);
-        overlay.remove();
-        resolve({ ...files, height: measured > 0 ? Math.round(measured * 10) : null });
+        try {
+          const files = await imageFiles(straighten(picture, outline), { master: true, kind });
+          const measured = Number(overlay.querySelector('[data-action="height"]')?.value || 0);
+          overlay.remove();
+          resolve({ ...files, height: measured > 0 ? Math.round(measured * 10) : null });
+        } catch (error) {
+          // Most often the phone ran short of memory for a large photo: say so and let the person try again.
+          event.target.disabled = false;
+          event.target.textContent = `Could not save (${error.message}). Try again`;
+        }
       }
     });
     requestAnimationFrame(() => setPicture(picture));

@@ -33,7 +33,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.14.1** (Session C, 12 November 2026): the Luther's Works list gained the 20 new-series volumes published so far (56–63, 67–69, 72–73, 75–80 and the Companion Volume), unchecked, so their dates are offered; a known-set line may now leave its language empty ("— 1537").
 
-All tests pass: 211 in the app (and 198 on the self-test page), 241 in the tools.
+- **Versions 1.14.2 to 1.14.4** (the first whole-project audit, 13 November 2026). 1.14.2: opening a book and saving it again no longer loses its pieces, dating notes, translators or a work's own title, and two works with one title by different authors stay two. 1.14.3: a sync no longer drops what is saved while it runs, syncs again when the app comes back to the front, and redraws the screen only when it brought something; a double tap no longer saves twice; notes no longer hide each other; failures no screen caught are shown; the size budget is no longer enforced, only printed. 1.14.4: leaving a half-added book or a changed form asks first; the scanner rests while a question or form is open and does not read the same book again at once; the Library returns to where it was after a book. The audit's findings, what is still open, and the order of work are in the private workspace's `handoffs/2026-11-13-audit.md`; that order comes before the "Next tasks" below.
+
+All tests pass: 220 in the app (and 203 on the self-test page), 246 in the tools.
 
 ## Waiting on Jakob
 
