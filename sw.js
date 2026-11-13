@@ -17,7 +17,7 @@ const FILES = [
   'ui/icons.js', 'ui/pieces.js', 'ui/long-list.js', 'ui/library.js', 'ui/book.js', 'ui/book-more.js', 'ui/shelf.js', 'ui/wishlist.js', 'ui/settings.js', 'ui/lists.js', 'ui/value.js', 'ui/save-file.js', 'ui/edit.js',
   'ui/add.js', 'ui/add-questions.js', 'ui/add-set.js', 'ui/works.js', 'ui/images.js', 'ui/photo-editor.js', 'ui/field-help.js', 'ui/known-sets.js',
   // The known sets' lists (ui/known-sets.js), read when adding and on the wishlist.
-  'sets/great-books-1990.txt', 'sets/luthers-works.txt', 'sets/complete-greek-tragedies-2013.txt',
+  'sets/great-books-1990.txt', 'sets/luthers-works.txt', 'sets/complete-greek-tragedies-1992.txt',
 ];
 
 self.addEventListener('install', event => {

@@ -6,7 +6,7 @@
 import { parseKnownSet } from '../core/known-sets.js';
 
 // Every list the app carries. A new list is added here and to FILES in sw.js.
-export const KNOWN_SET_FILES = ['sets/great-books-1990.txt', 'sets/luthers-works.txt', 'sets/complete-greek-tragedies-2013.txt'];
+export const KNOWN_SET_FILES = ['sets/great-books-1990.txt', 'sets/luthers-works.txt', 'sets/complete-greek-tragedies-1992.txt'];
 
 let loading = null;
 
