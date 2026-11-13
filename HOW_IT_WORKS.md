@@ -60,6 +60,8 @@ Every device (each phone, and the browser on the laptop) keeps a whole copy of t
 
 Anything red names the file to look at. Fix it in `core/` first if the rule lives there, run the tests again, raise `VERSION` in `sw.js` and `APP_VERSION` in `ui/settings.js`, and push.
 
+**What goes to Zotero** is one book item per book, never a section for a work inside it (docs/decisions/zotero-and-citations.md, "Books only, no sections"). If a book section appears in the "My Loci Library" collection without the tag "Loci: removed", it was made by hand in Zotero, and the companion leaves it alone. Sections from earlier versions carry that tag after the next run; nothing is ever deleted from Zotero, so remove them by hand if they are not wanted.
+
 **If the app's address ever changes** (a new domain, or a move away from GitHub Pages), the Loci links in Zotero must follow. Set `"appUrl"` in the tools' `config.json` to the new address, ending in a slash (for example `"https://books.example.org/"`), and run `loci-zotero` once: every item's link is part of what it compares, so every link is rewritten in that one run. Obsidian notes link to the Zotero items, not to Loci, so they need nothing.
 
 **If a phone loses its catalog** (the browser cleared its storage), open the app and connect sync again (Settings › Advanced › Sync): the catalog downloads from `catalog.json` and the files changed since.
