@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 13 November 2026 (app version 1.14.1).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 13 November 2026 (app version 1.15.0).
 
 ## Where things stand
 
@@ -34,6 +34,8 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 - **Version 1.14.1** (Session C, 12 November 2026): the Luther's Works list gained the 20 new-series volumes published so far (56–63, 67–69, 72–73, 75–80 and the Companion Volume), unchecked, so their dates are offered; a known-set line may now leave its language empty ("— 1537").
 
 - **Versions 1.14.2 to 1.14.5** (the first whole-project audit, 13 November 2026). 1.14.2: opening a book and saving it again no longer loses its pieces, dating notes, translators or a work's own title, and two works with one title by different authors stay two. 1.14.3: a sync no longer drops what is saved while it runs, syncs again when the app comes back to the front, and redraws the screen only when it brought something; a double tap no longer saves twice; notes no longer hide each other; failures no screen caught are shown; the size budget is no longer enforced, only printed. 1.14.4: leaving a half-added book or a changed form asks first; the scanner rests while a question or form is open and does not read the same book again at once; the Library returns to where it was after a book. 1.14.5: search orders every match before cutting the list and finds a book by publisher, year, volume or shelf; "Pages" sorts by count; of two books added the same day the later is first; dates such as "43 BC – 17" are read; a pasted contents line keeps its subtitle. The laptop tools were made safe against a phone saving during a run, a failed data fill, a partial "whole library" Logos export, and overwriting books already in Zotero. The audit's findings, what is still open, and the order of work are in the private workspace's `handoffs/2026-11-13-audit.md`; that order comes before the "Next tasks" below.
+
+- **Version 1.15.0** (13 November 2026): original dates made quick. A "Search the web" link beside every original-date box (adding, Edit book, "Works in this book") and beside the translation date opens a web search worded as a question ("When was Pride and Prejudice by Jane Austen written and first published?"), and the working-date rule stands as one line above the date box.
 
 The same day the tools gained the rest of the audit's safety fixes: a book a source missed is asked again within a week, a corrected ISBN clears what the old one filled, and only one tool at a time changes the catalog.
 
@@ -94,7 +96,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **Added on 13 November 2026** (project review with Jakob; `PLAN.md`, "Original dates"):
 
-- [x] **Original dates made quick.** Built on 13 November 2026, not yet released (`docs/decisions/screens.md`; phone checks in `DEVICE_CHECKS.md`). Release with the next version. A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
+- [x] **Original dates made quick.** Released as 1.15.0, 13 November 2026 (`docs/decisions/screens.md`; phone checks in `DEVICE_CHECKS.md`). A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
 - The prototypes and the test-data repository were removed on 13 November 2026. Trials now run against the real catalog (alpha), after checking that the daily backup is recent. The Zotero trial still goes into the "Loci test" collection only.
 - Known-set lists: no new ones are written ahead of time (Jakob, 13 November 2026: research after adding instead). Item 3 below is replaced by that.
 
