@@ -18,10 +18,12 @@ import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
+import { imageEntry } from '../core/records.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
 import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { lookUpWorks } from '../edges/lookup-wikidata.js';
+import { photoButtonsHtml } from './photo-buttons.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
@@ -258,6 +260,8 @@ export function render(container, state, actions) {
     book.contentsText = set.checked ? contentsLinesOf(volume) : volume.works.map(work => [work.author, work.title].filter(Boolean).join(' — ')).join('\n');
     const languages = [...new Set(volume.works.map(work => work.originalLanguage).filter(Boolean))];
     if (languages.length === 1) book.language = languages[0];
+    // Works first written in different languages (Lucretius and Epictetus): the language step opens with a row for each.
+    book.workLanguages = languages.length > 1 ? volume.works.map(work => ({ title: work.title, language: work.originalLanguage || '' })) : null;
     const translators = [...new Set(volume.works.map(work => work.translator).filter(Boolean))];
     if (translators.length === 1) Object.assign(book, { translator: translators[0], hasTranslator: true });
     book.works = suggestWorks(found.title, found.authors, state.library);
@@ -358,7 +362,7 @@ export function render(container, state, actions) {
   function drawStep() {
     const draw = {
       book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), contents: contentsStep, work: workStep, date: dateStep,
-      language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices()),
+      language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices()),
       translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
@@ -426,7 +430,7 @@ export function render(container, state, actions) {
       if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
     }).catch(error => {
       current.wikidataProblem = { key, message: error.message };
-      if (book === current && book.step === 'contents') drawStep();
+      if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
     });
   }
 
@@ -495,7 +499,7 @@ export function render(container, state, actions) {
     const photo = book.photos.contents;
     const photoHtml = book.contentsOffered ? ''
       : photo ? `<p class="step-hint"><img class="step-cover" src="${attr(photo.preview)}" alt="The contents page"> ${escapeHtml('The photo of the contents page is kept with the book. Type the works now, or later on the laptop ("Contents to enter"), and leave the box empty to save the book for now.')}</p>`
-      : '<label class="choice-button"><span>Photograph the contents page</span><small>Kept with the book, so the works can be typed in later on the laptop</small><input type="file" accept="image/*" capture="environment" data-photo="contents" hidden></label>';
+      : photoButtonsHtml('contents', 'Photograph the contents page', 'Kept with the book, so the works can be typed in later on the laptop');
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>
       <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
@@ -527,13 +531,21 @@ export function render(container, state, actions) {
     const suggestions = [...wikidataSuggestion(), ...(book.work ? suggestOriginalDates(book.work, book.found.year) : [])];
     const suggestionsHtml = suggestions.map(hint => choiceHtml('date', hint.text, hint.label, hint.text)).join('');
     const waitingHtml = book.work ? '' : '<p class="step-hint">Looking for the first publication…</p>';
+    // Wikidata refused or did not answer: say so, rather than leave its suggestion quietly missing.
+    const problem = book.wikidataProblem.key && book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
+    const problemHtml = problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '';
     return `<h2 class="step-title">When was this work written?</h2>
       <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
-      <div class="choices">${suggestionsHtml}</div>${waitingHtml}
+      <div class="choices">${suggestionsHtml}</div>${waitingHtml}${problemHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know yet</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
+  }
+
+  // The original languages of the works in the library, offered in each work's row of a mixed collection.
+  function usedLanguages() {
+    return [...new Set([...state.library.worksById.values()].map(work => work.originalLanguage).filter(Boolean))];
   }
 
   // The categories in use, by name, and the tags in use, most used first.
@@ -559,7 +571,7 @@ export function render(container, state, actions) {
   // 4. The cover.
   function coverStep() {
     const cover = book.cover;
-    const photoButtonHtml = label => `<label class="choice-button"><span>${escapeHtml(label)}</span><small>The editor opens to line it up</small><input type="file" accept="image/*" capture="environment" data-photo="cover" hidden></label>`;
+    const photoButtonHtml = label => photoButtonsHtml('cover', label);
     if (book.photos.cover) {
       return `<h2 class="step-title">Your cover photo</h2><div class="found"><img class="step-cover" src="${attr(book.photos.cover.preview)}" alt=""></div>
         <div class="choices">${choiceHtml('next', 'Use this photo')}${photoButtonHtml('Take it again')}</div>${backHtml()}`;
@@ -583,8 +595,7 @@ export function render(container, state, actions) {
     const doneHtml = book.photos.spine ? `<div class="found"><img class="step-spine" src="${attr(book.photos.spine.preview)}" alt=""></div>` : '';
     return `<h2 class="step-title">${escapeHtml(book.photos.spine ? 'Your spine photo' : 'Add a spine photo?')}</h2>
       <p class="step-hint">Optional. A spine photo shows on the book page and in the shelf view, so the book is easy to spot on the shelf.</p>${doneHtml}
-      <div class="choices"><label class="choice-button"><span>${escapeHtml(book.photos.spine ? 'Take it again' : 'Take a photo of the spine')}</span>
-        <small>The editor opens to line it up</small><input type="file" accept="image/*" capture="environment" data-photo="spine" hidden></label>
+      <div class="choices">${photoButtonsHtml('spine', book.photos.spine ? 'Take it again' : 'Take a photo of the spine')}
         ${choiceHtml('next', book.photos.spine ? 'Use this photo' : 'Skip')}</div>${backHtml()}`;
   }
 
@@ -677,6 +688,8 @@ export function render(container, state, actions) {
     if (action === 'original-title') { book.originalTitle = book.work.workTitle; return drawStep(); }
     // English needs no original title, so tapping it goes straight on.
     if (action === 'language') { book.language = value; return isEnglish(value) ? next() : drawStep(); }
+    if (action === 'mixed-languages') { book.workLanguages = []; return drawStep(); }
+    if (action === 'same-language') { book.workLanguages = null; return drawStep(); }
     if (action === 'category') { book.category = book.category === value ? '' : value; return drawStep(); }
     if (action === 'tag') { book.tags = book.tags.includes(value) ? book.tags.filter(tag => tag !== value) : [...book.tags, value]; return drawStep(); }
     if (action === 'binding') { book.binding = value; return next(); }
@@ -734,6 +747,7 @@ export function render(container, state, actions) {
       isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
+      workLanguages: book.contents !== null ? book.workLanguages || null : null,
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, working: true }],
@@ -829,7 +843,7 @@ export function render(container, state, actions) {
     book.imageFiles = [];
     const add = (kind, source, files, master) => {
       const id = actions.newId();
-      images.push({ id, kind, source, color: kind === 'cover' ? files.color : null, ratio: files.ratio, master, waiting: null });
+      images.push(imageEntry(id, kind, source, files, master));
       book.imageFiles.push([id, files]);
     };
     if (book.photos.cover) add('cover', 'photo', book.photos.cover, true);

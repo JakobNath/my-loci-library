@@ -1,6 +1,6 @@
 // The photo editor (PLAN.md, "Taking photos"): the outline starts already
-// placed; a cover has four corner handles, a spine has two edge lines and two
-// end bars. A handle stays exactly where it is let go. While dragging,
+// placed; a cover has four corner handles, a spine has a dot at each end and
+// a handle on each side. A handle stays exactly where it is let go. While dragging,
 // magnifiers show the point being placed, away from the finger. Holding the
 // photo away from the outline, or the Preview button, shows the straightened
 // result. The photo can be turned in 90° steps. Nothing is detected or moved
@@ -8,7 +8,7 @@
 
 import { readPicture, straighten, imageFiles } from '../edges/photo.js';
 import { escapeHtml } from '../core/html.js';
-import { EDGES, startingOutline, spineGrip, moveSpineEdge, loupePlace } from '../core/outline.js';
+import { startingOutline, startingSpine, spineOutline, spineHandle, moveSpine, spineHandlePoint, loupePlace } from '../core/outline.js';
 
 const HANDLE = 14; // touch target radius in screen pixels
 // Magnifier zooms. A cover has one at 2x: two looked alike there and one
@@ -39,7 +39,7 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     <div class="editor-tools"><button type="button" class="btn" data-action="turn">Turn 90°</button>
       <button type="button" class="btn" data-action="preview" aria-pressed="false">Preview</button>
       ${heightFieldHtml}
-      <p class="editor-hint">Or hold the photo away from the outline to see the result.</p></div>`;
+      <p class="editor-hint">${kind === 'spine' ? 'Drag the dots to the top and bottom of the spine, and the sides to its edges. ' : ''}Hold the photo away from the outline to see the result.</p></div>`;
   document.body.append(overlay);
   const canvas = overlay.querySelector('.editor-canvas');
   const loupes = overlay.querySelector('.editor-loupes');
@@ -47,6 +47,7 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
   const context = canvas.getContext('2d');
   let scale = 1;
   let outline = [];
+  let spine = null; // a spine's dots and widths (core/outline.js); its outline is made from them
   // A copy of the photo at screen size: straightening it takes a few
   // milliseconds, so the preview can be redrawn at once.
   let screenCopy = null;
@@ -63,15 +64,16 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     screenCopy.width = canvas.width;
     screenCopy.height = canvas.height;
     screenCopy.getContext('2d').drawImage(picture, 0, 0, canvas.width, canvas.height);
-    outline = startingOutline(picture.width, picture.height, kind);
+    spine = kind === 'spine' ? startingSpine(picture.width, picture.height) : null;
+    outline = spine ? spineOutline(spine) : startingOutline(picture.width, picture.height);
     draw();
   }
 
-  // Where the handles are drawn: a cover's corners; the middle of each of a
-  // spine's edges, with small dots at its corners, since the ends can tilt.
+  // Where the handles are drawn: a cover's corners; a spine's two end dots and the middle of each side.
   function handlePoints() {
     if (kind === 'cover') return outline;
-    return EDGES.map(([i, j]) => [(outline[i][0] + outline[j][0]) / 2, (outline[i][1] + outline[j][1]) / 2]);
+    const [tl, tr, br, bl] = outline;
+    return [spine.top, spine.foot, [(tl[0] + bl[0]) / 2, (tl[1] + bl[1]) / 2], [(tr[0] + br[0]) / 2, (tr[1] + br[1]) / 2]];
   }
 
   function drawPreview() {
@@ -108,10 +110,17 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
       context.stroke();
     }
     if (kind === 'spine') {
+      // The line between the end dots, which the spine is straightened along; the dots filled, to stand out from the side handles.
+      context.setLineDash([6, 6]);
+      context.beginPath();
+      context.moveTo(spine.top[0] * scale, spine.top[1] * scale);
+      context.lineTo(spine.foot[0] * scale, spine.foot[1] * scale);
+      context.stroke();
+      context.setLineDash([]);
       context.fillStyle = token('--pop');
-      for (const [x, y] of points) {
+      for (const [x, y] of [spine.top, spine.foot]) {
         context.beginPath();
-        context.arc(x, y, 4, 0, Math.PI * 2);
+        context.arc(x * scale, y * scale, 9, 0, Math.PI * 2);
         context.fill();
       }
     }
@@ -147,13 +156,14 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
     const rect = canvas.getBoundingClientRect();
     return [(event.clientX - rect.left) / scale, (event.clientY - rect.top) / scale];
   };
-  const middleOf = corners => [0, 1].map(axis => corners.reduce((sum, i) => sum + outline[i][axis], 0) / corners.length);
+  // The point a grip places, which the magnifiers center on.
+  const placedPoint = grip => (spine ? spineHandlePoint(spine, grip) : outline[grip.corners[0]]);
 
   // What a press takes hold of: a cover's nearest corner, or a spine's
-  // nearest edge (core/outline.js), if close enough; otherwise nothing.
+  // nearest dot or side (core/outline.js), if close enough; otherwise nothing.
   function gripAt(point) {
-    if (kind === 'spine') {
-      const grip = spineGrip(outline, point);
+    if (spine) {
+      const grip = spineHandle(spine, point);
       return grip.distance * scale <= HANDLE * 2 ? grip : null;
     }
     const nearest = outline.map((corner, i) => ({ i, distance: Math.hypot(corner[0] - point[0], corner[1] - point[1]) * scale }))
@@ -172,18 +182,21 @@ export async function editPhoto(file, kind, { heightHint = '' } = {}) {
       draw();
       return;
     }
-    dragging = { grip, at: point, place: loupePlace(middleOf(grip.corners), picture.width, picture.height) };
+    dragging = { grip, at: point, place: loupePlace(placedPoint(grip), picture.width, picture.height) };
   });
   canvas.addEventListener('pointermove', event => {
     if (!dragging) return;
     const point = pointOf(event);
     const dx = point[0] - dragging.at[0];
     const dy = point[1] - dragging.at[1];
-    outline = kind === 'spine'
-      ? moveSpineEdge(outline, dragging.grip, dx, dy)
-      : outline.map((corner, i) => (dragging.grip.corners.includes(i) ? [corner[0] + dx, corner[1] + dy] : corner));
+    if (spine) {
+      spine = moveSpine(spine, dragging.grip, dx, dy);
+      outline = spineOutline(spine);
+    } else {
+      outline = outline.map((corner, i) => (dragging.grip.corners.includes(i) ? [corner[0] + dx, corner[1] + dy] : corner));
+    }
     dragging.at = point;
-    showLoupes(middleOf(dragging.grip.corners), dragging.place);
+    showLoupes(placedPoint(dragging.grip), dragging.place);
     draw();
   });
   const endPress = () => {

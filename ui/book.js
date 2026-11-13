@@ -140,7 +140,7 @@ export function render(container, state, actions) {
     ${viewerHtml}`;
   fillImages(container, actions.imageUrl);
   // Other editions and the free-scan link, a moment later (ui/book-more.js).
-  import('./book-more.js').then(more => more.fillMore(container.querySelector('[data-more]'), entry, state.library)).catch(() => {});
+  import('./book-more.js').then(more => more.fillMore(container.querySelector('[data-more]'), entry, state.library, actions)).catch(() => {});
   const viewer = container.querySelector('.viewer');
   // The view's styles load with the later screens' stylesheet, first.
   const enlarge = async () => { if (viewer && viewer.showModal) { await actions.loadScreenStyles(); viewer.showModal(); } };

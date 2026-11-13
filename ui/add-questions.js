@@ -6,6 +6,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
+import { parseContentsLines } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
 
 /** The original languages offered as one-tap buttons; any other is typed. */
@@ -44,7 +45,9 @@ export function navHtml(nextLabel = 'Next') {
 export const isEnglish = language => /^english$/i.test(String(language || '').trim());
 
 // The work's original language and, for any other than English, its original title.
-export function languageStepHtml(book) {
+// usedLanguages: the languages of the library's works, offered in a mixed collection's rows.
+export function languageStepHtml(book, usedLanguages = []) {
+  if (book.contents !== null && book.workLanguages) return workLanguagesHtml(book, usedLanguages);
   const chipsHtml = LANGUAGES.map(language => chipHtml('language', language, book.language === language)).join('');
   const other = LANGUAGES.includes(book.language) ? '' : book.language;
   const foreign = book.language && !isEnglish(book.language);
@@ -55,12 +58,30 @@ export function languageStepHtml(book) {
   const many = book.contents !== null;
   const hint = many ? 'For every work in this book; a work first written in another language can be changed later on the book page, under "Edit the works".'
     : "The work's own language, not this book's: Latin for a translation of Augustine. Tap one, or type another below.";
+  const mixedHtml = many ? choiceHtml('mixed-languages', 'Not all the same', 'Choose a language for each work') : '';
   return `<h2 class="step-title">${escapeHtml(many ? 'What language were these works first written in?' : 'What language was this work first written in?')}</h2>
     <p class="step-hint">${escapeHtml(hint)}</p>
-    <div class="chips">${chipsHtml}</div>
+    <div class="chips">${chipsHtml}</div>${mixedHtml}
     <form class="form">${fieldHtml('Another language', 'originalLanguage', other, { help: true })}
       ${foreign && !many ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml : ''}
       ${navHtml()}</form>`;
+}
+
+// A collection whose works were first written in different languages (Lucretius in Latin,
+// Epictetus in Greek): one row per work, each starting at the language chosen for it, a known
+// set's list, or the one answer for the whole book.
+function workLanguagesHtml(book, usedLanguages) {
+  const chosen = new Map((book.workLanguages || []).map(row => [normalizeForSearch(row.title), row.language]));
+  const rowsHtml = parseContentsLines(book.contents).map(line => {
+    const language = chosen.get(normalizeForSearch(line.title)) || book.language || '';
+    const options = [...new Set(['', ...LANGUAGES, ...usedLanguages, language])];
+    const optionsHtml = options.map(name => `<option value="${attr(name)}"${name === language ? ' selected' : ''}>${escapeHtml(name || 'Not known yet')}</option>`).join('');
+    const label = line.author ? `${line.title} · ${line.author}` : line.title;
+    return `<label class="field">${escapeHtml(label)}<select name="workLanguage" data-title="${attr(line.title)}">${optionsHtml}</select></label>`;
+  }).join('');
+  return `<h2 class="step-title">What language was each work first written in?</h2>
+    <p class="step-hint">${escapeHtml(`A language not listed here, and each work's original title, can be given later on the book page, under "Edit the works".`)}</p>
+    <form class="form">${rowsHtml}${choiceHtml('same-language', 'All in one language after all')}${navHtml()}</form>`;
 }
 
 const MOST_USED_TAGS = 20; // tags offered as chips; every other is suggested as it is typed
@@ -115,6 +136,12 @@ export function readQuestions(book, stepArea) {
   const value = name => ((stepArea.querySelector(`[name="${name}"]`) || {}).value || '').trim();
   if (book.step === 'language') {
     if (value('originalLanguage')) book.language = value('originalLanguage');
+    const rows = [...stepArea.querySelectorAll('[name="workLanguage"]')].map(select => ({ title: select.dataset.title, language: select.value }));
+    if (rows.length) {
+      book.workLanguages = rows;
+      // The translation step asks whenever a work was not first written in English.
+      book.language = (rows.find(row => row.language && !isEnglish(row.language)) || rows.find(row => row.language) || { language: '' }).language;
+    }
     if (stepArea.querySelector('[name="originalTitle"]')) book.originalTitle = value('originalTitle');
   }
   if (book.step === 'subjects') {

@@ -174,3 +174,7 @@ button.menu-row:first-child { border-top: 0; }
 /* The main button of a form. Only screens loaded when opened have one (Add, the entry form, Settings,
    "Works in this book"), so it moved here from app.css on 12 November 2026 to make room at start-up. */
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* The book page's Pictures section (ui/book-photos.js). */
+.picture-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) 0; }
+.picture-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }

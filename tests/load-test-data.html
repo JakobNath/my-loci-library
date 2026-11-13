@@ -20,7 +20,7 @@
   // Development-only loader (BUILD_PLAN.md step 5.7). It talks only to this
   // device's storage, never to GitHub.
   import { openStorage } from '../edges/storage.js';
-  import { validateRecord } from '../core/records.js';
+  import { validateRecord } from '../core/validate.js';
 
   const status = document.getElementById('status');
   document.getElementById('file').addEventListener('change', async event => {

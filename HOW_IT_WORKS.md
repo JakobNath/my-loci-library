@@ -29,9 +29,11 @@ The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js`) 
 3. **Contents**, only when a source lists works inside the book or the person says it holds several works. Each line becomes a work; Wikidata may offer their original dates ("Use these dates"). When nothing lists them, "Photograph the contents page" keeps a photo with the book, to be typed in later on the laptop ("Contents to enter").
 4. **Same work?**, only when the catalog already holds a work with this title, such as another translation of the *Confessions*.
 5. **Original date**, for a single work. Suggestions (from the lookup, Wikidata, or a checked known-set list) are offered, never saved without a tap.
-6. **Original language, category and tags**, once for the book (or once for all of a collection's works), unless the work is already held.
+6. **Original language, category and tags**, once for the book (or once for all of a collection's works), unless the work is already held. A collection whose works were written in different languages takes "Not all the same", which shows a language box for each work.
 7. **Translation**, only for a translated book: the original title and the translator.
-8. **Cover, spine, binding** (binding only when asked for in Settings), then **Place** (the shelf, with the last ones used offered) and **This copy** (acquired, price, value, markings, notes).
+8. **Cover, spine, binding** (binding only when asked for in Settings; each photo can be taken with the camera or chosen from the photos already on the phone, and a spine is lined up by a dot at its top and foot and its two sides), then **Place** (the shelf, with the last ones used offered) and **This copy** (acquired, price, value, markings, notes).
+
+**Photos after adding.** The book page's Pictures section (`ui/book-photos.js`, loaded with the page's lower part) takes, chooses or removes the cover and the spine photo. A new photo replaces every image of its kind; a removed one leaves its files in the data repository.
 
 **What is saved.** Nothing is written until the last step. Then the app saves four kinds of record together (`DATA_FORMAT.md`): the **work** or works (the text as written: original title, language, date), the **edition** (this printing: publisher, year, ISBN, contents, cover), the **copy** (the object on the shelf: place, binding, price) and any new **author**. They go to the device's own store at once and to GitHub at the next sync.
 

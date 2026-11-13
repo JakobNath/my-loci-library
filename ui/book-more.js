@@ -1,12 +1,14 @@
 // The lower part of the book page, drawn a moment after the page opens so the
 // app's start-up code stays within its size budget: other editions of the same
 // works and the collections holding them, and, for a book old enough to be in
-// the public domain, a link to read HathiTrust's free scan.
+// the public domain, a link to read HathiTrust's free scan; and the Pictures
+// section, to take or remove the cover and spine photos (ui/book-photos.js).
 
 import { escapeHtml } from '../core/html.js';
 import { originalTextHolders } from '../core/library.js';
 import { badgesHtml } from './pieces.js';
 import { recordPage } from '../edges/lookup-hathitrust.js';
+import { picturesHtml, wirePictures } from './book-photos.js';
 
 // A book published this many years ago or more is in the public domain in the
 // United States, where HathiTrust shows it in full (published in 1930 or
@@ -46,6 +48,9 @@ export function freeScanHtml(edition, thisYear) {
 }
 
 /** Fill the book page's place for these sections. */
-export function fillMore(slot, entry, library) {
-  slot.innerHTML = freeScanHtml(entry.edition, new Date().getFullYear()) + relatedHtml(entry, library);
+export function fillMore(slot, entry, library, actions) {
+  slot.innerHTML = freeScanHtml(entry.edition, new Date().getFullYear()) + relatedHtml(entry, library) + picturesHtml(entry);
+  wirePictures(slot, entry, actions);
+  // The Pictures section's styles are with the later screens' (styles/screens.css).
+  actions.loadScreenStyles();
 }

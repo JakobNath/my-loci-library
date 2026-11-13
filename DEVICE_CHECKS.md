@@ -134,3 +134,11 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 - [ ] Phone: scan a volume of Luther's Works with an ISBN on its back (say volume 31, Career of the Reformer I). "Is this the book?" should show the volume's title, and the works step its works from the list (ten for volume 31, beginning with the Disputation Against Scholastic Theology). Save, and check the book page.
 - [ ] Phone: scan a second Genesis volume (any of 1 to 8) after a first: "Lectures on Genesis" should stay one work, listed under both books.
+
+## His wife's issues, part A (1.13.0)
+
+- [ ] iPhone: in Add, at the cover step, tap "Choose a saved photo". The phone should offer its photo library; a chosen photo opens in the editor.
+- [ ] Both phones: take a spine photo holding the book at a slant. Drag the top dot and the foot dot onto the spine's ends, then a side onto its edge. Preview should show the spine straight and upright.
+- [ ] Both phones: open a book already added. Under Pictures, take a cover photo, then choose a spine photo, then remove the spine. The page should show each change at once, and the other phone should show it after a sync.
+- [ ] Phone: add a collection with works in different languages (Lucretius with Epictetus, say), tap "Not all the same", choose Latin for Lucretius, and save. "Edit the works" should show Latin for Lucretius only.
+- [ ] Phone: add The Count of Monte Cristo again (or any Dumas). The date step should offer 1802–1870 as his lifetime, not "24–5".
