@@ -6,7 +6,7 @@ Where the project stands and what comes next. Read this first in any working ses
 
 Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting sources) is under way (`docs/plan/archive/BUILD_PLAN_phases_1-14.md`). The one build step left is the shelf view review (13.0), which needs real books on a shelf. The app, the laptop tools and the Zotero companion have been tried live:
 
-- **Sync** works on Jakob's laptop and phone, each with its own key, against the test catalog (`my-loci-library-test-data`). The real catalog (`my-loci-library-data`) is still empty and untouched.
+- **Sync** works on every device against the real catalog (`my-loci-library-data`). The sample catalog used during the build was removed on 13 November 2026.
 - **Logos**: an export of 53 resources imported cleanly in a trial on a copy of the test data.
 - **Zotero**: four trials into "Loci test" found and fixed eight citation problems; Chicago notes copied from Zotero now read correctly.
 - **Book search** (Wishlist and Add) shows specific editions with English titles, publishers and covers, and finds books by publisher or series.
@@ -91,6 +91,12 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 ## Next tasks for a working session
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
+
+**Added on 13 November 2026** (project review with Jakob; `PLAN.md`, "Original dates"):
+
+- [ ] **Original dates made quick.** A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
+- The prototypes and the test-data repository were removed on 13 November 2026. Trials now run against the real catalog (alpha), after checking that the daily backup is recent. The Zotero trial still goes into the "Loci test" collection only.
+- Known-set lists: no new ones are written ahead of time (Jakob, 13 November 2026: research after adding instead). Item 3 below is replaced by that.
 
 **The order from 12 November 2026** (agreed with Jakob):
 

@@ -13,16 +13,16 @@ import { parseKnownSet } from '../core/known-sets.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// The app's own files: everything except prototypes, vendor code, tests and docs.
+// The app's own files: everything except vendor code, tests and docs.
 function appFiles() {
   const files = [];
-  const skip = new Set(['prototypes', 'vendor', 'tests', 'docs', '.git', '.claude', 'node_modules']);
+  const skip = new Set(['vendor', 'tests', 'docs', '.git', '.claude', 'node_modules']);
   function walk(folder) {
     for (const name of readdirSync(folder)) {
       const path = join(folder, name);
       if (statSync(path).isDirectory()) {
         if (!skip.has(name)) walk(path);
-      } else if (/\.(js|mjs|html|css)$/.test(name) && !(name === 'review.html')) {
+      } else if (/\.(js|mjs|html|css)$/.test(name)) {
         files.push(relative(root, path).split(sep).join('/'));
       }
     }

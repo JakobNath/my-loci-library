@@ -160,6 +160,28 @@ Original dates live on the work, are typed naturally, and are never auto-filled.
 
 *Changed with Jakob on 11 November 2026:* a date is still always a person's choice, but the person can make it with one tap. Wikidata knows when most famous works were written or first published (tested: *Phaedo* c. 360 BC, *The Death of Ivan Ilyich* 1882–86, "The Raven" 1845, the Ninety-five Theses 1517). When adding a collection, the works' dates found there are shown filled in, marked "from Wikidata", and one tap ("Use these dates") accepts them all; each can be changed first. A date in a checked known-set list counts as set by a person, since a person checked the list. A disputed work (the *Didache*) keeps the datings a person gave it, and an existing dating is never replaced.
 
+**Which date is the working date** (decided with Jakob on 13 November 2026)
+
+A work can be dated several ways: when it was written, first performed, first published, or revised. One rule picks the working date, the one shown, sorted by and cited, so every book in the catalog is dated the same way. It follows how scholars date works in print, and agrees with library cataloging (the "date of work" is the earliest date tied to the work) and with Wikidata, which keeps written, published and performed dates apart.
+
+| The work | Working date | Examples |
+| --- | --- | --- |
+| Printed in the author's lifetime | First publication | *Frankenstein* 1818; *Pride and Prejudice* 1813 |
+| Written before printing, or first printed after the author died | When it was written | Augustine, *Confessions* c. 397–400; Pascal, *Pensées* 1657–62 |
+| A play | First performance where known, otherwise when written | Sophocles, *Oedipus the King* c. 429 BC |
+
+Any other date worth keeping goes in as a further dating with its type and a short note: *Frankenstein*'s revised text, "1831, revised edition"; *Pride and Prejudice*'s first draft, "1796–97, written as First Impressions". The date field carries this rule as one short line of help, so whoever is adding the book does not have to remember it. The date of a translation is not the work's date: it belongs to the edition ("Edition dates are separate", below).
+
+**Search the web** (Jakob, 13 November 2026)
+
+Most dates are found by a web search, whose summary at the top usually answers a plain question well. So beside every original-date box (adding, editing, "Works in this book") the app shows a "Search the web" link that opens the browser on a search already worded as a question, so nothing needs editing:
+
+- A work with an author: *When was Pride and Prejudice by Jane Austen written and first published?*
+- A work with no author: *When was the Didache written and first published?*
+- Beside an edition's translation date: *When was Robert Fagles' translation of The Odyssey first published?*
+
+The question asks for both the written and the published date, so the answer gives what the rule above needs. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change. The laptop's page for filling in what is missing has the same link.
+
 **Typing a date**
 
 The date field accepts what a scholar writes, and the app shows a preview of how it read the entry before saving:
