@@ -39,25 +39,32 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 - [x] The first tour of the app (10 November 2026): nothing to fix.
 - [x] Ready for the real catalog (11 November 2026): the two-device check, the daily backup (Task Scheduler, 12:30, into `My Drive › My Loci Library backup`), and his wife's iPhone set up by setup link.
 
-**1.3.0 on the phones**
+**The checking hour** (12 November 2026)
 
-- [ ] Try the four checks under "Adding books, second tour part B" in `DEVICE_CHECKS.md`: Arrange, a translated book, scanning a set, and pasting a set's volumes.
+- [ ] One hour with the books, both phones and the laptop, following the private workspace's `handoffs/CHECKING_HOUR.md`. It gathers, with numbered questions:
+  - the checks of the three known-set lists (Greek tragedies, Luther's Works, Great Books);
+  - the phone checks for 1.4.0 to 1.12.0 that use those books;
+  - the admin page and clearing "Loci test" in Zotero;
+  - a D/T/N sorting of the older unticked items in `DEVICE_CHECKS.md`.
 
-**1.12.0 on every device** (published 12 November 2026; includes 1.7.0 to 1.11.0)
+  Jakob reports the answers by number in a new chat. That session then:
+  - corrects the lists and adds their `checked:` lines;
+  - releases the Greek tragedies list;
+  - trims `DEVICE_CHECKS.md`.
 
-- [ ] Reload Jakob's phone, his wife's iPhone (close the home-screen app and open it again) and the laptop's Firefox to 1.12.0, then try the checks from "Format 3 and Wikidata (1.7.0)" to "Luther's Works list (1.12.0)" in `DEVICE_CHECKS.md`, and the 1.4.0 and 1.5.0 ones above them if not done yet. A device still on 1.5.0 that meets a newer record says so and waits, changing nothing, until it is reloaded.
-- [ ] **Check the Luther's Works list** with the volumes at hand (`handoffs/2026-11-12-luthers-works-check.md`): which volumes you own (and the new series 56–82?), the disagreements, the thin spots, and ten lines. Then a working session adds its `checked:` line.
-- [ ] **Check the Greek tragedies list** (`handoffs/2026-11-12-greek-tragedies-check.md`): the 1992 Centennial Edition, four volumes. Above all, that volume 2's Antigone and Oedipus at Colonus are Grene's translations; then four date notes and ten lines.
-- [ ] **Check the Great Books list** with the volumes at hand (`handoffs/2026-11-12-great-books-check.md`): the ISBN printed in the volumes, the disagreements, and ten random lines. Then a working session adds the `checked:` line (and drops the ISBN line that is not printed), and the list's dates fill in without a tap.
+  The detailed check files stay beside the sheet:
+  - `2026-11-12-greek-tragedies-check.md`;
+  - `2026-11-12-luthers-works-check.md`;
+  - `2026-11-12-great-books-check.md`.
 
 **The laptop admin page** (new, 12 November 2026)
 
-- [ ] Open it: double-click `admin.cmd` in the tools' `admin` folder. A window opens (leave it open) and the browser shows "My Loci Library · The laptop book". Read a chapter or two, and press "Check the sources" (it changes nothing).
 - [ ] When a bookcase is ready to arrange: "Planning the shelves" on that page, with the shelves measured. Record the arrangement only once the books are moved.
 
 **Before the real Zotero run**
 
-- [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection.
+- [ ] Clear the Zotero trial: in Zotero, select everything in "Loci test", move it to the trash, empty the trash, and delete the collection (also on the checking-hour sheet, LT-2).
+- [ ] Phase 15 step 10 built (below), so that works inside books go to Zotero only when "Cite this work" is tapped.
 
 **3. Start cataloging for real** (walked through together)
 
@@ -75,6 +82,18 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
+**The order from 12 November 2026** (agreed with Jakob):
+
+1. His wife's issues with the app, about five, which Jakob reports in a new chat.
+2. Phase 15 step 10: Zotero sections only for works marked "Cite this work". Approved by Jakob on 12 November 2026.
+3. Known-set lists, one per session:
+   - Loeb, the whole series: Greek first, then Latin, over several sessions;
+   - then Library of America, the CPH sets, Watts, Schaff, TDNT, Everyman's Library and the Folio Shakespeare.
+4. Whenever Jakob sends his checking-hour answers: apply them, add `checked:` lines, release the Greek tragedies list, and trim `DEVICE_CHECKS.md`.
+5. In the first week of December 2026: check Wikidata's new query address (`SOURCES.md`).
+
+The longer list below is the full record.
+
 0. (Second tour, part B, adding books, is done and released as 1.3.0, 11 November 2026. Its phone checks are waiting on Jakob, above.)
 0a. **Phase 15: anthologies and lasting sources** (planned with Jakob on 11 November 2026; PLAN.md, "Anthologies", "Original dates", "Book data", "Search"; decisions in `docs/decisions/book-data.md` and the others of that date; the full plan, live research answers and Jakob's 20 decisions in `handoffs/2026-11-12-sources-and-anthologies-phases.md`). Steps, ordered by risk; each is one session:
    1. [x] Decisions into the documents: PLAN.md, the CLAUDE.md copies, decisions, `SOURCES.md`, the yearly check (11 November 2026).
@@ -86,7 +105,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
    7. [x] Wikidata (published in 1.7.0, 12 November 2026): one query per book; "Use these dates" under a collection's contents; the first date suggestion for a single work; IDs, other titles and original titles for new works; a Settings switch. "Possibly the same as" and the laptop's re-check of stored IDs followed in 1.11.0. The original-text marker is built on the `known-sets` branch.
    8. [x] Known sets (released as 1.8.0, 12 November 2026): the list format with a `checked:` line, "Which volume?", a listed volume's works when adding, one work across volumes, set gaps on the Wishlist, new Logos volumes, and the Great Books (1990) list. Jakob owns the 1990 edition; the list answers to both its ISBN (0-85229-531-6) and the 1952 one (0-85229-163-9), until the printed one is known (`docs/decisions/book-data.md`). Waiting on Jakob's check of the list (above). Filling books already in the catalog is step 11.
    9. [x] Contents-page photos, the laptop page "Contents to enter", found works offered in the entry form (released as 1.10.0, 12 November 2026; 1.9.0 went to the big run's phases 2 to 4).
-   10. [ ] Zotero sections only for works marked to cite. Needs Jakob's go-ahead; before his first real Zotero run.
+   10. [ ] Zotero sections only for works marked to cite. Approved by Jakob on 12 November 2026; to build before his first real Zotero run (the tools' `zotero-items.mjs`, "Cite this work" on "Works in this book", the format-3 `cite` field; trials only in a test collection).
    11. [ ] Filling existing books from known lists (changes real records): a verified backup and a report first; undone with `git revert`.
    12. [~] Known-set lists, one per session (Luther's Works 1–55 done, unchecked, 1.12.0; the Chicago Complete Greek Tragedies, Centennial Edition 1992, the edition Jakob owns, written and tested on 12 November 2026 but not yet released (he wants to check it first), in `sets/complete-greek-tragedies-1992.txt`; a 2013 third-edition list is set aside in the workspace's `handoffs/research/`; next: Loeb, the whole series as Jakob chose, over several sessions), for the volumes Jakob owns first: Luther's Works, the Chicago Complete Greek Tragedies, Loeb, Library of America, the CPH sets (Walther, Gerhard, the Concordia Commentary, Luther's Complete Sermons), Watts, Schaff, TDNT, Everyman's Library, the Folio Shakespeare.
 1. (The daily backup and the switch of every device are done, 11 November 2026.) The full Logos import (section 3 above), then the first real Zotero run once Jakob has cleared "Loci test". The tools already point at the real catalog. Handoff: `handoffs/2026-11-11-real-catalog.md`.
