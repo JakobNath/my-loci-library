@@ -16,7 +16,7 @@ import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
 import { guideHtml } from './field-help.js';
 
-export const APP_VERSION = '1.14.1';
+export const APP_VERSION = '1.14.2';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 

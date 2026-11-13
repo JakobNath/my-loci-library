@@ -96,6 +96,9 @@ export function render(container, state, actions) {
   const foundHtml = entry && found.length ? `<div class="found-contents"><p>${escapeHtml(`A library catalog lists ${found.length} works inside this book: ${found.slice(0, 4).join('; ')}${found.length > 4 ? '; …' : ''}`)}</p>
     <div class="actions"><button class="btn" type="button" data-action="use-found">Use these works</button><button class="btn" type="button" data-action="decline-found">Not these</button></div></div>` : '';
   const worksLinkHtml = isAnthology ? `<a class="link" href="#/edit/${attr(entry.id)}/works">Give each work its original title, language, date, category and tags</a>` : '';
+  // Pieces (the short items of a known set's volume) have no box here; saving keeps them as they are.
+  const pieceCount = (edition.contents || []).filter(item => item.piece).length;
+  const piecesHtml = pieceCount ? `<p class="page-meta">${pieceCount === 1 ? 'One shorter piece' : `${pieceCount} shorter pieces`} from the set's list ${pieceCount === 1 ? 'is' : 'are'} also in this book and kept as ${pieceCount === 1 ? 'it is' : 'they are'}.</p>` : '';
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   // A volume of a set with its own value (core/value.js): say how this copy's value is counted.
   const set = entry && entry.set && entry.set.value !== null ? entry.set : null;
@@ -112,7 +115,7 @@ export function render(container, state, actions) {
         <div data-single${isAnthology ? ' hidden' : ''}>${fieldHtml('Authors (separate with ;)', 'authors', authorsText, { list: 'authors', wide: true })}</div>
         <label class="field" data-several${isAnthology ? '' : ' hidden'}>Contents: one work per line, as "Author — Title — date" (author and date optional). A table of contents can be pasted here.
           ${contentsPhotoHtml}<textarea name="contents" rows="8">${escapeHtml(contentsText)}</textarea></label>
-        ${worksLinkHtml}
+        ${worksLinkHtml}${piecesHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
       <fieldset data-single${isAnthology ? ' hidden' : ''}><legend>The work</legend>
