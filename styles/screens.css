@@ -153,6 +153,8 @@ button.menu-row:first-child { border-top: 0; }
 .preview { margin: 0; font: var(--fs-small) var(--font-ui); color: var(--muted); }
 .preview strong { color: var(--accent-ink); }
 .preview.is-problem { color: var(--warn-ink); }
+.search-line { margin: 0 0 var(--space-3); }
+.date-rule { margin-bottom: var(--space-3); }
 .problems { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-ink); font: var(--fs-small) var(--font-ui); }
 .trash-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
 .trash-list li { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; }

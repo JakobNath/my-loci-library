@@ -8,6 +8,8 @@ import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
 import { parseContentsLines } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
+import { translationDateQuestion } from '../core/date-search.js';
+import { searchLinkHtml } from './date-help.js';
 
 /** The original languages offered as one-tap buttons; any other is typed. */
 export const LANGUAGES = ['English', 'Latin', 'Greek', 'German', 'Hebrew', 'French'];
@@ -112,6 +114,7 @@ export function translationStepHtml(book) {
     <p class="step-hint">Who translated it, and the year this translation first appeared, which may be long before this printing. A revision's year goes in the notes. Both optional.</p>
     <form class="form">${fieldHtml('Translator', 'translator', book.translator)}
       ${fieldHtml('Translation first published (year)', 'translationFirstPublished', book.translationYear, { type: 'number', help: true })}
+      <p class="search-line">${searchLinkHtml(translationDateQuestion(book.found.title, String(book.translator || '').split(';')), 'translation')}</p>
       ${navHtml()}</form>`;
 }
 

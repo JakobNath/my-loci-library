@@ -142,3 +142,8 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: on a volume of Luther's Works, tap "Add the set's details", give the short form LW and the number of volumes, and save. Every volume should then say "Volume … of Luther's Works (LW)", and searching "LW 31" should find volume 31.
 - [ ] Phone: on the set's page, give the set a value and turn on "Count one value for the whole set". Settings › Value should count the set once, and a volume's page should say "Valued with the set".
 - [ ] iPhone: Settings › Rename and merge › Extras: add "Signed", then remove it. Both phones should show the change after a sync.
+
+## Original dates made quick (13 November 2026)
+
+- [ ] iPhone home-screen app and Android: in Edit book, tap "Search the web" under the original date. A browser tab should open on a search for "When was <title> by <author> written and first published?", and going back should return to the form with nothing lost.
+- [ ] Phone: add a translated book and, on the translation step, type the translator, then tap "Search the web". The search should name that translator.

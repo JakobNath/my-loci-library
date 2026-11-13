@@ -37,7 +37,7 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 The same day the tools gained the rest of the audit's safety fixes: a book a source missed is asked again within a week, a corrected ISBN clears what the old one filled, and only one tool at a time changes the catalog.
 
-All tests pass: 224 in the app (and 207 on the self-test page), 262 in the tools.
+All tests pass: 229 in the app (and 212 on the self-test page), 267 in the tools.
 
 ## Waiting on Jakob
 
@@ -94,7 +94,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **Added on 13 November 2026** (project review with Jakob; `PLAN.md`, "Original dates"):
 
-- [ ] **Original dates made quick.** A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
+- [x] **Original dates made quick.** Built on 13 November 2026, not yet released (`docs/decisions/screens.md`; phone checks in `DEVICE_CHECKS.md`). Release with the next version. A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
 - The prototypes and the test-data repository were removed on 13 November 2026. Trials now run against the real catalog (alpha), after checking that the daily backup is recent. The Zotero trial still goes into the "Loci test" collection only.
 - Known-set lists: no new ones are written ahead of time (Jakob, 13 November 2026: research after adding instead). Item 3 below is replaced by that.
 

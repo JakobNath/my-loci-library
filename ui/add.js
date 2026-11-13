@@ -27,6 +27,8 @@ import { photoButtonsHtml } from './photo-buttons.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
+import { workDateQuestion, translationDateQuestion } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 import { findKnownVolume, contentsLinesOf } from '../core/known-sets.js';
@@ -393,6 +395,11 @@ export function render(container, state, actions) {
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
+      // The translator may have just been typed: ask about that name.
+      if (event.target.dataset.searchWeb === 'translation') {
+        const typed = stepArea.querySelector('[name="translator"]').value;
+        refreshSearchLink(event.target, translationDateQuestion(book.found.title, typed.split(';')));
+      }
       const button = event.target.closest('[data-action]');
       if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
       else if (button) answer(button.dataset.action, button.dataset.value);
@@ -560,9 +567,11 @@ export function render(container, state, actions) {
     const problemHtml = problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '';
     return `<h2 class="step-title">When was this work written?</h2>
       <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
+      ${dateRuleHtml()}
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}${problemHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
+        <p class="search-line">${searchLinkHtml(workDateQuestion(book.found.title, book.found.authors))}</p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know yet</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }

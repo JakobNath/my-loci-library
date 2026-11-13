@@ -10,6 +10,8 @@ import { escapeHtml } from '../core/html.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
 import { worksFromRows } from '../core/entry.js';
 import { iconHtml } from './icons.js';
+import { workDateQuestion } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 
 const attr = value => escapeHtml(value ?? '');
 const fieldHtml = (label, name, value, list = '') => `<label class="field">${escapeHtml(label)}<input name="${name}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"></label>`;
@@ -27,16 +29,17 @@ function datalistsHtml(library) {
   return list('workLanguages', languages) + list('workCategories', categories);
 }
 
-function rowHtml(work, i) {
+function rowHtml(work, i, authorNames) {
   const disputed = work.datings.length > 1;
   const dating = work.datings.find(item => item.working) || work.datings[0];
   const dateHtml = disputed
     ? `<p class="preview">${escapeHtml(`${work.datings.length} datings (working: ${dating.text}); changed in the entry form of a book holding only this work.`)}</p><input type="hidden" name="dating" value="">`
     : `<label class="field">Original date<input name="dating" value="${attr(dating ? dating.text : '')}" placeholder="c. 397, 4th c. BC" autocomplete="off"><span class="preview" data-preview></span></label>`;
+  const searchHtml = `<p class="search-line">${searchLinkHtml(workDateQuestion(work.title, authorNames))}</p>`;
   return `<fieldset data-row="${attr(work.id)}"><legend>${escapeHtml(`${i + 1}. ${work.title}`)}</legend>
       ${fieldHtml('Title', 'title', work.title)}
       <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle)}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, 'workLanguages')}</div>
-      ${dateHtml}
+      ${dateHtml}${searchHtml}
       <div class="field-row">${fieldHtml('Category', 'category', work.category, 'workCategories')}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '))}</div>
     </fieldset>`;
 }
@@ -50,10 +53,13 @@ export function render(container, state, actions) {
     return;
   }
   const works = entry.edition.contents.map(piece => entry.works.find(work => work.id === piece.work)).filter(Boolean);
-  const rowsHtml = works.map(rowHtml).join('');
+  // Each work's own authors, or the book's when it names none.
+  const namesOf = work => work.authors.map(id => (state.library.authorsById.get(id) || {}).name).filter(Boolean);
+  const authorsOf = work => (namesOf(work).length ? namesOf(work) : entry.authors.map(author => author.name));
+  const rowsHtml = works.map((work, i) => rowHtml(work, i, authorsOf(work))).join('');
   container.innerHTML = `<a class="back" href="#/book/${escapeHtml(entry.id)}">${iconHtml('back')} Back to the book</a>
     <div class="page-head"><h1 class="page-title">Works in this book</h1>
-      <p class="page-meta">${escapeHtml(`${entry.edition.title}: ${works.length} works. Fill in what you know; everything can wait. Each work is shared by every book that holds it.`)}</p></div>
+      <p class="page-meta">${escapeHtml(`${entry.edition.title}: ${works.length} works. Fill in what you know; everything can wait. Each work is shared by every book that holds it.`)}</p>${dateRuleHtml()}</div>
     <form class="form" novalidate>
       <div class="problems" hidden></div>
       <fieldset><legend>Same for all</legend>
@@ -69,6 +75,13 @@ export function render(container, state, actions) {
   const form = container.querySelector('form');
   form.querySelectorAll('[name="dating"]').forEach(showPreview);
   container.oninput = event => { if (event.target.name === 'dating') showPreview(event.target); };
+  // The search asks about the title as typed now.
+  container.onclick = event => {
+    if (!event.target.dataset.searchWeb) return;
+    const row = event.target.closest('[data-row]');
+    const work = works.find(item => item.id === row.dataset.row);
+    refreshSearchLink(event.target, workDateQuestion(row.querySelector('[name="title"]').value, authorsOf(work)));
+  };
   container.onsubmit = async event => {
     event.preventDefault();
     const value = (scope, name) => (scope.querySelector(`[name="${name}"]`) || { value: '' }).value;

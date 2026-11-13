@@ -13,6 +13,8 @@ import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
+import { workDateQuestion, translationDateQuestion } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
 const attr = value => escapeHtml(value ?? '');
@@ -99,6 +101,8 @@ export function render(container, state, actions) {
   // Pieces (the short items of a known set's volume) have no box here; saving keeps them as they are.
   const pieceCount = (edition.contents || []).filter(item => item.piece).length;
   const piecesHtml = pieceCount ? `<p class="page-meta">${pieceCount === 1 ? 'One shorter piece' : `${pieceCount} shorter pieces`} from the set's list ${pieceCount === 1 ? 'is' : 'are'} also in this book and kept as ${pieceCount === 1 ? 'it is' : 'they are'}.</p>` : '';
+  // The boxes as first drawn, for the search links' first questions; a click asks about what is typed then.
+  const form0 = { title: edition.title, authors: authorsText, translators: edition.contributors.filter(person => person.role === 'translator').map(person => person.name) };
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   // A volume of a set with its own value (core/value.js): say how this copy's value is counted.
   const set = entry && entry.set && entry.set.value !== null ? entry.set : null;
@@ -119,13 +123,14 @@ export function render(container, state, actions) {
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
       <fieldset data-single${isAnthology ? ' hidden' : ''}><legend>The work</legend>
-        ${datingsHtml}<button type="button" class="link" data-action="dating">Add another dating</button>
+        ${dateRuleHtml()}${datingsHtml}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
         <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}</div>
         <div class="field-row">${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
       </fieldset>
       <fieldset><legend>Edition</legend>
         <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}${fieldHtml('Year', 'year', edition.year, { type: 'number' })}</div>
         <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}${fieldHtml('Translation first published', 'translationFirstPublished', edition.translationFirstPublished, { type: 'number', help: true })}</div>
+        <p class="search-line">${searchLinkHtml(translationQuestion(form0), 'translation')}</p>
         <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series', help: true })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
         <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets', help: true })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
         <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
@@ -161,6 +166,8 @@ export function render(container, state, actions) {
   };
   container.onclick = event => {
     if (event.target.dataset.help) { toggleHelp(container, event.target); return; }
+    const searchKind = event.target.dataset.searchWeb;
+    if (searchKind) refreshSearchLink(event.target, (searchKind === 'translation' ? translationQuestion : workQuestion)(typedNames(form)));
     const action = event.target.dataset.action;
     if (action === 'binding-part') toggleBindingChip(event.target);
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
@@ -230,6 +237,17 @@ function showPreview(input) {
   const { earliest, latest, certainty } = read.dating;
   preview.innerHTML = `Read as <strong>${escapeHtml(formatYearRange(earliest, latest))}</strong> (${escapeHtml(certainty)})`;
 }
+
+// The title, authors and translators as typed now, for the search questions.
+function typedNames(form) {
+  const data = new FormData(form);
+  const roles = data.getAll('contributorRole');
+  const translators = data.getAll('contributorName').filter((name, i) => roles[i] === 'translator').map(String);
+  return { title: String(data.get('title') || ''), authors: String(data.get('authors') || ''), translators };
+}
+
+const workQuestion = typed => workDateQuestion(typed.title, typed.authors.split(';'));
+const translationQuestion = typed => translationDateQuestion(typed.title, typed.translators);
 
 // The form's values in the shape core/entry.js expects.
 function readForm(form) {
