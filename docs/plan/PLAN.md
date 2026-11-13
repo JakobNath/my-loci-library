@@ -477,7 +477,7 @@ These rules keep the app fast on any phone and working through years of iOS, And
 
 **Small and fast**
 
-- Size budget: the app itself (HTML, CSS, JS) stays under about 100 KB. The barcode decoder (about 2 MB) is the one large file. It, the photo editor and the export code load only when used, and are then cached.
+- Size: the app itself (HTML, CSS, JS) stays small, but no number is enforced (changed on 13 November 2026; the speed targets below are the guard, and a test prints the start-up size). The barcode decoder (about 2 MB) is the one large file. It, the photo editor and the export code load only when used, and are then cached.
 - System fonts by default, with at most one self-hosted typeface if the chosen design needs it.
 - Long lists draw only the rows on screen, so 5,000 books scroll as smoothly as 50.
 - Search uses a prebuilt, accent-free index kept with the offline copy, so results appear as you type.

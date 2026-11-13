@@ -77,11 +77,19 @@ export async function openStorage(name = DATABASE) {
     },
     /** Fold the changed records into a new snapshot. */
     async compact() {
-      const records = await this.allRecords();
+      // Read and written in one transaction, so a record saved meanwhile (by a
+      // sync just after the app opens) cannot fall between the two and be lost.
       const transaction = db.transaction(['meta', 'records'], 'readwrite');
-      transaction.objectStore('meta').put(JSON.stringify(records), 'snapshot');
+      const done = transactionDone(transaction);
+      const [snapshot, changed] = await Promise.all([
+        requestResult(transaction.objectStore('meta').get('snapshot')),
+        requestResult(transaction.objectStore('records').getAll()),
+      ]);
+      const byId = new Map(snapshot ? JSON.parse(snapshot).map(record => [record.id, record]) : []);
+      for (const record of changed) byId.set(record.id, record);
+      transaction.objectStore('meta').put(JSON.stringify([...byId.values()].map(migrate)), 'snapshot');
       transaction.objectStore('records').clear();
-      return transactionDone(transaction);
+      return done;
     },
     /**
      * Save records. With `toOutbox`, each is also queued for the next sync;

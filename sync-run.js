@@ -17,6 +17,8 @@ import { withDefaults, settingsToFileText } from './core/settings.js';
  */
 export async function runSync(app, github, quiet) {
   const { state, storage } = app;
+  let brought = false; // whether the download changed anything the screen shows
+  let settled = false; // whether this device's changes arrived, or there were none
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
       const outboxIds = (await storage.outbox()).map(item => item.id);
@@ -30,10 +32,12 @@ export async function runSync(app, github, quiet) {
       const settingsUnsent = await storage.meta('settingsUnsent');
       if (pulled.backupStatus) { await storage.saveMeta('backupStatus', pulled.backupStatus); state.backupStatus = pulled.backupStatus; }
       if (pulled.settings && !settingsUnsent) { await storage.saveMeta('settings', pulled.settings); state.settings = withDefaults(pulled.settings); }
+      if (pulled.records.length || pulled.backupStatus || (pulled.settings && !settingsUnsent)) brought = true;
       await storage.saveMeta('known', [...pulled.known]);
       const records = outboxIds.map(id => state.records.get(id)).filter(Boolean);
       const imageIds = (await storage.meta('imageOutbox')) || [];
-      if (!records.length && !imageIds.length && !settingsUnsent) break;
+      const sentSettings = state.settings;
+      if (!records.length && !imageIds.length && !settingsUnsent) { settled = true; break; }
       const images = [];
       for (const id of imageIds) {
         for (const size of ['thumb', 'detail', 'master']) {
@@ -44,24 +48,36 @@ export async function runSync(app, github, quiet) {
       try {
         const files = settingsUnsent ? [{ path: 'settings.json', text: settingsToFileText(state.settings) }] : [];
         const sent = await github.push({ records, files, images, base: pulled.commit, message: `Save ${records.length} changed records${images.length ? ` and ${imageIds.length} pictures` : ''}` });
-        await storage.clearOutbox(outboxIds);
-        await storage.saveMeta('imageOutbox', []);
-        await storage.saveMeta('settingsUnsent', false);
+        // Sending takes seconds, and a person may save again meanwhile. Only what
+        // was sent is taken off the lists: a record changed since stays queued
+        // (every save puts a new object in state.records), and so does a
+        // picture added since, and settings changed since.
+        await storage.clearOutbox(records.filter(record => state.records.get(record.id) === record).map(record => record.id));
+        const sentImages = new Set(imageIds);
+        await storage.saveMeta('imageOutbox', ((await storage.meta('imageOutbox')) || []).filter(id => !sentImages.has(id)));
+        if (state.settings === sentSettings) await storage.saveMeta('settingsUnsent', false);
         await storage.saveMeta('known', [...pulled.known, ...sent.known]);
+        settled = true;
         break;
       } catch (error) {
         if (!error.conflict) throw error; // another device saved first: go round again, merging its changes
       }
     }
+    if (!settled) throw new Error('Other devices kept saving at the same moment, so this device\'s changes are still waiting. They are kept here and sent with the next sync.');
     state.library = withSearchText(buildLibrary([...state.records.values()]));
     state.syncStatus = `Synced at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`;
     keepThumbnails(github, app);
-    // Batch add and the entry form are never redrawn under the person's hands.
-    if (!['add', 'new', 'edit'].includes(state.route.name)) app.render();
+    // The screen is drawn again only when the download changed what it shows, and
+    // batch add and the entry form are never redrawn under the person's hands.
+    // Settings always shows the new sync time.
+    const isForm = ['add', 'new', 'edit'].includes(state.route.name);
+    if ((brought && !isForm) || state.route.name === 'settings') app.render();
+    return true;
   } catch (error) {
     state.syncStatus = error.message;
     if (!quiet) app.showNote(error.message);
     if (state.route.name === 'settings') app.render();
+    return false;
   }
 }
 

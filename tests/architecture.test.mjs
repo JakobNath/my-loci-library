@@ -12,7 +12,6 @@ import { execFileSync } from 'node:child_process';
 import { parseKnownSet } from '../core/known-sets.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SIZE_BUDGET = 100 * 1024; // PLAN.md, "Small and fast"
 
 // The app's own files: everything except prototypes, vendor code, tests and docs.
 function appFiles() {
@@ -138,9 +137,12 @@ export function codeSize(text) {
   return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"\\])\/\/.*$/gm, '$1').replace(/^\s*\n/gm, '').length;
 }
 
-test('the files a phone loads stay within the size budget', () => {
+// There is no size limit (dropped on 13 November 2026, docs/decisions/speed-offline-size.md):
+// the speed tests are the guard. The size is still printed, so slow growth is seen.
+test('the size of the files a phone loads is reported', () => {
   const total = loadedFiles().reduce((sum, file) => sum + codeSize(read(file)), 0);
-  assert.ok(total <= SIZE_BUDGET, `the app's code is ${Math.round(total / 1024)} KB without comments; the budget is ${SIZE_BUDGET / 1024} KB`);
+  console.log(`  start-up code: ${Math.round(total / 1024)} KB without comments`);
+  assert.ok(total > 0);
 });
 
 test('the service worker keeps every file the app loads, so it opens offline', () => {

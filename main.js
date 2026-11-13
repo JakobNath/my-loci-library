@@ -130,13 +130,50 @@ function render() {
   if (typeof stop === 'function') stopScreen = stop;
 }
 
-function showNote(text, buttonLabel, onButton) {
+// A note with a button ("New version · Reload") stays until its button is
+// pressed. A plain note shows for a few seconds, longer when it is long, and
+// then gives the place back to a waiting note with a button.
+let noteTimer = null;
+let waitingNote = null;
+
+function drawNote(text, buttonLabel, onButton) {
   const buttonHtml = buttonLabel ? `<button type="button">${escapeHtml(buttonLabel)}</button>` : '';
   note.innerHTML = `<span>${escapeHtml(text)}</span>${buttonHtml}`;
   note.hidden = false;
-  if (onButton) note.querySelector('button').onclick = onButton;
-  else setTimeout(() => { note.hidden = true; }, 4000);
+  if (onButton) note.querySelector('button').onclick = () => { waitingNote = null; onButton(); };
 }
+
+function showNote(text, buttonLabel, onButton) {
+  clearTimeout(noteTimer);
+  drawNote(text, buttonLabel, onButton);
+  if (onButton) { waitingNote = [text, buttonLabel, onButton]; return; }
+  const readingTime = Math.max(4000, text.length * 60); // about 60 ms a letter, so a long message can be read
+  noteTimer = setTimeout(() => {
+    if (waitingNote) drawNote(...waitingNote);
+    else note.hidden = true;
+  }, readingTime);
+}
+
+// A failure no screen caught is still said, never dropped (CODE_STYLE.md, "Never fail silently").
+addEventListener('unhandledrejection', event => {
+  showNote(`Something went wrong: ${event.reason && event.reason.message ? event.reason.message : event.reason}. If it happens again, note what you tapped.`);
+});
+
+// A second tap on the same button, or a second Save of the same form, within
+// half a second is a slip of the finger: without this, it saved a book twice.
+let lastTap = { target: null, time: 0 };
+function isRepeatedTap(target, time) {
+  const repeated = target === lastTap.target && time - lastTap.time < 500;
+  lastTap = { target, time };
+  return repeated;
+}
+screen.addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (button && isRepeatedTap(button, event.timeStamp)) { event.stopPropagation(); event.preventDefault(); }
+}, true);
+screen.addEventListener('submit', event => {
+  if (isRepeatedTap(event.target, event.timeStamp)) { event.stopPropagation(); event.preventDefault(); }
+}, true);
 
 // ---------- actions the screens may take ----------
 
@@ -340,9 +377,10 @@ async function syncNow({ quiet = true } = {}) {
   if (!navigator.onLine) { state.syncStatus = 'Offline: changes are kept on this device and sent later.'; return; }
   syncing = true;
   showUnsent();
+  let done = false;
   try {
     const { runSync } = await import('./sync-run.js');
-    await runSync(lentToSync(), github, quiet);
+    done = await runSync(lentToSync(), github, quiet);
   } catch (error) {
     // runSync explains its own failures; this is the file itself not loading.
     state.syncStatus = `The sync code did not load: ${error.message}`;
@@ -350,9 +388,20 @@ async function syncNow({ quiet = true } = {}) {
     syncing = false;
     showUnsent();
   }
+  // Something saved while the sync was running is still waiting: send it too.
+  // A failed sync is not repeated here; the next save, or coming back online, tries again.
+  if (done && ((await storage.outbox()).length || ((await storage.meta('imageOutbox')) || []).length)) syncSoon();
 }
 
 addEventListener('online', () => syncNow());
+
+// Coming back to the app (from another app, or unlocking the phone) fetches
+// what the other device added and looks for a new version of the app.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  syncNow();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.getRegistration().then(registration => registration && registration.update()).catch(() => {});
+});
 
 // ---------- starting up ----------
 

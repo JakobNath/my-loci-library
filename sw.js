@@ -6,7 +6,7 @@
 // whole app; the barcode decoder is cached the first time the scan screen
 // opens. Prototypes, tests and docs are never cached.
 
-const VERSION = 'v1.14.2';
+const VERSION = 'v1.14.3';
 const FILES = [
   './', 'index.html', 'main.js', 'sync-run.js', 'manifest.webmanifest', 'styles/tokens.css', 'styles/app.css', 'styles/screens.css',
   'icons/icon.svg', 'icons/icon-180.png', 'icons/icon-512.png',
@@ -21,7 +21,9 @@ const FILES = [
 ];
 
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(FILES)));
+  // Each file is fetched afresh, past the browser's own cache: GitHub Pages lets
+  // browsers reuse a file for ten minutes, which could put an older file into a new version.
+  event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(FILES.map(file => new Request(file, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', event => {
