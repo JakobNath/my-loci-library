@@ -2,11 +2,11 @@
 
 This file describes every record and field in the catalog. It is the most important document in the project: if the app is ever lost, the data can be read, and a new app written, from this file alone.
 
-Format version: **3** (November 2026). Version 1 and 2 records are still read; see "Format versions".
+Format version: **4** (November 2026). Version 1, 2 and 3 records are still read; see "Format versions".
 
 ## The idea in one paragraph
 
-The catalog is a folder of small text files, one per record, in JSON. A **work** is a piece of writing (Augustine's *Confessions*). An **edition** is one published form of one or more works (the Chadwick translation, Oxford World's Classics, 1991). A **copy** is one item we hold of an edition (our paperback, on the office shelf). An **author** record gathers every form of one person's name. A **wishlist item** is a book we want, kept apart from the library. Images (covers and spines) are JPEG files beside the records.
+The catalog is a folder of small text files, one per record, in JSON. A **work** is a piece of writing (Augustine's *Confessions*). An **edition** is one published form of one or more works (the Chadwick translation, Oxford World's Classics, 1991). A **copy** is one item we hold of an edition (our paperback, on the office shelf). An **author** record gathers every form of one person's name. A **wishlist item** is a book we want, kept apart from the library. A **set** record holds what belongs to a multi-volume set as a whole (its short form for citing, and what the whole set cost and is worth). Images (covers and spines) are JPEG files beside the records.
 
 ## Words
 
@@ -27,9 +27,9 @@ These words mean the same thing everywhere: in the data, the code, the screens a
 | certainty | How a dating is meant: exact, circa, range, century, open-ended. |
 | location | Where a physical copy stands: place, room, case, shelf. |
 | shelf order | A short text that sorts copies along their shelf. |
-| binding | How a physical copy is bound (hardcover, paperback, leather...), from a list we extend. |
+| binding | How a physical copy is bound: the binding itself (hardcover, paperback), its material (cloth, leather) and its extras (dust jacket, slipcase), each chosen from a list kept in `settings.json`. |
 | series | A publisher's numbered series (Loeb Classical Library 36). |
-| set | A multi-volume work published together (Chemnitz's Works, vol. 1). |
+| set | A multi-volume work or collection published as one numbered whole (Luther's Works, vol. 31). A set may have its own record (see "Set"). |
 | wishlist item | A book we want; a standalone record, not linked to the library. |
 | status | Whether we still hold a copy: owned, or one of the "no longer owned" reasons. |
 | value | Our estimate of what a copy is worth, in the shared currency. |
@@ -50,6 +50,7 @@ my-loci-library-data/
   copies/<id>.json
   authors/<id>.json
   wishlist/<id>.json
+  sets/<id>.json            a set's own record (version 4)
   settings.json            settings shared by everyone using this catalog
   images/thumb/<id>.jpg     about 200 px tall (a spine 600 px)
   images/detail/<id>.jpg    about 1,000 px tall (a spine 1,600 px); images made before 2026-11-11 are 600 px
@@ -82,8 +83,8 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 3. |
-| `type` | text | `work`, `edition`, `copy`, `author` or `wishlist`. |
+| `format` | number | The format version this record was written in. Currently 4. |
+| `type` | text | `work`, `edition`, `copy`, `author`, `wishlist` or `set`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
 | `trashed` | date or null | The day the record was moved to the trash; null if it is not in the trash. Restoring sets it back to null. |
@@ -163,6 +164,7 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `seriesNumber` | text or null | | "36". Text, because some are "38A". |
 | `set` | text or null | | "Chemnitz's Works". |
 | `volume` | text or null | | The volume label within the set: "1", "I/1". |
+| `setRecord` | set ID or null | | The set's own record, when it has one (version 4). The `set` text stays as well, and is kept the same as the set record's title. |
 | `isbn` | text or null | | ISBN-13, digits only. An ISBN-10 is converted when entered. |
 | `identifiers` | object | | The edition's catalogue numbers, from library records; see "Identifiers". (Version 2.) |
 | `languages` | list of text | | The languages printed in it. Two make a diglot ("Greek", "English"), three a triglot. |
@@ -236,7 +238,9 @@ The first cover in the list is the one shown.
 | Field | Type | Required | Meaning |
 | --- | --- | --- | --- |
 | `edition` | edition ID | yes | |
-| `binding` | text or null | | From the binding list. Physical only. |
+| `binding` | text or null | | One of the bindings list in `settings.json`: "Hardcover", "Paperback". Physical only. In a record read from version 3, older text that could not be read into the three parts stays here as it was typed. |
+| `material` | text or null | | One of the materials list: "Cloth", "Leather". Null for an ordinary printed cover. (Version 4.) |
+| `extras` | list of text | | Any of the extras list: "Dust jacket", "Slipcase". (Version 4.) |
 | `location` | list of text | | Place, room, case, shelf, as far as known: `["Home", "Office", "Case 2", "Shelf 3"]`. Physical only. |
 | `shelfOrder` | text or null | | Sorts copies along a shelf (see below). Physical only. |
 | `markings` | true or false | | Writing or markings when acquired. |
@@ -249,6 +253,24 @@ The first cover in the list is the one shown.
 | `status` | text | yes | `owned`, or no longer owned: `given away`, `sold`, `lost`, `gone from Logos`. |
 
 **Shelf order.** A short text made of the digits and letters in the ID alphabet. Copies on a shelf sort by it, as text. To place a copy between two others, the app makes a text that sorts between theirs (between `m` and `n` is `mg`), so only the moved copy changes. Copies without one follow the library's sort order, after those that have one.
+
+## Set
+
+A set's own record (version 4): what belongs to the whole of a multi-volume set rather than to one volume. Each volume stays its own edition, which keeps its `set` text and points here with `setRecord`. A set record is made only when someone gives a set's details; a set with none is simply the editions that share a `set` text.
+
+| Field | Type | Required | Meaning |
+| --- | --- | --- | --- |
+| `title` | text | yes | "Luther's Works". The volumes' `set` text is kept the same. |
+| `shortTitle` | text or null | | The usual abbreviation for citing: "LW" (or "AE"). Searched with the volume label, so "LW 31" finds volume 31. |
+| `editors` | list of text | | The general editors, names as typed. |
+| `volumes` | number or null | | How many volumes the whole set has (not how many we hold). |
+| `price` | number or null | | What we paid for the set as a whole. |
+| `value` | number or null | | Our current estimated value of the set as a whole. |
+| `valueHistory` | list | | Earlier values, as for a copy. |
+| `valueAsSet` | true or false | | Whether only the set's value counts. See below. |
+| `notes` | text | | |
+
+**How a set's value is counted.** While `valueAsSet` is false (a set still being gathered), each volume counts its own value, and the set's value, when given, counts once for the volumes bought with it; those leave their own value empty and are not counted as missing. When `valueAsSet` is true, only the set's value counts, once; the volumes' own prices and values are kept but not counted. A set's value is counted under the place where most of its owned volumes stand, or with the Logos total when all are digital. A set with no value of its own changes nothing.
 
 ## Author
 
@@ -286,7 +308,9 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
   "batchAddPrompts": ["title", "subtitle", "authors", "datings", "binding", "publisher", "year"],
   "defaultSort": { "library": "title", "wishlist": "added" },
   "lookups": { "openLibrary": true, "googleBooks": true },
-  "bindings": ["Hardcover", "Hardcover with dust jacket", "Paperback", "Mass-market paperback", "Leather", "Bonded leather", "Cloth", "Library binding", "Journal issue"],
+  "bindings": ["Hardcover", "Paperback", "Mass-market paperback", "Library binding", "Journal issue"],
+  "materials": ["Cloth", "Leather", "Bonded leather"],
+  "extras": ["Dust jacket", "Slipcase"],
   "views": [
     { "name": "Office by original date", "medium": "physical", "sort": "originalDate", "status": "owned", "location": ["Home", "Office"], "category": "", "tag": "", "needsDate": false, "needsDetails": false }
   ]
@@ -296,6 +320,7 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
 - `dateStyle`: `AD` (AD/BC) or `CE` (CE/BCE).
 - `anthologiesInShelfLists`: `once` (at the earliest date) or `each` (under each contained work).
 - `views`: the saved views, in the order they are shown. `medium` is `physical`, `logos` or `all`; `sort` names a sort (`title`, `subtitle`, `author`, `originalDate`, `year`, `added`, `value`, `location`, `binding`, `category`, `publisher`, `pages`, `series`); `status` is `owned`, `gone` (any status but owned), `all`, or one copy status; `location` is a place path and includes everything inside it; an empty `category` or `tag` means any; `needsDate` shows only books with a work that has no original date, and `needsDetails` only physical books missing a publisher, year, pages or binding (added 11 November 2026; a view saved before then lacks it and counts as false).
+- `bindings`, `materials`, `extras` (the last two from November 2026): the choices offered for a copy's binding, material and extras. A copy's binding is chosen only from these; they are added to, renamed and removed (when no copy uses a choice) in Settings › Rename and merge. A file written before then has only `bindings`, mixing all three ("Hardcover with dust jacket", "Leather"); it is read as three lists by the same reading as a copy's older binding text, with the default materials and extras added.
 - Keys are written in the order shown. A key missing from the file takes the value shown here.
 - Categories, tags, series, places and the like are not stored here: they are the values found on the records, and renaming one edits those records.
 
@@ -328,7 +353,7 @@ Edgar Allan Poe — The Raven | | English — 1845 | piece
 All records in one file, so a device can load the catalog with one download:
 
 ```json
-{ "format": 1, "built": "2026-11-09T22:00:00Z", "works": [], "editions": [], "copies": [], "authors": [], "wishlist": [] }
+{ "format": 1, "built": "2026-11-09T22:00:00Z", "works": [], "editions": [], "copies": [], "authors": [], "wishlist": [], "sets": [] }
 ```
 
 It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edited by hand. Each record in it is exactly as its file stores it, in that file's format version, so a device can tell which files it need not download. A test catalog also carries `"testData": true`; the app's development loader accepts only catalogs that do, and the real catalog never does. Devices load it, then any record files changed after `built`. If it is ever lost or wrong, it can be rebuilt from the record files, which are always the truth.
@@ -391,6 +416,7 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 - Version 1 (November 2026): the first format.
 - Version 2 (November 2026): each edition gained `identifiers` and `subjects`. A version-1 edition is read as version 2 with `identifiers` all null and `subjects` empty; any other version-1 record only changes its `format`. Nothing else changes, and a version-1 file stays as it is until the record is next saved.
 - Version 3 (November 2026): each work gained `otherTitles` and `wikidata`; each edition gained `foundContents` and the identifiers `openLibrary` and `hathiTrust`; each contents entry gained `piece` and `cite`, and its `work` may be null for a piece. A version-2 work is read with no other titles and no Wikidata ID; a version-2 edition with both new identifiers null, nothing found, and every contents entry a work (`piece` null) not cited. Other records only change their `format`. A version-2 file stays as it is until the record is next saved.
+- Version 4 (November 2026): each copy gained `material` and `extras`, and its `binding` holds only a binding; each edition gained `setRecord`; and there is a new record type, `set`, in the folder `sets/`. A version-3 copy's binding text is read into the three parts by a fixed table (`readBindingText` in `core/bindings.js`): "Hardcover with dust jacket" is Hardcover and Dust jacket; "Cloth and hardcover in slip case" is Hardcover, Cloth and Slipcase; "Cloth" alone is the material Cloth. Text that cannot be read wholly (a word left over, or two bindings at once) stays in `binding` as it was, with no material and no extras, so nothing is guessed or lost. A version-3 edition is read with no set record. Other records only change their `format`. A version-3 file stays as it is until the record is next saved.
 - Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
 - When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
@@ -400,7 +426,7 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 3,
+  "format": 4,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
@@ -427,7 +453,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 3,
+  "format": 4,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
@@ -449,6 +475,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "seriesNumber": null,
   "set": null,
   "volume": null,
+  "setRecord": null,
   "isbn": "9783438051400",
   "identifiers": { "lccn": null, "oclc": null, "lcc": null, "ddc": null, "openLibrary": null, "hathiTrust": null },
   "languages": ["Greek"],
@@ -476,11 +503,13 @@ A copy:
 
 ```json
 {
-  "format": 3,
+  "format": 4,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
   "binding": "Hardcover",
+  "material": null,
+  "extras": ["Dust jacket"],
   "location": ["Home", "Office", "Case 2", "Shelf 1"],
   "shelfOrder": "m",
   "markings": true,
@@ -501,7 +530,7 @@ An author:
 
 ```json
 {
-  "format": 3,
+  "format": 4,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -513,11 +542,33 @@ An author:
 }
 ```
 
+A set:
+
+```json
+{
+  "format": 4,
+  "type": "set",
+  "id": "s3tw0rks0001",
+  "title": "Luther's Works",
+  "shortTitle": "LW",
+  "editors": ["Jaroslav Pelikan", "Helmut T. Lehmann"],
+  "volumes": 55,
+  "price": 700,
+  "value": 900,
+  "valueHistory": [{ "date": "2026-11-12", "value": 900 }],
+  "valueAsSet": false,
+  "notes": "Bought as a run of 40 volumes; the rest one at a time.",
+  "trashed": null,
+  "created": "2026-11-12T14:00:00Z",
+  "changed": {}
+}
+```
+
 A wishlist item:
 
 ```json
 {
-  "format": 3,
+  "format": 4,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",

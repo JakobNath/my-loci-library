@@ -29,7 +29,7 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.13.0** (his wife's issues, part A, 12 November 2026): no more "24–5" for Dumas (dates written year first are read right) and no "first published 1479" for Ovid (a printing by 1500 is never offered as the original date); the date step says when Wikidata did not answer; "Choose a saved photo" beside every "Take a photo"; a Pictures section on the book page (take, choose or remove the cover and spine); the spine lined up by a dot at its top and foot and its sides; "Not all the same" languages for a collection. It also published the 1992 Greek tragedies list, with Jakob's yes (unchecked, so its dates are only offered).
 
-All tests pass: 192 in the app (and 180 on the self-test page), 223 in the tools.
+All tests pass: 192 in the app (and 180 on the self-test page), 223 in the tools. On the `format-4` branches: 210 in the app (197 on the self-test page), 240 in the tools.
 
 ## Waiting on Jakob
 
@@ -88,7 +88,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 1. His wife's issues with the app (reported 12 November 2026; findings in the workspace's `handoffs/2026-11-12-wife-issues.md`, Jakob's choices in `docs/decisions/`), in three sessions, one after another:
    - A. [x] Released as 1.13.0, 12 November 2026. No format change: date suggestions (Dumas's ISO dates, no "first published" for printings up to 1500), "Choose a saved photo", a Pictures section on the book page, the spine outline by top and bottom dots, "Not all the same" languages for a collection. Release 1.13.0.
-   - B. [~] Data format 4, on the `format-4` branches of the app and the tools (started 12 November 2026; plan approved, and progress kept, in the workspace's `handoffs/2026-11-12-format-4.md`): bindings from three lists in Settings (binding, material, extras), a set record (title, short form AE/LW, editors, volumes, price, value, notes, and a switch to count one value for the whole set), the Value page counting a set once, old binding text read into the lists. Jakob's two answers are in `docs/decisions/data-format.md`.
+   - B. [~] Data format 4: **built and tested on the `format-4` branches of the app and the tools (12 November 2026), not yet merged or published; waiting on Jakob's yes to release it as 1.14.0.** Bindings from three lists (binding, material, extras; added to and pruned in Settings › Rename and merge), a set record (title, short form LW/AE, editors, volumes, price, value, value history, notes, and "Count one value for the whole set"), a set page (`#/set/<id>`), "Add the set's details" on a volume's page, "LW 31" in search, the Value page and insurance CSV counting a set once, old binding text read into the lists. Jakob's two answers and the choices made while building are in `docs/decisions/data-format.md`, `screens.md` and `speed-offline-size.md` (the sync code moved to `sync-run.js` to make room). Plan and progress: the workspace's `handoffs/2026-11-12-format-4.md`. Phone checks: `DEVICE_CHECKS.md`, "part B".
    - C. [ ] Luther's Works volumes 56 on (the newer Concordia volumes) added to `sets/luthers-works.txt`.
 2. Phase 15 step 10: Zotero sections only for works marked "Cite this work". Approved by Jakob on 12 November 2026.
 3. Known-set lists, one per session:
@@ -132,6 +132,8 @@ The longer list below is the full record.
 ## Decisions to look over
 
 Choices made without Jakob, each with its reason in `docs/decisions/`:
+
+- Data format 4 (12 November 2026, `data-format.md`): binding text that cannot be read is kept as typed; "Cloth" alone is a material, not a hardcover; "Journal issue" stays a binding; a set record is made only when someone gives a set's details, and renaming it renames every volume's set text; a set's value counts under the room holding most of its volumes; the short form is not sent to Zotero yet; a binding choice in use cannot be removed, only renamed. New choices are added in Settings › Rename and merge (`screens.md`).
 
 - Adding a book (1.3.0): "Needs details" lists physical books only (Logos details come from the Logos export) and follows the chosen sort; a set's volumes keep the year their lookup finds; tags are offered as chips up to the 20 most used (`docs/decisions/screens.md`).
 - Sync now uses one key for all our devices, without an expiry date, passed between devices by a setup link (Jakob's request; PLAN.md "Sync" changed to match).

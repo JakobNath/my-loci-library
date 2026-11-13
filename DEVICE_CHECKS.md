@@ -142,3 +142,12 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Both phones: open a book already added. Under Pictures, take a cover photo, then choose a spine photo, then remove the spine. The page should show each change at once, and the other phone should show it after a sync.
 - [ ] Phone: add a collection with works in different languages (Lucretius with Epictetus, say), tap "Not all the same", choose Latin for Lucretius, and save. "Edit the works" should show Latin for Lucretius only.
 - [ ] Phone: add The Count of Monte Cristo again (or any Dumas). The date step should offer 1802–1870 as his lifetime, not "24–5".
+
+## His wife's issues, part B: data format 4 (1.14.0)
+
+- [ ] Both phones and the laptop's Firefox: after the update, open the app once and wait for "New version · Reload" (or reload). Each device must be on 1.14.0 before books are added in the new format; one still on 1.13.0 says it needs refreshing and sends nothing, as designed.
+- [ ] Phone: open a book whose copy was "Hardcover with dust jacket". The copy line should read "Hardcover · Dust jacket". Edit it: the Binding row should have Hardcover lit and the Extras row Dust jacket.
+- [ ] Phone: add a book and, at the binding step, tap Hardcover, then Cloth, then Dust jacket and Slipcase. Tapping Hardcover again should turn it off. The book page should show the choices.
+- [ ] Phone: on a volume of Luther's Works, tap "Add the set's details", give the short form LW and the number of volumes, and save. Every volume should then say "Volume … of Luther's Works (LW)", and searching "LW 31" should find volume 31.
+- [ ] Phone: on the set's page, give the set a value and turn on "Count one value for the whole set". Settings › Value should count the set once, and a volume's page should say "Valued with the set".
+- [ ] iPhone: Settings › Rename and merge › Extras: add "Signed", then remove it. Both phones should show the change after a sync.
