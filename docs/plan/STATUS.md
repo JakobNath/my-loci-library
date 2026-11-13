@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.13.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 12 November 2026 (app version 1.14.0).
 
 ## Where things stand
 
@@ -29,7 +29,9 @@ Every build phase is done, from 1 to 14, and phase 15 (anthologies and lasting s
 
 - **Version 1.13.0** (his wife's issues, part A, 12 November 2026): no more "24–5" for Dumas (dates written year first are read right) and no "first published 1479" for Ovid (a printing by 1500 is never offered as the original date); the date step says when Wikidata did not answer; "Choose a saved photo" beside every "Take a photo"; a Pictures section on the book page (take, choose or remove the cover and spine); the spine lined up by a dot at its top and foot and its sides; "Not all the same" languages for a collection. It also published the 1992 Greek tragedies list, with Jakob's yes (unchecked, so its dates are only offered).
 
-All tests pass: 192 in the app (and 180 on the self-test page), 223 in the tools. On the `format-4` branches: 210 in the app (197 on the self-test page), 240 in the tools.
+- **Version 1.14.0** (his wife's issues, part B, 12 November 2026): data format 4. A copy's binding is chosen from three lists (binding, material, extras), kept in Settings › Rename and merge; older binding text is read into them. A set can have its own record and page (short form LW or AE, editors, number of volumes, price, value, notes, and "Count one value for the whole set"), reached from "Add the set's details" on a volume's page or made by "Add a set"; "LW 31" finds volume 31; the Value page and insurance CSV count a set once; a work printed across volumes "continues in volumes …". The sync code now loads just after start (`sync-run.js`), leaving 1,773 bytes of start-up budget. The laptop tools were updated the same day.
+
+All tests pass: 210 in the app (and 197 on the self-test page), 240 in the tools.
 
 ## Waiting on Jakob
 
@@ -88,7 +90,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 1. His wife's issues with the app (reported 12 November 2026; findings in the workspace's `handoffs/2026-11-12-wife-issues.md`, Jakob's choices in `docs/decisions/`), in three sessions, one after another:
    - A. [x] Released as 1.13.0, 12 November 2026. No format change: date suggestions (Dumas's ISO dates, no "first published" for printings up to 1500), "Choose a saved photo", a Pictures section on the book page, the spine outline by top and bottom dots, "Not all the same" languages for a collection. Release 1.13.0.
-   - B. [~] Data format 4: **built and tested on the `format-4` branches of the app and the tools (12 November 2026), not yet merged or published; waiting on Jakob's yes to release it as 1.14.0.** Bindings from three lists (binding, material, extras; added to and pruned in Settings › Rename and merge), a set record (title, short form LW/AE, editors, volumes, price, value, value history, notes, and "Count one value for the whole set"), a set page (`#/set/<id>`), "Add the set's details" on a volume's page, "LW 31" in search, the Value page and insurance CSV counting a set once, old binding text read into the lists. Jakob's two answers and the choices made while building are in `docs/decisions/data-format.md`, `screens.md` and `speed-offline-size.md` (the sync code moved to `sync-run.js` to make room). Plan and progress: the workspace's `handoffs/2026-11-12-format-4.md`. Phone checks: `DEVICE_CHECKS.md`, "part B".
+   - B. [x] Released as 1.14.0, 12 November 2026: data format 4 (bindings from three lists, the set record and page, the Value page counting a set once). Jakob's answers and the choices made while building are in `docs/decisions/data-format.md`, `screens.md` and `speed-offline-size.md`; phone checks in `DEVICE_CHECKS.md`, "part B". Handoff: the workspace's `handoffs/2026-11-12-format-4.md`.
    - C. [ ] Luther's Works volumes 56 on (the newer Concordia volumes) added to `sets/luthers-works.txt`.
 2. Phase 15 step 10: Zotero sections only for works marked "Cite this work". Approved by Jakob on 12 November 2026.
 3. Known-set lists, one per session:
