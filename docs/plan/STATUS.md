@@ -84,7 +84,10 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **The order from 12 November 2026** (agreed with Jakob):
 
-1. His wife's issues with the app, about five, which Jakob reports in a new chat.
+1. His wife's issues with the app (reported 12 November 2026; findings in the workspace's `handoffs/2026-11-12-wife-issues.md`, Jakob's choices in `docs/decisions/`), in three sessions, one after another:
+   - A. [ ] No format change: date suggestions (Dumas's ISO dates, no "first published" for printings up to 1500), "Choose a saved photo", a Pictures section on the book page, the spine outline by top and bottom dots, "Not all the same" languages for a collection. Release 1.13.0.
+   - B. [ ] Data format 4, on a branch: bindings from three lists in Settings (binding, material, extras), a set record (title, short form AE/LW, editors, volumes, price, value, notes), the Value page counting a set once, old binding text read into the lists. Plan mode, xhigh effort.
+   - C. [ ] Luther's Works volumes 56 on (the newer Concordia volumes) added to `sets/luthers-works.txt`.
 2. Phase 15 step 10: Zotero sections only for works marked "Cite this work". Approved by Jakob on 12 November 2026.
 3. Known-set lists, one per session:
    - Loeb, the whole series: Greek first, then Latin, over several sessions;
