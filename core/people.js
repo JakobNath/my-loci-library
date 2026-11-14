@@ -5,6 +5,8 @@
 // original date follows from it. These rules put the people the records do
 // make clear in their right place; what the records get wrong without a trace
 // is left for "Fix details" (docs/decisions/book-data.md, "People in lookups").
+// Then adding asks a person: who translated and edited it, and the language
+// of the book itself (the last two functions).
 
 import { normalizeForSearch } from './search.js';
 import { latin, nameInLatin, samePerson, tidy } from './lookup.js';
@@ -62,4 +64,34 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
     authors = authors.filter(listed);
   }
   return { ...found, authors, contributors };
+}
+
+/**
+ * A book's contributors once adding has asked about them: the translators and
+ * editors typed (or kept as found) take the place of those the lookups gave;
+ * everyone else (a foreword, an assistant editor kept as "other") stays.
+ * @param {{ name: string, role: string }[]} contributors as found
+ * @param {string} translatorText the translator box, names separated by ";"
+ * @param {string} editorText the "Edited by" box, the same way
+ * @returns {{ name: string, role: string }[]}
+ */
+export function contributorsFromSteps(contributors, translatorText, editorText) {
+  const others = contributors.filter(person => person.role !== 'translator' && person.role !== 'editor');
+  const named = (text, role) => translatorNames(text).map(name => ({ name, role }));
+  return [...named(editorText, 'editor'), ...named(translatorText, 'translator'), ...others];
+}
+
+/**
+ * The languages of a new book (an edition's own, not its works'): those typed,
+ * else those a lookup gave, else, for a book that is not a translation, the
+ * language its work was first written in. A translation with nothing typed or
+ * found is left empty, since the original language would be wrong for it.
+ * @param {{ typed: string, found: string[], original: string, isTranslated: boolean }} answers
+ * @returns {string[]}
+ */
+export function editionLanguages({ typed, found, original, isTranslated }) {
+  const named = String(typed || '').split(',').map(name => tidy(name)).filter(Boolean);
+  if (named.length) return named;
+  if (found.length) return found;
+  return !isTranslated && tidy(original) ? [tidy(original)] : [];
 }
