@@ -1,7 +1,7 @@
 // The entry form's records: sample books entered from scratch, editing
 // that stamps only what changed, and ISBNs.
 
-import { recordsFromForm, isbn13, anotherCopy, isBookBarcode, wishFromForm, formFromWish, isbnInText, volumesFromLines, nextVolumeLabel, withSetFacts, worksFromRows } from '../entry.js';
+import { recordsFromForm, isbn13, anotherCopy, isBookBarcode, wishFromForm, formFromWish, isbnInText, volumesFromLines, nextVolumeLabel, withSetFacts, worksFromRows, withWorkTranslators } from '../entry.js';
 import { emptyFound } from '../lookup.js';
 import { sameWikidataWorks } from '../matching.js';
 import { validateRecord } from '../validate.js';
@@ -373,6 +373,34 @@ export const tests = [
       same(Object.keys(after.get(clement.id).changed).sort(), ['category', 'originalLanguage', 'originalTitle', 'tags'], 'only what changed is stamped');
       equal(worksFromRows([row(clement, { title: ' ' })], { originalLanguage: '', category: '', tags: [] }, works, 'x').problems.length, 1, 'a work needs a title');
       equal(worksFromRows([row(polycarp, { dating: 'sometime' })], { originalLanguage: '', category: '', tags: [] }, works, 'x').records.length, 0, 'an unreadable date saves nothing');
+    },
+  },
+  {
+    name: 'each work of Luther\'s Works 14 keeps its own translator: chosen while adding, typed on its line, or kept through an edit',
+    fn() {
+      const contents = 'Martin Luther — Psalm 117 — 1530 — trans. Edward Sittler\nMartin Luther — Psalm 118 — 1530\nMartin Luther — Psalms 1 and 2 — 1519 — trans. Someone';
+      // The step "Who translated each work?" wins over a line; a row left at "Not known" means none.
+      const workTranslators = [{ title: 'Psalm 118', translator: 'George Beto' }, { title: 'Psalms 1 and 2', translator: '' }];
+      const first = recordsFromForm(blankForm({ title: 'Selected Psalms III', contents, workTranslators }), null, context());
+      same(first.problems, []);
+      const edition = first.records.find(record => record.type === 'edition');
+      same(edition.contents.map(entry => entry.translator), ['Edward Sittler', 'George Beto', null]);
+      const existing = { edition, copy: first.records.find(r => r.type === 'copy'), works: first.records.filter(r => r.type === 'work') };
+      const edited = recordsFromForm(blankForm({ title: 'Selected Psalms III', contents: 'Martin Luther — Psalm 117 — 1530\nMartin Luther — Psalm 118 — 1530 — trans. G. Beto\nMartin Luther — Psalms 1 and 2 — 1519' }), existing, context(first.records.filter(r => r.type === 'author')));
+      same(edited.records.find(r => r.type === 'edition').contents.map(entry => entry.translator), ['Edward Sittler', 'G. Beto', null], 'a line without one keeps it; a line naming one changes it');
+    },
+  },
+  {
+    name: '"Works in this book" changes a work\'s translator on the book\'s contents, and nothing when none changed',
+    fn() {
+      const first = recordsFromForm(blankForm({ title: 'Selected Psalms III', contents: 'Martin Luther — Psalm 117 — trans. Edward Sittler\nMartin Luther — Psalm 147' }), null, context());
+      const edition = first.records.find(record => record.type === 'edition');
+      const [psalm117, psalm147] = edition.contents.map(entry => entry.work);
+      equal(withWorkTranslators(edition, [{ id: psalm117, translator: 'Edward Sittler' }, { id: psalm147, translator: ' ' }], 'x'), edition, 'unchanged');
+      const changed = withWorkTranslators(edition, [{ id: psalm117, translator: '' }, { id: psalm147, translator: 'Edward Sittler' }], '2026-11-14T12:00:00Z');
+      same(changed.contents.map(entry => entry.translator), [null, 'Edward Sittler']);
+      equal(changed.changed.contents, '2026-11-14T12:00:00Z');
+      same(validateRecord(changed), []);
     },
   },
 ];

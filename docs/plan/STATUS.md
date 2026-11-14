@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.16.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.17.0).
 
 ## Where things stand
 
@@ -43,7 +43,9 @@ Phase 15 step 10 was built in the tools the same day: Zotero gets books only, ne
 
 - **Version 1.16.0** (14 November 2026): fixes from his wife's first real book (Luther's Works 12, a later printing) and from a live lookup run of 36 real ISBNs (the workspace's `handoffs/2026-11-14-first-real-book.md`). A volume of a known set is found by the set's name and the volume number in its subtitle, not only by ISBN; the web searches name the volume ("Selected Psalms I (Luther's Works, volume 12)") and at most two translators; the translator box says to separate names with ";" and shows how it reads them; translators, editors and publishers that records list as authors are put in their place, and Greek-script names get their Latin form (`core/people.js`); an editor's lifetime is no longer offered as a work's date; Google Books covers are no longer kept "waiting for the laptop" (nothing ever fetched them): with no usable Open Library cover, a photo is asked for; contents pages take several photos, the step explains copying printed text with the phone (Live Text, Google Lens), pasted contents are tidied, and a search link asks for the table of contents; the laptop page "Contents to enter" is gone, and such books wait under "Needs details" ("Still missing: contents"); Wikidata takes the clear work when two items share a title (Pride and Prejudice was missed).
 
-All tests pass: 240 in the app (and 223 on the self-test page), 279 in the tools.
+- **Version 1.17.0** (testing day, batch 1, 14 November 2026; Luther's Works 12 and 14): a phone catches up with the other before saying "You already have this edition" (Volume 12, trashed on one phone, was offered as held on the other); the Add box is emptied and the keyboard stays closed after saving; "Added this time" lost its "0."; a known set's contents step shows every offered date and a "Search the web" link. Any translation, collection or book with editors is asked "Translation and editors" ("Edited by", and for a translation "This book is in: English"); a collection with several translators is asked "Who translated each work?"; "Works in this book" has a translator box per work; a contents line may end "— trans. Name", and a pasted contents page keeps "translated by". Zotero still gets books only (Jakob: Z1); roles for volume, assistant and general editors are in `docs/decisions/zotero-and-citations.md`. The Luther's Works list has volume 14's translators, checked against Jakob's copy.
+
+All tests pass: 246 in the app (and 229 on the self-test page), 285 in the tools.
 
 ## Waiting on Jakob
 

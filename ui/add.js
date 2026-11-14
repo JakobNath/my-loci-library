@@ -14,7 +14,7 @@ import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, 
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound, withLibraryContents } from '../core/book-data.js';
-import { tidyPeople, translatorNames } from '../core/people.js';
+import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
@@ -31,7 +31,7 @@ import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
 import { workDateQuestion, translationDateQuestion, searchTitle } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
-import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator, translatorsReadAs } from './add-questions.js';
+import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 import { findKnownVolume, contentsLinesOf, volumeFromText } from '../core/known-sets.js';
 import { loadKnownSets } from './known-sets.js';
@@ -44,7 +44,7 @@ const NO_WORK = { workTitle: '', firstPublished: null, author: null };
 
 const STEP_NAMES = {
   book: 'The book', volume: 'Volume', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
-  translation: 'Translation', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
+  translation: 'Translation and editors', translators: 'Each translator', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
 };
 
 /** Draw the batch add screen. Returns a cleanup that closes the camera. */
@@ -89,6 +89,8 @@ export function render(container, state, actions) {
   const find = container.querySelector('#find');
   showShelf();
   if (usb) find.focus();
+  // Fetch what the other phone added or trashed, so the duplicate check below sees it.
+  actions.catchUp();
 
   // Whenever a question or a form takes the place of the scan area, the camera
   // stops reading, so a book lying in view cannot start a new lookup under it.
@@ -169,7 +171,13 @@ export function render(container, state, actions) {
     find.value = '';
     // An ISBN a whole known set shares (Great Books) names no one edition: the volumes held are shown in "Which volume?" instead.
     const sharedBySet = knownSets.some(set => set.isbns.includes(isbn));
-    const duplicates = sharedBySet ? [] : editionsWithIsbn(isbn, state.library.entries);
+    let duplicates = sharedBySet ? [] : editionsWithIsbn(isbn, state.library.entries);
+    // The other phone may have trashed it since this one last synced: catch up before saying it is held.
+    if (duplicates.length && navigator.onLine) {
+      showMessage('Checking for changes from your other devices…');
+      await actions.catchUp();
+      duplicates = editionsWithIsbn(isbn, state.library.entries);
+    }
     if (duplicates.length) return askAboutDuplicate(duplicates[0]);
     // The work search is asked once, alongside: for date suggestions, and for authors the edition record lacks.
     const workSearch = searchWork(isbn);
@@ -203,10 +211,13 @@ export function render(container, state, actions) {
 
   function askAboutDuplicate(entry) {
     const where = entry.copies.map(copy => copy.location.join(' › ')).filter(Boolean)[0] || 'no place yet';
+    // The volume and the day it was added, so the book meant is plain ("Selected Psalms I (Luther's Works, volume 12)").
+    const added = entry.copies.map(copy => copy.added).filter(Boolean).sort()[0];
+    const held = [searchTitle(entry.edition), where, added ? `added ${added}` : ''].filter(Boolean).join(' · ');
     hideScanArea();
     stepArea.hidden = false;
     stepArea.innerHTML = `<h2 class="step-title">You already have this edition</h2>
-      <p class="step-hint">${escapeHtml(entry.edition.title)} · ${escapeHtml(where)}</p>
+      <p class="step-hint">${escapeHtml(held)}</p>
       <div class="choices">${choiceHtml('copy', 'Add another copy', 'A second copy of the same edition')}${choiceHtml('back', 'Not this time', 'Back to scanning')}</div>`;
     stepArea.onclick = async event => {
       const button = event.target.closest('[data-action]');
@@ -239,6 +250,10 @@ export function render(container, state, actions) {
       // What only a person knows, asked by the steps in ui/add-questions.js.
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
+      editors: full.contributors.filter(person => person.role === 'editor').map(person => person.name).join('; '),
+      // The language of the pages in hand, asked of a translation; English unless a record says otherwise.
+      bookLanguages: (full.languages || []).join(', ') || 'English',
+      workTranslators: null, // who translated each work of a collection, when it has several translators
       copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
       photos: {}, cover: { state: 'none' }, ...parts, location: (state.batchLocation || []).filter(Boolean),
       // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
@@ -288,13 +303,15 @@ export function render(container, state, actions) {
     });
     book.contentsOffered = true;
     book.contents = null;
-    book.contentsText = set.checked ? contentsLinesOf(volume) : volume.works.map(work => [work.author, work.title].filter(Boolean).join(' — ')).join('\n');
+    // Each work's translator, when the list names one, is on its line, to be corrected like the rest.
+    book.contentsText = set.checked ? contentsLinesOf(volume)
+      : volume.works.map(work => [work.author, work.title, work.translator ? `trans. ${work.translator}` : ''].filter(Boolean).join(' — ')).join('\n');
     const languages = [...new Set(volume.works.map(work => work.originalLanguage).filter(Boolean))];
     if (languages.length === 1) book.language = languages[0];
     // Works first written in different languages (Lucretius and Epictetus): the language step opens with a row for each.
     book.workLanguages = languages.length > 1 ? volume.works.map(work => ({ title: work.title, language: work.originalLanguage || '' })) : null;
     const translators = [...new Set(volume.works.map(work => work.translator).filter(Boolean))];
-    if (translators.length === 1) Object.assign(book, { translator: translators[0], hasTranslator: true });
+    if (translators.length) Object.assign(book, { translator: translators.join('; '), hasTranslator: true });
     book.works = suggestWorks(found.title, found.authors, state.library);
   }
 
@@ -329,6 +346,13 @@ export function render(container, state, actions) {
     });
   }
 
+  // A translation: a translator is named, or the work was first written in another language.
+  function isTranslated() {
+    const linked = book.works.find(work => work.id === book.workId);
+    const language = linked ? linked.originalLanguage : book.language;
+    return book.hasTranslator || Boolean(language && !isEnglish(language));
+  }
+
   // The steps this book needs, in order; steps with nothing to ask are left out.
   function steps() {
     const linked = book.works.find(work => work.id === book.workId);
@@ -336,7 +360,6 @@ export function render(container, state, actions) {
     const single = book.contents === null;
     // A work already in the library keeps its own language, category and tags.
     const ownWork = single && !linked;
-    const language = linked ? linked.originalLanguage : book.language;
     // A volume of a known set that shares one ISBN is asked which volume first, so "Is this the book?" shows the right one.
     const askVolumeFirst = book.knownSet && !book.knownVolume && !setInfo && !book.volumeSkipped;
     return [
@@ -349,7 +372,9 @@ export function render(container, state, actions) {
       // A collection is asked its language, category and tags once, for all its new works.
       ownWork || !single ? 'language' : null,
       ownWork || !single ? 'subjects' : null,
-      book.hasTranslator || (language && !isEnglish(language)) ? 'translation' : null,
+      // Translators and editors: for a translation, any collection, or a book a record names editors for.
+      isTranslated() || !single || book.editors ? 'translation' : null,
+      !single && translatorNames(book.translator).length > 1 && parseContentsLines(book.contents).length > 1 ? 'translators' : null,
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
       'where', 'copy',
@@ -381,7 +406,8 @@ export function render(container, state, actions) {
   function progressHtml() {
     const list = steps();
     const at = list.indexOf(book.step) + 1;
-    const where = escapeHtml(`Step ${at} of ${list.length}: ${STEP_NAMES[book.step]}${book.found.title ? ` · ${book.found.title}` : ''}`);
+    const name = book.step === 'translation' && !isTranslated() ? 'Editors' : STEP_NAMES[book.step];
+    const where = escapeHtml(`Step ${at} of ${list.length}: ${name}${book.found.title ? ` · ${book.found.title}` : ''}`);
     return `<p class="step-count">${where}</p><div class="progress"><span style="width:${Math.round(at / list.length * 100)}%"></span></div>`;
   }
 
@@ -393,7 +419,7 @@ export function render(container, state, actions) {
     const draw = {
       book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), contents: contentsStep, work: workStep, date: dateStep,
       language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices()),
-      translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
+      translation: () => translationStepHtml(book, isTranslated()), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
     stepArea.oninput = event => {
@@ -426,6 +452,8 @@ export function render(container, state, actions) {
         <p class="step-hint">${escapeHtml(found.source ? 'Correct anything that is wrong.' : `${book.problem || 'Neither Open Library nor Google Books knows this book.'} Type what is on the title page.`)}</p>
         <form class="form">${fieldHtml('Title', 'title', found.title, { missing: !found.title })}${fieldHtml('Subtitle', 'subtitle', found.subtitle)}
           ${fieldHtml('Authors (separate with ;)', 'authors', found.authors.join('; '), { missing: !found.authors.length })}
+          ${fieldHtml('Editors (separate with ;)', 'editors', book.editors)}
+          ${fieldHtml('Translators (separate with ;)', 'translator', book.translator)}
           <div class="field-row">${fieldHtml('Publisher', 'publisher', found.publisher, { missing: !found.publisher })}${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}</div>
           ${fieldHtml('Pages, as printed', 'pages', found.pages)}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
@@ -498,8 +526,9 @@ export function render(container, state, actions) {
   function listDatesHtml(text) {
     const offered = parseContentsLines(text).filter(piece => !piece.date && listDateOf(piece.title));
     if (!offered.length) return '';
-    const sample = offered.slice(0, 3).map(piece => `${piece.title} ${listDateOf(piece.title)}`).join('; ') + (offered.length > 3 ? '; …' : '');
-    return `<div class="field"><p class="step-hint">${escapeHtml(`The list, not yet checked by a person, gives when ${offered.length} of these were written: ${sample}.`)}</p>`
+    // Every date is shown, so each can be checked before the one tap.
+    const list = offered.map(piece => `${piece.title} ${listDateOf(piece.title)}`).join('; ');
+    return `<div class="field"><p class="step-hint">${escapeHtml(`The list, not yet checked by a person, gives when ${offered.length} of these were written: ${list}.`)}</p>`
       + '<button type="button" class="chip" data-action="list-dates">Use these dates</button></div>';
   }
 
@@ -524,15 +553,16 @@ export function render(container, state, actions) {
     // A known set's list gives the dates itself (filled in when checked, offered when not), so Wikidata is not asked.
     if (!set) askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
     const datesHtml = (set ? listDatesHtml(lines) : wikidataDatesHtml(lines)) + (set ? '' : sameWorksHtml(listed.pieces));
+    const searchHtml = `<p class="search-line">${searchLinkHtml(`Table of contents of ${searchTitle(book.found)}`, 'contents')}</p>`;
     if (set) {
       return `<h2 class="step-title">The works in this volume</h2>
-        <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator.`)}</p>
-        <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
+        <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator. A translator can be added at the end of a line: "— trans. Edward Sittler".`)}</p>
+        <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${datesHtml}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
     const hint = book.contentsOffered
       ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
-      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC").';
+      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like, a date if you know it, and the work\'s own translator ("Plato — Phaedo — c. 360 BC — trans. Benjamin Jowett").';
     // The phone itself can read the printed page: copy its text and paste it, a page at a time (docs/decisions/screens.md).
     const copyHint = book.contentsOffered ? '' : `<p class="step-hint">${escapeHtml('To copy the printed contents: on an iPhone, point the camera at the page (or open a photo of it), tap the text button, then "Copy All". On Android, use Google Lens, then "Copy text". Paste here once per page; page numbers and dotted lines are taken out.')}</p>`;
     // With no contents known, photos of the contents pages are kept with the book, to be typed in
@@ -541,7 +571,6 @@ export function render(container, state, actions) {
     const pagesHtml = pages.length ? `<p class="step-hint">${pages.map(page => `<img class="step-cover" src="${attr(page.preview)}" alt="A contents page">`).join(' ')} ${escapeHtml(`${pages.length === 1 ? 'This photo is' : `These ${pages.length} photos are`} kept with the book. Type the works now, or later in Edit book (the Library's filter "Needs details" lists it), and leave the box empty to save the book for now.`)}</p>` : '';
     const photoHtml = book.contentsOffered ? ''
       : pagesHtml + photoButtonsHtml('contents', pages.length ? 'Photograph the next page' : 'Photograph the contents page', 'Kept with the book, so the works can be typed in later');
-    const searchHtml = `<p class="search-line">${searchLinkHtml(`Table of contents of ${searchTitle(book.found)}`, 'contents')}</p>`;
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>${copyHint}
       <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${datesHtml}
@@ -672,6 +701,9 @@ export function render(container, state, actions) {
     if (book.step === 'book' && book.fixing) {
       for (const name of ['title', 'subtitle', 'publisher', 'year', 'pages']) found[name] = (value(name) || '').trim();
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
+      book.editors = (value('editors') || '').trim();
+      book.translator = (value('translator') || '').trim();
+      if (translatorNames(book.translator).length) book.hasTranslator = true;
       book.works = suggestWorks(found.title, found.authors, state.library);
     }
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
@@ -801,14 +833,20 @@ export function render(container, state, actions) {
 
   async function saveBook() {
     const { found, copy } = book;
+    const linked = book.works.find(work => work.id === book.workId);
+    const languages = editionLanguages({
+      typed: isTranslated() ? book.bookLanguages : '', found: found.languages,
+      original: linked ? linked.originalLanguage : book.language, isTranslated: isTranslated(),
+    });
     const form = {
-      title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsWithTranslator(found.contributors, book.translator),
+      title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),
       publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(book.translationYear),
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
-      isbn: found.isbn, pages: found.pages, languages: found.languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
+      isbn: found.isbn, pages: found.pages, languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
       workLanguages: book.contents !== null ? book.workLanguages || null : null,
+      workTranslators: steps().includes('translators') ? book.workTranslators : null,
       setRecord: setRecordFor(found.set),
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
@@ -996,11 +1034,15 @@ export function render(container, state, actions) {
     showShelf();
     if (title) {
       added.unshift(title);
-      const addedHtml = added.slice(0, 8).map(name => `<p class="piece-title">${escapeHtml(name)}</p>`).join('');
+      const addedHtml = added.slice(0, 8).map(name => `<p class="added-title">${escapeHtml(name)}</p>`).join('');
       container.querySelector('#added').innerHTML = `<section class="block"><h2 class="block-title">Added this time</h2>${addedHtml}</section>`;
+      // The title typed to find this book is done with; the next book is scanned, not this one typed again.
+      find.value = '';
     }
     if (scanner) scanner.resume();
-    else find.focus();
+    // Only a USB scanner types into the box; on a phone, focusing it would open the keyboard.
+    if (usb) find.focus();
+    else if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   }
 
   // ---------- scanning ----------

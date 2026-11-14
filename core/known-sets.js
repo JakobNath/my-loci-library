@@ -140,11 +140,11 @@ export function findKnownVolume(sets, { isbn = '', set: setTitle = '', volume: l
 }
 
 /**
- * A volume's works as contents lines for the entry form ("Author — Title — date",
- * core/contents.js), so they are saved the way pasted contents are.
+ * A volume's works as contents lines for the entry form ("Author — Title — date
+ * — trans. Translator", core/contents.js), so they are saved the way pasted contents are.
  */
 export function contentsLinesOf(volume) {
-  return volume.works.map(work => [work.author, work.title, work.date].filter(Boolean).join(' — ')).join('\n');
+  return volume.works.map(work => [work.author, work.title, work.date, work.translator ? `trans. ${work.translator}` : ''].filter(Boolean).join(' — ')).join('\n');
 }
 
 /**

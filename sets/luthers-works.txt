@@ -10,6 +10,7 @@
 # against the set record, Logos and Open Library. Original titles follow the Weimar edition; some rest
 # on one source (listed in the project's working notes for the person who checks this list).
 # Translators and page ranges are left out: no source reachable on that day gave them per work.
+# They are added from the printed contents pages of the volumes we own as each is added (volume 14 first).
 # Letters, sermons, hymns and the Table Talk are one work per volume, not one per letter or sermon.
 #
 # Volumes 56 on were researched 12 November 2026. Titles and ISBNs are from Concordia Publishing House's
@@ -90,14 +91,15 @@ Martin Luther — Psalm 110 | | German — 1535
 Martin Luther — Psalm 111 | Der 111. Psalm ausgelegt | German — 1530
 Martin Luther — Psalm 112 | Der 112. Psalm Davids gepredigt | German — 1526
 
+# note: translators and all six dates checked against Jakob's copy (contents page and introduction), 14 November 2026
 volume: 14 | Selected Psalms III | isbn 9780570064145
-Martin Luther — Psalm 117 | Der 117. Psalm ausgelegt | German — 1530
-Martin Luther — Psalm 118 | Das schöne Confitemini | German — 1530
-Martin Luther — Psalm 147 | Der 147. Psalm, Lauda Jerusalem, ausgelegt | German — 1532
+Martin Luther — Psalm 117 | Der 117. Psalm ausgelegt | German — 1530 | trans. Edward Sittler
+Martin Luther — Psalm 118 | Das schöne Confitemini | German — 1530 | trans. George Beto
+Martin Luther — Psalm 147 | Der 147. Psalm, Lauda Jerusalem, ausgelegt | German — 1532 | trans. Edward Sittler
 # note: the 1525 revision (WA 18) of the 1517 first version (WA 1)
-Martin Luther — The Seven Penitential Psalms | Die sieben Bußpsalmen | German — 1525
-Martin Luther — Four Psalms of Comfort | Vier tröstliche Psalmen an die Königin zu Ungarn | German — 1526
-# note: from the second Psalms lectures (WA 5, 26-74); the exact LW heading for this item was not confirmed
+Martin Luther — The Seven Penitential Psalms | Die sieben Bußpsalmen | German — 1525 | trans. Arnold Guebert
+Martin Luther — Four Psalms of Comfort | Vier tröstliche Psalmen an die Königin zu Ungarn | German — 1526 | trans. Jaroslav Pelikan
+# note: from the second Psalms lectures (WA 5, 26-74), "from Works on the First Twenty-two Psalms", a composite translation (no one translator)
 Martin Luther — Psalms 1 and 2 | Operationes in Psalmos | Latin — 1519
 
 volume: 15 | Ecclesiastes, Song of Solomon, Last Words of David | isbn 9780570064152

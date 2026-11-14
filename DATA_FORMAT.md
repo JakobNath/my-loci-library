@@ -209,7 +209,7 @@ Each entry:
 | `work` | work ID or null | The work; null for a piece (below). |
 | `piece` | object or null | A short work kept inside this book instead of as a work record (version 3): a poem, hymn, sermon or letter. See below. Null for a work. |
 | `extent` | text | `complete`, `selections`, or a free range: "Books I–IV". |
-| `translator` | text or null | Only when this piece's translator differs from the edition's. |
+| `translator` | text or null | This work's own translator in this book, when it is not simply the edition's (the book has several translators, or another translated this work). The edition's `contributors` still list every translator. In the contents box it is written at the end of the work's line: "Martin Luther — Psalm 117 — 1530 — trans. Edward Sittler". |
 | `pages` | text or null | Where it is in the book: "1–55". |
 | `cite` | true or false | Planned as "send this work to Zotero as a section of the book" (version 3). Not used since 13 November 2026, when Zotero was given books only; always false, and kept so records stay the same shape. |
 

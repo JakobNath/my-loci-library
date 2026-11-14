@@ -3,7 +3,7 @@
 
 import { fromOpenLibrary, fromGoogleBooks, combineFound, candidatesFromSearch, searchQueries, workFromOpenLibrary, suggestOriginalDates, yearFromText, titleCase } from '../lookup.js';
 import { emptyFound } from '../lookup.js';
-import { tidyPeople, translatorNames } from '../people.js';
+import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages } from '../people.js';
 import { editionsWithIsbn, suggestWorks } from '../matching.js';
 import { buildLibrary } from '../library.js';
 import { equal, same, ok } from './check.js';
@@ -254,6 +254,25 @@ export const tests = [
       same(suggestOriginalDates(pelikan, 1958, { authors: ['Martin Luther'] }).map(s => s.text), ['1958']);
       const luther = { workTitle: '', firstPublished: 1955, author: null };
       ok(suggestOriginalDates(luther, 1973, { authors: ['Martin Luther'], translated: true })[0].label.includes("translation's year"));
+    },
+  },
+  {
+    name: 'the translators and editors typed while adding replace those found; a foreword and an assistant editor stay',
+    fn() {
+      const found = [{ name: 'Jaraslav Pelikan', role: 'editor' }, { name: 'L. W. Spitz Jr.', role: 'translator' }, { name: 'Daniel E. Poellot', role: 'other' }];
+      same(contributorsFromSteps(found, 'Edward Sittler; George Beto', 'Jaroslav Pelikan'), [
+        { name: 'Jaroslav Pelikan', role: 'editor' }, { name: 'Edward Sittler', role: 'translator' }, { name: 'George Beto', role: 'translator' }, { name: 'Daniel E. Poellot', role: 'other' },
+      ]);
+      same(contributorsFromSteps(found, '', ''), [{ name: 'Daniel E. Poellot', role: 'other' }], 'emptied boxes remove them');
+    },
+  },
+  {
+    name: 'a new book\'s language is what was typed, else what a record says, else the original language of a book that is not a translation',
+    fn() {
+      same(editionLanguages({ typed: 'Greek, English', found: ['English'], original: 'Greek', isTranslated: true }), ['Greek', 'English'], 'a facing-page Loeb');
+      same(editionLanguages({ typed: '', found: ['German'], original: 'German', isTranslated: false }), ['German']);
+      same(editionLanguages({ typed: '', found: [], original: 'English', isTranslated: false }), ['English'], 'Pride and Prejudice');
+      same(editionLanguages({ typed: '', found: [], original: 'Latin', isTranslated: true }), [], 'a translation is never given its original language');
     },
   },
 ];

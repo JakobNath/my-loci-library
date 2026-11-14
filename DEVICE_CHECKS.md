@@ -154,3 +154,11 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Android: the same with Google Lens, "Copy text".
 - [ ] Phone: "Photograph the contents page", then "Photograph the next page": both small pictures should show, and after saving, Edit book should show both above the contents box.
 - [ ] Phone: scan Luther's Works 12 (the later printing, 978-0-7586-7506-4): "Is this the book?" should say "Selected Psalms I" and "the list of Luther's Works", and the next step should list the seven Psalm lectures.
+
+## Testing day, batch 1 (1.17.0, 14 November 2026)
+
+- [ ] Two phones: trash a book on one; on the other, open Add and scan or type its ISBN. It should say "Checking for changes from your other devices…" for a moment, then look the book up as new, not "You already have this edition".
+- [ ] Phone: type a title in the Add box, add the book and save. The box should be empty afterwards and the keyboard closed; "Added this time" should list the book without a number.
+- [ ] Phone: add an anthology with two or more translators (Luther's Works 14): the step "Translation and editors" should have "Edited by" and "This book is in: English", and the next step "Who translated each work?" one menu per work. The book page should then show "trans. …" beside each work.
+- [ ] iPhone or Android: paste the contents page of Luther's Works 14 copied with the phone (Live Text or Google Lens): each Psalm line should end "— trans. …" with its translator.
+- [ ] Phone: on a book page, "Edit the works": each work has a translator box; change one and save, and the book page shows the change.

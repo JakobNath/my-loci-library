@@ -121,10 +121,10 @@ export const tests = [
     fn() {
       const pasted = ['Plato — Euthyphro — c. 399 BC', 'Plato -- Apology', '', 'Romans 1–8', 'The Didache | c. 100–120'].join('\n');
       same(parseContentsLines(pasted), [
-        { author: 'Plato', title: 'Euthyphro', date: 'c. 399 BC' },
-        { author: 'Plato', title: 'Apology', date: null },
-        { author: null, title: 'Romans 1–8', date: null },
-        { author: null, title: 'The Didache', date: 'c. 100–120' },
+        { author: 'Plato', title: 'Euthyphro', date: 'c. 399 BC', translator: null },
+        { author: 'Plato', title: 'Apology', date: null, translator: null },
+        { author: null, title: 'Romans 1–8', date: null, translator: null },
+        { author: null, title: 'The Didache', date: 'c. 100–120', translator: null },
       ]);
       equal(contentsLine(loebWorks[1], ['Plato']), 'Plato — Phaedo — c. 385 BC');
     },
@@ -290,8 +290,8 @@ export const tests = [
   {
     name: 'a pasted contents line keeps a subtitle after the title; only a last part that reads as a date is the date',
     fn() {
-      same(parseContentsLines('Augustine — Confessions — A New Translation'), [{ author: 'Augustine', title: 'Confessions — A New Translation', date: null }]);
-      same(parseContentsLines('Augustine — Confessions — c. 397'), [{ author: 'Augustine', title: 'Confessions', date: 'c. 397' }]);
+      same(parseContentsLines('Augustine — Confessions — A New Translation'), [{ author: 'Augustine', title: 'Confessions — A New Translation', date: null, translator: null }]);
+      same(parseContentsLines('Augustine — Confessions — c. 397'), [{ author: 'Augustine', title: 'Confessions', date: 'c. 397', translator: null }]);
     },
   },
   {
@@ -301,6 +301,24 @@ export const tests = [
       const copied = 'CONTENTS\n\nGeneral Introduction . . . . . . ix\nPsalm 2 ........ 3\nPsalm 8 41\nPsalm 19 139\nPsalm 23 147\n183\nPsalm 26 183';
       equal(tidyPastedContents(copied), 'General Introduction\nPsalm 2\nPsalm 8\nPsalm 19\nPsalm 23\nPsalm 26');
       equal(tidyPastedContents('Psalm 23\nPsalm 51'), 'Psalm 23\nPsalm 51', 'no page column: the numbers belong to the titles');
+    },
+  },
+  {
+    name: 'a contents line may name its work\'s own translator, before or after the date',
+    fn() {
+      same(parseContentsLines('Martin Luther — Psalm 117 — trans. Edward Sittler'), [{ author: 'Martin Luther', title: 'Psalm 117', date: null, translator: 'Edward Sittler' }]);
+      same(parseContentsLines('Martin Luther — Psalm 117 — trans. Edward Sittler — 1530'), [{ author: 'Martin Luther', title: 'Psalm 117', date: '1530', translator: 'Edward Sittler' }]);
+      same(parseContentsLines('Psalm 118 — 1530 — translated by George Beto'), [{ author: null, title: 'Psalm 118', date: '1530', translator: 'George Beto' }]);
+      const work = { title: 'Psalm 117', datings: [{ text: '1530', working: true }] };
+      same(parseContentsLines(contentsLine(work, ['Martin Luther'], 'Edward Sittler')), [{ author: 'Martin Luther', title: 'Psalm 117', date: '1530', translator: 'Edward Sittler' }], 'the entry form reads back what it wrote');
+    },
+  },
+  {
+    name: 'a pasted contents page keeps the translator it names, on the line or under the title',
+    fn() {
+      // As a phone's text reading copies the contents page of Luther's Works 14.
+      const copied = 'PSALM 117 translated by Edward Sittler 1\nPSALM 118 translated by George Beto 41\nTHE SEVEN PENITENTIAL PSALMS 137\ntranslated by Arnold Guebert 139';
+      equal(tidyPastedContents(copied), 'PSALM 117 — trans. Edward Sittler\nPSALM 118 — trans. George Beto\nTHE SEVEN PENITENTIAL PSALMS — trans. Arnold Guebert');
     },
   },
 ];

@@ -54,7 +54,9 @@ function datingRowHtml(dating, i) {
 }
 
 function contributorRowHtml(person) {
-  const options = ROLES.map(role => `<option${role === person.role ? ' selected' : ''}>${role}</option>`).join('');
+  // "other" (an assistant editor, a foreword's author) goes to Zotero as a contributor, which Chicago does not print.
+  const label = role => (role === 'other' ? 'other (not cited)' : role);
+  const options = ROLES.map(role => `<option value="${role}"${role === person.role ? ' selected' : ''}>${label(role)}</option>`).join('');
   return `<div class="field-row"><label class="field">Role<select name="contributorRole">${options}</select></label>`
     + `<label class="field">Name<input name="contributorName" value="${attr(person.name)}"></label></div>`;
 }
@@ -80,7 +82,9 @@ export function render(container, state, actions) {
   const isAnthology = entry ? entry.works.length > 1 : false;
   const work = entry && entry.works.length === 1 ? entry.works[0] : { title: '', originalTitle: '', originalLanguage: '', datings: [], category: '', tags: [] };
   const authorsText = entry && !isAnthology ? entry.authors.map(author => author.name).join('; ') : wish ? wish.authorsText : '';
-  const contentsText = isAnthology ? entry.works.map(w => contentsLine(w, w.authors.map(id => state.library.authorsById.get(id)?.name || ''))).join('\n') : '';
+  // Each line carries the work's own translator in this book, so saving the form keeps it.
+  const translatorIn = w => (edition.contents.find(item => item.work === w.id) || {}).translator || null;
+  const contentsText = isAnthology ? entry.works.map(w => contentsLine(w, w.authors.map(id => state.library.authorsById.get(id)?.name || ''), translatorIn(w))).join('\n') : '';
   const datingsHtml = [...work.datings, { text: '', note: '', working: false }].map(datingRowHtml).join('');
   const contributorsHtml = [...edition.contributors, { name: '', role: 'translator' }].map(contributorRowHtml).join('');
   const statusHtml = STATUSES.map(status => `<option${status === copy.status ? ' selected' : ''}>${status}</option>`).join('');

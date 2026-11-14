@@ -108,6 +108,7 @@ label.btn { position: relative; }
 .rename { flex: 1; padding: var(--space-2) 0; }
 
 /* Add: the line confirming a saved book */
+.added-title { margin: 0; padding: var(--space-2) 0; border-bottom: 1px solid var(--line); font-family: var(--font-display); }
 .saved-banner { margin: 0 0 var(--space-3); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--accent-soft); color: var(--accent-ink); font: 600 var(--fs-base)/1.4 var(--font-ui); }
 
 /* Wishlist: covers on the items, and the find box's results */

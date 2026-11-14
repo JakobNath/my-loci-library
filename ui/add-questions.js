@@ -1,6 +1,7 @@
 // The add screen's questions about what only a person knows (PLAN.md, "Batch
 // add"): the work's original language and title, its category and tags, the
-// translation, and this copy. Catalog facts (pages, sizes, call numbers) are
+// translation and editors (and who translated each work of a collection), and
+// this copy. Catalog facts (pages, sizes, call numbers) are
 // left to the lookups and the laptop. Also the small pieces every add step is
 // drawn with. ui/add.js decides the order of the steps and saves the book.
 
@@ -109,15 +110,43 @@ export function subjectsStepHtml(book, choices) {
       ${navHtml()}</form>`;
 }
 
-// Who translated it, and when this translation first appeared.
-export function translationStepHtml(book) {
-  return `<h2 class="step-title">About the translation</h2>
-    <p class="step-hint">Who translated it, and the year this translation first appeared, which may be long before this printing. A revision's year goes in the notes. Both optional.</p>
+// Who translated and edited it, when this translation first appeared, and the
+// language of this book. A book that is not a translation (an anthology in its
+// own language) is asked only for its editors.
+export function translationStepHtml(book, isTranslated) {
+  const editorsHtml = fieldHtml('Edited by', 'editors', book.editors, { hint: 'Several: separate the names with ;. An assistant editor goes in Edit book with the role "other (not cited)".' });
+  if (!isTranslated) {
+    return `<h2 class="step-title">Editors</h2>
+      <p class="step-hint">Who edited this book, if anyone: the editor of a collection, or of this edition. Optional.</p>
+      <form class="form">${editorsHtml}${navHtml()}</form>`;
+  }
+  return `<h2 class="step-title">Translation and editors</h2>
+    <p class="step-hint">Who translated and edited it, and the year this translation first appeared, which may be long before this printing. A revision's year goes in the notes. All optional.</p>
     <form class="form">${fieldHtml('Translator', 'translator', book.translator, { hint: 'Several translators: separate the names with ;' })}
       <p class="preview" data-translators>${escapeHtml(translatorsReadAs(book.translator))}</p>
       ${fieldHtml('Translation first published (year)', 'translationFirstPublished', book.translationYear, { type: 'number', help: true })}
       <p class="search-line">${searchLinkHtml(translationDateQuestion(searchTitle(book.found), translatorNames(book.translator)), 'translation')}</p>
+      ${editorsHtml}
+      ${fieldHtml('This book is in', 'bookLanguages', book.bookLanguages, { hint: 'The language of the pages in your hand. Two for a facing-page edition: "Greek, English".' })}
       ${navHtml()}</form>`;
+}
+
+// A collection with several translators: which one translated each work.
+// Each row starts at the translator its contents line names, or the list's.
+export function workTranslatorsStepHtml(book) {
+  const names = translatorNames(book.translator);
+  const chosen = new Map((book.workTranslators || []).map(row => [normalizeForSearch(row.title), row.translator]));
+  const rowsHtml = parseContentsLines(book.contents).map(line => {
+    const title = normalizeForSearch(line.title);
+    const translator = chosen.has(title) ? chosen.get(title) : line.translator || '';
+    const options = [...new Set(['', ...names, translator])];
+    const optionsHtml = options.map(name => `<option value="${attr(name)}"${name === translator ? ' selected' : ''}>${escapeHtml(name || 'Not known, or all of them')}</option>`).join('');
+    const label = line.author ? `${line.title} · ${line.author}` : line.title;
+    return `<label class="field">${escapeHtml(label)}<select name="workTranslator" data-title="${attr(line.title)}">${optionsHtml}</select></label>`;
+  }).join('');
+  return `<h2 class="step-title">Who translated each work?</h2>
+    <p class="step-hint">${escapeHtml('Shown on the book page beside each work, for citing one work from the book. Optional; it can be changed later under "Edit the works".')}</p>
+    <form class="form">${rowsHtml}${navHtml()}</form>`;
 }
 
 // Our copy: when we got it, what it cost and is worth, markings, and notes.
@@ -155,8 +184,15 @@ export function readQuestions(book, stepArea) {
     book.tags = [...new Set([...book.tags, ...typed])];
   }
   if (book.step === 'translation') {
-    book.translator = value('translator');
-    book.translationYear = value('translationFirstPublished');
+    // The step for a book that is not a translation has only the editors' box.
+    const has = name => Boolean(stepArea.querySelector(`[name="${name}"]`));
+    if (has('translator')) book.translator = value('translator');
+    if (has('translationFirstPublished')) book.translationYear = value('translationFirstPublished');
+    if (has('bookLanguages')) book.bookLanguages = value('bookLanguages');
+    book.editors = value('editors');
+  }
+  if (book.step === 'translators') {
+    book.workTranslators = [...stepArea.querySelectorAll('[name="workTranslator"]')].map(select => ({ title: select.dataset.title, translator: select.value }));
   }
   if (book.step === 'copy') {
     for (const name of ['acquired', 'price', 'value']) book.copy[name] = value(name);
@@ -171,9 +207,3 @@ export function translatorsReadAs(text) {
   return names.length > 1 ? `Read as ${names.length} translators: ${names.join(' · ')}` : '';
 }
 
-/** The edition's contributors with the translator from the translation step in place of any found. */
-export function contributorsWithTranslator(contributors, translator) {
-  const others = contributors.filter(person => person.role !== 'translator');
-  const typed = translatorNames(translator).map(name => ({ name, role: 'translator' }));
-  return [...others, ...typed];
-}

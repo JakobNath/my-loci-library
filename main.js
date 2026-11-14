@@ -283,6 +283,12 @@ const actions = {
     await syncNow({ quiet: false });
   },
   syncNow: () => syncNow({ quiet: false }),
+  /**
+   * Bring this device up to date quietly, and resolve when it is (at once when
+   * offline or not connected). Batch add waits for it before saying a book is
+   * already held, so a book trashed on the other phone is not offered again.
+   */
+  catchUp: () => syncNow(),
 
   setBatchLocation(parts) {
     state.batchLocation = parts;
@@ -314,6 +320,7 @@ const actions = {
 
 let syncing = false;
 let syncTimer = null;
+let running = null; // the sync under way, so a second caller waits for it instead of going without
 
 // The sync module loads just after the first screen appears, the first time
 // it is needed, so opening the app stays fast (HOW_IT_WORKS.md, "Decisions").
@@ -373,10 +380,20 @@ async function showUnsent() {
 }
 
 /**
- * Bring this device and GitHub up to date (sync-run.js), unless a sync is
- * already running or the device is offline.
+ * Bring this device and GitHub up to date (sync-run.js), unless the device is
+ * offline. When a sync is already running, wait for that one instead.
  */
 async function syncNow({ quiet = true } = {}) {
+  if (running) return running;
+  running = syncOnce(quiet);
+  try {
+    return await running;
+  } finally {
+    running = null;
+  }
+}
+
+async function syncOnce(quiet) {
   const github = await syncConnection();
   if (!github || !storage || syncing) return;
   if (!navigator.onLine) { state.syncStatus = 'Offline: changes are kept on this device and sent later.'; return; }

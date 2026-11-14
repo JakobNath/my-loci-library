@@ -211,13 +211,20 @@ export function recordsFromForm(form, existing, context) {
     const matches = worksForLines(lines, oldWorks, sameAuthors);
     // The works of a known set's volume (core/known-sets.js), when the contents came from its list.
     const knownSet = form.knownWorks || { set: '', works: [] };
+    // A work's own translator: chosen for it while adding (form.workTranslators, where a row left at
+    // "Not known" means none), else typed on its line ("— trans. Edward Sittler"), else the known set's list's.
+    const translatorOf = (line, listed) => {
+      const chosen = (form.workTranslators || []).find(row => key(row.title) === key(line.title));
+      if (chosen) return chosen.translator || null;
+      return line.translator || (listed && listed.translator) || null;
+    };
     for (const [i, line] of lines.entries()) {
       const match = matches[i];
       // A line still as the list gives it takes the list's details; a line a person changed is saved as typed.
       const listed = knownSet.works.find(item => key(item.title) === key(line.title) && key(item.author) === key(line.author || ''));
       if (listed && listed.piece) {
         const piece = { title: line.title, author: line.author || null, originalTitle: listed.originalTitle || null, date: line.date || null };
-        contents.push({ work: null, piece, extent: 'complete', translator: listed.translator || null, pages: listed.pages || null, cite: false });
+        contents.push({ work: null, piece, extent: 'complete', translator: translatorOf(line, listed), pages: listed.pages || null, cite: false });
         continue;
       }
       // A work the list puts in several volumes (Gibbon, the Summa) is one work: a later volume links to the
@@ -225,7 +232,7 @@ export function recordsFromForm(form, existing, context) {
       const inSet = listed && !match
         && (context.setWorks || []).find(work => key(work.title) === key(line.title) && sameAuthors(work, line));
       if (inSet) {
-        contents.push({ work: inSet.id, piece: null, extent: 'complete', translator: listed.translator || null, pages: listed.pages || null, cite: false });
+        contents.push({ work: inSet.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: listed.pages || null, cite: false });
         continue;
       }
       // A line a person joined to a work already held ("Possibly the same as…", form.sameWorks:
@@ -233,18 +240,21 @@ export function recordsFromForm(form, existing, context) {
       const joined = form.sameWorks && !match
         && context.works && context.works.get(form.sameWorks[key(line.title)]);
       if (joined) {
-        contents.push({ work: joined.id, piece: null, extent: 'complete', translator: (listed && listed.translator) || null, pages: (listed && listed.pages) || null, cite: false });
+        contents.push({ work: joined.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false });
         continue;
       }
       const ids = authorIds(line.author ? line.author.split(/\s+and\s+/) : []);
       const note = listed && line.date === listed.date ? `from the ${knownSet.set} list` : '';
-      const fresh = { work: null, piece: null, extent: 'complete', translator: (listed && listed.translator) || null, pages: (listed && listed.pages) || null, cite: false };
+      const fresh = { work: null, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false };
       if (match) {
         // A work the book already holds: only what the line changed is changed.
         const datings = line.date ? withWorkingDate(match, line.date, problems) : match.datings;
         const work = update(match, { title: line.title, authors: ids, datings }, now);
         if (work !== match) records.push(work);
-        contents.push(listed ? { ...fresh, work: work.id } : entryFor(work.id, { ...fresh, work: work.id }));
+        // A translator the line names replaces the old one; a line without one keeps it
+        // (it is cleared on "Works in this book", so an edit never loses one by accident).
+        const old = entryFor(work.id, { ...fresh, work: work.id });
+        contents.push(listed ? { ...fresh, work: work.id } : { ...old, translator: fresh.translator || old.translator });
         continue;
       }
       const reading = line.date ? datingsFromRows([{ text: line.date, working: true, note }]) : { datings: [], problems: [] };
@@ -462,4 +472,21 @@ export function worksFromRows(rows, same, works, now) {
     if (changed !== work) records.push(changed);
   }
   return { records: problems.length ? [] : records, problems };
+}
+
+/**
+ * Each work's own translator in this book, from the rows of "Works in this
+ * book". The translator belongs to the book's contents entry, not to the work,
+ * since another book may hold the same work in another translation. An empty
+ * box means the work has no translator of its own (the book's translators stand).
+ * @param {object} edition
+ * @param {{ id: string, translator: string }[]} rows work IDs and the translator typed for each
+ * @param {string} now timestamp for the changed field
+ * @returns {object} the edition, a new record only if a translator changed
+ */
+export function withWorkTranslators(edition, rows, now) {
+  const typed = new Map(rows.map(row => [row.id, String(row.translator || '').trim() || null]));
+  const contents = edition.contents.map(entry => (entry.work && typed.has(entry.work) && typed.get(entry.work) !== entry.translator
+    ? { ...entry, translator: typed.get(entry.work) } : entry));
+  return contents.some((entry, i) => entry !== edition.contents[i]) ? withField(edition, 'contents', contents, now) : edition;
 }

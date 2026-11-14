@@ -67,7 +67,10 @@ export const tests = [
     name: 'a volume\'s works become contents lines that the entry form reads back the same',
     fn() {
       const [plato] = parseKnownSet(SAMPLE).volumes;
-      same(parseContentsLines(contentsLinesOf(plato)), [{ author: 'Plato', title: 'Euthyphro', date: 'c. 399–395 BC' }, { author: 'Plato', title: 'Phaedo', date: 'c. 360 BC' }]);
+      same(parseContentsLines(contentsLinesOf(plato)), [
+        { author: 'Plato', title: 'Euthyphro', date: 'c. 399–395 BC', translator: 'Benjamin Jowett' },
+        { author: 'Plato', title: 'Phaedo', date: 'c. 360 BC', translator: 'Benjamin Jowett' },
+      ]);
     },
   },
   {

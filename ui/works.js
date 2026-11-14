@@ -1,6 +1,6 @@
 // "Works in this book" (#/edit/<edition id>/works): one page to give every
 // work of a collection its original title and language, its date, category
-// and tags (PLAN.md, "Book detail page"). "Same for all" fills a field for
+// and tags, and its own translator in this book (PLAN.md, "Book detail page"). "Same for all" fills a field for
 // every work whose own box is left empty, so the five dialogues of Plato I
 // take "Greek" and "Philosophy" in one go. The works' order and the list
 // itself are changed in the entry form; this page only fills in each work.
@@ -8,7 +8,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
-import { worksFromRows } from '../core/entry.js';
+import { worksFromRows, withWorkTranslators } from '../core/entry.js';
 import { iconHtml } from './icons.js';
 import { workDateQuestion } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
@@ -29,7 +29,7 @@ function datalistsHtml(library) {
   return list('workLanguages', languages) + list('workCategories', categories);
 }
 
-function rowHtml(work, i, authorNames) {
+function rowHtml(work, i, authorNames, translator) {
   const disputed = work.datings.length > 1;
   const dating = work.datings.find(item => item.working) || work.datings[0];
   const dateHtml = disputed
@@ -40,6 +40,7 @@ function rowHtml(work, i, authorNames) {
       ${fieldHtml('Title', 'title', work.title)}
       <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle)}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, 'workLanguages')}</div>
       ${dateHtml}${searchHtml}
+      ${fieldHtml('Translator of this work, if not the whole book\'s', 'translator', translator)}
       <div class="field-row">${fieldHtml('Category', 'category', work.category, 'workCategories')}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '))}</div>
     </fieldset>`;
 }
@@ -56,7 +57,8 @@ export function render(container, state, actions) {
   // Each work's own authors, or the book's when it names none.
   const namesOf = work => work.authors.map(id => (state.library.authorsById.get(id) || {}).name).filter(Boolean);
   const authorsOf = work => (namesOf(work).length ? namesOf(work) : entry.authors.map(author => author.name));
-  const rowsHtml = works.map((work, i) => rowHtml(work, i, authorsOf(work))).join('');
+  const translatorOf = work => (entry.edition.contents.find(item => item.work === work.id) || {}).translator || '';
+  const rowsHtml = works.map((work, i) => rowHtml(work, i, authorsOf(work), translatorOf(work))).join('');
   container.innerHTML = `<a class="back" href="#/book/${escapeHtml(entry.id)}">${iconHtml('back')} Back to the book</a>
     <div class="page-head"><h1 class="page-title">Works in this book</h1>
       <p class="page-meta">${escapeHtml(`${entry.edition.title}: ${works.length} works. Fill in what you know; everything can wait. Each work is shared by every book that holds it.`)}</p>${dateRuleHtml()}</div>
@@ -91,6 +93,10 @@ export function render(container, state, actions) {
     }));
     const same = { originalLanguage: value(form, 'sameLanguage'), category: value(form, 'sameCategory'), tags: splitTags(value(form, 'sameTags')) };
     const result = worksFromRows(rows, same, state.library.worksById, actions.now());
+    // Translators are kept on the book's contents, so the edition changes with them.
+    const translators = [...form.querySelectorAll('[data-row]')].map(row => ({ id: row.dataset.row, translator: value(row, 'translator') }));
+    const edition = withWorkTranslators(entry.edition, translators, actions.now());
+    if (edition !== entry.edition && !result.problems.length) result.records.push(edition);
     const problems = form.querySelector('.problems');
     if (result.problems.length) {
       problems.textContent = result.problems.join(' ');
@@ -99,7 +105,9 @@ export function render(container, state, actions) {
       return;
     }
     if (!result.records.length || await actions.saveRecords(result.records)) {
-      actions.showNote(result.records.length ? `Saved ${result.records.length} ${result.records.length === 1 ? 'work' : 'works'}` : 'Nothing was changed');
+      const saved = result.records.filter(record => record.type === 'work').length;
+      const note = [saved ? `${saved} ${saved === 1 ? 'work' : 'works'}` : '', edition !== entry.edition ? 'the translators' : ''].filter(Boolean).join(' and ');
+      actions.showNote(note ? `Saved ${note}` : 'Nothing was changed');
       actions.go(`#/book/${entry.id}`);
     }
   };
