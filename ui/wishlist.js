@@ -191,11 +191,11 @@ export function render(container, state, actions) {
     draw();
   }
 
-  // An Open Library cover is downloaded and made into our own files now; a Google Books
-  // cover waits for the laptop, as in batch add (PLAN.md, "Covers and images").
+  // An Open Library cover is downloaded and made into our own files now. A Google Books
+  // cover cannot be read by a web page, and none is kept for later, as in batch add
+  // (docs/decisions/photos-and-scanning.md): the work's Open Library cover is tried instead.
   async function coverFor(url, source, waiting) {
-    if (!url) return null;
-    if (waiting) return { waiting: url, source };
+    if (!url || waiting) return null;
     try {
       const blob = await downloadOpenLibraryCover(url);
       if (!blob) return null;

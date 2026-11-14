@@ -8,7 +8,8 @@ import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
 import { parseContentsLines } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
-import { translationDateQuestion } from '../core/date-search.js';
+import { translationDateQuestion, searchTitle } from '../core/date-search.js';
+import { translatorNames } from '../core/people.js';
 import { searchLinkHtml } from './date-help.js';
 
 /** The original languages offered as one-tap buttons; any other is typed. */
@@ -112,9 +113,10 @@ export function subjectsStepHtml(book, choices) {
 export function translationStepHtml(book) {
   return `<h2 class="step-title">About the translation</h2>
     <p class="step-hint">Who translated it, and the year this translation first appeared, which may be long before this printing. A revision's year goes in the notes. Both optional.</p>
-    <form class="form">${fieldHtml('Translator', 'translator', book.translator)}
+    <form class="form">${fieldHtml('Translator', 'translator', book.translator, { hint: 'Several translators: separate the names with ;' })}
+      <p class="preview" data-translators>${escapeHtml(translatorsReadAs(book.translator))}</p>
       ${fieldHtml('Translation first published (year)', 'translationFirstPublished', book.translationYear, { type: 'number', help: true })}
-      <p class="search-line">${searchLinkHtml(translationDateQuestion(book.found.title, String(book.translator || '').split(';')), 'translation')}</p>
+      <p class="search-line">${searchLinkHtml(translationDateQuestion(searchTitle(book.found), translatorNames(book.translator)), 'translation')}</p>
       ${navHtml()}</form>`;
 }
 
@@ -163,9 +165,15 @@ export function readQuestions(book, stepArea) {
   }
 }
 
+/** What the translator box will save, said back under it: "Read as 4 translators: …". */
+export function translatorsReadAs(text) {
+  const names = translatorNames(text);
+  return names.length > 1 ? `Read as ${names.length} translators: ${names.join(' · ')}` : '';
+}
+
 /** The edition's contributors with the translator from the translation step in place of any found. */
 export function contributorsWithTranslator(contributors, translator) {
   const others = contributors.filter(person => person.role !== 'translator');
-  const typed = translator.split(';').map(name => name.trim()).filter(Boolean).map(name => ({ name, role: 'translator' }));
+  const typed = translatorNames(translator).map(name => ({ name, role: 'translator' }));
   return [...others, ...typed];
 }

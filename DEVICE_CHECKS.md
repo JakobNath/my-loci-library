@@ -112,7 +112,7 @@ Things that can only be checked on a real phone or a particular browser. Work th
 ## Contents photos and found works (1.10.0)
 
 - [ ] Phone: add a book that holds several works but whose contents no catalog lists (an old anthology without a barcode, or a title typed in). At "Is this the book?" tap "Yes, and it holds several works". The next step should offer "Photograph the contents page": take the photo, and a small copy of it should appear with a note. Leave the box empty and finish adding.
-- [ ] Laptop, in Firefox with the app synced: open `https://jakobnath.github.io/my-loci-library/laptop/contents.html`. The book should be listed; open it: the entry form should show the photo of the contents page under "This book holds several works" once ticked. Type two lines, save: the book should leave the list.
+- [ ] Any device: Library › Filters › "Needs details" should list the book, and its page should say "Still missing: contents". Edit: the photos of the contents pages should show under "This book holds several works" once ticked. Type two lines, save: the book should leave the list.
 - [ ] After a laptop `loci-enrich` run that reports "works found inside": the book's page says "Still missing: works found inside"; Edit shows "A library catalog lists … works"; "Use these works" fills the contents box, and Save makes them works.
 
 ## Same works and free scans (1.11.0)
@@ -147,3 +147,10 @@ Things that can only be checked on a real phone or a particular browser. Work th
 
 - [ ] iPhone home-screen app and Android: in Edit book, tap "Search the web" under the original date. A browser tab should open on a search for "When was <title> by <author> written and first published?", and going back should return to the form with nothing lost.
 - [ ] Phone: add a translated book and, on the translation step, type the translator, then tap "Search the web". The search should name that translator.
+
+## Fixes from the first real book (1.16.0, 14 November 2026)
+
+- [ ] iPhone: on "Which works does it hold?", point the camera at a printed contents page, tap the text button, "Copy All", and paste into the box. The lines should come in without page numbers or dotted lines. Paste a second page: it should go on new lines below.
+- [ ] Android: the same with Google Lens, "Copy text".
+- [ ] Phone: "Photograph the contents page", then "Photograph the next page": both small pictures should show, and after saving, Edit book should show both above the contents box.
+- [ ] Phone: scan Luther's Works 12 (the later printing, 978-0-7586-7506-4): "Is this the book?" should say "Selected Psalms I" and "the list of Luther's Works", and the next step should list the seven Psalm lectures.

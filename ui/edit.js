@@ -13,7 +13,8 @@ import { trashBook, trashRecord } from '../core/trash.js';
 import { iconHtml } from './icons.js';
 import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
-import { workDateQuestion, translationDateQuestion } from '../core/date-search.js';
+import { wireTidyPaste } from './paste-contents.js';
+import { workDateQuestion, translationDateQuestion, searchTitle } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
@@ -89,10 +90,10 @@ export function render(container, state, actions) {
   const titleHtml = entry ? 'Edit book' : wish ? 'Add the book you bought' : 'Add a book';
   const historyRowsHtml = (copy.valueHistory || []).map(point => `<label class="check"><input type="checkbox" name="dropHistory" value="${attr(point.date)}"> Delete ${escapeHtml(`${point.date}: ${point.value}`)}</label>`).join('');
   const historyHtml = historyRowsHtml ? `<details class="small"><summary>Value history</summary>${historyRowsHtml}</details>` : '';
-  // A photo of the contents page, taken while adding, shown above the box it is typed into.
-  const contentsPhoto = (edition.images || []).find(image => image.kind === 'contents');
-  const contentsPhotoHtml = contentsPhoto ? `<img class="contents-photo" data-image="${attr(contentsPhoto.id)}/detail" alt="The contents page">` : '';
-  const photoHintHtml = contentsPhoto && !isAnthology ? '<p class="page-meta">A photo of the contents page is kept with this book. Tick "This book holds several works" to type them beside it.</p>' : '';
+  // Photos of the contents pages, taken while adding, shown above the box they are typed into.
+  const contentsPhotos = (edition.images || []).filter(image => image.kind === 'contents');
+  const contentsPhotoHtml = contentsPhotos.map(photo => `<img class="contents-photo" data-image="${attr(photo.id)}/detail" alt="A contents page">`).join('');
+  const photoHintHtml = contentsPhotos.length && !isAnthology ? '<p class="page-meta">Photos of the contents pages are kept with this book. Tick "This book holds several works" to type them beside it.</p>' : '';
   // Works a library catalog lists inside a book entered as one work (found by the laptop, DATA_FORMAT.md "foundContents").
   const found = (edition.foundContents || []).map(piece => (piece.author ? `${piece.author} — ${piece.title}` : piece.title));
   const foundHtml = entry && found.length ? `<div class="found-contents"><p>${escapeHtml(`A library catalog lists ${found.length} works inside this book: ${found.slice(0, 4).join('; ')}${found.length > 4 ? '; …' : ''}`)}</p>
@@ -102,7 +103,7 @@ export function render(container, state, actions) {
   const pieceCount = (edition.contents || []).filter(item => item.piece).length;
   const piecesHtml = pieceCount ? `<p class="page-meta">${pieceCount === 1 ? 'One shorter piece' : `${pieceCount} shorter pieces`} from the set's list ${pieceCount === 1 ? 'is' : 'are'} also in this book and kept as ${pieceCount === 1 ? 'it is' : 'they are'}.</p>` : '';
   // The boxes as first drawn, for the search links' first questions; a click asks about what is typed then.
-  const form0 = { title: edition.title, authors: authorsText, translators: edition.contributors.filter(person => person.role === 'translator').map(person => person.name) };
+  const form0 = { title: edition.title, subtitle: edition.subtitle || '', set: edition.set || '', volume: edition.volume || '', authors: authorsText, translators: edition.contributors.filter(person => person.role === 'translator').map(person => person.name) };
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   // A volume of a set with its own value (core/value.js): say how this copy's value is counted.
   const set = entry && entry.set && entry.set.value !== null ? entry.set : null;
@@ -118,7 +119,7 @@ export function render(container, state, actions) {
         <label class="check"><input type="checkbox" name="several"${isAnthology ? ' checked' : ''}> This book holds several works (an anthology)</label>${photoHintHtml}
         <div data-single${isAnthology ? ' hidden' : ''}>${fieldHtml('Authors (separate with ;)', 'authors', authorsText, { list: 'authors', wide: true })}</div>
         <label class="field" data-several${isAnthology ? '' : ' hidden'}>Contents: one work per line, as "Author — Title — date" (author and date optional). A table of contents can be pasted here.
-          ${contentsPhotoHtml}<textarea name="contents" rows="8">${escapeHtml(contentsText)}</textarea></label>
+          ${contentsPhotoHtml}<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(contentsText)}</textarea></label>
         ${worksLinkHtml}${piecesHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
@@ -151,6 +152,7 @@ export function render(container, state, actions) {
     </form>`;
 
   const form = container.querySelector('form');
+  wireTidyPaste(form);
   fillImages(container, actions.imageUrl);
   let foundAccepted = false;
   form.querySelectorAll('[name="datingText"]').forEach(showPreview);
@@ -243,11 +245,11 @@ function typedNames(form) {
   const data = new FormData(form);
   const roles = data.getAll('contributorRole');
   const translators = data.getAll('contributorName').filter((name, i) => roles[i] === 'translator').map(String);
-  return { title: String(data.get('title') || ''), authors: String(data.get('authors') || ''), translators };
+  return { title: String(data.get('title') || ''), subtitle: String(data.get('subtitle') || ''), set: String(data.get('set') || ''), volume: String(data.get('volume') || ''), authors: String(data.get('authors') || ''), translators };
 }
 
-const workQuestion = typed => workDateQuestion(typed.title, typed.authors.split(';'));
-const translationQuestion = typed => translationDateQuestion(typed.title, typed.translators);
+const workQuestion = typed => workDateQuestion(searchTitle(typed), typed.authors.split(';'));
+const translationQuestion = typed => translationDateQuestion(searchTitle(typed), typed.translators);
 
 // The form's values in the shape core/entry.js expects.
 function readForm(form) {

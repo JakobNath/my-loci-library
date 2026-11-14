@@ -16,8 +16,9 @@ const KIND_NAMES = { cover: 'Cover', spine: 'Spine' };
 export function picturesHtml(entry) {
   const kinds = entry.isDigital ? ['cover'] : ['cover', 'spine'];
   const rowsHtml = kinds.map(kind => {
-    const image = entry.edition.images.find(other => other.kind === kind);
-    const state = !image ? 'none yet' : image.source === 'photo' ? 'our photo' : image.waiting ? 'waiting for the laptop' : 'from online';
+    // A Google Books cover saved before 1.16.0 only as an address was never fetched: it counts as none.
+    const image = entry.edition.images.find(other => other.kind === kind && !other.waiting);
+    const state = !image ? 'none yet' : image.source === 'photo' ? 'our photo' : 'from online';
     const removeHtml = image ? `<button type="button" class="btn" data-action="remove-photo" data-value="${kind}">Remove</button>` : '';
     return `<div class="picture-row"><span>${KIND_NAMES[kind]} <span class="muted">(${escapeHtml(state)})</span></span>`
       + `<span class="picture-buttons"><label class="btn">${image && image.source === 'photo' ? 'Retake' : 'Take'}${photoInputHtml(kind, true)}</label>`

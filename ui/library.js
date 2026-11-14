@@ -61,7 +61,7 @@ function filtersHtml(entries, view, savedViews) {
       <label class="field"><span>Tag</span><select data-filter="tag">${tagHtml}</select></label>
       <label class="field"><span>Status</span><select data-filter="status">${statusHtml}</select></label>
       <label class="check"><input type="checkbox" data-filter="needsDate"${view.needsDate ? ' checked' : ''}> Needs an original date</label>
-      <label class="check"><input type="checkbox" data-filter="needsDetails"${view.needsDetails ? ' checked' : ''}> Needs details (publisher, year, pages, binding)</label>
+      <label class="check"><input type="checkbox" data-filter="needsDetails"${view.needsDetails ? ' checked' : ''}> Needs details (publisher, year, pages, binding, contents)</label>
       <div class="filter-actions"><button class="btn" data-action="clearFilters">Clear filters</button>${saveHtml}</div>
     </div>`;
 }

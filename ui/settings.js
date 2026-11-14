@@ -16,7 +16,7 @@ import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
 import { guideHtml } from './field-help.js';
 
-export const APP_VERSION = '1.15.0';
+export const APP_VERSION = '1.16.0';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -153,7 +153,7 @@ function mainHtml(state) {
   const trashCount = trashedItems(state.records).length;
   // Books the laptop's nightly check has not completed yet, opened as a Library filter.
   const needingDetails = state.library.entries.filter(entry => entry.owned && missingDetails(entry).length).length;
-  const needsDetailsText = needingDetails ? `${needingDetails} ${needingDetails === 1 ? 'book' : 'books'} still missing publisher, year, pages or binding` : 'every book has them';
+  const needsDetailsText = needingDetails ? `${needingDetails} ${needingDetails === 1 ? 'book' : 'books'} still missing publisher, year, pages, binding or contents` : 'every book has them';
   const needsDetailsHtml = `<a class="menu-row" href="#/" data-needs-details><span>Needs details</span><span class="page-meta">${escapeHtml(needsDetailsText)}</span></a>`;
   const menuHtml = menuRowHtml('#/settings/guide', 'How the catalog is organized', 'works and editions, series and sets, categories and tags')
     + needsDetailsHtml

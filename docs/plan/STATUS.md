@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 13 November 2026 (app version 1.15.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.16.0).
 
 ## Where things stand
 
@@ -41,9 +41,13 @@ The same day the tools gained the rest of the audit's safety fixes: a book a sou
 
 Phase 15 step 10 was built in the tools the same day: Zotero gets books only, never book sections, and every section sent by an earlier version is tagged "Loci: removed" (never deleted, never made again). A live trial of the real catalog into "Loci test" made no sections, tagged the 4 old ones, and changed only items the companion had made itself. That trial showed that a run on 12 November 2026 had already sent 25 items (21 books, 4 sections) into a Zotero collection named "My Loci Library"; all 25 were made by the companion that day, and none of Jakob's own items was linked or changed. They now sit in both "My Loci Library" and "Loci test" (with 3 more books in "Loci test" only), and `integrations/zotero-links.json` in the data repository points at them.
 
-All tests pass: 229 in the app (and 212 on the self-test page), 268 in the tools.
+- **Version 1.16.0** (14 November 2026): fixes from his wife's first real book (Luther's Works 12, a later printing) and from a live lookup run of 36 real ISBNs (the workspace's `handoffs/2026-11-14-first-real-book.md`). A volume of a known set is found by the set's name and the volume number in its subtitle, not only by ISBN; the web searches name the volume ("Selected Psalms I (Luther's Works, volume 12)") and at most two translators; the translator box says to separate names with ";" and shows how it reads them; translators, editors and publishers that records list as authors are put in their place, and Greek-script names get their Latin form (`core/people.js`); an editor's lifetime is no longer offered as a work's date; Google Books covers are no longer kept "waiting for the laptop" (nothing ever fetched them): with no usable Open Library cover, a photo is asked for; contents pages take several photos, the step explains copying printed text with the phone (Live Text, Google Lens), pasted contents are tidied, and a search link asks for the table of contents; the laptop page "Contents to enter" is gone, and such books wait under "Needs details" ("Still missing: contents"); Wikidata takes the clear work when two items share a title (Pride and Prejudice was missed).
+
+All tests pass: 240 in the app (and 223 on the self-test page), 279 in the tools.
 
 ## Waiting on Jakob
+
+**The testing day** (14 November 2026): add many real books, of every kind, in a fresh chat, and report each problem as it comes (screenshots welcome). His wife first moves her Luther's Works 12 to the trash and adds it again, to try 1.16.0. Things already known to watch for: Open Library naming a translator as the author with no trace (Ovid's Metamorphoses "by A. D. Melville": use "Fix details"); Wikidata missing Dostoevsky and some Luther titles; which steps of adding are skipped every time (for the question of shortening adding).
 
 Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
@@ -96,6 +100,8 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 ## Next tasks for a working session
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
+
+**First, from 14 November 2026:** the testing day. Fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check (`handoffs/2026-11-14-first-real-book.md` says how) after any change to lookups.
 
 **On hold from 13 November 2026** (Jakob): he is testing the app for a while, and will then decide how needful the known-set lists (Loeb first) and the full Logos import are. Until then a working session fixes what his testing turns up, and otherwise takes items 4 and 5 below or the audit's open items (the workspace's `handoffs/2026-11-13-audit.md`). Both may be taken up again; nothing written for them is removed.
 

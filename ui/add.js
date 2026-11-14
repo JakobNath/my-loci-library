@@ -14,6 +14,7 @@ import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, 
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound, withLibraryContents } from '../core/book-data.js';
+import { tidyPeople, translatorNames } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
@@ -24,14 +25,15 @@ import { lookUpGoogleBooks } from '../edges/lookup-googlebooks.js';
 import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { lookUpWorks } from '../edges/lookup-wikidata.js';
 import { photoButtonsHtml } from './photo-buttons.js';
+import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, translationDateQuestion } from '../core/date-search.js';
+import { workDateQuestion, translationDateQuestion, searchTitle } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
-import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator } from './add-questions.js';
+import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, copyStepHtml, readQuestions, contributorsWithTranslator, translatorsReadAs } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
-import { findKnownVolume, contentsLinesOf } from '../core/known-sets.js';
+import { findKnownVolume, contentsLinesOf, volumeFromText } from '../core/known-sets.js';
 import { loadKnownSets } from './known-sets.js';
 import { readBindingText } from '../core/bindings.js';
 import { setFromForm, editionsOfSet, linkEditionsToSet } from '../core/sets.js';
@@ -83,6 +85,7 @@ export function render(container, state, actions) {
     <div id="step" hidden></div>`;
   const scanArea = container.querySelector('#scan');
   const stepArea = container.querySelector('#step');
+  wireTidyPaste(stepArea);
   const find = container.querySelector('#find');
   showShelf();
   if (usb) find.focus();
@@ -191,9 +194,11 @@ export function render(container, state, actions) {
       answers.push(await ask(() => lookUpGoogleBooks(isbn, ''), 'Google Books'));
       found = withLibraryContents(mergeFound(answers.map(answer => answer.found)), answers.map(answer => answer.found));
     }
+    // Translators, editors and publishers the records list as authors are put in their place (core/people.js).
+    const known = [...state.library.authorsById.values()].map(author => author.name);
+    found = tidyPeople(found, { search: await workSearch, work: await work, known });
     const sources = answers.filter(answer => answer.found).map(answer => answer.name);
-    const google = answers.find(answer => answer.name === 'Google Books' && answer.found);
-    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problems[0] || '', google ? google.found.cover : null);
+    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problems[0] || '');
   }
 
   function askAboutDuplicate(entry) {
@@ -217,8 +222,7 @@ export function render(container, state, actions) {
 
   // ---------- the steps ----------
 
-  // otherCover: a Google Books cover, used when Open Library's turns out to be missing.
-  function startBook(found, workLookup, problem = '', otherCover = null) {
+  function startBook(found, workLookup, problem = '') {
     const looked = { ...emptyFound(''), ...found };
     // A volume of the set being added takes the set's shared facts, and the
     // previous volume's language, category and tags are offered again.
@@ -236,7 +240,7 @@ export function render(container, state, actions) {
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
       copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
-      photos: {}, cover: { state: 'none' }, otherCover, ...parts, location: (state.batchLocation || []).filter(Boolean),
+      photos: {}, cover: { state: 'none' }, ...parts, location: (state.batchLocation || []).filter(Boolean),
       // Contents a record lists are offered, never for a Bible (cited by chapter and verse).
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
@@ -248,15 +252,15 @@ export function render(container, state, actions) {
     actions.setDraft(`"${full.title || 'The book being added'}" is not saved yet.`);
     // A volume of a known set takes its works from the list. One found by its own ISBN is used at once;
     // an ISBN the whole set shares (Great Books) asks which volume first. While adding a set, the volume step decides.
-    const known = findKnownVolume(knownSets, { isbn: full.isbn, set: full.set, volume: full.volume });
+    // A later printing the list has no ISBN for is found by the set's name and the volume number in its title or subtitle.
+    const known = findKnownVolume(knownSets, { isbn: full.isbn, set: full.set, volume: full.volume, title: full.title, subtitle: full.subtitle });
     book.knownSet = known ? known.set : null;
     book.knownVolume = null;
     if (known && known.volume && !setInfo) useKnownVolume(known.set, known.volume);
     // What the lookup says for a shared ISBN describes some other volume, or another printing: set aside, and the list's set facts used.
-    else if (known && !setInfo) {
+    else if (known && known.sharedIsbn && !setInfo) {
       const { title, subtitle, authors, contents, pages, subjects, contributors, year, publisher, place, editionStatement, series, seriesNumber, identifiers } = emptyFound('');
       Object.assign(book.found, { title, subtitle, authors, contents, pages, subjects, contributors, year, publisher, place, editionStatement, series, seriesNumber, identifiers, cover: null });
-      book.otherCover = null;
     }
     book.works = suggestWorks(book.found.title, book.found.authors, state.library);
     const current = book;
@@ -274,6 +278,8 @@ export function render(container, state, actions) {
     book.knownVolume = volume;
     Object.assign(found, {
       set: set.set, volume: volume.label, title: volume.title || found.title,
+      // A subtitle that only named the volume ("Volume 12 - (Selected Psalms I)") is now said by the set and volume.
+      subtitle: volumeFromText(found.subtitle) ? '' : found.subtitle,
       authors: [...new Set(volume.works.map(work => work.author).filter(Boolean))],
       contents: volume.works.map(work => ({ title: work.title, author: work.author })),
       publisher: found.publisher || set.publisher, place: found.place || set.place, year: found.year || set.year,
@@ -301,11 +307,12 @@ export function render(container, state, actions) {
   }
 
   // A found cover is downloaded and checked now, so the cover step can say
-  // whether there is one; it is saved with the book.
+  // whether there is one; it is saved with the book. Google Books' covers cannot be
+  // read by a web page, and none is kept for later: with no usable Open Library
+  // cover, the cover step asks for a photo (docs/decisions/photos-and-scanning.md).
   function checkCover(current) {
     const cover = current.found.cover;
-    if (!cover) return;
-    if (cover.waiting) { current.cover = { state: 'waiting', url: cover.url, source: cover.source }; return; }
+    if (!cover || cover.waiting) return;
     current.cover = { state: 'checking' };
     (async () => {
       const blob = await downloadOpenLibraryCover(cover.url);
@@ -316,8 +323,6 @@ export function render(container, state, actions) {
       return { state: 'found', source: cover.source, files: await imageFiles(picture) };
     })().catch(() => ({ state: 'none' })).then(result => {
       if (book !== current) return;
-      const other = current.otherCover;
-      if (result.state === 'none' && other) result = { state: 'waiting', url: other.url, source: other.source };
       if (result.files) result.preview = URL.createObjectURL(result.files.thumb);
       current.cover = result;
       if (book.step === 'cover') drawStep();
@@ -391,14 +396,17 @@ export function render(container, state, actions) {
       translation: () => translationStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
-    stepArea.oninput = event => { if (event.target.name === 'dating') showDatingPreview(); };
+    stepArea.oninput = event => {
+      if (event.target.name === 'dating') showDatingPreview();
+      if (event.target.name === 'translator') stepArea.querySelector('[data-translators]').textContent = translatorsReadAs(event.target.value);
+    };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
       // The translator may have just been typed: ask about that name.
       if (event.target.dataset.searchWeb === 'translation') {
         const typed = stepArea.querySelector('[name="translator"]').value;
-        refreshSearchLink(event.target, translationDateQuestion(book.found.title, typed.split(';')));
+        refreshSearchLink(event.target, translationDateQuestion(searchTitle(book.found), translatorNames(typed)));
       }
       const button = event.target.closest('[data-action]');
       if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
@@ -524,16 +532,19 @@ export function render(container, state, actions) {
     }
     const hint = book.contentsOffered
       ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
-      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC"). A table of contents can be pasted and tidied here.';
-    // With no contents known, a photo of the contents page is kept with the book, to be typed
-    // in later beside it, on the laptop's "Contents to enter" page (PLAN.md, "Contents no source knows").
-    const photo = book.photos.contents;
+      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and a date last if you know it ("Plato — Phaedo — c. 360 BC").';
+    // The phone itself can read the printed page: copy its text and paste it, a page at a time (docs/decisions/screens.md).
+    const copyHint = book.contentsOffered ? '' : `<p class="step-hint">${escapeHtml('To copy the printed contents: on an iPhone, point the camera at the page (or open a photo of it), tap the text button, then "Copy All". On Android, use Google Lens, then "Copy text". Paste here once per page; page numbers and dotted lines are taken out.')}</p>`;
+    // With no contents known, photos of the contents pages are kept with the book, to be typed in
+    // later beside them (the Library's filter "Needs details"; PLAN.md, "Contents no source knows").
+    const pages = book.photos.contents || [];
+    const pagesHtml = pages.length ? `<p class="step-hint">${pages.map(page => `<img class="step-cover" src="${attr(page.preview)}" alt="A contents page">`).join(' ')} ${escapeHtml(`${pages.length === 1 ? 'This photo is' : `These ${pages.length} photos are`} kept with the book. Type the works now, or later in Edit book (the Library's filter "Needs details" lists it), and leave the box empty to save the book for now.`)}</p>` : '';
     const photoHtml = book.contentsOffered ? ''
-      : photo ? `<p class="step-hint"><img class="step-cover" src="${attr(photo.preview)}" alt="The contents page"> ${escapeHtml('The photo of the contents page is kept with the book. Type the works now, or later on the laptop ("Contents to enter"), and leave the box empty to save the book for now.')}</p>`
-      : photoButtonsHtml('contents', 'Photograph the contents page', 'Kept with the book, so the works can be typed in later on the laptop');
+      : pagesHtml + photoButtonsHtml('contents', pages.length ? 'Photograph the next page' : 'Photograph the contents page', 'Kept with the book, so the works can be typed in later');
+    const searchHtml = `<p class="search-line">${searchLinkHtml(`Table of contents of ${searchTitle(book.found)}`, 'contents')}</p>`;
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
-      <p class="step-hint">${escapeHtml(hint)}</p>
-      <form class="form"><label class="field">Contents<textarea name="contents" rows="8">${escapeHtml(lines)}</textarea></label>${datesHtml}
+      <p class="step-hint">${escapeHtml(hint)}</p>${copyHint}
+      <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${datesHtml}
         <div class="choices">${photoHtml}${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
   }
@@ -550,6 +561,11 @@ export function render(container, state, actions) {
       <div class="choices">${optionsHtml}${choiceHtml('work', 'No, a different work', '', '')}</div>${backHtml()}`;
   }
 
+  // Open Library's suggestions, checked against the book's own authors and whether it is translated.
+  function dateSuggestions() {
+    return suggestOriginalDates(book.work, book.found.year, { authors: book.found.authors, translated: translatorNames(book.translator).length > 0 });
+  }
+
   // Wikidata's date for this one work, offered first when it knows one.
   function wikidataSuggestion() {
     const work = book.wikidata.get(book.found.title);
@@ -559,7 +575,7 @@ export function render(container, state, actions) {
   // 3. When was it written?
   function dateStep() {
     const year = book.found.year ? `the ${book.found.year} printing` : 'this printing';
-    const suggestions = [...wikidataSuggestion(), ...(book.work ? suggestOriginalDates(book.work, book.found.year) : [])];
+    const suggestions = [...wikidataSuggestion(), ...(book.work ? dateSuggestions() : [])];
     const suggestionsHtml = suggestions.map(hint => choiceHtml('date', hint.text, hint.label, hint.text)).join('');
     const waitingHtml = book.work ? '' : '<p class="step-hint">Looking for the first publication…</p>';
     // Wikidata refused or did not answer: say so, rather than leave its suggestion quietly missing.
@@ -571,7 +587,7 @@ export function render(container, state, actions) {
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}${problemHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
-        <p class="search-line">${searchLinkHtml(workDateQuestion(book.found.title, book.found.authors))}</p>
+        <p class="search-line">${searchLinkHtml(workDateQuestion(searchTitle(book.found), book.found.authors))}</p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know yet</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
@@ -613,10 +629,6 @@ export function render(container, state, actions) {
     if (cover.state === 'found') {
       return `<h2 class="step-title">Use this cover?</h2><p class="step-hint">Found on Open Library. Check it matches the book in your hand.</p><div class="found"><img class="step-cover is-large" src="${attr(cover.preview)}" alt=""></div>
         <div class="choices">${choiceHtml('next', 'Yes, use it')}${photoButtonHtml('No, take my own photo')}</div>${backHtml()}`;
-    }
-    if (cover.state === 'waiting') {
-      return `<h2 class="step-title">Cover</h2><p class="step-hint">Google Books has a cover, which the laptop will fetch later.</p>
-        <div class="choices">${choiceHtml('next', 'That is fine')}${photoButtonHtml('Take my own photo now')}</div>${backHtml()}`;
     }
     return `<h2 class="step-title">No cover found online</h2>
       <p class="step-hint">${escapeHtml(cover.tooSmall ? 'The one online is too small to look sharp.' : 'Take a photo of the front, so the book has its own cover.')}</p>
@@ -712,7 +724,7 @@ export function render(container, state, actions) {
     if (action === 'work') { book.workId = value || null; return next(); }
     if (action === 'date') {
       // book.work is still empty while Open Library has not answered.
-      const hint = [...wikidataSuggestion(), ...(book.work ? suggestOriginalDates(book.work, book.found.year) : [])].find(item => item.text === value);
+      const hint = [...wikidataSuggestion(), ...(book.work ? dateSuggestions() : [])].find(item => item.text === value);
       book.dating = value;
       book.datingNote = hint ? `suggested: ${hint.label}` : '';
       return next();
@@ -747,7 +759,8 @@ export function render(container, state, actions) {
       if (box) book.contentsText = box.value;
       const { readPicture, imageFiles } = await import('../edges/photo.js');
       const files = await imageFiles(await readPicture(file), { master: true, kind });
-      book.photos.contents = { ...files, preview: URL.createObjectURL(files.thumb) };
+      // A contents list often runs over several pages: each photo is kept.
+      book.photos.contents = [...(book.photos.contents || []), { ...files, preview: URL.createObjectURL(files.thumb) }];
       drawStep();
       return;
     }
@@ -942,8 +955,7 @@ export function render(container, state, actions) {
     finishBook(`${volumes.length} ${volumes.length === 1 ? 'volume' : 'volumes'} of ${setInfo.title}`, location);
   }
 
-  // The new edition's images (our photos, the checked online cover, or a waiting Google Books
-  // cover), and what the records online gave that the steps do not ask: sizes, catalogue numbers, subjects.
+  // The new edition's images (our photos, or the checked online cover), and what the records online gave that the steps do not ask: sizes, catalogue numbers, subjects.
   function withImages(edition) {
     const images = [];
     book.imageFiles = [];
@@ -954,9 +966,8 @@ export function render(container, state, actions) {
     };
     if (book.photos.cover) add('cover', 'photo', book.photos.cover, true);
     else if (book.cover.state === 'found') add('cover', book.cover.source, book.cover.files, false);
-    else if (book.cover.state === 'waiting') images.push({ id: actions.newId(), kind: 'cover', source: book.cover.source, color: null, ratio: null, master: false, waiting: book.cover.url });
     if (book.photos.spine) add('spine', 'photo', book.photos.spine, true);
-    if (book.photos.contents) add('contents', 'photo', book.photos.contents, true);
+    for (const page of book.photos.contents || []) add('contents', 'photo', page, true);
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
     const measured = book.photos.spine && book.photos.spine.height;
