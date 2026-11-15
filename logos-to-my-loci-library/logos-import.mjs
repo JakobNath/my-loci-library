@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, rmSync
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
-import { readConfig, readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock } from '../shared/data-repo.mjs';
+import { readConfig, readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock, localDate } from '../shared/data-repo.mjs';
 import { readKnownSets } from '../shared/known-sets.mjs';
 import { makeId } from '../core/ids.js';
 import { parseCsv, decodeExport } from './columns.mjs';
@@ -50,7 +50,7 @@ function writeMemory(dataRepo, memory) {
 export function importFile(dataRepo, file, { full = false, allowManyGone = false, now = nowText(), linksFile = LINKS_FILE } = {}) {
   const rows = parseCsv(decodeExport(readFileSync(file)));
   const memory = readMemory(dataRepo);
-  const result = importRows(rows, readRecords(dataRepo), memory, { now, today: now.slice(0, 10), newId: () => makeId(randomBytes(12)), full, allowManyGone, sets: readKnownSets() });
+  const result = importRows(rows, readRecords(dataRepo), memory, { now, today: localDate(now), newId: () => makeId(randomBytes(12)), full, allowManyGone, sets: readKnownSets() });
   for (const record of result.changed) writeRecord(dataRepo, record);
   writeMemory(dataRepo, memory);
   if (result.suggestions.length) {
@@ -82,7 +82,7 @@ export function confirmLinks(dataRepo, { now = nowText(), linksFile = LINKS_FILE
     const [, editionId, workId] = line.split('|').map(part => part.trim());
     return { editionId, workId };
   });
-  const changed = linkEditions(links, readRecords(dataRepo), { now, today: now.slice(0, 10) });
+  const changed = linkEditions(links, readRecords(dataRepo), { now, today: localDate(now) });
   for (const record of changed) writeRecord(dataRepo, record);
   // Lines dealt with (yes or no) leave the file; only the heading stays if nothing is left.
   writeFileSync(linksFile, lines.filter(line => line.startsWith('#') || (line.includes('|') && !/^(yes|no)\s*\|/i.test(line))).join('\n') + '\n');

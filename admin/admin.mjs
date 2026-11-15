@@ -14,7 +14,7 @@ import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { CHAPTERS, chapterNumber } from './chapters.mjs';
 import { markdownToHtml, sectionOf, escapeHtml } from './markdown.mjs';
-import { readConfig, FOLDERS } from '../shared/data-repo.mjs';
+import { readConfig, localDate, FOLDERS } from '../shared/data-repo.mjs';
 import { APP_URL } from '../my-loci-library-to-zotero/zotero-items.mjs';
 import { shelvesFor, suggest, record } from '../shelf-planner/planner.mjs';
 import { ORDERS } from '../shelf-planner/plan.mjs';
@@ -228,7 +228,7 @@ export function createAdminServer({ port = PORT, appRepo = APP_REPO, toolsFolder
         if (!dataRepo) return send(400, 'text/plain', 'No catalog: config.json names none.');
         const place = (url.searchParams.get('place') || '').split('›').map(part => part.trim()).filter(Boolean);
         const order = url.searchParams.get('order') === 'date' ? 'date' : 'shelf';
-        return send(200, 'text/html; charset=utf-8', shelfListsHtml(shelfLists(readRecords(dataRepo), place, order), { place, order, today: new Date().toISOString().slice(0, 10) }));
+        return send(200, 'text/html; charset=utf-8', shelfListsHtml(shelfLists(readRecords(dataRepo), place, order), { place, order, today: localDate(new Date().toISOString()) }));
       }
       if (request.method === 'GET' && ['/admin.css', '/admin.js', '/print.css'].includes(url.pathname)) {
         return send(200, TYPES[url.pathname.endsWith('.css') ? '.css' : '.js'], readFileSync(join(here, 'page', url.pathname.slice(1))));

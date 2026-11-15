@@ -7,9 +7,16 @@ import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { newRecord, FORMAT_VERSION } from '../../core/records.js';
-import { readRecords, writeRecord, FOLDERS } from '../data-repo.mjs';
+import { readRecords, writeRecord, localDate, FOLDERS } from '../data-repo.mjs';
 
 const NOW = '2026-11-12T10:00:00Z';
+
+test('a date written into a record is the day on this computer\'s calendar, not in UTC', () => {
+  // 9 pm on 14 November where the computer is; in Minnesota that moment is already the 15th in UTC.
+  const evening = new Date(2026, 10, 14, 21, 0, 0).toISOString();
+  assert.equal(localDate(evening), '2026-11-14');
+  assert.equal(localDate(new Date(2026, 0, 1, 0, 30, 0).toISOString()), '2026-01-01', 'just after midnight');
+});
 
 test('a record newer than the tools stops every tool that writes, but not the backup', () => {
   const folder = mkdtempSync(join(tmpdir(), 'loci-data-repo-'));

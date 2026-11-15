@@ -12,7 +12,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readConfig, readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock, FOLDERS } from '../shared/data-repo.mjs';
+import { readConfig, readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock, localDate, FOLDERS } from '../shared/data-repo.mjs';
 import { editionsToAsk, fillBook, askKey, sourcesOfWritten, isCorrectedNumber, clearWritten, RECHECK_DAYS, RETRY_DAYS } from './enrich.mjs';
 import { checkWikidataIds } from './wikidata-ids.mjs';
 import { askSources } from './sources.mjs';
@@ -70,7 +70,7 @@ export async function runEnrich(dataRepo, { useGit = true, commit = true, limit 
   const records = readRecords(dataRepo);
   const byId = new Map(records.map(record => [record.id, record]));
   const memory = readMemory(dataRepo);
-  const today = now.slice(0, 10);
+  const today = localDate(now);
   const due = editionsToAsk(records.filter(record => record.type === 'edition'), memory, today);
   const asking = due.slice(0, limit);
   const filledLines = [];

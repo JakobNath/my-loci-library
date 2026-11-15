@@ -9,6 +9,18 @@ import { recordToFileText, migrate, FORMAT_VERSION } from '../core/records.js';
 
 const toolsFolder = join(dirname(fileURLToPath(import.meta.url)), '..');
 
+/**
+ * The date of a moment on this computer's own calendar, "YYYY-MM-DD". Moments
+ * are kept in UTC, but a date written into a record (a copy's "added", the day
+ * it went to the trash) is the day where we are, as the phone app writes it:
+ * in UTC an evening in Minnesota is already the next day.
+ * @param {string} moment "YYYY-MM-DDTHH:MM:SSZ"
+ */
+export function localDate(moment) {
+  const date = new Date(moment);
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
 // The folder of each record type in a data repository (DATA_FORMAT.md, "Files").
 export const FOLDERS = { work: 'works', edition: 'editions', copy: 'copies', author: 'authors', wishlist: 'wishlist', set: 'sets' };
 
