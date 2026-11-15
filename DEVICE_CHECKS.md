@@ -232,7 +232,7 @@ Checked in the browser preview at phone width on 15 November 2026 (the Reader an
 
 ## Original dates with direction, testing day batch 6, stage B (1.25.0, 15 November 2026)
 
-The browser preview could not be opened during the session (it needs approval in the pane), so the screens were drawn and read in Node instead; these are for the phones themselves.
+Checked in the browser preview at phone width on 15 November 2026 (Plutarch by ISBN through the cards, Edit book and "Works in this book"; not saved), so these are for the phones themselves.
 
 - [ ] Phone: on the date step of any single book, the line reads "The first time it appeared: first published, or written if it was not printed in the author's lifetime." Tap "Which date?": the list of eight kinds of work opens below it. Tap it again: it closes.
 - [ ] Phone, same step: under the date box are six chips (Book or essay, Letter, Speech or sermon, Play, Poem, Ancient or medieval), none lit. Tap "Play": it lights, its rule shows, and "Search the web" asks "When was the play … first performed?". Tap it again: it goes out. A date typed in the box stays while tapping.
