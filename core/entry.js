@@ -3,7 +3,7 @@
 // only the fields that changed are stamped, so merging stays precise.
 
 import { newRecord, withField } from './records.js';
-import { parseDating, isRevised, opinionsOf, revisedDating, workingDating } from './dating.js';
+import { parseDating, isRevised, opinionsOf, revisedDating, workingDating, revisionProblem, NEEDS_FIRST_DATE } from './dating.js';
 import { parseContentsLines, typedNames } from './contents.js';
 import { normalizeForSearch } from './search.js';
 import { trashRecord } from './trash.js';
@@ -137,8 +137,6 @@ export function datingsFromRows(rows) {
   return { datings, problems };
 }
 
-const NEEDS_FIRST_DATE = 'A final edition\'s year needs the first edition\'s date too (Grimm\'s tales: 1812–15, revised 1857).';
-
 /**
  * A work's datings with its final revised edition as typed in the "Revised
  * later?" box: added, changed, or (an empty box) taken away. The other
@@ -157,7 +155,7 @@ export function withRevision(datings, text, old) {
   if (!others.length) return { datings: others, problems: [NEEDS_FIRST_DATE] };
   if (old && old.text === typed) return { datings: [...others, old], problems: [] };
   const read = parseDating(typed);
-  if (!read.ok) return { datings: others, problems: [`Final edition: ${read.problem}`] };
+  if (!read.ok) return { datings: others, problems: [revisionProblem(others[0].text, typed)] };
   return { datings: [...others, { ...read.dating, kind: 'revised', note: '', working: false }], problems: [] };
 }
 

@@ -21,7 +21,7 @@ import { mergeFound, withLibraryContents, withLibraryAuthors, isYearTooEarly, ca
 import { tidyPeople, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
-import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
+import { parseDating, formatYearRange, workingDating, revisionProblem } from '../core/dating.js';
 import { estimateSize } from '../core/sizes.js';
 import { imageEntry } from '../core/records.js';
 import { lookUpOpenLibrary, lookUpWork, searchWork, searchOpenLibrary, downloadOpenLibraryCover } from '../edges/lookup-openlibrary.js';
@@ -34,7 +34,7 @@ import { parseContentsLines, typedNames } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
 import { workDateQuestion, workDetailsQuestion, contentsQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, datingKindOf } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, datingKindOf, revisedHtml, useVersionChip } from './date-help.js';
 import { mustMissing, checkRows, cardAnswered } from '../core/add-check.js';
 import { cardsFromLines, contentsFromCards, workDetailsFromCards, fillUndatedCards, worksStepHtml, readCards, cardAction, redrawCard, showCount, showCardPreview } from './add-works.js';
 import { checkStepHtml, nudgeHtml } from './add-check.js';
@@ -261,6 +261,8 @@ export function render(container, state, actions) {
       found: full,
       problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
       datingKind: '', // the kind of work chosen beside the date box, if any (ui/date-help.js)
+      revised: '', version: '', // a revised work's final edition, and which text this book prints (format 7)
+      variousTranslators: false, // "Various translators" chosen on the translation step
       allDate: '', // "All written about the same time?" above a collection's cards
       // What only a person knows, asked by the steps in ui/add-questions.js.
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
@@ -377,7 +379,7 @@ export function render(container, state, actions) {
 
   // A translation: a translator is named, or the work (for a collection, any of its works) was first written in another language.
   function isTranslated() {
-    if (book.hasTranslator) return true;
+    if (book.hasTranslator || book.variousTranslators) return true;
     if (book.contents !== null && book.cards) return book.cards.some(card => card.language && !isEnglish(card.language));
     const language = originalLanguage();
     return Boolean(language && !isEnglish(language));
@@ -519,6 +521,7 @@ export function render(container, state, actions) {
       if (search) { refreshCardSearch(search); return; }
       const button = event.target.closest('[data-action]');
       if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
+      else if (button && button.dataset.action === 'version-chip') useVersionChip(button);
       else if (button && button.dataset.action.startsWith('card-')) {
         readFields();
         const index = Number(button.closest('[data-card]').dataset.card);
@@ -805,6 +808,7 @@ export function render(container, state, actions) {
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
         ${kindChipsHtml(book.datingKind)}
+        ${revisedHtml({ first: book.dating, revised: book.revised, version: book.version })}
         <p class="search-line">${searchLinkHtml(workDateQuestion(searchTitle(book.found), book.found.authors, book.datingKind))}</p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
@@ -909,7 +913,11 @@ export function render(container, state, actions) {
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
     const ticks = [...stepArea.querySelectorAll('[name="authorEdited"]')];
     if (book.step === 'contents' && ticks.length) moveAuthorsToEditors(ticks.filter(tick => tick.checked).map(tick => tick.value));
-    if (book.step === 'date') book.dating = (value('dating') || '').trim();
+    if (book.step === 'date') {
+      book.dating = (value('dating') || '').trim();
+      book.revised = (value('revised') || '').trim();
+      book.version = (value('version') || '').trim();
+    }
     if (book.step === 'spine') book.heightCm = (value('heightCm') || '').trim();
     if (book.step === 'works') {
       book.allDate = (value('allDate') || '').trim();
@@ -939,6 +947,9 @@ export function render(container, state, actions) {
         if (book.editionProblems.length) return drawStep();
       }
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
+      // A final edition that cannot be read, or has no first date, keeps the step open with its problem shown.
+      if (book.step === 'date' && revisionProblem(book.dating, book.revised)) return drawStep();
+      if (book.step === 'works' && book.cards.some(card => revisionProblem(card.date, card.revised))) return drawStep();
       if (book.step === 'contents') {
         book.contents = book.contentsText.trim() || null;
         // Each work gets its card, keeping what was already answered on it.
@@ -1008,13 +1019,19 @@ export function render(container, state, actions) {
       book.datingNote = hint ? `suggested: ${hint.label}` : '';
       return next();
     }
-    if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; book.unknown.add('dating'); return next(); }
+    if (action === 'unknown') { Object.assign(book, { dating: '', dateUnknown: true, revised: '', version: '' }); book.unknown.add('dating'); return next(); }
     if (action === 'add-publisher') { book.publisherRows = [...book.publisherRows, { publisher: '', place: '' }]; return drawStep(); }
     if (action === 'same-printing') { book.found.firstPrinted = book.found.year; return drawStep(); }
     if (action === 'add-isbn') { book.otherIsbnsText = [book.otherIsbnsText, value].filter(Boolean).join('; '); return drawStep(); }
     if (action === 'original-title') { book.originalTitle = book.work.workTitle; return drawStep(); }
     if (action === 'loeb-title') { Object.assign(book.found, { title: loebStyleTitle(book.found), subtitle: '' }); book.loebTitle = true; return drawStep(); }
     if (action === 'book-languages') { book.bookLanguages = value; return drawStep(); }
+    // "Various translators": no one is named for the whole book; it answers the translator, whose box is emptied.
+    if (action === 'various-translators') {
+      book.variousTranslators = !book.variousTranslators;
+      if (book.variousTranslators) book.translator = '';
+      return drawStep();
+    }
     // English needs no original title, so tapping it goes straight on.
     if (action === 'language') { book.language = value; return isEnglish(value) ? next() : drawStep(); }
     if (action === 'category') { book.category = book.category === value ? '' : value; return drawStep(); }
@@ -1091,10 +1108,12 @@ export function render(container, state, actions) {
     });
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),
+      variousTranslators: book.variousTranslators,
       publisher: found.publisher, place: found.place, year: found.year, firstPrinted: found.firstPrinted || '', editionStatement: found.editionStatement,
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, otherIsbns: book.otherIsbnsText, pages: found.pages, languages, medium: 'physical', logosId: '',
       contents: collection ? contentsFromCards(book.cards) : book.contents, workId: book.contents === null ? book.workId : null,
+      version: book.contents === null ? book.version : undefined,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
       workDetails: collection ? workDetailsFromCards(book.cards) : null,
@@ -1103,6 +1122,7 @@ export function render(container, state, actions) {
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
         datings: [{ text: book.dating, note: book.datingNote, kind: datingKindOf(book.datingKind) || null, working: true }],
+        revised: book.revised,
       },
       copy: {
         binding: book.binding, material: book.material, extras: book.extras, location: book.location,

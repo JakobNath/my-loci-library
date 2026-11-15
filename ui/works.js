@@ -7,11 +7,12 @@
 // Building the records is core's job (worksFromRows in core/entry.js).
 
 import { escapeHtml } from '../core/html.js';
-import { parseDating, formatYearRange } from '../core/dating.js';
+import { parseDating, formatYearRange, opinionsOf, revisedDating, workingDating } from '../core/dating.js';
 import { worksFromRows, withEntryDetails } from '../core/entry.js';
+import { toggleHelp } from './field-help.js';
 import { iconHtml } from './icons.js';
 import { workDateQuestion } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind, revisedHtml, useVersionChip } from './date-help.js';
 
 const attr = value => escapeHtml(value ?? '');
 const fieldHtml = (label, name, value, list = '') => `<label class="field">${escapeHtml(label)}<input name="${name}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"></label>`;
@@ -29,13 +30,17 @@ function datalistsHtml(library) {
   return list('workLanguages', languages) + list('workCategories', categories);
 }
 
-function rowHtml(work, i, authorNames, translator) {
-  const disputed = work.datings.length > 1;
-  const dating = work.datings.find(item => item.working) || work.datings[0];
+function rowHtml(work, i, authorNames, { translator, version }) {
+  // A final revised edition is no second opinion: a work with one dating and a revision is not disputed.
+  const opinions = opinionsOf(work);
+  const disputed = opinions.length > 1;
+  const dating = workingDating(work);
+  const revised = revisedDating(work);
   const dateHtml = disputed
-    ? `<p class="preview">${escapeHtml(`${work.datings.length} datings (working: ${dating.text}); changed in the entry form of a book holding only this work.`)}</p><input type="hidden" name="dating" value="">`
+    ? `<p class="preview">${escapeHtml(`${opinions.length} datings (working: ${dating.text}); changed in the entry form of a book holding only this work.`)}</p><input type="hidden" name="dating" value="">`
     : `<label class="field">Original date<input name="dating" value="${attr(dating ? dating.text : '')}" placeholder="c. 397, 4th c. BC" autocomplete="off"><span class="preview" data-preview></span></label>`
-      + kindChipsHtml(kindForDating(dating && dating.kind));
+      + kindChipsHtml(kindForDating(dating && dating.kind))
+      + revisedHtml({ first: dating ? dating.text : '', revised: revised ? revised.text : '', version });
   const searchHtml = `<p class="search-line">${searchLinkHtml(workDateQuestion(work.title, authorNames))}</p>`;
   return `<fieldset data-row="${attr(work.id)}"><legend>${escapeHtml(`${i + 1}. ${work.title}`)}</legend>
       ${fieldHtml('Title', 'title', work.title)}
@@ -58,8 +63,8 @@ export function render(container, state, actions) {
   // Each work's own authors, or the book's when it names none.
   const namesOf = work => work.authors.map(id => (state.library.authorsById.get(id) || {}).name).filter(Boolean);
   const authorsOf = work => (namesOf(work).length ? namesOf(work) : entry.authors.map(author => author.name));
-  const translatorOf = work => (entry.edition.contents.find(item => item.work === work.id) || {}).translator || '';
-  const rowsHtml = works.map((work, i) => rowHtml(work, i, authorsOf(work), translatorOf(work))).join('');
+  const entryOf = work => entry.edition.contents.find(item => item.work === work.id) || {};
+  const rowsHtml = works.map((work, i) => rowHtml(work, i, authorsOf(work), { translator: entryOf(work).translator || '', version: entryOf(work).version || '' })).join('');
   container.innerHTML = `<a class="back" href="#/book/${escapeHtml(entry.id)}">${iconHtml('back')} Back to the book</a>
     <div class="page-head"><h1 class="page-title">Works in this book</h1>
       <p class="page-meta">${escapeHtml(`${entry.edition.title}: ${works.length} works. Fill in what you know; everything can wait. Each work is shared by every book that holds it.`)}</p>${dateRuleHtml()}</div>
@@ -80,7 +85,9 @@ export function render(container, state, actions) {
   container.oninput = event => { if (event.target.name === 'dating') showPreview(event.target); };
   // The search asks about the title as typed now.
   container.onclick = event => {
+    if (event.target.dataset.help) { toggleHelp(container, event.target); return; }
     if (event.target.dataset.action === 'date-kind') { toggleKind(event.target); return; }
+    if (event.target.dataset.action === 'version-chip') { useVersionChip(event.target); return; }
     if (!event.target.dataset.searchWeb) return;
     const row = event.target.closest('[data-row]');
     const work = works.find(item => item.id === row.dataset.row);
@@ -90,15 +97,18 @@ export function render(container, state, actions) {
   container.onsubmit = async event => {
     event.preventDefault();
     const value = (scope, name) => (scope.querySelector(`[name="${name}"]`) || { value: '' }).value;
+    // A disputed work's row has no "Revised later?" box, so its revision stays as it is (undefined).
+    const boxValue = (scope, name) => { const box = scope.querySelector(`[name="${name}"]`); return box ? box.value : undefined; };
     const rows = [...form.querySelectorAll('[data-row]')].map(row => ({
       id: row.dataset.row, title: value(row, 'title'), originalTitle: value(row, 'originalTitle'), originalLanguage: value(row, 'originalLanguage'),
-      dating: value(row, 'dating'), kind: chosenDatingKind(row.querySelector('.date-kinds')), category: value(row, 'category'), tags: splitTags(value(row, 'tags')),
+      dating: value(row, 'dating'), kind: chosenDatingKind(row.querySelector('.date-kinds')), revised: boxValue(row, 'revised'),
+      category: value(row, 'category'), tags: splitTags(value(row, 'tags')),
     }));
     const same = { originalLanguage: value(form, 'sameLanguage'), category: value(form, 'sameCategory'), tags: splitTags(value(form, 'sameTags')) };
     const result = worksFromRows(rows, same, state.library.worksById, actions.now());
-    // Translators are kept on the book's contents, so the edition changes with them.
-    const translators = [...form.querySelectorAll('[data-row]')].map(row => ({ id: row.dataset.row, translator: value(row, 'translator') }));
-    const edition = withEntryDetails(entry.edition, translators, actions.now());
+    // Translators and the text each work is printed in are kept on the book's contents, so the edition changes with them.
+    const details = [...form.querySelectorAll('[data-row]')].map(row => ({ id: row.dataset.row, translator: value(row, 'translator'), version: boxValue(row, 'version') }));
+    const edition = withEntryDetails(entry.edition, details, actions.now());
     if (edition !== entry.edition && !result.problems.length) result.records.push(edition);
     const problems = form.querySelector('.problems');
     if (result.problems.length) {
@@ -109,7 +119,7 @@ export function render(container, state, actions) {
     }
     if (!result.records.length || await actions.saveRecords(result.records)) {
       const saved = result.records.filter(record => record.type === 'work').length;
-      const note = [saved ? `${saved} ${saved === 1 ? 'work' : 'works'}` : '', edition !== entry.edition ? 'the translators' : ''].filter(Boolean).join(' and ');
+      const note = [saved ? `${saved} ${saved === 1 ? 'work' : 'works'}` : '', edition !== entry.edition ? 'the translators and texts' : ''].filter(Boolean).join(' and ');
       actions.showNote(note ? `Saved ${note}` : 'Nothing was changed');
       actions.go(`#/book/${entry.id}`);
     }

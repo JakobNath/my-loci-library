@@ -198,6 +198,23 @@ export function revisedDating(work) {
 }
 
 /**
+ * What is wrong with a final revised edition as typed beside a first date:
+ * a date that cannot be read, or a revision with no first date.
+ * @param {string} first the first date as typed
+ * @param {string} revised the final edition's date as typed
+ * @returns {string} empty when nothing is wrong
+ */
+export function revisionProblem(first, revised) {
+  const typed = String(revised ?? '').trim();
+  if (!typed) return '';
+  const read = parseDating(typed);
+  if (!read.ok) return `Final edition: ${read.problem}`;
+  return String(first ?? '').trim() ? '' : NEEDS_FIRST_DATE;
+}
+
+export const NEEDS_FIRST_DATE = 'A final edition\'s year needs the first edition\'s date too (Grimm\'s tales: 1812–15, revised 1857).';
+
+/**
  * A work's date for display: its working dating, and its revision after it,
  * "1812–15; rev. 1857" (PLAN.md, "Which date is the working date").
  * @returns {string} empty when the work has no dating

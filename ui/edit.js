@@ -5,7 +5,7 @@
 // the form and reads it back.
 
 import { escapeHtml } from '../core/html.js';
-import { parseDating, formatYearRange } from '../core/dating.js';
+import { parseDating, formatYearRange, opinionsOf, revisedDating, workingDating } from '../core/dating.js';
 import { contentsLine } from '../core/contents.js';
 import { recordsFromForm, formFromWish } from '../core/entry.js';
 import { STATUSES, ROLES, withField } from '../core/records.js';
@@ -15,7 +15,7 @@ import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
 import { wireTidyPaste } from './paste-contents.js';
 import { workDateQuestion, searchTitle } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind, revisedHtml, useVersionChip } from './date-help.js';
 import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
 const attr = value => escapeHtml(value ?? '');
@@ -87,8 +87,11 @@ export function render(container, state, actions) {
   // Each line carries the work's own translator in this book, so saving the form keeps it.
   const translatorIn = w => (edition.contents.find(item => item.work === w.id) || {}).translator || null;
   const contentsText = isAnthology ? entry.works.map(w => contentsLine(w, w.authors.map(id => state.library.authorsById.get(id)?.name || ''), translatorIn(w))).join('\n') : '';
-  const datingsHtml = [...work.datings, { text: '', note: '', working: false }].map(datingRowHtml).join('');
-  const workingKind = (work.datings.find(dating => dating.working) || work.datings[0] || {}).kind;
+  // A final revised edition has its own box ("Revised later?"), so the dating rows hold only the opinions.
+  const datingsHtml = [...opinionsOf(work), { text: '', note: '', working: false }].map(datingRowHtml).join('');
+  const workingKind = (workingDating(work) || {}).kind;
+  const version = entry && !isAnthology ? (edition.contents.find(item => item.work === work.id) || {}).version || '' : '';
+  const revisedBoxHtml = revisedHtml({ first: (workingDating(work) || {}).text || '', revised: (revisedDating(work) || {}).text || '', version });
   const contributorsHtml = [...edition.contributors, { name: '', role: 'translator' }].map(contributorRowHtml).join('');
   const statusHtml = STATUSES.map(status => `<option${status === copy.status ? ' selected' : ''}>${status}</option>`).join('');
   const locationHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'location', copy.location[i], { list: `location${i}` })).join('');
@@ -129,9 +132,10 @@ export function render(container, state, actions) {
           ${contentsPhotoHtml}<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(contentsText)}</textarea></label>
         ${worksLinkHtml}${piecesHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
+        <label class="check"><input type="checkbox" name="variousTranslators"${edition.variousTranslators ? ' checked' : ''}> <span class="field-label">Various translators${helpHtml('variousTranslators').button}</span></label>${helpHtml('variousTranslators').text}
       </fieldset>
       <fieldset data-work${isAnthology ? ' hidden' : ''}><legend>The work</legend>
-        <div data-single>${dateRuleHtml()}${datingsHtml}${kindChipsHtml(kindForDating(workingKind))}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
+        <div data-single>${dateRuleHtml()}${datingsHtml}${kindChipsHtml(kindForDating(workingKind))}${revisedBoxHtml}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
         <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}</div></div>
         <div class="field-row">${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}</div>
         <div class="field-row">${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
@@ -187,6 +191,7 @@ export function render(container, state, actions) {
     const action = event.target.dataset.action;
     if (action === 'date-kind') toggleKind(event.target);
     if (action === 'binding-part') toggleBindingChip(event.target);
+    if (action === 'version-chip') useVersionChip(event.target);
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
     if (action === 'trash') moveToTrash(entry, state, actions);
     if (action === 'contributor') event.target.insertAdjacentHTML('beforebegin', contributorRowHtml({ name: '', role: 'translator' }));
@@ -285,9 +290,12 @@ function readForm(form) {
     set: text('set'), volume: text('volume'), isbn: text('isbn'), otherIsbns: text('otherIsbns'), pages: text('pages'), languages: list('languages', ','),
     medium: text('medium') || 'physical', logosId: text('logosId'),
     contents: data.get('several') ? text('contents') : null,
+    variousTranslators: Boolean(data.get('variousTranslators')),
+    version: text('version'),
     work: {
       title: '', originalTitle: text('originalTitle'), originalLanguage: text('originalLanguage'), category: text('category'), tags: list('tags', ','),
       datings: data.getAll('datingText').map((value, i) => ({ text: value.toString(), note: (data.getAll('datingNote')[i] || '').toString().trim(), kind: kindOfRow(i), working: i === working })),
+      revised: text('revised'),
     },
     copy: {
       ...readBindingChoices(form), location: data.getAll('location').map(part => part.toString().trim()), acquired: text('acquired'),
