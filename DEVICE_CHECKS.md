@@ -165,3 +165,10 @@ Things that can only be checked on a real phone or a particular browser. Work th
 ## No translation year (data format 5, 14 November 2026)
 
 - [ ] Both phones: after updating, add a translated book. "Translation and editors" should ask for the translator, editors and the book's language, and no year. In Edit book and on the book page of a translation that had a year, no translation year should show; Settings should show data format 5.
+
+## Testing day, batch 2 (1.19.0, 14 November 2026)
+
+- [ ] Phone: add a book no lookup knows (Loeb Euripides IV): "None of these", then fill the form with "This book holds several works" ticked, Series "Loeb Classical Library" 12, Set "Euripides", Volume "4" and Place. The next step should be "Which works does it hold?"; once saved, the book page shows the series, the set and volume, and the place.
+- [ ] Phone: "Enter a book by hand instead", tick "This book holds several works": a box "For all the works" with original language, category and tags should stay. Type Greek and save; "Edit the works" shows Greek on every work.
+- [ ] Phone: a book titled "Euripides" with set Euripides, volume 4 shows "Euripides, vol. 4" in the Library, in both covers and list.
+- [ ] Phone: a work dated "c. 413 BC" shows "c. 413 BC" in the book page's contents.

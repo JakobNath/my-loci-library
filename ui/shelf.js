@@ -5,6 +5,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { estimateSize } from '../core/sizes.js';
+import { shownTitle } from '../core/library.js';
 import { keysAfterMove } from '../core/shelf-order.js';
 import { withField } from '../core/records.js';
 import { iconHtml } from './icons.js';
@@ -41,11 +42,11 @@ function spineHtml(entry, copy, related, arrange) {
   if (spine) {
     // A spine photo: its own shape gives its width at the book's height.
     const photoWidth = Math.max(6, Math.round(height * (spine.ratio || size.thickness.mm / size.height.mm)));
-    return `<a class="spine has-photo${picked}" href="#/book/${escapeHtml(entry.id)}"${arrangeHtml} title="${escapeHtml(entry.edition.title)}" style="width:${photoWidth}px;height:${height}px">`
+    return `<a class="spine has-photo${picked}" href="#/book/${escapeHtml(entry.id)}"${arrangeHtml} title="${escapeHtml(shownTitle(entry.edition))}" style="width:${photoWidth}px;height:${height}px">`
       + `<img data-image="${escapeHtml(spine.id)}/thumb" alt=""></a>`;
   }
   const foot = entry.edition.volume || entry.edition.seriesNumber || (entry.authors[0] && entry.authors[0].name.split(' ').pop()) || '';
-  const title = `${entry.edition.title} · ${size.height.mm / 10} cm (${size.height.source}), ${size.thickness.mm} mm (${size.thickness.source})`;
+  const title = `${shownTitle(entry.edition)} · ${size.height.mm / 10} cm (${size.height.source}), ${size.thickness.mm} mm (${size.thickness.source})`;
   return `<a class="spine${cover ? ' has-color' : ''}${picked}" href="#/book/${escapeHtml(entry.id)}"${arrangeHtml} title="${escapeHtml(title)}" style="width:${width}px;height:${height}px${cover ? `;border-color:${escapeHtml(cover.color)}` : ''}">`
     + `<span class="spine-box" style="top:5%;bottom:${foot ? 26 : 5}%">${letteringHtml(entry.edition.title, width, height * (foot ? 0.69 : 0.9) - 4, 11, '')}</span>`
     + (foot ? `<span class="spine-box" style="bottom:5%;height:18%">${letteringHtml(String(foot), width, height * 0.18 - 4, 9.5, 'spine-foot')}</span>` : '')

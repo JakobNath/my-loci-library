@@ -1,7 +1,7 @@
 // The date parser: every row of the table in DATA_FORMAT.md, plus the extra
 // forms named in PLAN.md, and the historical century convention.
 
-import { parseDating, centurySpan, formatYear, formatYearRange, sortYearOf, workingDating } from '../dating.js';
+import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating } from '../dating.js';
 import { workDateQuestion, webSearchUrl, searchTitle } from '../date-search.js';
 import { equal, same, ok } from './check.js';
 
@@ -80,6 +80,15 @@ export const tests = [
       equal(formatYearRange(1517, null), 'after 1517');
       equal(formatYearRange(-50, 70), '50 BC – AD 70');
       equal(formatYearRange(-50, 70, 'CE'), '50 BCE – 70 CE');
+    },
+  },
+  {
+    name: 'a BC dating keeps its "c." when shown (Euripides, c. 413 BC)',
+    fn() {
+      equal(formatDating(parseDating('c. 413 BC').dating), 'c. 413 BC');
+      equal(formatDating(parseDating('c. 413 BC').dating, 'CE'), 'c. 413 BCE');
+      equal(formatDating(parseDating('431 BC').dating), '431 BC');
+      equal(formatDating(parseDating('c. 397').dating), 'c. 397');
     },
   },
   {

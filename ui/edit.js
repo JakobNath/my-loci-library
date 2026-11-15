@@ -127,10 +127,11 @@ export function render(container, state, actions) {
         ${worksLinkHtml}${piecesHtml}
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
-      <fieldset data-single${isAnthology ? ' hidden' : ''}><legend>The work</legend>
-        ${dateRuleHtml()}${datingsHtml}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
-        <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}</div>
-        <div class="field-row">${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
+      <fieldset data-work${isAnthology ? ' hidden' : ''}><legend>The work</legend>
+        <div data-single>${dateRuleHtml()}${datingsHtml}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
+        <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}</div></div>
+        <div class="field-row">${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}</div>
+        <div class="field-row">${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
       </fieldset>
       <fieldset><legend>Edition</legend>
         <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}${fieldHtml('Year', 'year', edition.year, { type: 'number' })}</div>
@@ -166,8 +167,14 @@ export function render(container, state, actions) {
   };
   container.onchange = event => {
     if (event.target.name !== 'several') return;
-    form.querySelectorAll('[data-single]').forEach(part => { part.hidden = event.target.checked; });
-    form.querySelector('[data-several]').hidden = !event.target.checked;
+    const several = event.target.checked;
+    form.querySelectorAll('[data-single]').forEach(part => { part.hidden = several; });
+    form.querySelector('[data-several]').hidden = !several;
+    // A new collection is asked its language, category and tags once, for all its works; an existing
+    // one changes them under "Edit the works", so the box is not offered there.
+    const workPart = form.querySelector('[data-work]');
+    workPart.hidden = several && Boolean(entry);
+    workPart.querySelector('legend').textContent = several ? 'For all the works' : 'The work';
   };
   container.onclick = event => {
     if (event.target.dataset.help) { toggleHelp(container, event.target); return; }

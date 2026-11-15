@@ -2,7 +2,7 @@
 // badges. Every piece escapes its own data and ends in "Html".
 
 import { escapeHtml } from '../core/html.js';
-import { formatYearRange, workingDating } from '../core/dating.js';
+import { formatYearRange, formatDating, workingDating } from '../core/dating.js';
 
 /** The shape of a cover slot, width over height (--cover-ratio in styles/tokens.css). */
 export const COVER_RATIO = 2 / 3;
@@ -53,7 +53,7 @@ export function dateLineHtml(entry, style = 'AD') {
   }
   const dating = entry.works[0] && workingDating(entry.works[0]);
   if (!dating) return '';
-  return escapeHtml(dating.earliest !== null && dating.earliest < 0 ? formatYearRange(dating.earliest, dating.latest, style) : dating.text);
+  return escapeHtml(formatDating(dating, style));
 }
 
 /** Badges: digital, no longer in library. */

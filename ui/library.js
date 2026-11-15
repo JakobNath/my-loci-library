@@ -4,7 +4,7 @@
 // while the search box has text.
 
 import { escapeHtml } from '../core/html.js';
-import { SORTS, VIEW_DEFAULTS, viewEntries, searchEntries, searchPieces, filterChoices } from '../core/library.js';
+import { SORTS, VIEW_DEFAULTS, shownTitle, viewEntries, searchEntries, searchPieces, filterChoices } from '../core/library.js';
 import { STATUSES } from '../core/records.js';
 import { matchesSearch } from '../core/search.js';
 import { coverHtml, dateLineHtml, badgesHtml } from './pieces.js';
@@ -17,13 +17,13 @@ const TILE_WIDTH = { small: 110, medium: 150, large: 200 };
 
 function tileHtml(entry, style) {
   return `<a class="tile${entry.owned ? '' : ' is-gone'}" href="#/book/${escapeHtml(entry.id)}">${coverHtml(entry)}`
-    + `<span class="tile-caption"><span class="tile-title">${escapeHtml(entry.edition.title)}</span>`
+    + `<span class="tile-caption"><span class="tile-title">${escapeHtml(shownTitle(entry.edition))}</span>`
     + `<span class="tile-author">${escapeHtml(entry.authorLine)}</span><span class="tile-date">${dateLineHtml(entry, style)}</span></span></a>`;
 }
 
 function rowHtml(entry, style) {
   return `<a class="row${entry.owned ? '' : ' is-gone'}" href="#/book/${escapeHtml(entry.id)}">${coverHtml(entry, 's')}`
-    + `<span class="row-main"><span class="row-title">${escapeHtml(entry.edition.title)}</span>`
+    + `<span class="row-main"><span class="row-title">${escapeHtml(shownTitle(entry.edition))}</span>`
     + `<span class="row-author">${escapeHtml(entry.authorLine)} ${badgesHtml(entry)}</span></span>`
     + `<span class="row-date">${dateLineHtml(entry, style)}</span></a>`;
 }

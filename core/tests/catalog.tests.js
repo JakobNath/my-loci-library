@@ -5,7 +5,7 @@ import { countPages } from '../pages.js';
 import { estimateSize } from '../sizes.js';
 import { normalizeForSearch, searchTextOf, matchesSearch } from '../search.js';
 import { parseContentsLines, contentsLine, tidyPastedContents } from '../contents.js';
-import { buildLibrary, viewEntries, searchEntries, searchPieces, originalTextHolders, authorLineOf, sortEntries, filterChoices, missingDetails, SORTS } from '../library.js';
+import { buildLibrary, viewEntries, searchEntries, searchPieces, originalTextHolders, authorLineOf, sortEntries, filterChoices, missingDetails, shownTitle, SORTS } from '../library.js';
 import { equal, same, ok } from './check.js';
 import { newRecord } from '../records.js';
 import { isBible, isBibleBook } from '../bible.js';
@@ -319,6 +319,15 @@ export const tests = [
       // As a phone's text reading copies the contents page of Luther's Works 14.
       const copied = 'PSALM 117 translated by Edward Sittler 1\nPSALM 118 translated by George Beto 41\nTHE SEVEN PENITENTIAL PSALMS 137\ntranslated by Arnold Guebert 139';
       equal(tidyPastedContents(copied), 'PSALM 117 — trans. Edward Sittler\nPSALM 118 — trans. George Beto\nTHE SEVEN PENITENTIAL PSALMS — trans. Arnold Guebert');
+    },
+  },
+  {
+    name: 'a volume titled only by its set shows its volume number (Euripides, vol. 4)',
+    fn() {
+      equal(shownTitle({ title: 'Euripides', set: 'Euripides', volume: '4' }), 'Euripides, vol. 4');
+      equal(shownTitle({ title: "Luther's Works", set: 'Luthers Works', volume: '12' }), "Luther's Works, vol. 12");
+      equal(shownTitle({ title: 'Selected Psalms I', set: "Luther's Works", volume: '12' }), 'Selected Psalms I');
+      equal(shownTitle({ title: 'Euripides', set: null, volume: null }), 'Euripides');
     },
   },
 ];

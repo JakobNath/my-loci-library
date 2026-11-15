@@ -171,6 +171,20 @@ export function missingDetails(entry) {
     .filter(([, value]) => !value).map(([name]) => name);
 }
 
+/**
+ * The title a book is shown by in the Library and shelf view. A volume whose
+ * title is only its set's name ("Euripides", set Euripides, volume 4) would
+ * look the same as every other volume, so it shows "Euripides, vol. 4".
+ * Search and sorting use the stored title.
+ * @param {object} edition
+ * @returns {string}
+ */
+export function shownTitle(edition) {
+  const plain = text => String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (!edition.set || !edition.volume || plain(edition.title) !== plain(edition.set)) return edition.title;
+  return `${edition.title}, vol. ${edition.volume}`;
+}
+
 /** Whether a location lies at or inside another (["Home", "Office"] is inside ["Home"]). */
 export const isInside = (location, outer) => outer.every((part, i) => location[i] === part);
 

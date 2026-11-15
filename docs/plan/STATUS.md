@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.18.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.19.0).
 
 ## Where things stand
 
@@ -47,7 +47,9 @@ Phase 15 step 10 was built in the tools the same day: Zotero gets books only, ne
 
 - **Version 1.18.0** (14 November 2026): data format 5. At Jakob's request the year a translation first appeared is gone from everywhere: adding ("Translation and editors" asks only for the translator, editors and the book's language), Edit book, the book page, field help, the translation "Search the web" link and the docs. Version-4 editions are read without it; the catalog's files were not rewritten, so the 15 years typed so far stay only in untouched files and git history (`docs/decisions/data-format.md`). The tools were updated the same day.
 
-All tests pass: 246 in the app (and 229 on the self-test page), 285 in the tools.
+- **Version 1.19.0** (testing day, batch 2, 14 November 2026; Loeb Euripides IV, a book no lookup knows): "Not found online" and "Fix details" ask for several works (a tick), place, series and number, set and volume (a known set's volume takes the list's works); "Is this the book?" says "Typed in by hand." when nothing was found; the one-page form keeps a "For all the works" box (original language, category, tags) when a new book holds several works; the Library and shelf view show "Euripides, vol. 4" for a volume titled only by its set; "c." stays on BC dates ("c. 413 BC"). The tools' copy of core was updated the same day.
+
+All tests pass: 248 in the app (and 231 on the self-test page), 287 in the tools.
 
 ## Waiting on Jakob
 
@@ -107,7 +109,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **First, from 14 November 2026:** the testing day. Fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check (`handoffs/2026-11-14-first-real-book.md` says how) after any change to lookups.
 
-- [ ] **Next: build testing-day batch 2** (planned and approved with Jakob, 14 November 2026; the whole plan is in the private workspace's `handoffs/2026-11-14-testing-day-batch-2-plan.md`). From Loeb Euripides IV, a book no lookup knows: the "Not found online" form asks for several works, series, set, volume and place; the one-page form asks an anthology's language and category; the Library shows "Euripides, vol. 4" for a volume titled only by its set; "c." stays on BC dates. (The reprint date to Zotero was dropped with the translation year in 1.18.0.) Release as 1.19.0. One session, Opus, effort high. Jakob's answer the same day: adding keeps its many screens (he skips none), so "shortening the add flow" is settled.
+- [x] **Released as 1.19.0, 14 November 2026: testing-day batch 2** (planned and approved with Jakob, 14 November 2026; the whole plan is in the private workspace's `handoffs/2026-11-14-testing-day-batch-2-plan.md`). From Loeb Euripides IV, a book no lookup knows: the "Not found online" form asks for several works, series, set, volume and place; the one-page form asks an anthology's language and category; the Library shows "Euripides, vol. 4" for a volume titled only by its set; "c." stays on BC dates. (The reprint date to Zotero was dropped with the translation year in 1.18.0.) Release as 1.19.0. One session, Opus, effort high. Jakob's answer the same day: adding keeps its many screens (he skips none), so "shortening the add flow" is settled.
 
 **On hold from 13 November 2026** (Jakob): he is testing the app for a while, and will then decide how needful the known-set lists (Loeb first) and the full Logos import are. Until then a working session fixes what his testing turns up, and otherwise takes items 4 and 5 below or the audit's open items (the workspace's `handoffs/2026-11-13-audit.md`). Both may be taken up again; nothing written for them is removed.
 

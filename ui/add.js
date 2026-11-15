@@ -443,21 +443,28 @@ export function render(container, state, actions) {
   function bookStep() {
     const found = book.found;
     if (book.fixing) {
+      // A book no record lists the works of can say here that it holds several, so the contents step follows.
+      const severalHtml = book.contentsOffered ? ''
+        : `<label class="toggle"><input type="checkbox" name="several"${book.severalChosen ? ' checked' : ''}> This book holds several works (an anthology)</label>`;
       return `<h2 class="step-title">${escapeHtml(found.source ? 'Fix the details' : 'Not found online')}</h2>
         <p class="step-hint">${escapeHtml(found.source ? 'Correct anything that is wrong.' : `${book.problem || 'Neither Open Library nor Google Books knows this book.'} Type what is on the title page.`)}</p>
         <form class="form">${fieldHtml('Title', 'title', found.title, { missing: !found.title })}${fieldHtml('Subtitle', 'subtitle', found.subtitle)}
           ${fieldHtml('Authors (separate with ;)', 'authors', found.authors.join('; '), { missing: !found.authors.length })}
           ${fieldHtml('Editors (separate with ;)', 'editors', book.editors)}
           ${fieldHtml('Translators (separate with ;)', 'translator', book.translator)}
-          <div class="field-row">${fieldHtml('Publisher', 'publisher', found.publisher, { missing: !found.publisher })}${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}</div>
-          ${fieldHtml('Pages, as printed', 'pages', found.pages)}
+          <div class="field-row">${fieldHtml('Publisher', 'publisher', found.publisher, { missing: !found.publisher })}${fieldHtml('Place', 'place', found.place)}</div>
+          <div class="field-row">${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}${fieldHtml('Pages, as printed', 'pages', found.pages)}</div>
+          <div class="field-row">${fieldHtml('Series', 'series', found.series)}${fieldHtml('Number in series', 'seriesNumber', found.seriesNumber)}</div>
+          <div class="field-row">${fieldHtml('Set', 'set', found.set)}${fieldHtml('Volume', 'volume', found.volume)}</div>
+          ${severalHtml}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
     const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', prompts.has('year') && !found.year && 'year'].filter(Boolean);
     const coverHtml = found.cover && !found.cover.waiting ? `<img class="step-cover" src="${attr(found.cover.url)}" alt="" onerror="this.remove()">` : '';
     const detailsHtml = escapeHtml([found.authors.join(', '), found.editionStatement, [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
     const peopleHtml = escapeHtml(found.contributors.map(person => `${person.role} ${person.name}`).join(' · '));
-    const foundOnHtml = escapeHtml(`Found on ${(found.sources || ['Open Library']).join(' and ')}.`);
+    const foundOnHtml = escapeHtml(found.sources && found.sources.length ? `Found on ${found.sources.join(' and ')}.`
+      : found.source ? 'Found on Open Library.' : 'Typed in by hand.');
     return `<h2 class="step-title">Is this the book?</h2><p class="step-hint">${foundOnHtml}</p>
       <div class="found">${coverHtml}<div><p class="found-title">${escapeHtml(found.title)}</p><p class="found-sub">${escapeHtml(found.subtitle)}</p>
         <p class="found-meta">${detailsHtml}</p><p class="found-meta">${peopleHtml}</p></div></div>
@@ -694,12 +701,18 @@ export function render(container, state, actions) {
     const value = name => (stepArea.querySelector(`[name="${name}"]`) || {}).value;
     const found = book.found;
     if (book.step === 'book' && book.fixing) {
-      for (const name of ['title', 'subtitle', 'publisher', 'year', 'pages']) found[name] = (value(name) || '').trim();
+      for (const name of ['title', 'subtitle', 'publisher', 'place', 'year', 'pages', 'series', 'seriesNumber', 'set']) found[name] = (value(name) || '').trim();
+      found.volume = (value('volume') || '').trim();
+      const several = stepArea.querySelector('[name="several"]');
+      if (several) book.severalChosen = several.checked;
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
       book.editors = (value('editors') || '').trim();
       book.translator = (value('translator') || '').trim();
       if (translatorNames(book.translator).length) book.hasTranslator = true;
       book.works = suggestWorks(found.title, found.authors, state.library);
+      // A set and volume a known list holds ("Luther's Works", 14) take their works from the list, as when chosen.
+      const known = found.set && found.volume ? findKnownVolume(knownSets, { set: found.set, volume: found.volume }) : null;
+      if (known && known.volume && known.volume !== book.knownVolume) { book.severalChosen = false; useKnownVolume(known.set, known.volume); }
     }
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');

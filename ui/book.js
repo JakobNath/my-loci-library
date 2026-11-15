@@ -3,7 +3,7 @@
 // anthologies that contain it, and each copy with its value history.
 
 import { escapeHtml } from '../core/html.js';
-import { formatYearRange, workingDating } from '../core/dating.js';
+import { formatDating, workingDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
 import { missingDetails } from '../core/library.js';
 import { bindingText } from '../core/bindings.js';
@@ -22,7 +22,7 @@ function factsHtml(pairs) {
 function datingsHtml(work, style) {
   if (!work.datings.length) return '<span class="date-chip is-missing">Needs original date</span>';
   return work.datings.map(dating => {
-    const shown = dating.earliest !== null && dating.earliest < 0 ? formatYearRange(dating.earliest, dating.latest, style) : dating.text;
+    const shown = formatDating(dating, style);
     const note = dating.note ? ` <span class="muted">${escapeHtml(dating.note)}</span>` : '';
     return `<span class="date-chip">${escapeHtml(shown)}</span>${dating.working && work.datings.length > 1 ? ' <span class="muted">working date</span>' : ''}${note}`;
   }).join(' ');
@@ -35,7 +35,7 @@ function contentsHtml(entry, style) {
     const work = entry.works.find(w => w.id === piece.work);
     if (!work) return '';
     const dating = workingDating(work);
-    const date = dating ? escapeHtml(dating.earliest !== null && dating.earliest < 0 ? formatYearRange(dating.earliest, dating.latest, style) : dating.text) : 'needs date';
+    const date = dating ? escapeHtml(formatDating(dating, style)) : 'needs date';
     const meta = [piece.extent !== 'complete' ? piece.extent : '', piece.translator ? `trans. ${piece.translator}` : '', piece.pages ? `pp. ${piece.pages}` : ''].filter(Boolean).join(' · ');
     return `<li class="piece"><span class="piece-title">${escapeHtml(work.title)}</span><span class="piece-date${dating ? '' : ' is-missing'}">${date}</span>`
       + `<span class="piece-meta">${escapeHtml(meta)}</span></li>`;

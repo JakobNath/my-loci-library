@@ -148,6 +148,19 @@ export function formatYearRange(earliest, latest, style = 'AD') {
   return `${earliest}–${latest}`;
 }
 
+/**
+ * Write a dating for display. AD datings show as typed; BC datings are written
+ * again from their years, so the AD / CE setting applies, keeping "c." on a
+ * circa dating ("c. 413 BC", not "413 BC").
+ * @param {{ text: string, earliest: number|null, latest: number|null, certainty: string }} dating
+ * @param {'AD'|'CE'} style
+ */
+export function formatDating(dating, style = 'AD') {
+  if (dating.earliest === null || dating.earliest >= 0) return dating.text;
+  const years = formatYearRange(dating.earliest, dating.latest, style);
+  return dating.certainty === 'circa' ? `c. ${years}` : years;
+}
+
 /** The working dating of a work: the one marked working, or else the first. */
 export function workingDating(work) {
   const datings = work.datings || [];
