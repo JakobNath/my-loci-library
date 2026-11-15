@@ -4,7 +4,7 @@
 // the book is in hand"). Each card has the work's title and author, the
 // language it was first written in, its original title and its original
 // date, with one "Search the web" link at its top asking for all four, and the
-// optional kind-of-work chips under the date. A card is ticked once its
+// optional kind-of-work chips and "Revised later?" under the date. A card is ticked once its
 // language and date are answered (core/add-check.js). Above the cards, one
 // date or the author's lifetime can be given to every work without a date.
 //
@@ -18,7 +18,7 @@ import { parseContentsLines, typedNames } from '../core/contents.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
 import { workDetailsQuestion, collectionDateQuestion } from '../core/date-search.js';
 import { cardAnswered } from '../core/add-check.js';
-import { dateRuleHtml, searchLinkHtml, kindChipsHtml, datingKindOf } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, kindChipsHtml, datingKindOf, revisedHtml } from './date-help.js';
 import { attr, navHtml, isEnglish, LANGUAGES } from './add-questions.js';
 
 /**
@@ -47,6 +47,7 @@ export function cardsFromLines(text, previous, { authors = [], listed = () => nu
       originalTitle: list.originalTitle || null, // null: not given yet, so Wikidata's is shown
       date: line.date || '', dateUnknown: false, translator: line.translator || '',
       kind: '', // the kind of work, if a chip was chosen (ui/date-help.js)
+      revised: '', version: '', // a revised work's final edition, and which text this book prints (format 7)
     };
   });
 }
@@ -61,7 +62,7 @@ export function contentsFromCards(cards) {
 export function workDetailsFromCards(cards) {
   return cards.map(card => ({
     title: card.title, author: card.author || '', originalLanguage: card.language || '', originalTitle: card.originalTitle || '',
-    datingKind: datingKindOf(card.kind || '') || null,
+    datingKind: datingKindOf(card.kind || '') || null, revised: card.revised || '', version: card.version || '',
   }));
 }
 
@@ -144,6 +145,7 @@ export function cardHtml(card, i, about) {
       <div class="chips">${suggestionsHtml}<button type="button" class="chip${card.dateUnknown && !card.date ? ' is-on' : ''}" data-action="card-unknown" aria-pressed="${card.dateUnknown && !card.date}">Don't know</button></div>
       ${posthumousHtml}
       ${kindChipsHtml(card.kind || '', 'card-kind')}
+      ${revisedHtml({ first: card.date, revised: card.revised || '', version: card.version || '' }, { revisedName: 'cardRevised', versionName: 'cardVersion' })}
       <p><button type="button" class="link" data-action="card-remove">Not a work (a heading): remove</button></p>
     </fieldset>`;
 }
@@ -198,6 +200,8 @@ export function readCards(book, stepArea) {
     if (box.querySelector('[name="cardOriginalTitle"]')) card.originalTitle = value('cardOriginalTitle') || null;
     card.date = value('cardDate');
     if (card.date) card.dateUnknown = false;
+    card.revised = value('cardRevised');
+    card.version = value('cardVersion');
   }
 }
 
@@ -212,7 +216,7 @@ export function cardAction(book, action, value, index) {
   if (action === 'card-author') Object.assign(card, { author: value, authorAsked: false });
   if (action === 'card-date') Object.assign(card, { date: value, dateUnknown: false });
   if (action === 'card-kind') card.kind = card.kind === value ? '' : value;
-  if (action === 'card-unknown') Object.assign(card, { date: '', dateUnknown: !card.dateUnknown });
+  if (action === 'card-unknown') Object.assign(card, { date: '', dateUnknown: !card.dateUnknown, revised: '' });
   if (action === 'card-remove') { book.cards.splice(index, 1); return true; }
   return false;
 }

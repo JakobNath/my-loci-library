@@ -4,7 +4,7 @@
 // An em dash, a double hyphen or a bar separates the parts; ordinary hyphens
 // and en dashes stay part of titles ("Romans 1–8").
 
-import { parseDating } from './dating.js';
+import { parseDating, workingDating } from './dating.js';
 
 const SEPARATOR = /\s+(?:—|--|\|)\s+|\s*—\s*/;
 // "trans. Edward Sittler" or "translated by Edward Sittler", as a part of its own.
@@ -90,6 +90,6 @@ export function tidyPastedContents(text) {
  * @param {string|null} [translator] the work's own translator in this book, from its contents entry
  */
 export function contentsLine(work, authorNames, translator = null) {
-  const dating = work.datings.find(d => d.working) || work.datings[0];
+  const dating = workingDating(work);
   return [authorNames.join(' and '), work.title, dating ? dating.text : '', translator ? `trans. ${translator}` : ''].filter(Boolean).join(' — ');
 }

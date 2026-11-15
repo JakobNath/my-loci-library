@@ -110,6 +110,8 @@ export function translationStepHtml(book, isTranslated, languageChoices = []) {
     <p class="step-hint">Who translated and edited it. All optional.</p>
     <form class="form">${fieldHtml('Translator', 'translator', book.translator, { hint: 'Several translators: separate the names with ;' })}
       <p class="preview" data-translators>${escapeHtml(translatorsReadAs(book.translator))}</p>
+      <div class="chips step-chips">${chipHtml('various-translators', '', Boolean(book.variousTranslators), 'Various translators')}</div>
+      ${book.variousTranslators ? `<p class="preview">${escapeHtml('Many people translated the works, and no one is named for the whole book. A work\'s own translator can be given on the contents later, under "Edit the works".')}</p>` : ''}
       ${editorsHtml}
       ${fieldHtml('This book is in', 'bookLanguages', book.bookLanguages, { hint: 'The language of the pages in your hand. Tap one, or type: two for a facing-page edition, "Greek, English".' })}
       ${languageChoices.length ? `<div class="chips step-chips">${languageChoices.map(choice => chipHtml('book-languages', choice.text, choice.text === book.bookLanguages, choice.label)).join('')}</div>` : ''}
@@ -166,6 +168,8 @@ export function readQuestions(book, stepArea) {
     // The step for a book that is not a translation has only the editors' box.
     const has = name => Boolean(stepArea.querySelector(`[name="${name}"]`));
     if (has('translator')) book.translator = value('translator');
+    // A name typed takes back "Various translators".
+    if (book.translator) book.variousTranslators = false;
     if (has('bookLanguages')) book.bookLanguages = value('bookLanguages');
     book.editors = value('editors');
   }

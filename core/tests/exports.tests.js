@@ -7,6 +7,7 @@ import { catalogCsv, valueCsv, catalogJson, cslJson, bibtex } from '../exports.j
 import { valueHistoryWithout } from '../entry.js';
 import { archiveReminder, lastBackupLine } from '../backup-status.js';
 import { equal, same, ok } from './check.js';
+import { parseDating } from '../dating.js';
 import { na28, na28Works, loeb36, loebWorks, plato, augustine, confessions, chadwick, edition } from './samples.js';
 
 const NOW = '2026-11-10T12:00:00Z';
@@ -101,6 +102,20 @@ export const tests = [
       ok(archiveReminder({ ...status, lastArchive: '2027-11-12T10:00:00Z' }, '2028-11-12'));
       equal(archiveReminder(null, '2030-01-01'), null, 'no laptop backup yet: no reminder');
       equal(lastBackupLine(status), 'Last backup to the backup folder: 2027-03-01.');
+    },
+  },
+  {
+    name: 'CSV writes a revised work\'s date with its final edition, and says when a book has various translators',
+    fn() {
+      const first = { ...parseDating('1812–15').dating, kind: null, note: '', working: true };
+      const revised = { ...parseDating('1857').dating, kind: 'revised', note: '', working: false };
+      const grimmRecords = records.map(record => (record.id === confessions.id ? { ...record, datings: [first, revised] } : record.id === chadwick.id ? { ...record, variousTranslators: true } : record));
+      const text = catalogCsv(buildLibrary(grimmRecords).entries);
+      const lines = text.split('\r\n');
+      ok(lines[0].includes(',Translators,Various translators,Editors,'));
+      const line = lines.find(item => item.includes('Gift'));
+      ok(line.includes(',1812–15; rev. 1857,'), line);
+      ok(line.includes(',yes,'), 'various translators');
     },
   },
 ];

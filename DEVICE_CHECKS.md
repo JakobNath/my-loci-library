@@ -242,3 +242,9 @@ Checked in the browser preview at phone width on 15 November 2026 (Plutarch by I
 - [ ] Phone: on a card, type "1806-1812, 1857" as the date. The line under it says "Two dates: type only the first edition's here (Grimm's tales: 1812–15)…".
 - [ ] Phone (1.25.1): on Plutarch's Lives II's copyright page step, no "The record also lists…" lines appear.
 - [ ] Phone: in Edit book of a single work, tap "Speech or sermon" and save. Open Edit book again: the chip is lit. On "Works in this book", the same chips sit under each work's date.
+## Data format 7, testing day batch 6, stage C (1.26.0, 15 November 2026)
+
+- [ ] Phone: add the Grimm again (978-93-90093-02-1). On the date step type "1812–15", then tap "Revised later? Final edition's year": a box opens. Type "1857" and tap "The final text": the box below says "final edition, 1857". "Check before saving" shows "Original date: 1812–15; rev. 1857" and "Text in this book: final edition, 1857". After saving, the book page's date reads "1812–15; rev. 1857" and the Edition section "Text in this book: final edition, 1857".
+- [ ] Phone, same book: in the Library sorted by original date, it sits under 1812, not 1857.
+- [ ] Phone: add the Reader again (978-0-393-09040-6). On "Translation and editors" tap "Various translators": the translator box empties and the step goes on without asking for a translator. "Check before saving" says "Translators: Various translators"; so does the book page after saving, and Edit book has the tick.
+- [ ] Phone, the other phone: once both have 1.26.0 and have synced, the Grimm shows "1812–15; rev. 1857" there too. A phone still on 1.25 that meets the new records asks to be refreshed.

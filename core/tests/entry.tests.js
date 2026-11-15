@@ -4,10 +4,12 @@
 import { otherIsbnsFromText, firstPrintedFromText, hasValidCheckDigit, publisherRows, publishersFromRows } from '../entry.js';
 import { editionsWithIsbn } from '../matching.js';
 import { buildLibrary, searchEntries } from '../library.js';
-import { recordsFromForm, isbn13, anotherCopy, isBookBarcode, wishFromForm, formFromWish, isbnInText, volumesFromLines, nextVolumeLabel, withSetFacts, worksFromRows, withWorkTranslators } from '../entry.js';
+import { recordsFromForm, isbn13, anotherCopy, isBookBarcode, wishFromForm, formFromWish, isbnInText, volumesFromLines, nextVolumeLabel, withSetFacts, worksFromRows, withEntryDetails } from '../entry.js';
 import { emptyFound } from '../lookup.js';
 import { sameWikidataWorks } from '../matching.js';
 import { validateRecord } from '../validate.js';
+import { parseDating } from '../dating.js';
+import { confessions, chadwick } from './samples.js';
 import { equal, same, ok } from './check.js';
 
 let counter = 0;
@@ -438,8 +440,8 @@ export const tests = [
       const first = recordsFromForm(blankForm({ title: 'Selected Psalms III', contents: 'Martin Luther — Psalm 117 — trans. Edward Sittler\nMartin Luther — Psalm 147' }), null, context());
       const edition = first.records.find(record => record.type === 'edition');
       const [psalm117, psalm147] = edition.contents.map(entry => entry.work);
-      equal(withWorkTranslators(edition, [{ id: psalm117, translator: 'Edward Sittler' }, { id: psalm147, translator: ' ' }], 'x'), edition, 'unchanged');
-      const changed = withWorkTranslators(edition, [{ id: psalm117, translator: '' }, { id: psalm147, translator: 'Edward Sittler' }], '2026-11-14T12:00:00Z');
+      equal(withEntryDetails(edition, [{ id: psalm117, translator: 'Edward Sittler' }, { id: psalm147, translator: ' ' }], 'x'), edition, 'unchanged');
+      const changed = withEntryDetails(edition, [{ id: psalm117, translator: '' }, { id: psalm147, translator: 'Edward Sittler' }], '2026-11-14T12:00:00Z');
       same(changed.contents.map(entry => entry.translator), [null, 'Edward Sittler']);
       equal(changed.changed.contents, '2026-11-14T12:00:00Z');
       same(validateRecord(changed), []);
@@ -499,6 +501,85 @@ export const tests = [
       same(editionsWithIsbn('9780674990128', library.entries).length, 1, 'the main ISBN as before');
       same(editionsWithIsbn('9780000000002', library.entries), []);
       same(searchEntries(library, '9780434990122').map(entry => entry.edition.title), ['Euripides IV']);
+    },
+  },
+  {
+    name: 'adding a revised work keeps its first date as the working dating and its final edition beside it, with the text this book prints',
+    fn() {
+      const form = blankForm({
+        title: 'The Complete Grimm\'s Fairy Tales', authors: ['Jacob Grimm'], version: 'final edition, 1857',
+        work: { title: '', originalTitle: '', originalLanguage: 'German', category: '', tags: [], datings: [{ text: '1812–15', note: '', working: true }], revised: '1857' },
+      });
+      const result = recordsFromForm(form, null, context());
+      same(result.problems, []);
+      const work = result.records.find(record => record.type === 'work');
+      same(work.datings.map(dating => [dating.text, dating.kind, dating.working]), [['1812–15', null, true], ['1857', 'revised', false]]);
+      const edition = result.records.find(record => record.type === 'edition');
+      equal(edition.contents[0].version, 'final edition, 1857');
+      equal(edition.variousTranslators, false, 'not chosen');
+      for (const record of result.records) same(validateRecord(record), [], record.type);
+      const alone = blankForm({ title: 'Tales', work: { ...form.work, datings: [], revised: '1857' } });
+      ok(recordsFromForm(alone, null, context()).problems[0].includes('first edition\'s date'), 'a revision alone is asked to have a first date');
+    },
+  },
+  {
+    name: 'editing a book keeps its revision, version and "various translators" when the form has no box for them, and changes them when it does',
+    fn() {
+      const form = blankForm({
+        title: 'Tales', authors: ['Jacob Grimm'], version: 'final edition, 1857', variousTranslators: true,
+        work: { title: '', originalTitle: '', originalLanguage: 'German', category: '', tags: [], datings: [{ text: '1812–15', note: '', working: true }], revised: '1857' },
+      });
+      const added = recordsFromForm(form, null, context());
+      const existing = {
+        edition: added.records.find(record => record.type === 'edition'), copy: added.records.find(record => record.type === 'copy'),
+        works: added.records.filter(record => record.type === 'work'),
+      };
+      equal(existing.edition.variousTranslators, true);
+      const noBoxes = { ...form, version: undefined, variousTranslators: undefined, work: { ...form.work, revised: undefined } };
+      const authors = added.records.filter(record => record.type === 'author');
+      const kept = recordsFromForm(noBoxes, existing, context(authors));
+      same(kept.problems, []);
+      equal(kept.records.length, 0, 'nothing changed, nothing saved');
+      const changed = recordsFromForm({ ...form, version: '', variousTranslators: false, work: { ...form.work, revised: '' } }, existing, context(authors));
+      const work = changed.records.find(record => record.type === 'work');
+      same(work.datings.map(dating => dating.text), ['1812–15'], 'an emptied box takes the revision away');
+      const edition = changed.records.find(record => record.type === 'edition');
+      same([edition.contents[0].version, edition.variousTranslators], [null, false]);
+    },
+  },
+  {
+    name: 'a card\'s final edition and version go to its work and its contents entry',
+    fn() {
+      const form = blankForm({
+        title: 'Plutarch\'s Lives', contents: 'Plutarch — Themistocles — c. 100\nJohn Calvin — Institutes of the Christian Religion — 1536',
+        workDetails: [{ title: 'Institutes of the Christian Religion', author: 'John Calvin', originalLanguage: 'Latin', originalTitle: '', datingKind: null, revised: '1559', version: 'final edition, 1559' }],
+      });
+      const result = recordsFromForm(form, null, context());
+      same(result.problems, []);
+      const institutes = result.records.find(record => record.type === 'work' && record.title.startsWith('Institutes'));
+      same(institutes.datings.map(dating => [dating.text, dating.kind]), [['1536', null], ['1559', 'revised']]);
+      const edition = result.records.find(record => record.type === 'edition');
+      same(edition.contents.map(entry => entry.version), [null, 'final edition, 1559']);
+    },
+  },
+  {
+    name: '"Works in this book" keeps a work with a revision editable, as one dating and its revision, and sets each work\'s version',
+    fn() {
+      const first = { ...parseDating('1536').dating, kind: null, note: '', working: true };
+      const revised = { ...parseDating('1559').dating, kind: 'revised', note: '', working: false };
+      const institutes = { ...confessions, id: '1nst1tutes01', title: 'Institutes', datings: [first, revised] };
+      const works = new Map([[institutes.id, institutes]]);
+      const same0 = { originalLanguage: '', category: '', tags: [] };
+      const row = values => ({ id: institutes.id, title: 'Institutes', originalTitle: institutes.originalTitle || '', originalLanguage: institutes.originalLanguage || '', dating: '1536', category: institutes.category || '', tags: institutes.tags, ...values });
+      equal(worksFromRows([row({})], same0, works, 'x').records.length, 0, 'the revision is kept when its box is not given');
+      equal(worksFromRows([row({ revised: '1559' })], same0, works, 'x').records.length, 0, 'or unchanged');
+      const later = worksFromRows([row({ dating: '1536–39', revised: '1560' })], same0, works, 'x').records[0];
+      same(later.datings.map(dating => [dating.text, dating.kind, dating.working]), [['1536–39', null, true], ['1560', 'revised', false]], 'a work with a revision is not disputed: both change');
+      same(worksFromRows([row({ revised: '' })], same0, works, 'x').records[0].datings.map(dating => dating.text), ['1536']);
+      const edition = { ...chadwick, contents: [{ work: institutes.id, piece: null, extent: 'complete', translator: null, version: null, pages: null, cite: false }] };
+      const withVersion = withEntryDetails(edition, [{ id: institutes.id, translator: '', version: 'final edition, 1559' }], '2026-11-15T12:00:00Z');
+      equal(withVersion.contents[0].version, 'final edition, 1559');
+      equal(withEntryDetails(withVersion, [{ id: institutes.id, translator: '' }], 'x'), withVersion, 'a row without a version keeps it');
     },
   },
 ];

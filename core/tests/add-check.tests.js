@@ -114,4 +114,17 @@ export const tests = [
       equal(groups[0].rows.find(item => item.label === 'Authors').value, 'Karl Marx; Friedrich Engels');
     },
   },
+  {
+    name: 'the check shows a revised work as "1812–15; rev. 1857" with the text this book prints, and "Various translators" answers the translator',
+    fn() {
+      const book = { ...fear(), dating: '1812–15', revised: '1857', version: 'final edition, 1857' };
+      const rows = checkRows(book, { steps: ['date'] }).flatMap(group => group.rows);
+      equal(rows.find(item => item.label === 'Original date').value, '1812–15; rev. 1857');
+      equal(rows.find(item => item.label === 'Text in this book').value, 'final edition, 1857');
+      ok(!checkRows(fear(), {}).flatMap(group => group.rows).some(item => item.label === 'Text in this book'), 'asked only of a revised work');
+      const various = { ...fear(), translator: '', variousTranslators: true };
+      same(mustMissing(various, 'translation', { translated: true, bookLanguages: 'English' }), []);
+      equal(checkRows(various, { translated: true }).flatMap(group => group.rows).find(item => item.label === 'Translators').value, 'Various translators');
+    },
+  },
 ];

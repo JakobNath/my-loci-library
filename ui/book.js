@@ -3,7 +3,7 @@
 // anthologies that contain it, and each copy with its value history.
 
 import { escapeHtml } from '../core/html.js';
-import { formatDating, workingDating } from '../core/dating.js';
+import { formatDating, formatWorkDate, workingDating, opinionsOf, revisedDating } from '../core/dating.js';
 import { countPages } from '../core/pages.js';
 import { missingDetails } from '../core/library.js';
 import { bindingText } from '../core/bindings.js';
@@ -19,12 +19,16 @@ function factsHtml(pairs) {
   return `<dl class="facts">${filled.map(([label, value]) => `<dt>${escapeHtml(label)}</dt><dd>${escapeHtml(value)}</dd>`).join('')}</dl>`;
 }
 
+// Each opinion of the work's date; the working one carries the final revised edition, "1812–15; rev. 1857".
 function datingsHtml(work, style) {
-  if (!work.datings.length) return '<span class="date-chip is-missing">Needs original date</span>';
-  return work.datings.map(dating => {
-    const shown = formatDating(dating, style);
+  const opinions = opinionsOf(work);
+  if (!opinions.length) return '<span class="date-chip is-missing">Needs original date</span>';
+  const working = workingDating(work);
+  const revised = revisedDating(work);
+  return opinions.map(dating => {
+    const shown = dating === working && revised ? `${formatDating(dating, style)}; rev. ${formatDating(revised, style)}` : formatDating(dating, style);
     const note = dating.note ? ` <span class="muted">${escapeHtml(dating.note)}</span>` : '';
-    return `<span class="date-chip">${escapeHtml(shown)}</span>${dating.working && work.datings.length > 1 ? ' <span class="muted">working date</span>' : ''}${note}`;
+    return `<span class="date-chip">${escapeHtml(shown)}</span>${dating === working && opinions.length > 1 ? ' <span class="muted">working date</span>' : ''}${note}`;
   }).join(' ');
 }
 
@@ -35,8 +39,8 @@ function contentsHtml(entry, style) {
     const work = entry.works.find(w => w.id === piece.work);
     if (!work) return '';
     const dating = workingDating(work);
-    const date = dating ? escapeHtml(formatDating(dating, style)) : 'needs date';
-    const meta = [piece.extent !== 'complete' ? piece.extent : '', piece.translator ? `trans. ${piece.translator}` : '', piece.pages ? `pp. ${piece.pages}` : ''].filter(Boolean).join(' · ');
+    const date = dating ? escapeHtml(formatWorkDate(work, style)) : 'needs date';
+    const meta = [piece.extent !== 'complete' ? piece.extent : '', piece.translator ? `trans. ${piece.translator}` : '', piece.version ? `text: ${piece.version}` : '', piece.pages ? `pp. ${piece.pages}` : ''].filter(Boolean).join(' · ');
     return `<li class="piece"><span class="piece-title">${escapeHtml(work.title)}</span><span class="piece-date${dating ? '' : ' is-missing'}">${date}</span>`
       + `<span class="piece-meta">${escapeHtml(meta)}</span></li>`;
   });
@@ -80,9 +84,13 @@ export function render(container, state, actions) {
   const citeHtml = entry.isDigital ? `<label class="toggle"><input type="checkbox" data-action="cite"${edition.cite ? ' checked' : ''}> Cite: send to Zotero</label>` : '';
   const goneHtml = entry.owned ? '' : '<p class="banner">No longer in library</p>';
   const datesHtml = work ? datingsHtml(work, style) : entry.range ? `<span class="date-chip">${dateLineHtml(entry, style)}</span>` : '';
+  // Which text of a revised work this book prints (format 7).
+  const version = work ? (edition.contents.find(item => item.work === work.id) || {}).version : null;
   const editionHtml = factsHtml([
     ['Original title', work && work.originalTitle],
+    ['Text in this book', version],
     ['Contributors', edition.contributors.map(person => `${person.name} (${person.role})`).join('; ')],
+    ['Translators', edition.variousTranslators ? 'Various translators' : ''],
     ['Publisher', [edition.publisher, edition.place].filter(Boolean).join(', ')],
     ['Year of this edition or printing', edition.year],
     ['First edition\'s year', edition.firstPrinted],

@@ -1,11 +1,14 @@
 // What sits by an original-date box on every screen that has one: the
 // working-date rule as one line, with "Which date?" opening the whole rule;
-// the optional kind-of-work chips; and a "Search the web" link that opens the
-// browser on a question about the date (PLAN.md, "Original dates"). The
+// the optional kind-of-work chips; "Revised later?" for a work's final
+// edition and the text a book prints; and a "Search the web" link that opens
+// the browser on a question about the date (PLAN.md, "Original dates"). The
 // browser does the search; the app sends nothing anywhere.
 
 import { escapeHtml } from '../core/html.js';
 import { webSearchUrl } from '../core/date-search.js';
+import { revisionProblem } from '../core/dating.js';
+import { helpHtml } from './field-help.js';
 
 // The working-date rule in one line, shown above the date box.
 export const WORKING_DATE_RULE = 'The first time it appeared: first published, or written if it was not printed in the author\'s lifetime.';
@@ -14,7 +17,7 @@ export const WORKING_DATE_RULE = 'The first time it appeared: first published, o
 export const DATE_RULES = [
   { work: 'Printed in the author\'s lifetime', date: 'its first publication', example: 'Pride and Prejudice, 1813' },
   { work: 'Published in parts over several years', date: 'the range of its first edition', example: 'Grimm\'s tales, 1812–15' },
-  { work: 'Revised by the author afterwards', date: 'the first edition; the final revision can go in as another dating', example: 'Calvin\'s Institutes, 1536' },
+  { work: 'Revised by the author afterwards', date: 'the first edition; the final edition goes in "Revised later?"', example: 'Calvin\'s Institutes, 1536; rev. 1559' },
   { work: 'Written before printing, or first printed after the author died', date: 'when it was written', example: 'Augustine\'s Confessions, c. 397–400' },
   { work: 'A letter', date: 'the date on it', example: '' },
   { work: 'A speech, sermon or lecture', date: 'when it was delivered', example: '' },
@@ -106,6 +109,41 @@ export function toggleKind(button) {
 export function chosenDatingKind(box) {
   if (!box || box.dataset.kind === box.dataset.start) return undefined;
   return datingKindOf(box.dataset.kind) || null;
+}
+
+/**
+ * "Revised later?" under a date box (format 7): the final edition's date of a
+ * work its author revised, and which text of it this book prints. Folded away
+ * unless filled, so a plain book shows one line. A problem (a date that cannot
+ * be read, or a revision with no first date) shows under the box.
+ * @param {{ first?: string, revised?: string, version?: string }} values the first date as typed, and the two boxes
+ * @param {{ revisedName?: string, versionName?: string, askVersion?: boolean }} [names] the boxes' names on the screen;
+ *   askVersion: false where the book holds the work but the screen does not ask its text
+ */
+export function revisedHtml({ first = '', revised = '', version = '' }, { revisedName = 'revised', versionName = 'version', askVersion = true } = {}) {
+  const problem = revised ? revisionProblem(first, revised) : '';
+  const revisedHelp = helpHtml('revised');
+  const versionHelp = helpHtml('version');
+  const versionHtml = askVersion ? `<label class="field"><span class="field-label">This book prints${versionHelp.button}</span>`
+    + `<input name="${versionName}" value="${escapeHtml(version)}" placeholder="final edition, 1857" autocomplete="off" data-version-box>${versionHelp.text}</label>`
+    + `<div class="chips"><button type="button" class="chip" data-action="version-chip" data-value="first">The first text</button>`
+    + `<button type="button" class="chip" data-action="version-chip" data-value="final">The final text</button></div>` : '';
+  return `<details class="revised"${revised || version ? ' open' : ''}><summary>Revised later? Final edition's year</summary>`
+    + `<label class="field"><span class="field-label">Final edition's year${revisedHelp.button}</span>`
+    + `<input name="${revisedName}" value="${escapeHtml(revised)}" placeholder="1857" autocomplete="off" data-revised-box>${revisedHelp.text}`
+    + `<span class="preview${problem ? ' is-problem' : ''}" data-revised-problem>${escapeHtml(problem)}</span></label>${versionHtml}</details>`;
+}
+
+/**
+ * A tap on "The first text" or "The final text": the box beside them says
+ * which, with the final edition's year when it is typed ("final edition, 1857").
+ * The screen is not drawn again, so nothing typed is lost.
+ * @param {HTMLElement} button the chip tapped
+ */
+export function useVersionChip(button) {
+  const box = button.closest('.revised');
+  const year = box.querySelector('[data-revised-box]').value.trim();
+  box.querySelector('[data-version-box]').value = button.dataset.value === 'final' ? ['final edition', year].filter(Boolean).join(', ') : 'first edition';
 }
 
 /**
