@@ -178,10 +178,15 @@ screen.addEventListener('submit', event => {
 // ---------- actions the screens may take ----------
 
 const now = () => new Date().toISOString().slice(0, 19) + 'Z';
+// Today on the device's own calendar. Moments are kept in UTC, but a date (a
+// copy's "added", a value's date, the day a record went to the trash) is the
+// day where the person is: a book added at 9 pm in Minnesota is added that day,
+// though in UTC it is already the next.
+const localDay = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
 
 const actions = {
   now,
-  today: () => now().slice(0, 10),
+  today: () => localDay(new Date()),
   newId: () => makeId(crypto.getRandomValues(new Uint8Array(12))),
 
   /**

@@ -11,7 +11,7 @@ import { saveFile } from './save-file.js';
 // The level chosen, kept while the app is open.
 let depth = 2;
 
-export function render(container, state) {
+export function render(container, state, actions) {
   const { currency } = state.settings;
   const money = amount => `${currency}${amount.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
   const summary = valueSummary(state.library.entries, depth);
@@ -37,6 +37,6 @@ export function render(container, state) {
     if (level) { depth = Number(level.dataset.depth); render(container, state); return; }
     if (!event.target.closest('[data-action="csv"]')) return;
     const { valueCsv } = await import('../core/exports.js');
-    saveFile(`my-loci-library-value-${new Date().toISOString().slice(0, 10)}.csv`, valueCsv(state.library.entries, { currency, depth }), 'text/csv');
+    saveFile(`my-loci-library-value-${actions.today()}.csv`, valueCsv(state.library.entries, { currency, depth }), 'text/csv');
   };
 }

@@ -16,7 +16,7 @@ import { checkGoogleBooksKey } from '../edges/lookup-googlebooks.js';
 import { setupLink, readSetupLink, guessDataRepo } from '../core/settings.js';
 import { guideHtml } from './field-help.js';
 
-export const APP_VERSION = '1.21.0';
+export const APP_VERSION = '1.21.1';
 
 const ON_OFF = [[true, 'On'], [false, 'Off']];
 
@@ -140,7 +140,7 @@ function menuRowHtml(href, label, detail) {
   return `<a class="menu-row" href="${href}"><span>${escapeHtml(label)}</span><span class="page-meta">${escapeHtml(detail)}</span></a>`;
 }
 
-function mainHtml(state) {
+function mainHtml(state, today) {
   const { device } = state;
   const lookHtml = DEVICE_CHOICES.filter(([key]) => LOOK_KEYS.includes(key)).map(([key, label, options]) => chipsHtml('data-key', key, label, options, device[key] ?? options[0][0])).join('');
   // The catalog's name is shown, so moving from the test catalog to the real one can be seen.
@@ -148,7 +148,7 @@ function mainHtml(state) {
     : `Catalog: ${device.syncRepo.split('/').pop()}. ${state.syncStatus || 'Connected.'} ${state.unsent ? `${state.unsent} changes waiting to be sent.` : 'Everything is sent.'}`;
   const syncButtonHtml = device.syncRepo ? '<button class="btn" type="button" data-sync-now>Sync now</button>' : '';
   const backupLine = lastBackupLine(state.backupStatus) || 'No backup from the laptop yet (loci-backup, in the tools).';
-  const reminder = archiveReminder(state.backupStatus, new Date().toISOString().slice(0, 10));
+  const reminder = archiveReminder(state.backupStatus, today);
   const backupHtml = `<p class="page-meta">${escapeHtml(backupLine)}</p>${reminder ? `<p class="step-hint is-missing">${escapeHtml(reminder)}</p>` : ''}`;
   const trashCount = trashedItems(state.records).length;
   // Books the laptop's nightly check has not completed yet, opened as a Library filter.
@@ -203,7 +203,7 @@ export function render(container, state, actions) {
   else if (page === 'export') container.innerHTML = `${backHtml}<div class="page-head"><h1 class="page-title">Export</h1><p class="page-meta">The whole catalog, every book owned or not, as a file on this device.</p></div>
     <nav class="menu">${exportsMenuHtml()}</nav>
     <p class="page-meta">A catalog that opens in any browser, with covers and no internet, is made on the laptop by loci-backup.</p>`;
-  else container.innerHTML = mainHtml(state);
+  else container.innerHTML = mainHtml(state, actions.today());
 
   container.onsubmit = event => {
     if (!event.target.matches('[data-sync]')) return;
@@ -231,7 +231,7 @@ export function render(container, state, actions) {
   };
   container.onclick = event => {
     const exportButton = event.target.closest('[data-export]');
-    if (exportButton) { exportCatalog(exportButton.dataset.export, state); return; }
+    if (exportButton) { exportCatalog(exportButton.dataset.export, state, actions); return; }
     if (event.target.closest('[data-test-key]')) { testGoogleKey(container); return; }
     if (event.target.closest('[data-share-setup]')) { shareSetupLink(container, device); return; }
     if (event.target.closest('[data-needs-details]')) {
@@ -313,13 +313,13 @@ const EXPORTS = [
 ];
 
 // The export code is loaded only when an export is chosen.
-async function exportCatalog(kind, state) {
+async function exportCatalog(kind, state, actions) {
   const exports = await import('../core/exports.js');
   const { library } = state;
-  const day = new Date().toISOString().slice(0, 10);
+  const day = actions.today();
   const files = {
     csv: () => [`my-loci-library-${day}.csv`, exports.catalogCsv(library.entries, { dateStyle: state.settings.dateStyle }), 'text/csv'],
-    json: () => [`my-loci-library-${day}.json`, exports.catalogJson([...state.records.values()], new Date().toISOString().slice(0, 19) + 'Z'), 'application/json'],
+    json: () => [`my-loci-library-${day}.json`, exports.catalogJson([...state.records.values()], actions.now()), 'application/json'],
     csl: () => [`my-loci-library-${day}.csl.json`, exports.cslJson(library.entries, library.worksById, library.authorsById), 'application/json'],
     bibtex: () => [`my-loci-library-${day}.bib`, exports.bibtex(library.entries, library.worksById, library.authorsById), 'application/x-bibtex'],
   };

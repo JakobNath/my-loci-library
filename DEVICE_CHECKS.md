@@ -180,6 +180,11 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone, same book: the language step has clear space between the chips, "Not all the same" and "Another language". Category offers "Drama" "From the record". "Translation and editors" starts "This book is in" at "Greek, English" (or "Ancient Greek, English"), with three chips; tapping one fills the box and keeps the translator typed.
 - [ ] Phone, after saving: the book page shows the series Loeb Classical Library 12, and "Contents" with no dot when no work has a date.
 
+## Dates on the right day (1.21.1, 14 November 2026)
+
+- [ ] Phone, after 6 pm: add a book (or another copy). Its book page should say "Added" with today's date, not tomorrow's.
+- [ ] Phone, after syncing: a book added on an evening before, such as one added on 11 November, now shows the earlier, right day.
+
 ## Title page and copyright page (data format 6, 1.21.0, 14 November 2026)
 
 These could not be tried in the browser preview while building (it would not open), so they are the first look at the new step on any screen.
