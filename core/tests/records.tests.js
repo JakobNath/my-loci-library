@@ -328,7 +328,7 @@ export const tests = [
       const edited = withField(read, 'pages', 'xxviii, 311', '2026-11-12T09:00:00Z');
       same(validateRecord(edited), []);
       const text = recordToFileText(edited);
-      ok(text.includes('"isbn": "9780199537822",\n  "identifiers": {\n    "lccn": null,'), 'the new fields sit in their fixed place');
+      ok(text.includes('"isbn": "9780199537822",\n  "otherIsbns": [],\n  "identifiers": {\n    "lccn": null,'), 'the new fields sit in their fixed place');
       const saved = JSON.parse(text);
       for (const name of Object.keys(edited)) same(saved[name], edited[name], `saved ${name}`);
       same(migrate(read), read, 'a record already in this version stays as it is');
@@ -364,6 +364,8 @@ export const tests = [
       same([migrate(work).format, migrate(work).otherTitles, migrate(work).wikidata], [FORMAT_VERSION, [], null]);
       const edition = { ...newRecord('edition', 'chadw1ck1991', NOW_TEST, { title: 'Confessions', contents: [{ work: 'c0nf3ss10n5x', extent: 'complete', translator: null, pages: null }] }), format: 2, identifiers: { lccn: null, oclc: null, lcc: null, ddc: null } };
       delete edition.foundContents;
+      delete edition.firstPrinted;
+      delete edition.otherIsbns;
       equal(recordToFileText(edition), `${JSON.stringify(edition, null, 2)}\n`, 'a version-2 edition, as stored');
       const read = migrate(edition);
       same(validateRecord(read), []);
@@ -444,6 +446,44 @@ export const tests = [
       same(validateRecord(read), []);
       ok(!recordToFileText(read).includes('translationFirstPublished'), 'not written once read');
       equal(stored.translationFirstPublished, 1991, 'the record read is not changed');
+    },
+  },
+  {
+    name: 'a version-5 edition gains no first printing and no other ISBNs, and is written exactly as stored until edited',
+    fn() {
+      // A version-5 edition file, as the catalog held it before 14 November 2026.
+      const stored = JSON.parse(recordToFileText({ ...chadwick, format: 5 }));
+      ok(!('otherIsbns' in stored) && !('firstPrinted' in stored), 'version 5 has neither field');
+      equal(recordToFileText(stored), `${JSON.stringify(stored, null, 2)}\n`, 'a version-5 edition, as stored');
+      const read = migrate(stored);
+      same([read.format, read.firstPrinted, read.otherIsbns], [FORMAT_VERSION, null, []]);
+      same(validateRecord(read), []);
+      const text = recordToFileText(read);
+      ok(text.includes(`"year": ${chadwick.year},\n  "firstPrinted": null,\n  "editionStatement"`), 'the first printing sits after the year');
+      ok(text.includes(`"isbn": "${chadwick.isbn}",\n  "otherIsbns": [],\n  "identifiers"`), 'the other ISBNs sit after the ISBN');
+      ok(!('firstPrinted' in stored), 'the record read is not changed');
+      same(migrate({ ...augustine, format: 5 }), augustine, 'other records only change their format number');
+    },
+  },
+  {
+    name: 'an edition\'s first printing is a year, and each other ISBN is 13 digits and not the ISBN itself',
+    fn() {
+      // Loeb Euripides IV: this printing 1980, first printed 1912, with a British ISBN beside the American one.
+      const loeb = { ...chadwick, year: 1980, firstPrinted: 1912, isbn: '9780674990128', otherIsbns: ['9780434990122'] };
+      same(validateRecord(loeb), []);
+      ok(validateRecord({ ...loeb, firstPrinted: '1912' }).some(p => p.includes('firstPrinted')), 'a year as text');
+      ok(validateRecord({ ...loeb, otherIsbns: ['0434990124'] }).some(p => p.includes('13 digits')), 'an ISBN-10 is stored as 13 digits');
+      ok(validateRecord({ ...loeb, otherIsbns: ['9780674990128'] }).some(p => p.includes('same as the ISBN')), 'the ISBN again');
+    },
+  },
+  {
+    name: 'two devices merge the first printing and the other ISBNs field by field',
+    fn() {
+      const mine = withField(chadwick, 'firstPrinted', 1912, '2026-11-14T09:00:00Z');
+      const theirs = withField(chadwick, 'otherIsbns', ['9780434990122'], '2026-11-14T10:00:00Z');
+      const merged = mergeRecords(mine, theirs);
+      same([merged.firstPrinted, merged.otherIsbns], [1912, ['9780434990122']]);
+      same(mergeRecords(theirs, mine), merged, 'the same either way');
     },
   },
   {

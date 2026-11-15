@@ -1,6 +1,9 @@
 // The entry form's records: sample books entered from scratch, editing
 // that stamps only what changed, and ISBNs.
 
+import { otherIsbnsFromText, firstPrintedFromText, hasValidCheckDigit, publisherRows, publishersFromRows } from '../entry.js';
+import { editionsWithIsbn } from '../matching.js';
+import { buildLibrary, searchEntries } from '../library.js';
 import { recordsFromForm, isbn13, anotherCopy, isBookBarcode, wishFromForm, formFromWish, isbnInText, volumesFromLines, nextVolumeLabel, withSetFacts, worksFromRows, withWorkTranslators } from '../entry.js';
 import { emptyFound } from '../lookup.js';
 import { sameWikidataWorks } from '../matching.js';
@@ -401,6 +404,62 @@ export const tests = [
       same(changed.contents.map(entry => entry.translator), [null, 'Edward Sittler']);
       equal(changed.changed.contents, '2026-11-14T12:00:00Z');
       same(validateRecord(changed), []);
+    },
+  },
+  {
+    name: 'the form reads other ISBNs as 13 digits, each once and never the ISBN itself, and names one that is not an ISBN',
+    fn() {
+      // Loeb Euripides IV prints the American ISBN and the British one (0 434 99012 4).
+      same(otherIsbnsFromText('0 434 99012 4; 978-0-434-99012-2, 0674990129', '9780674990128'), { isbns: ['9780434990122'], problems: [] });
+      same(otherIsbnsFromText('', null), { isbns: [], problems: [] });
+      ok(otherIsbnsFromText('Heinemann', null).problems[0].includes('"Heinemann" is not an ISBN'));
+      ok(otherIsbnsFromText('0 434 99012 5', null).problems[0].includes('last digit'), 'a slip in typing');
+      ok(hasValidCheckDigit('0758615477') && !hasValidCheckDigit('0785615477') && hasValidCheckDigit('9780758615466'));
+    },
+  },
+  {
+    name: 'the form saves the first printing and the other ISBNs; a form without their boxes leaves them as they are',
+    fn() {
+      same(firstPrintedFromText(' 1912 '), { year: 1912, problem: null });
+      same(firstPrintedFromText(''), { year: null, problem: null });
+      ok(firstPrintedFromText('1912?').problem.includes('not a year'));
+      const form = blankForm({ title: 'Euripides IV', authors: ['Euripides'], year: '1980', firstPrinted: '1912', isbn: '0674990129', otherIsbns: '0434990124' });
+      const result = recordsFromForm(form, null, context());
+      same(result.problems, []);
+      const edition = result.records.find(record => record.type === 'edition');
+      same([edition.year, edition.firstPrinted, edition.isbn, edition.otherIsbns], [1980, 1912, '9780674990128', ['9780434990122']]);
+      same(validateRecord(edition), []);
+      const existing = { edition, copy: result.records.find(record => record.type === 'copy'), works: result.records.filter(record => record.type === 'work') };
+      const { firstPrinted, otherIsbns, ...withoutBoxes } = form;
+      const again = recordsFromForm({ ...withoutBoxes, pages: 'xii, 478' }, existing, context(result.records.filter(record => record.type === 'author')));
+      const edited = again.records.find(record => record.type === 'edition');
+      same([edited.firstPrinted, edited.otherIsbns, edited.pages], [1912, ['9780434990122'], 'xii, 478']);
+      ok(!('firstPrinted' in edited.changed), 'nothing stamped');
+      equal(recordsFromForm({ ...form, firstPrinted: 'about 1912' }, null, context()).problems.length, 1, 'a year that cannot be read is asked again');
+    },
+  },
+  {
+    name: 'two publishers are two rows on the copyright page step, and are joined back in the same order with "; "',
+    fn() {
+      // As the catalog held Loeb Euripides IV and a Concordia book in November 2026.
+      const loeb = publisherRows('Harvard University Press; William Heinemann', 'Cambridge, MA; London');
+      same(loeb, [{ publisher: 'Harvard University Press', place: 'Cambridge, MA' }, { publisher: 'William Heinemann', place: 'London' }]);
+      same(publishersFromRows(loeb), { publisher: 'Harvard University Press; William Heinemann', place: 'Cambridge, MA; London' });
+      same(publisherRows(null, null), [{ publisher: '', place: '' }], 'one empty row to fill');
+      same(publisherRows('Concordia Publishing House; Fortress Press', 'St. Louis'), [{ publisher: 'Concordia Publishing House', place: 'St. Louis' }, { publisher: 'Fortress Press', place: '' }]);
+      same(publishersFromRows([{ publisher: 'Oxford University Press', place: '' }, { publisher: ' ', place: 'London' }, { publisher: '', place: '' }]),
+        { publisher: 'Oxford University Press', place: 'London' }, 'empty rows and boxes leave no stray "; "');
+    },
+  },
+  {
+    name: 'scanning or searching a British ISBN finds the edition held under the American one',
+    fn() {
+      const form = blankForm({ title: 'Euripides IV', authors: ['Euripides'], isbn: '9780674990128', otherIsbns: '0434990124' });
+      const library = buildLibrary(recordsFromForm(form, null, context()).records);
+      same(editionsWithIsbn('9780434990122', library.entries).map(entry => entry.edition.title), ['Euripides IV']);
+      same(editionsWithIsbn('9780674990128', library.entries).length, 1, 'the main ISBN as before');
+      same(editionsWithIsbn('9780000000002', library.entries), []);
+      same(searchEntries(library, '9780434990122').map(entry => entry.edition.title), ['Euripides IV']);
     },
   },
 ];

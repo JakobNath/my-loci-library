@@ -6,7 +6,7 @@
 // Loeb's style of title.
 
 import { isbn13 } from './entry.js';
-import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn } from './lookup.js';
+import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns } from './lookup.js';
 import { normalizeForSearch } from './search.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
@@ -93,8 +93,8 @@ const first = list => tidy((list || []).find(item => tidy(item)) || '');
  * @returns {import('./lookup.js').Found|null} null when the record does not list the ISBN
  */
 export function fromOpenLibraryEdition(edition, isbn) {
-  const isbns = [...((edition && edition.isbn_13) || []), ...((edition && edition.isbn_10) || [])].map(isbn13);
-  if (!edition || !edition.title || !isbns.includes(isbn)) return null;
+  const listed = [...((edition && edition.isbn_13) || []), ...((edition && edition.isbn_10) || [])];
+  if (!edition || !edition.title || !listed.map(isbn13).includes(isbn)) return null;
   const found = emptyFound('openlibrary');
   found.title = titleCase(tidy(edition.title));
   found.subtitle = titleCase(tidy(edition.subtitle));
@@ -105,6 +105,7 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.year = yearOf(edition.publish_date);
   found.pages = cleanPages(edition.pagination) || (edition.number_of_pages ? String(edition.number_of_pages) : '');
   found.isbn = isbn;
+  found.otherIsbns = otherIsbnsListed(listed, isbn);
   // Records copied from booksellers say "New Ed edition", meaning "New ed.".
   found.editionStatement = tidy(edition.edition_name).replace(/[[\]]/g, '').replace(/\.\.$/, '.').replace(/\bEd\.? edition$/i, 'ed.');
   Object.assign(found, edition.series && edition.series.length ? seriesParts(edition.series) : {});
@@ -164,6 +165,7 @@ export function fromGoogleBooksVolume(volume, isbn) {
   found.year = yearOf(info.publishedDate);
   found.pages = info.pageCount ? String(info.pageCount) : '';
   found.isbn = isbn;
+  found.otherIsbns = otherIsbnsListed(googleIsbns(info), isbn);
   const size = info.dimensions || {};
   const number = text => String(text || '').replace(/\s*cm$/, '');
   Object.assign(found, sizesFromDimensions(number(size.height), number(size.width), number(size.thickness), 'cm'));
@@ -233,6 +235,8 @@ export function mergeFound(answers) {
   const merged = present.reduce(combineFound);
   const printed = present.map(found => found.pages).find(pages => pages && !isBareCount(pages));
   const result = printed ? { ...merged, pages: printed } : { ...merged }; // a copy: answers are never changed
+  // Every source's other ISBNs together, each once, since each record lists its own few.
+  result.otherIsbns = otherIsbnsListed(present.flatMap(found => found.otherIsbns || []), result.isbn);
   // Only a set's record knew the book: it is called by the set and its volume.
   if (!result.title && result.set) result.title = `${result.set}, vol. ${result.volume}`;
   return result;

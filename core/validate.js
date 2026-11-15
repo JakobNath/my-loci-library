@@ -64,6 +64,11 @@ const TYPE_CHECKS = {
       if (edition[field] !== null && !allowed.includes(edition[field])) problems.push(`${field} "${edition[field]}" is not one of: ${allowed.join(', ')}.`);
     }
     if (edition.isbn !== null && !/^\d{13}$/.test(edition.isbn)) problems.push(`ISBN "${edition.isbn}" should be 13 digits.`);
+    for (const other of edition.otherIsbns) {
+      if (!/^\d{13}$/.test(other)) problems.push(`Other ISBN "${other}" should be 13 digits.`);
+      if (other === edition.isbn) problems.push(`Other ISBN "${other}" is the same as the ISBN.`);
+    }
+    if (edition.firstPrinted !== null && !Number.isInteger(edition.firstPrinted)) problems.push(`"firstPrinted" should be a year, or null; it is "${edition.firstPrinted}".`);
     const identifiers = edition.identifiers || {};
     if (IDENTIFIER_KEYS.some(key => !(key in identifiers) || (identifiers[key] !== null && typeof identifiers[key] !== 'string'))) {
       problems.push(`"identifiers" should hold ${IDENTIFIER_KEYS.join(', ')}, each text or null.`);

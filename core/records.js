@@ -5,15 +5,15 @@
 
 import { readBindingText } from './bindings.js';
 
-export const FORMAT_VERSION = 5;
+export const FORMAT_VERSION = 6;
 
 // The fields of each record type, in file order, with the value of an empty field.
 export const FIELDS = {
   work: { title: '', subtitle: null, authors: [], originalTitle: null, otherTitles: [], originalLanguage: null, datings: [], sortYear: null, category: null, tags: [], wikidata: null },
   edition: {
-    title: '', subtitle: null, contents: [], contributors: [], publisher: null, place: null, year: null,
+    title: '', subtitle: null, contents: [], contributors: [], publisher: null, place: null, year: null, firstPrinted: null,
     editionStatement: null, series: null, seriesNumber: null, set: null, volume: null, setRecord: null,
-    isbn: null, identifiers: { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, languages: [], subjects: [], foundContents: [], pages: null, height: null, heightSource: null, thickness: null, thicknessSource: null,
+    isbn: null, otherIsbns: [], identifiers: { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, languages: [], subjects: [], foundContents: [], pages: null, height: null, heightSource: null, thickness: null, thicknessSource: null,
     medium: 'physical', logosId: null, logosExtra: {}, cite: false, images: [],
   },
   copy: {
@@ -112,10 +112,13 @@ export function recordToFileText(record) {
 }
 
 // The fields of a record in file order. An edition before version 5 also had
-// translationFirstPublished, kept in place so its file text stays as stored.
+// translationFirstPublished, and one before version 6 had no firstPrinted or
+// otherIsbns; both are kept as they were, so its file text stays as stored.
 function fieldNames(type, format) {
-  const names = Object.keys(FIELDS[type]);
-  if (type === 'edition' && format < 5) names.splice(names.indexOf('editionStatement') + 1, 0, 'translationFirstPublished');
+  let names = Object.keys(FIELDS[type]);
+  if (type !== 'edition') return names;
+  if (format < 6) names = names.filter(name => name !== 'firstPrinted' && name !== 'otherIsbns');
+  if (format < 5) names.splice(names.indexOf('editionStatement') + 1, 0, 'translationFirstPublished');
   return names;
 }
 
@@ -150,7 +153,16 @@ export function migrate(record) {
   if (upgraded.format === 2) upgraded = fromVersion2(upgraded);
   if (upgraded.format === 3) upgraded = fromVersion3(upgraded);
   if (upgraded.format === 4) upgraded = fromVersion4(upgraded);
+  if (upgraded.format === 5) upgraded = fromVersion5(upgraded);
   return upgraded;
+}
+
+// Version 6 (November 2026) gave each edition the year it was first printed,
+// as its copyright page says, and the other ISBNs printed in it (another
+// country's or binding's), so a scan of either finds the book.
+function fromVersion5(record) {
+  if (record.type !== 'edition') return { ...record, format: 6 };
+  return { ...record, format: 6, firstPrinted: null, otherIsbns: [] };
 }
 
 // Version 5 (November 2026) dropped the year an edition's translation first
