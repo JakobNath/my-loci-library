@@ -77,7 +77,7 @@ export function cardHtml(card, i, about) {
   }).join('');
   const foreign = card.language && !isEnglish(card.language);
   const originalHtml = foreign ? `<label class="field">Original title<input name="cardOriginalTitle" value="${attr(shownOriginalTitle(card, known))}" autocomplete="off">`
-    + `${card.originalTitle === null && known && known.originalTitle ? '<span class="preview">From Wikidata; correct it or clear it.</span>' : ''}</label>`
+    + `${card.originalTitle === null && known && known.originalTitle ? '<span class="preview">From Wikidata; correct it if it is wrong.</span>' : ''}</label>`
     + `<p class="search-line">${searchLinkHtml(originalTitleQuestion(card.title, authors), 'card-title')}</p>` : '';
   // A date to tap: Wikidata's, unless it was printed after the author died (then the working date is when it was written).
   const suggestions = [];
@@ -137,7 +137,8 @@ export function readCards(book, stepArea) {
     card.title = value('cardTitle') || card.title;
     card.author = value('cardAuthor');
     if (value('cardLanguage')) Object.assign(card, { language: value('cardLanguage'), languageChosen: true });
-    if (box.querySelector('[name="cardOriginalTitle"]')) card.originalTitle = value('cardOriginalTitle');
+    // An empty box is "not given" (null), so Wikidata's title, which is kept anyway when the work is saved, still shows.
+    if (box.querySelector('[name="cardOriginalTitle"]')) card.originalTitle = value('cardOriginalTitle') || null;
     card.date = value('cardDate');
     if (card.date) card.dateUnknown = false;
   }

@@ -18,7 +18,9 @@ const STATE_TEXT = { missing: 'missing', unknown: "don't know", none: 'none' };
 export function checkStepHtml(groups, title) {
   const missing = groups.flatMap(group => group.rows).filter(row => row.state === 'missing').length;
   const rowHtml = row => {
-    const value = row.state === 'filled' ? escapeHtml(row.value) : `<span class="check-${row.state}">${escapeHtml(STATE_TEXT[row.state] || '')}</span>`;
+    // A work answered in part ("Karl Marx · German", date not known) shows what it has, then its state.
+    const stateHtml = row.state === 'filled' ? '' : `<span class="check-${row.state}">${escapeHtml(STATE_TEXT[row.state] || '')}</span>`;
+    const value = [row.value ? escapeHtml(row.value) : '', stateHtml].filter(Boolean).join(' · ');
     const inner = `<span class="check-label">${escapeHtml(row.label)}</span><span class="check-value">${value}</span>`;
     return row.step ? `<button type="button" class="check-row" data-action="jump" data-value="${attr(row.step)}">${inner}</button>` : `<div class="check-row">${inner}</div>`;
   };

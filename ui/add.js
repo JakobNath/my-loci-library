@@ -502,6 +502,7 @@ export function render(container, state, actions) {
         if (event.target.name === 'cardDate') showCardPreview(event.target);
         readCards(book, stepArea);
         showCount(stepArea, book, Number(card.dataset.card));
+        if (['cardTitle', 'cardAuthor'].includes(event.target.name)) wikidataAgainShown();
       }
     };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
@@ -626,9 +627,8 @@ export function render(container, state, actions) {
   // authors were corrected on the cards, a button to ask again with them.
   function wikidataLineHtml(cards) {
     if ((state.settings.lookups || {}).wikidata === false || book.knownVolume) return '';
-    const question = wikidataQuestion(cards);
-    const again = wikidataKey(question.titles, question.authors) !== book.wikidataAsked
-      ? ' <button type="button" class="chip" data-action="wikidata-again">Ask Wikidata again, with the titles and authors as corrected</button>' : '';
+    // Shown as soon as a title or author is changed on a card (wikidataAgainShown).
+    const again = ` <button type="button" class="chip" data-action="wikidata-again"${wikidataChanged(cards) ? '' : ' hidden'}>Ask Wikidata again, with the titles and authors as corrected</button>`;
     const arrived = '<p class="step-hint" data-wikidata-arrived hidden>Wikidata has answered. <button type="button" class="chip" data-action="works-refresh">Show its suggestions</button></p>';
     const problem = book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
     if (problem) return `<p class="step-hint">${escapeHtml(problem)}${again}</p>`;
@@ -639,6 +639,16 @@ export function render(container, state, actions) {
       : 'Wikidata knows none of these works. Use "Search the web" on each card.';
     const useHtml = datable.length ? ` <button type="button" class="chip" data-action="wikidata-dates">${escapeHtml(`Use Wikidata's dates (${datable.length})`)}</button>` : '';
     return `<p class="step-hint">${escapeHtml(text)}${useHtml}${again}</p>${arrived}`;
+  }
+
+  // Whether the cards' titles or authors differ from what Wikidata was last asked.
+  function wikidataChanged(cards) {
+    const question = wikidataQuestion(cards);
+    return wikidataKey(question.titles, question.authors) !== book.wikidataAsked;
+  }
+  function wikidataAgainShown() {
+    const button = stepArea.querySelector('[data-action="wikidata-again"]');
+    if (button) button.hidden = !wikidataChanged(book.cards);
   }
 
   // A card's search link, pointed at its title and author as typed now.
