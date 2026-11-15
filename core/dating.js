@@ -61,7 +61,7 @@ function failure(text) {
   if (parts.length > 1) {
     return {
       ok: false,
-      problem: `Two dates: type only the first edition's here (Grimm's tales: 1812–15), or when it was written if it was not printed in the author's lifetime. A later revision can be added in Edit book as another dating.`,
+      problem: `Two dates: type only the first edition's here (Grimm's tales: 1812–15), or when it was written if it was not printed in the author's lifetime. A later revision goes in "Revised later?", under the box.`,
     };
   }
   return {
@@ -169,10 +169,44 @@ export function formatDating(dating, style = 'AD') {
   return dating.certainty === 'circa' ? `c. ${years}` : years;
 }
 
-/** The working dating of a work: the one marked working, or else the first. */
+/** The working dating of a work: the one marked working, or else the first that is not a revision. */
 export function workingDating(work) {
   const datings = work.datings || [];
-  return datings.find(dating => dating.working) || datings[0] || null;
+  return datings.find(dating => dating.working) || datings.find(dating => !isRevised(dating)) || null;
+}
+
+/**
+ * Whether a dating is the final revised edition of a work its author kept
+ * revising (Grimm's tales, rev. 1857; format 7). It is kept beside the first
+ * edition's dating, is never the working dating, and is no second opinion.
+ */
+export function isRevised(dating) {
+  return Boolean(dating) && dating.kind === 'revised';
+}
+
+/**
+ * A work's opinions of when it was written: its datings without the revision.
+ * A work with two or more of these is a disputed work.
+ */
+export function opinionsOf(work) {
+  return (work.datings || []).filter(dating => !isRevised(dating));
+}
+
+/** A work's final revised edition, or null. */
+export function revisedDating(work) {
+  return (work.datings || []).find(isRevised) || null;
+}
+
+/**
+ * A work's date for display: its working dating, and its revision after it,
+ * "1812–15; rev. 1857" (PLAN.md, "Which date is the working date").
+ * @returns {string} empty when the work has no dating
+ */
+export function formatWorkDate(work, style = 'AD') {
+  const working = workingDating(work);
+  if (!working) return '';
+  const revised = revisedDating(work);
+  return revised ? `${formatDating(working, style)}; rev. ${formatDating(revised, style)}` : formatDating(working, style);
 }
 
 /**

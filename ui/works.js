@@ -8,7 +8,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
-import { worksFromRows, withWorkTranslators } from '../core/entry.js';
+import { worksFromRows, withEntryDetails } from '../core/entry.js';
 import { iconHtml } from './icons.js';
 import { workDateQuestion } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind } from './date-help.js';
@@ -98,7 +98,7 @@ export function render(container, state, actions) {
     const result = worksFromRows(rows, same, state.library.worksById, actions.now());
     // Translators are kept on the book's contents, so the edition changes with them.
     const translators = [...form.querySelectorAll('[data-row]')].map(row => ({ id: row.dataset.row, translator: value(row, 'translator') }));
-    const edition = withWorkTranslators(entry.edition, translators, actions.now());
+    const edition = withEntryDetails(entry.edition, translators, actions.now());
     if (edition !== entry.edition && !result.problems.length) result.records.push(edition);
     const problems = form.querySelector('.problems');
     if (result.problems.length) {

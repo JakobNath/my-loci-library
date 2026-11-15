@@ -322,7 +322,7 @@ export const tests = [
       equal(stored.format, 1, 'the record read is not changed');
       equal(recordToFileText(stored), `${JSON.stringify(stored, null, 2)}\n`, 'a version-1 record is written exactly as stored, for comparing with its file');
       same([read.format, read.identifiers, read.subjects, read.foundContents], [FORMAT_VERSION, { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, [], []]);
-      same(read.contents, [{ work: '6jwwbbrvgvdy', piece: null, extent: 'complete', translator: null, pages: null, cite: false }], 'each contents entry gains no piece and is not cited');
+      same(read.contents, [{ work: '6jwwbbrvgvdy', piece: null, extent: 'complete', translator: null, version: null, pages: null, cite: false }], 'each contents entry gains no piece, is not cited and names no version');
       // Version 5 dropped the translation year on purpose (see the version-4 test below).
       for (const name of Object.keys(stored).filter(name => !['format', 'contents', 'translationFirstPublished'].includes(name))) same(read[name], stored[name], name);
       const edited = withField(read, 'pages', 'xxviii, 311', '2026-11-12T09:00:00Z');
@@ -366,6 +366,7 @@ export const tests = [
       delete edition.foundContents;
       delete edition.firstPrinted;
       delete edition.otherIsbns;
+      delete edition.variousTranslators;
       equal(recordToFileText(edition), `${JSON.stringify(edition, null, 2)}\n`, 'a version-2 edition, as stored');
       const read = migrate(edition);
       same(validateRecord(read), []);
@@ -517,6 +518,40 @@ export const tests = [
       same(withDefaults({ bindings: ['Hardcover'], materials: ['Vellum'], extras: [] }).materials, ['Vellum'], 'settings already in three lists are kept as they are');
       same(withDefaults({}).bindings, SHARED_DEFAULTS.bindings);
       same(sortBindingList(['Hardcover, Smyth-sewn']).bindings, ['Hardcover, Smyth-sewn'], 'an entry that cannot be read stays a binding');
+    },
+  },
+  {
+    name: 'a version-6 edition gains "various translators" off and no version on its contents, and is written exactly as stored until edited',
+    fn() {
+      // A version-6 edition file, as the catalog held it before 15 November 2026.
+      const stored = JSON.parse(recordToFileText({ ...chadwick, format: 6, contents: chadwick.contents.map(entry => ({ ...entry, piece: null, cite: false })) }));
+      ok(!('variousTranslators' in stored) && !('version' in stored.contents[0]), 'version 6 has neither field');
+      equal(recordToFileText(stored), `${JSON.stringify(stored, null, 2)}\n`, 'a version-6 edition, as stored');
+      const read = migrate(stored);
+      same([read.format, read.variousTranslators, read.contents[0].version], [FORMAT_VERSION, false, null]);
+      same(validateRecord(read), []);
+      const text = recordToFileText(read);
+      ok(text.includes('"contributors": [\n    {\n      "name": "Henry Chadwick",\n      "role": "translator"\n    }\n  ],\n  "variousTranslators": false,\n  "publisher"'), '"various translators" sits after the contributors');
+      ok(text.includes('"translator": null,\n      "version": null,\n      "pages": null'), 'the version sits after the translator');
+      ok(!('variousTranslators' in stored), 'the record read is not changed');
+      same(migrate({ ...augustine, format: 6 }), augustine, 'other records only change their format number');
+      const work = { ...confessions, format: 6 };
+      same(migrate(work), confessions, 'a work only changes its format number');
+    },
+  },
+  {
+    name: 'a final revised edition is never the working dating, needs a first dating, and a version names a text',
+    fn() {
+      const first = { ...parseDating('1812–15').dating, kind: null, note: '', working: true };
+      const revised = { ...parseDating('1857').dating, kind: 'revised', note: '', working: false };
+      const grimm = newRecord('work', 'gr1mmta1es01', NOW_TEST, { title: 'Children\'s and Household Tales', datings: [first, revised] });
+      same(validateRecord(grimm), []);
+      ok(validateRecord({ ...grimm, datings: [{ ...first, working: false }, { ...revised, working: true }] }).some(p => p.includes('never the working dating')));
+      ok(validateRecord({ ...grimm, datings: [{ ...revised, working: true }] }).some(p => p.includes('first edition')), 'a revision alone');
+      const edition = { ...chadwick, variousTranslators: true, contents: [{ ...chadwick.contents[0], version: 'final edition, 1857' }] };
+      same(validateRecord(edition), []);
+      ok(validateRecord({ ...edition, contents: [{ ...chadwick.contents[0], version: 1857 }] }).some(p => p.includes('version')), 'a version is text');
+      ok(validateRecord({ ...edition, variousTranslators: 'yes' }).some(p => p.includes('true or false')));
     },
   },
 ];
