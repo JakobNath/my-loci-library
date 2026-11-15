@@ -1,7 +1,7 @@
 // The date parser: every row of the table in DATA_FORMAT.md, plus the extra
 // forms named in PLAN.md, and the historical century convention.
 
-import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating } from '../dating.js';
+import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating, formatWorkDate, opinionsOf, revisedDating, isRevised } from '../dating.js';
 import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle, contentsQuestion, firstEditionQuestion, workDetailsQuestion, collectionDateQuestion } from '../date-search.js';
 import { equal, same, ok } from './check.js';
 
@@ -233,5 +233,22 @@ export const tests = [
   {
     name: 'the search address carries the question, encoded',
     fn() { equal(webSearchUrl("When was Fagles' Iliad & Odyssey?"), "https://www.google.com/search?q=When%20was%20Fagles'%20Iliad%20%26%20Odyssey%3F"); },
+  },
+  {
+    name: 'a revised work shows its first date and its final edition, "1812–15; rev. 1857", and is no disputed work',
+    fn() {
+      const first = { ...parseDating('1812–15').dating, kind: null, note: '', working: true };
+      const revised = { ...parseDating('1857').dating, kind: 'revised', note: '', working: false };
+      const grimm = { datings: [first, revised], sortYear: null };
+      equal(formatWorkDate(grimm), '1812–15; rev. 1857');
+      equal(sortYearOf(grimm), 1812, 'it sorts by the first edition');
+      same(opinionsOf(grimm), [first], 'one opinion, so not disputed');
+      equal(revisedDating(grimm), revised);
+      ok(isRevised(revised) && !isRevised(first));
+      equal(workingDating({ datings: [revised, { ...first, working: false }] }).text, '1812–15', 'with none marked working, the first that is no revision');
+      equal(formatWorkDate({ datings: [first] }), '1812–15');
+      equal(formatWorkDate({ datings: [] }), '');
+      ok(parseDating('1806-1812, 1857').problem.includes('Revised later?'), 'two dates point to the revision box');
+    },
   },
 ];

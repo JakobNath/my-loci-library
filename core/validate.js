@@ -43,7 +43,9 @@ const TYPE_CHECKS = {
         problems.push(`Dating "${dating.text}" ends before it starts.`);
       }
       if (dating.earliest === 0 || dating.latest === 0) problems.push(`Dating "${dating.text}" uses year 0, which does not exist.`);
+      if (dating.kind === 'revised' && dating.working) problems.push(`Dating "${dating.text}" is a final revised edition, which is never the working dating.`);
     }
+    if (work.datings.length && work.datings.every(dating => dating.kind === 'revised')) problems.push('A final revised edition needs the first edition\'s dating beside it.');
     return problems;
   },
   edition(edition) {
@@ -53,6 +55,7 @@ const TYPE_CHECKS = {
     for (const entry of edition.contents) {
       const isPiece = entry.work === null && entry.piece && typeof entry.piece.title === 'string' && entry.piece.title;
       if (!isPiece && !isId(entry.work)) problems.push(`Contents entry "${entry.work}" is neither a work ID nor a piece with a title.`);
+      if (entry.version !== undefined && entry.version !== null && (typeof entry.version !== 'string' || !entry.version)) problems.push(`Contents entry "${entry.work || entry.piece.title}" should name the text it prints, or have null as its version.`);
       if (entry.cite !== undefined && typeof entry.cite !== 'boolean') problems.push(`Contents entry "${entry.work || entry.piece.title}" should say whether it is cited (true or false).`);
     }
     if (edition.foundContents.some(entry => !entry || !entry.title)) problems.push('Every entry of "foundContents" needs a title.');

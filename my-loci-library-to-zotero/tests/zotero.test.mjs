@@ -279,3 +279,20 @@ test('more than 100 collections are all looked through', async () => {
   assert.deepEqual(pages, [0, 100]);
   assert.ok(zotero);
 });
+
+test('a revised work sends its first edition as the original date, and "Various translators" is never sent as a person', async () => {
+  // Format 7: an exact first edition with a final revised edition beside it, and a book translated by many.
+  const datings = [
+    { text: '1536', earliest: 1536, latest: 1536, certainty: 'exact', kind: null, note: '', working: true },
+    { text: '1559', earliest: 1559, latest: 1559, certainty: 'exact', kind: 'revised', note: '', working: false },
+  ];
+  const revised = withField(confessions, 'datings', datings, '2026-11-15T09:00:00Z');
+  const various = withField(chadwick, 'variousTranslators', true, '2026-11-15T09:00:00Z');
+  const records = sampleRecords().map(record => (record.id === confessions.id ? revised : record.id === chadwick.id ? various : record));
+  const { fake, zotero, links } = setup();
+  await sendToZotero(records, links, zotero);
+  const [book] = fake.byTitle('Confessions');
+  assert.equal(book.data.originalDate, '1536', 'the first edition, not the revision');
+  const names = book.data.creators.map(person => `${person.firstName || ''} ${person.lastName || person.name || ''}`);
+  assert.ok(!names.some(name => /various/i.test(name)), names.join('; '));
+});
