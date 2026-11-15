@@ -13,7 +13,7 @@ import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
-import { mergeFound, withLibraryContents } from '../core/book-data.js';
+import { mergeFound, withLibraryContents, isYearTooEarly, categoriesFromSubjects, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../core/book-data.js';
 import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
@@ -29,7 +29,7 @@ import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, searchTitle } from '../core/date-search.js';
+import { workDateQuestion, searchTitle, webSearchUrl } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml } from './date-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
@@ -206,7 +206,10 @@ export function render(container, state, actions) {
     const known = [...state.library.authorsById.values()].map(author => author.name);
     found = tidyPeople(found, { search: await workSearch, work: await work, known });
     const sources = answers.filter(answer => answer.found).map(answer => answer.name);
-    startBook(found ? { ...found, sources } : { isbn }, work, found ? '' : problems[0] || '');
+    // A year too early for a book with an ISBN was left out (core/book-data.js); with no other year, "Is this the book?" says why.
+    const early = answers.map(answer => answer.found).find(answer => answer && isYearTooEarly(answer));
+    const yearSetAside = found && !found.year && early ? early.year : '';
+    startBook(found ? { ...found, sources, yearSetAside } : { isbn }, work, found ? '' : problems[0] || '');
   }
 
   function askAboutDuplicate(entry) {
@@ -251,8 +254,8 @@ export function render(container, state, actions) {
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), hasTranslator: translators.length > 0,
       editors: full.contributors.filter(person => person.role === 'editor').map(person => person.name).join('; '),
-      // The language of the pages in hand, asked of a translation; English unless a record says otherwise.
-      bookLanguages: (full.languages || []).join(', ') || 'English',
+      // The language of the pages in hand, asked of a translation; null until answered (shownBookLanguages).
+      bookLanguages: null,
       workTranslators: null, // who translated each work of a collection, when it has several translators
       copy: { acquired: '', price: '', value: '', markings: false, notes: '' },
       photos: {}, cover: { state: 'none' }, ...parts, location: (state.batchLocation || []).filter(Boolean),
@@ -260,7 +263,7 @@ export function render(container, state, actions) {
       contentsOffered: full.contents.length > 1 && !isBible({ edition: {}, works: full.contents }),
       contents: null, // the accepted contents, one work per line
       severalChosen: false, // "Yes, and it holds several works", when no source listed them
-      wikidata: new Map(), wikidataAsked: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
+      wikidata: new Map(), wikidataAsked: '', wikidataAnswered: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
       fixing: !found.source, // not found online: the details are asked for at once
     };
     // Leaving the screen now would lose the answers and photos, so main.js asks first.
@@ -346,11 +349,22 @@ export function render(container, state, actions) {
     });
   }
 
+  // The work's original language: a linked work's own, else the one given while adding.
+  function originalLanguage() {
+    const linked = book.works.find(work => work.id === book.workId);
+    return linked ? linked.originalLanguage : book.language;
+  }
+
   // A translation: a translator is named, or the work was first written in another language.
   function isTranslated() {
-    const linked = book.works.find(work => work.id === book.workId);
-    const language = linked ? linked.originalLanguage : book.language;
+    const language = originalLanguage();
     return book.hasTranslator || Boolean(language && !isEnglish(language));
+  }
+
+  // "This book is in", until the person answers: the original and English for a facing-page
+  // series (a Loeb), else the record's languages, else English (core/book-data.js).
+  function shownBookLanguages() {
+    return book.bookLanguages ?? startingBookLanguages({ found: book.found.languages || [], series: book.found.series, original: originalLanguage() });
   }
 
   // The steps this book needs, in order; steps with nothing to ask are left out.
@@ -418,8 +432,8 @@ export function render(container, state, actions) {
   function drawStep() {
     const draw = {
       book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), contents: contentsStep, work: workStep, date: dateStep,
-      language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices()),
-      translation: () => translationStepHtml(book, isTranslated()), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
+      language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices(), categoriesFromSubjects(book.found.subjects || [])),
+      translation: () => translationStepHtml({ ...book, bookLanguages: shownBookLanguages() }, isTranslated(), bookLanguageChoices(originalLanguage())), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
     stepArea.innerHTML = progressHtml() + draw();
     stepArea.oninput = event => {
@@ -459,7 +473,12 @@ export function render(container, state, actions) {
           ${severalHtml}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
-    const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', prompts.has('year') && !found.year && 'year'].filter(Boolean);
+    // A year set aside as too early is always pointed out, since the record did give one.
+    const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', (prompts.has('year') || found.yearSetAside) && !found.year && 'year'].filter(Boolean);
+    const earlyHtml = found.yearSetAside && !found.year ? escapeHtml(` The record's year, ${found.yearSetAside}, is older than ISBNs, so it is an earlier printing's: type the year printed in this copy.`) : '';
+    // Loeb's own style of title, offered for a tap, since some Loebs are titled by one work.
+    const loeb = loebStyleTitle(found);
+    const loebHtml = loeb ? `<p class="step-hint">${escapeHtml(`Loeb's own style: ${loeb}`)} <button type="button" class="chip" data-action="loeb-title">Use this title</button></p>` : '';
     const coverHtml = found.cover && !found.cover.waiting ? `<img class="step-cover" src="${attr(found.cover.url)}" alt="" onerror="this.remove()">` : '';
     const detailsHtml = escapeHtml([found.authors.join(', '), found.editionStatement, [found.publisher, found.year].filter(Boolean).join(', '), found.pages && `${found.pages} pages`].filter(Boolean).join(' · '));
     const peopleHtml = escapeHtml(found.contributors.map(person => `${person.role} ${person.name}`).join(' · '));
@@ -468,7 +487,7 @@ export function render(container, state, actions) {
     return `<h2 class="step-title">Is this the book?</h2><p class="step-hint">${foundOnHtml}</p>
       <div class="found">${coverHtml}<div><p class="found-title">${escapeHtml(found.title)}</p><p class="found-sub">${escapeHtml(found.subtitle)}</p>
         <p class="found-meta">${detailsHtml}</p><p class="found-meta">${peopleHtml}</p></div></div>
-      ${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. Tap "Fix details" to add.`)}</p>` : ''}
+      ${loebHtml}${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. Tap "Fix details" to add.`)}${earlyHtml}</p>` : ''}
       <div class="choices">${choiceHtml('yes', 'Yes, this is it')}${book.contentsOffered ? '' : choiceHtml('several', 'Yes, and it holds several works', 'Collected works or an anthology: list them next')}${choiceHtml('fix', 'Fix details', missing.length ? `Add the ${missing.join(', ')}` : 'Correct the title, author or year')}
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
@@ -492,6 +511,7 @@ export function render(container, state, actions) {
     if (lookups.wikidata === false || !titles.length || current.wikidataAsked === key) return;
     current.wikidataAsked = key;
     lookUpWorks(titles, author).then(found => {
+      current.wikidataAnswered = key;
       for (const [title, work] of found) current.wikidata.set(title, work);
       // "Possibly the same as…": a work already held under the same Wikidata item is offered in "Same work?".
       const held = current.contents === null && sameWikidataWorks(found, state.library.worksById).get(current.found.title);
@@ -512,15 +532,31 @@ export function render(container, state, actions) {
     return { pieces, author };
   }
 
-  // Wikidata's dates for listed works still without one, offered with one tap (PLAN.md, "Original dates").
+  // Wikidata's dates for listed works still without one, offered with one tap (PLAN.md, "Original dates"),
+  // and the original titles it knows, which are kept with the new works (withWikidata).
   function wikidataDatesHtml(text) {
-    const offered = parseContentsLines(text).filter(piece => !piece.date && (book.wikidata.get(piece.title) || {}).date);
+    const pieces = parseContentsLines(text);
+    const offered = pieces.filter(piece => !piece.date && (book.wikidata.get(piece.title) || {}).date);
     // A problem is shown only when it came from asking about these works, not about the book's own title.
     const problem = book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
-    if (!offered.length) return problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '';
-    const list = offered.map(piece => `${piece.title} ${book.wikidata.get(piece.title).date}`).join('; ');
-    return `<div class="field"><p class="step-hint">${escapeHtml(`Wikidata gives when ${offered.length} of these were written or first published: ${list}.`)}</p>`
-      + `<button type="button" class="chip" data-action="wikidata-dates">Use these dates</button></div>`;
+    if (!offered.length && problem) return `<p class="step-hint">${escapeHtml(problem)}</p>`;
+    const titled = pieces.filter(piece => (book.wikidata.get(piece.title) || {}).originalTitle);
+    const titlesHtml = titled.length ? `<p class="step-hint">${escapeHtml(`Wikidata's original titles, kept with the works: ${titled.map(piece => `${piece.title}, ${book.wikidata.get(piece.title).originalTitle}`).join('; ')}.`)}</p>` : '';
+    if (offered.length) {
+      const list = offered.map(piece => `${piece.title} ${book.wikidata.get(piece.title).date}`).join('; ');
+      return `<div class="field"><p class="step-hint">${escapeHtml(`Wikidata gives when ${offered.length} of these were written or first published: ${list}.`)}</p>`
+        + `<button type="button" class="chip" data-action="wikidata-dates">Use these dates</button></div>${titlesHtml}`;
+    }
+    // Wikidata answered and knows no date for any of them: said, so the silence is not taken for waiting,
+    // with a web search for each work still undated.
+    const undated = pieces.filter(piece => !piece.date);
+    if (book.wikidataAnswered !== book.wikidataAsked || !undated.length) return titlesHtml;
+    const author = listedWorks(text).author;
+    const linksHtml = undated.map(piece => {
+      const question = workDateQuestion(piece.title, [piece.author || author].filter(Boolean));
+      return `<a class="link" href="${attr(webSearchUrl(question))}" target="_blank" rel="noopener">${escapeHtml(piece.title)}</a>`;
+    }).join(' · ');
+    return `<p class="step-hint">${escapeHtml('Wikidata knows no dates for these works. Type each date at the end of its line, as "— 431 BC". Search the web:')} ${linksHtml}</p>${titlesHtml}`;
   }
 
   // The dates of a list nobody has checked yet: offered with one tap, like Wikidata's (PLAN.md, "Original dates").
@@ -736,7 +772,14 @@ export function render(container, state, actions) {
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
       // An empty date is a choice, not an oversight: ask for "Don't know yet".
       if (book.step === 'date' && !book.dating) { book.dateNudge = true; return drawStep(); }
-      if (book.step === 'contents') book.contents = book.contentsText.trim() || null;
+      if (book.step === 'contents') {
+        book.contents = book.contentsText.trim() || null;
+        // A Loeb title taken on "Is this the book?" follows the corrected works ("Alecestic" made "Alcestis").
+        if (book.loebTitle && book.contents) {
+          const works = parseContentsLines(book.contents).map(line => ({ title: line.title }));
+          book.found.title = loebStyleTitle({ ...book.found, title: '', contents: works }) || book.found.title;
+        }
+      }
       book.fixing = false;
       return next();
     }
@@ -771,6 +814,8 @@ export function render(container, state, actions) {
     }
     if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; return next(); }
     if (action === 'original-title') { book.originalTitle = book.work.workTitle; return drawStep(); }
+    if (action === 'loeb-title') { Object.assign(book.found, { title: loebStyleTitle(book.found), subtitle: '' }); book.loebTitle = true; return drawStep(); }
+    if (action === 'book-languages') { book.bookLanguages = value; return drawStep(); }
     // English needs no original title, so tapping it goes straight on.
     if (action === 'language') { book.language = value; return isEnglish(value) ? next() : drawStep(); }
     if (action === 'mixed-languages') { book.workLanguages = []; return drawStep(); }
@@ -841,10 +886,9 @@ export function render(container, state, actions) {
 
   async function saveBook() {
     const { found, copy } = book;
-    const linked = book.works.find(work => work.id === book.workId);
     const languages = editionLanguages({
-      typed: isTranslated() ? book.bookLanguages : '', found: found.languages,
-      original: linked ? linked.originalLanguage : book.language, isTranslated: isTranslated(),
+      typed: isTranslated() ? shownBookLanguages() : '', found: found.languages,
+      original: originalLanguage(), isTranslated: isTranslated(),
     });
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),

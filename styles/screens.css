@@ -79,6 +79,7 @@ label.btn { position: relative; }
 .choice-button:hover, .choice-button:focus-visible { border-color: var(--pop); }
 .step-nav { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between; align-items: center; margin-top: var(--space-3); }
 .chip-big { min-height: var(--tap); padding: 8px 16px; font-size: var(--fs-base); }
+.step-chips { margin-bottom: var(--space-4); } /* room between the language chips and what follows */
 .found { display: flex; gap: var(--space-4); align-items: flex-start; margin-bottom: var(--space-4); }
 .found-title { margin: 0; font: 600 var(--fs-h2)/1.25 var(--font-display); }
 .found-sub { margin: 2px 0 0; color: var(--ink-2); font-family: var(--font-display); }

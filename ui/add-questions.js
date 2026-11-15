@@ -33,9 +33,9 @@ export function choiceHtml(action, main, detail = '', value = '') {
     + (detail ? `<small>${escapeHtml(detail)}</small>` : '') + '</button>';
 }
 
-/** A large chip, lit when chosen. */
-export function chipHtml(action, value, isOn) {
-  return `<button type="button" class="chip chip-big${isOn ? ' is-on' : ''}" data-action="${action}" data-value="${attr(value)}" aria-pressed="${isOn}">${escapeHtml(value)}</button>`;
+/** A large chip, lit when chosen; its label is its value unless given. */
+export function chipHtml(action, value, isOn, label = value) {
+  return `<button type="button" class="chip chip-big${isOn ? ' is-on' : ''}" data-action="${action}" data-value="${attr(value)}" aria-pressed="${isOn}">${escapeHtml(label)}</button>`;
 }
 
 /** The step's Back and Next buttons, inside its form. */
@@ -60,10 +60,10 @@ export function languageStepHtml(book, usedLanguages = []) {
   const many = book.contents !== null;
   const hint = many ? 'For every work in this book; a work first written in another language can be changed later on the book page, under "Edit the works".'
     : "The work's own language, not this book's: Latin for a translation of Augustine. Tap one, or type another below.";
-  const mixedHtml = many ? choiceHtml('mixed-languages', 'Not all the same', 'Choose a language for each work') : '';
+  const mixedHtml = many ? `<div class="choices">${choiceHtml('mixed-languages', 'Not all the same', 'Choose a language for each work')}</div>` : '';
   return `<h2 class="step-title">${escapeHtml(many ? 'What language were these works first written in?' : 'What language was this work first written in?')}</h2>
     <p class="step-hint">${escapeHtml(hint)}</p>
-    <div class="chips">${chipsHtml}</div>${mixedHtml}
+    <div class="chips step-chips">${chipsHtml}</div>${mixedHtml}
     <form class="form">${fieldHtml('Another language', 'originalLanguage', other, { help: true })}
       ${foreign && !many ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml : ''}
       ${navHtml()}</form>`;
@@ -91,9 +91,13 @@ const MOST_USED_TAGS = 20; // tags offered as chips; every other is suggested as
 /**
  * One category and any number of tags, from those already used or typed new.
  * @param {{ categories: string[], tags: string[] }} choices categories by name; tags most used first
+ * @param {string[]} fromRecord categories the record's subjects suggest ("Drama")
  */
-export function subjectsStepHtml(book, choices) {
-  const categories = [...new Set([...choices.categories, ...(book.category ? [book.category] : [])])];
+export function subjectsStepHtml(book, choices, fromRecord = []) {
+  // A suggested category the library already has is its own chip already.
+  const inUse = new Set(choices.categories.map(normalizeForSearch));
+  const suggested = fromRecord.filter(category => !inUse.has(normalizeForSearch(category)));
+  const categories = [...new Set([...suggested, ...choices.categories, ...(book.category ? [book.category] : [])])];
   const tags = [...new Set([...choices.tags.slice(0, MOST_USED_TAGS), ...book.tags])];
   const categoriesHtml = categories.map(category => chipHtml('category', category, category === book.category)).join('');
   const tagsHtml = tags.map(tag => chipHtml('tag', tag, book.tags.includes(tag))).join('');
@@ -101,7 +105,7 @@ export function subjectsStepHtml(book, choices) {
   return `<h2 class="step-title">Category and tags</h2>
     <p class="step-hint">${escapeHtml(book.contents !== null ? 'For every work in this book: one broad group, and the topics they are about. Each work can be given its own later, under "Edit the works". Both can wait.' : 'One broad group for the work, and the topics it is about. Every edition of the work shares them. Both can wait.')}</p>
     <form class="form">
-      ${categoriesHtml ? `<div class="field">Category<div class="chips">${categoriesHtml}</div></div>` : ''}
+      ${categoriesHtml ? `<div class="field">Category<div class="chips">${categoriesHtml}</div>${suggested.length ? `<span class="preview">${escapeHtml(`From the record: ${suggested.join(', ')}`)}</span>` : ''}</div>` : ''}
       ${fieldHtml(categoriesHtml ? 'Or a new category' : 'Category', 'category', '', { help: true })}
       ${tagsHtml ? `<div class="field">Tags${choices.tags.length > MOST_USED_TAGS ? ', the most used' : ''}<div class="chips">${tagsHtml}</div></div>` : ''}
       ${fieldHtml(tagsHtml ? 'Other tags (separate with ,)' : 'Tags (separate with ,)', 'tags', '', { help: true, list: 'tagList' })}${tagListHtml}
@@ -109,8 +113,8 @@ export function subjectsStepHtml(book, choices) {
 }
 
 // Who translated and edited it, and the language of this book. A book that is not a translation (an anthology in its
-// own language) is asked only for its editors.
-export function translationStepHtml(book, isTranslated) {
+// own language) is asked only for its editors. languageChoices: the one-tap answers for "This book is in" (core/book-data.js).
+export function translationStepHtml(book, isTranslated, languageChoices = []) {
   const editorsHtml = fieldHtml('Edited by', 'editors', book.editors, { hint: 'Several: separate the names with ;. An assistant editor goes in Edit book with the role "other (not cited)".' });
   if (!isTranslated) {
     return `<h2 class="step-title">Editors</h2>
@@ -122,7 +126,8 @@ export function translationStepHtml(book, isTranslated) {
     <form class="form">${fieldHtml('Translator', 'translator', book.translator, { hint: 'Several translators: separate the names with ;' })}
       <p class="preview" data-translators>${escapeHtml(translatorsReadAs(book.translator))}</p>
       ${editorsHtml}
-      ${fieldHtml('This book is in', 'bookLanguages', book.bookLanguages, { hint: 'The language of the pages in your hand. Two for a facing-page edition: "Greek, English".' })}
+      ${fieldHtml('This book is in', 'bookLanguages', book.bookLanguages, { hint: 'The language of the pages in your hand. Tap one, or type: two for a facing-page edition, "Greek, English".' })}
+      ${languageChoices.length ? `<div class="chips step-chips">${languageChoices.map(choice => chipHtml('book-languages', choice.text, choice.text === book.bookLanguages, choice.label)).join('')}</div>` : ''}
       ${navHtml()}</form>`;
 }
 

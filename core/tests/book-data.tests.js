@@ -4,7 +4,8 @@
 
 import { fromLibraryOfCongress, fromHathiTrust, heightInMm } from '../marc.js';
 import { fromOpenLibraryEdition, fromGoogleBooksVolume, mergeFound, withLibraryContents, bindingFromFormat, sizesFromDimensions, googleKeyVerdict } from '../book-data.js';
-import { fromOpenLibrary, fromGoogleBooks, contributorsFrom, cleanPages } from '../lookup.js';
+import { seriesFromSubtitle, isYearTooEarly, categoriesFromSubjects, isFacingPageSeries, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../book-data.js';
+import { fromOpenLibrary, fromGoogleBooks, contributorsFrom, cleanPages, emptyFound } from '../lookup.js';
 import { equal, same, ok } from './check.js';
 import * as confessions from './answers/9780199537822.js';
 import * as crime from './answers/9780140449136.js';
@@ -326,6 +327,86 @@ export const tests = [
       equal(idsQuery([]), '');
       const changes = readIdChecks(wikidata.idChecks, ['Q68', 'Q21697683', 'Q999999999999']);
       same([...changes], [['Q21697683', { mergedInto: 'Q68' }], ['Q999999999999', { missing: true }]]);
+    },
+  },
+  // Testing day, batch 3 (14 November 2026): Loeb Euripides IV, ISBN 9780674990135. Open Library's
+  // record came from a bookseller: "Loeb Classical #012 (Works)" as the subtitle and 1920 as the year;
+  // HathiTrust's record says 1980, the printing in hand.
+  {
+    name: 'a bookseller\'s subtitle "Loeb Classical #012 (Works)" is the series Loeb Classical Library, number 12',
+    fn() {
+      same(seriesFromSubtitle('Loeb Classical #012 (Works)'), { series: 'Loeb Classical Library', seriesNumber: '12' });
+      equal(seriesFromSubtitle('Vol. 30: Blaise Pascal'), null, 'a real subtitle stays');
+      equal(seriesFromSubtitle('The Gospels as Eyewitness Testimony'), null);
+    },
+  },
+  {
+    name: 'merging Euripides IV: no subtitle, the series and number from it, and the 1980 year instead of 1920',
+    fn() {
+      const openLibrary = { ...emptyFound('openlibrary'), title: 'Euripides: Ion-Hippolytus-Medea-Alcestis', subtitle: 'Loeb Classical #012 (Works)', year: '1920', isbn: '9780674990135' };
+      const hathiTrust = { ...emptyFound('hathitrust'), year: '1980', series: 'Loeb Classical Library', isbn: '9780674990135' };
+      const merged = mergeFound([openLibrary, hathiTrust]);
+      same([merged.subtitle, merged.series, merged.seriesNumber, merged.year], ['', 'Loeb Classical Library', '12', '1980']);
+      equal(openLibrary.year, '1920', 'the answers themselves are not changed');
+    },
+  },
+  {
+    name: 'a book with an ISBN was printed in 1966 or later; a book without one may be older',
+    fn() {
+      ok(isYearTooEarly({ isbn: '9780674990135', year: '1920' }), '1920 is an older printing\'s year');
+      ok(!isYearTooEarly({ isbn: '9780674990135', year: '1980' }));
+      ok(!isYearTooEarly({ isbn: '', year: '1920' }), 'a book found by LCCN or OCLC number');
+      equal(mergeFound([{ ...emptyFound('openlibrary'), year: '1920', isbn: '9780674990135' }]).year, '', 'left empty, to be asked');
+    },
+  },
+  {
+    name: 'Open Library\'s series split in two, ["Everyman\'s library ;", "259"], keeps its number',
+    fn() {
+      const found = fromOpenLibraryEdition({ title: 'Essays', isbn_13: ['9781857150582'], series: ["Everyman's library ;", '259'] }, '9781857150582');
+      same([found.series, found.seriesNumber], ["Everyman's Library", '259']);
+      const loebs = fromOpenLibraryEdition({ title: 'Lucretius', isbn_13: ['9781857150582'], series: ['Loeb classical library -- 24-25.'] }, '9781857150582');
+      equal(loebs.seriesNumber, '24-25', 'no full stop after the number');
+    },
+  },
+  {
+    name: 'a bookseller\'s subject "Plays / Drama" offers the category Drama; a library heading offers none',
+    fn() {
+      same(categoriesFromSubjects(['Ancient, Classical & Medieval', 'Plays / Drama']), ['Drama']);
+      same(categoriesFromSubjects(['FICTION / Classics', 'Fiction / General']), ['Fiction']);
+      same(categoriesFromSubjects(['Christian saints -- Algeria -- Hippo (Extinct city) -- Biography']), []);
+    },
+  },
+  {
+    name: 'a Loeb, I Tatti or Dumbarton Oaks book is in its original and English; others start from the record',
+    fn() {
+      ok(isFacingPageSeries('Loeb Classical Library'));
+      ok(isFacingPageSeries('The Loeb classical library [Latin authors]'));
+      ok(isFacingPageSeries('I Tatti Renaissance Library') && isFacingPageSeries('Dumbarton Oaks Medieval Library'));
+      ok(isFacingPageSeries('Murty Classical Library') && isFacingPageSeries('Clay Sanskrit Library'));
+      ok(!isFacingPageSeries("Oxford World's Classics") && !isFacingPageSeries(''));
+      equal(startingBookLanguages({ found: ['English'], series: 'Loeb Classical Library', original: 'Ancient Greek' }), 'Ancient Greek, English');
+      equal(startingBookLanguages({ found: [], series: 'Penguin Classics', original: 'Latin' }), 'English');
+      equal(startingBookLanguages({ found: ['German'], series: '', original: 'German' }), 'German');
+    },
+  },
+  {
+    name: '"This book is in" offers English, the original with English, and the original only',
+    fn() {
+      same(bookLanguageChoices('Latin').map(choice => choice.text), ['English', 'Latin, English', 'Latin']);
+      same(bookLanguageChoices('Latin').map(choice => choice.label), ['English', 'Latin, English (facing pages)', 'Latin only']);
+      same(bookLanguageChoices('English'), [], 'nothing to choose for a work written in English');
+    },
+  },
+  {
+    name: 'a Loeb volume is offered Loeb\'s own title: "Euripides IV: Ion. Hippolytus. Medea. Alcestis"',
+    fn() {
+      const works = ['Ion', 'Hippolytus', 'Medea', 'Alcestis'].map(title => ({ title, author: 'Euripides' }));
+      const found = { ...emptyFound('hathitrust'), title: 'Euripides: Ion-Hippolytus-Medea-Alcestis', authors: ['Euripides'], series: 'Loeb Classical Library', set: 'Euripides in Four Volumes', volume: '4', contents: works };
+      equal(loebStyleTitle(found), 'Euripides IV: Ion. Hippolytus. Medea. Alcestis');
+      equal(loebStyleTitle({ ...found, volume: '29' }).split(':')[0], 'Euripides XXIX');
+      equal(loebStyleTitle({ ...found, volume: '' }), '', 'no volume number, no offer');
+      equal(loebStyleTitle({ ...found, series: 'Penguin Classics' }), '', 'only Loebs');
+      equal(loebStyleTitle({ ...found, title: 'Euripides IV: Ion. Hippolytus. Medea. Alcestis' }), '', 'already so titled');
     },
   },
 ];

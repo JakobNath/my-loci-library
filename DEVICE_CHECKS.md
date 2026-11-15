@@ -172,3 +172,10 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: "Enter a book by hand instead", tick "This book holds several works": a box "For all the works" with original language, category and tags should stay. Type Greek and save; "Edit the works" shows Greek on every work.
 - [ ] Phone: a book titled "Euripides" with set Euripides, volume 4 shows "Euripides, vol. 4" in the Library, in both covers and list.
 - [ ] Phone: a work dated "c. 413 BC" shows "c. 413 BC" in the book page's contents.
+
+## Testing day, batch 3 (1.20.0, 14 November 2026)
+
+- [ ] Phone: move Euripides IV (if added again) to the trash, then scan its barcode. "Is this the book?" should show 1980 (not 1920), no subtitle "Loeb Classical #012 (Works)", and "Loeb's own style: Euripides IV: Ion. Hippolytus. Medea. Alecestic" with "Use this title".
+- [ ] Phone, same book: tap "Use this title", go on, and correct "Alecestic" to "Alcestis" in the contents. The step counter should then show the title with "Alcestis". If Wikidata answers with no dates, a line says so with a link for each work; each link opens a web search in a new tab.
+- [ ] Phone, same book: the language step has clear space between the chips, "Not all the same" and "Another language". Category offers "Drama" "From the record". "Translation and editors" starts "This book is in" at "Greek, English" (or "Ancient Greek, English"), with three chips; tapping one fills the box and keeps the translator typed.
+- [ ] Phone, after saving: the book page shows the series Loeb Classical Library 12, and "Contents" with no dot when no work has a date.
