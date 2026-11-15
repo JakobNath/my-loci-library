@@ -347,14 +347,14 @@ export function recordsFromForm(form, existing, context) {
         contents.push(listed ? { ...fresh, work: work.id } : { ...old, translator: fresh.translator || old.translator });
         continue;
       }
-      const reading = line.date ? datingsFromRows([{ text: line.date, working: true, note }]) : { datings: [], problems: [] };
-      problems.push(...reading.problems);
-      const values = { title: line.title, authors: ids, ...(line.date ? { datings: reading.datings } : {}) };
       // A new work in a collection takes the language, category and tags asked once for the whole book,
       // and from a known set's list its own original title and language. What was given for this work
-      // alone (its card while adding, form.workDetails) comes first.
+      // alone (its card while adding, form.workDetails) comes first, and so does the kind of dating its card chose.
       // Matched by title and, when the row names one, author: Sappho's and Alcaeus's "Fragments" are two works.
       const own = (form.workDetails || []).find(row => key(row.title) === key(line.title) && (row.author === undefined || key(row.author) === key(line.author || ''))) || {};
+      const reading = line.date ? datingsFromRows([{ text: line.date, working: true, note, kind: own.datingKind || null }]) : { datings: [], problems: [] };
+      problems.push(...reading.problems);
+      const values = { title: line.title, authors: ids, ...(line.date ? { datings: reading.datings } : {}) };
       const originalTitle = (own.originalTitle || '').trim() || (listed && listed.originalTitle) || '';
       const shared = {
         originalLanguage: own.originalLanguage || (listed && listed.originalLanguage) || form.work.originalLanguage || null,
@@ -530,7 +530,8 @@ export function isBookBarcode(code) {
  * whose own box was left empty. Only fields that changed are stamped. A work
  * with several datings (a disputed work) keeps them: its date is changed on its
  * own, in the entry form of a book holding only it.
- * @param {{ id: string, title: string, originalTitle: string, originalLanguage: string, dating: string, category: string, tags: string[] }[]} rows
+ * @param {{ id: string, title: string, originalTitle: string, originalLanguage: string, dating: string, kind?: string|null, category: string, tags: string[] }[]} rows
+ *   kind: the dating's kind, when a kind of work was chosen (null for one that sets none); left out, the old kind stays
  * @param {{ originalLanguage: string, category: string, tags: string[] }} same the "same for all" boxes
  * @param {Map<string, object>} works the works, by ID
  * @param {string} now timestamp for the changed fields
@@ -554,9 +555,11 @@ export function worksFromRows(rows, same, works, now) {
     if (work.datings.length <= 1) {
       const current = work.datings[0];
       const text = row.dating.trim();
+      // A kind of work chosen beside the box (row.kind) sets the dating's kind; none chosen keeps the old one.
+      const kind = row.kind === undefined ? (current && current.kind) || null : row.kind;
       if (!text) values.datings = [];
-      else if (!current || current.text !== text) {
-        const reading = datingsFromRows([{ text, note: current ? current.note : '', working: true }]);
+      else if (!current || current.text !== text || (current.kind || null) !== kind) {
+        const reading = datingsFromRows([{ text, note: current ? current.note : '', kind, working: true }]);
         if (reading.problems.length) { problems.push(`${title}: ${reading.problems[0]}`); continue; }
         values.datings = reading.datings;
       }

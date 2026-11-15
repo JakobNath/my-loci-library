@@ -56,6 +56,14 @@ export function parseDating(text) {
 }
 
 function failure(text) {
+  // "1806-1812, 1857": the years Grimm's tales were written, and a revision. The box takes one dating.
+  const parts = text.split(/[,;]|\s+and\s+/).filter(part => /\d{3,4}/.test(part));
+  if (parts.length > 1) {
+    return {
+      ok: false,
+      problem: `Two dates: type only the first edition's here (Grimm's tales: 1812–15), or when it was written if it was not printed in the author's lifetime. A later revision can be added in Edit book as another dating.`,
+    };
+  }
   return {
     ok: false,
     problem: `Could not read "${text}" as a date. Forms that work: 1689, c. 397, 397–400, 4th c. BC, early 2nd c., after 1517.`,

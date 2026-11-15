@@ -396,6 +396,28 @@ export const tests = [
     },
   },
   {
+    name: 'the kind of work chosen beside a date box is saved as the dating\'s kind, and kept when none is chosen',
+    fn() {
+      // While adding: a card chose "Speech or sermon" (ui/date-help.js gives "delivered").
+      const form = blankForm({
+        title: 'The Marx-Engels Reader', contents: 'Friedrich Engels — Speech at the Graveside of Karl Marx — 1883\nKarl Marx — Theses on Feuerbach — 1845',
+        workDetails: [{ title: 'Speech at the Graveside of Karl Marx', author: 'Friedrich Engels', originalLanguage: 'English', originalTitle: '', datingKind: 'delivered' }],
+      });
+      const works = recordsFromForm(form, null, context()).records.filter(record => record.type === 'work');
+      same(works.map(work => work.datings[0].kind), ['delivered', null]);
+      // A single work's date step.
+      const single = blankForm({ title: 'Oedipus the King', work: { title: '', originalTitle: '', originalLanguage: 'Greek', category: '', tags: [], datings: [{ text: 'c. 429 BC', note: '', kind: 'first performed', working: true }] } });
+      equal(recordsFromForm(single, null, context()).records.find(record => record.type === 'work').datings[0].kind, 'first performed');
+      // "Works in this book": a kind chosen with the date unchanged changes the kind; none chosen keeps it.
+      const [speech] = works;
+      const byId = new Map([[speech.id, speech]]);
+      const row = values => ({ id: speech.id, title: speech.title, originalTitle: '', originalLanguage: 'English', dating: '1883', category: '', tags: [], ...values });
+      equal(worksFromRows([row({ kind: null })], { originalLanguage: '', category: '', tags: [] }, byId, 'x').records[0].datings[0].kind, null, 'a book or poem sets none');
+      equal(worksFromRows([row({ dating: '1883–84' })], { originalLanguage: '', category: '', tags: [] }, byId, 'x').records[0].datings[0].kind, 'delivered', 'a new date keeps the kind');
+      equal(worksFromRows([row({})], { originalLanguage: '', category: '', tags: [] }, byId, 'x').records.length, 0, 'nothing chosen, nothing changed');
+    },
+  },
+  {
     name: 'each work of Luther\'s Works 14 keeps its own translator: chosen while adding, typed on its line, or kept through an edit',
     fn() {
       const contents = 'Martin Luther — Psalm 117 — 1530 — trans. Edward Sittler\nMartin Luther — Psalm 118 — 1530\nMartin Luther — Psalms 1 and 2 — 1519 — trans. Someone';

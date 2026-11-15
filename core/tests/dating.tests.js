@@ -2,7 +2,7 @@
 // forms named in PLAN.md, and the historical century convention.
 
 import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating } from '../dating.js';
-import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle, contentsQuestion, firstEditionQuestion } from '../date-search.js';
+import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle, contentsQuestion, firstEditionQuestion, workDetailsQuestion, collectionDateQuestion } from '../date-search.js';
 import { equal, same, ok } from './check.js';
 
 function reads(text, earliest, latest, certainty) {
@@ -128,14 +128,14 @@ export const tests = [
   },
   // "Search the web" beside a date box (PLAN.md, "Original dates")
   {
-    name: 'a work with an author is asked about by title and author',
-    fn() { equal(workDateQuestion('Pride and Prejudice', ['Jane Austen']), 'When was Pride and Prejudice by Jane Austen written and first published?'); },
+    name: 'a work with an author is asked about by title and author, with the working-date rule, for one date',
+    fn() { equal(workDateQuestion('Pride and Prejudice', ['Jane Austen']), `What is the original date of Pride and Prejudice by Jane Austen? Give one date: the year it was first published if that was in the author's lifetime, otherwise when it was written. For a letter give its date, for a speech or sermon when it was delivered, for a play its first performance. If the author later revised it, also give the year of the final edition.`); },
   },
   {
     name: 'a work with no author is asked about as "the" work',
     fn() {
-      equal(workDateQuestion('Didache', []), 'When was the Didache written and first published?');
-      equal(workDateQuestion('The Epic of Gilgamesh', []), 'When was The Epic of Gilgamesh written and first published?');
+      equal(workDateQuestion('Didache', []), `What is the original date of the Didache? Give one date: the year it was first published if that was in the author's lifetime, otherwise when it was written. For a letter give its date, for a speech or sermon when it was delivered, for a play its first performance. If the author later revised it, also give the year of the final edition.`);
+      equal(workDateQuestion('The Epic of Gilgamesh', []), `What is the original date of The Epic of Gilgamesh? Give one date: the year it was first published if that was in the author's lifetime, otherwise when it was written. For a letter give its date, for a speech or sermon when it was delivered, for a play its first performance. If the author later revised it, also give the year of the final edition.`);
     },
   },
   {
@@ -171,12 +171,12 @@ export const tests = [
       // The Marx-Engels Reader titles its extracts "Alienation and Social Classes (from The Holy Family)".
       equal(searchableTitle('Alienation and Social Classes (from the Holy Family)'), 'The Holy Family');
       equal(searchableTitle('Discovering Hegel (Marx to His Father)'), 'Discovering Hegel (Marx to His Father)', 'other brackets stay');
-      equal(workDateQuestion('On Morality (from Anti-Dühring)', ['Friedrich Engels']), 'When was Anti-Dühring by Friedrich Engels written and first published?');
+      ok(workDateQuestion('On Morality (from Anti-Dühring)', ['Friedrich Engels']).startsWith('What is the original date of Anti-Dühring by Friedrich Engels? Give one date'));
     },
   },
   {
     name: 'several authors are joined with "and"',
-    fn() { equal(workDateQuestion('Good Omens', ['Terry Pratchett', 'Neil Gaiman']), 'When was Good Omens by Terry Pratchett and Neil Gaiman written and first published?'); },
+    fn() { ok(workDateQuestion('Good Omens', ['Terry Pratchett', 'Neil Gaiman']).startsWith('What is the original date of Good Omens by Terry Pratchett and Neil Gaiman?')); },
   },
   {
     name: 'a volume of a set is searched for by its own title, with the set and number',
@@ -186,6 +186,48 @@ export const tests = [
       equal(searchTitle({ title: "Luther's Works", subtitle: 'Volume 12 - (Selected Psalms I)' }), "Selected Psalms I (Luther's Works, volume 12)");
       equal(searchTitle({ title: "Luther's Works", set: "Luther's Works", volume: '12' }), "Luther's Works, volume 12");
       equal(searchTitle({ title: 'Pride and Prejudice', subtitle: 'A Novel' }), 'Pride and Prejudice');
+    },
+  },
+  {
+    name: 'a kind of work narrows the date question to its own rule',
+    fn() {
+      equal(workDateQuestion('Oedipus the King', ['Sophocles'], 'play'),
+        'When was the play Oedipus the King by Sophocles first performed? Give one date: its first performance, or when it was written if that is not known.');
+      equal(workDateQuestion('Letter to Annenkov', ['Karl Marx'], 'letter'), 'What is the date of the letter Letter to Annenkov by Karl Marx? Give one date: the date on the letter.');
+      equal(workDateQuestion('Speech at the Graveside of Karl Marx', ['Friedrich Engels'], 'speech'),
+        'When was Speech at the Graveside of Karl Marx by Friedrich Engels delivered? Give one date: when it was delivered.');
+      equal(workDateQuestion('Didache', [], 'ancient'), 'When was the Didache written? Give one date or range of years: when it was written, as scholars date it.');
+      ok(workDateQuestion('The Raven', ['Edgar Allan Poe'], 'poem').startsWith('When was the poem The Raven by Edgar Allan Poe first published? Give one date'));
+      ok(workDateQuestion('Pride and Prejudice', ['Jane Austen'], 'book').endsWith('also give the year of the final edition.'));
+      equal(workDateQuestion('Pride and Prejudice', ['Jane Austen'], ''), workDateQuestion('Pride and Prejudice', ['Jane Austen']), 'no kind: the whole rule');
+    },
+  },
+  {
+    name: 'a card in a collection asks one question for its author, language, original title and date, without assuming the author',
+    fn() {
+      const reader = { title: 'The Marx-Engels Reader', authors: ['Karl Marx', 'Friedrich Engels'] };
+      equal(workDetailsQuestion('The Condition of the Working Class in England', reader),
+        `'The Condition of the Working Class in England', printed in The Marx-Engels Reader (works by Karl Marx and Friedrich Engels): who wrote it, in what language, under what original title, and what is its original date? Give one date: the year it was first published if that was in the author's lifetime, otherwise when it was written. For a letter give its date, for a speech or sermon when it was delivered, for a play its first performance. If the author later revised it, also give the year of the final edition.`);
+      ok(workDetailsQuestion('Themistocles', { title: 'Lives II', set: "Plutarch's Lives", volume: '2', authors: ['Plutarch'] })
+        .startsWith("'Themistocles', printed in Lives II (Plutarch's Lives, volume 2), by Plutarch: who wrote it"), 'no brackets after brackets');
+      ok(workDetailsQuestion('Antigone', { title: 'Greek Tragedies', authors: [] }, 'play').endsWith('Give one date: its first performance, or when it was written if that is not known.'));
+    },
+  },
+  {
+    name: 'a whole collection is asked when its works were written',
+    fn() {
+      equal(collectionDateQuestion({ title: "Plutarch's Lives", authors: ['Plutarch'] }), "When did Plutarch write the works in Plutarch's Lives? Give one date or range of years.");
+      equal(collectionDateQuestion({ title: 'The Apostolic Fathers', authors: [] }), 'When were the works in The Apostolic Fathers written? Give one date or range of years.');
+    },
+  },
+  {
+    name: 'two dates in one box are named as two, with the first edition asked for',
+    fn() {
+      const result = parseDating('1806-1812, 1857');
+      ok(!result.ok);
+      ok(result.problem.startsWith('Two dates: type only the first edition\'s here (Grimm\'s tales: 1812–15)'), result.problem);
+      ok(parseDating('1536; 1559').problem.startsWith('Two dates'));
+      ok(parseDating('sometime').problem.includes('Forms that work'), 'one unreadable date keeps the usual message');
     },
   },
   {

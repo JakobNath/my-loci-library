@@ -165,6 +165,8 @@ export const tests = [
         'Grimm\'s tales: named as the earliest edition Open Library knows, not as the first publication');
       equal(yearFromText('c. 427 BC'), -427);
       same(suggestOriginalDates({ firstPublished: 1514, author: { name: 'Plato', born: -428, died: -348 } }, 1914).map(s => s.text), ['428–348 BC']);
+      // The lifetime names its author, for "Plato's lifetime" above a collection's cards.
+      equal(suggestOriginalDates({ firstPublished: 1514, author: { name: 'Plato', born: -428, died: -348 } }, 1914)[0].lifetimeOf, 'Plato');
     },
   },
   {
