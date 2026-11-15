@@ -105,6 +105,8 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **First, from 14 November 2026:** the testing day. Fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check (`handoffs/2026-11-14-first-real-book.md` says how) after any change to lookups.
 
+- [ ] **Next: build testing-day batch 2** (planned and approved with Jakob, 14 November 2026; the whole plan is in the private workspace's `handoffs/2026-11-14-testing-day-batch-2-plan.md`). From Loeb Euripides IV, a book no lookup knows: the "Not found online" form asks for several works, series, set, volume and place; the one-page form asks an anthology's language and category; the Library shows "Euripides, vol. 4" for a volume titled only by its set; "c." stays on BC dates; a translated book of several works sends its translation's first year to Zotero's Original Date (reprint citations). Release as 1.18.0. One session, Opus, effort high. Jakob's answer the same day: adding keeps its many screens (he skips none), so "shortening the add flow" is settled.
+
 **On hold from 13 November 2026** (Jakob): he is testing the app for a while, and will then decide how needful the known-set lists (Loeb first) and the full Logos import are. Until then a working session fixes what his testing turns up, and otherwise takes items 4 and 5 below or the audit's open items (the workspace's `handoffs/2026-11-13-audit.md`). Both may be taken up again; nothing written for them is removed.
 
 **Added on 13 November 2026** (project review with Jakob; `PLAN.md`, "Original dates"):
