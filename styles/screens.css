@@ -182,3 +182,18 @@ button.menu-row:first-child { border-top: 0; }
 /* The book page's Pictures section (ui/book-photos.js). */
 .picture-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); padding: var(--space-1) 0; }
 .picture-buttons { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Adding a collection: one card per work (ui/add-works.js); an unanswered card is outlined after Next */
+.work-card .chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.work-card.is-missing { border-color: var(--pop); box-shadow: 0 0 0 3px var(--pop-soft); }
+.nudge .chip { margin-left: var(--space-2); }
+
+/* "Check before saving" (ui/add-check.js): one line per field; a tap opens the step that asks it */
+.check-group { display: grid; gap: var(--space-1); }
+.check-row { display: grid; grid-template-columns: minmax(8em, 2fr) 3fr; gap: var(--space-3); width: 100%; padding: var(--space-2) var(--space-3);
+  border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--ink); font: var(--fs-base)/1.35 var(--font-ui); text-align: start; }
+button.check-row:hover, button.check-row:focus-visible { background: var(--surface-2); }
+.check-label { color: var(--muted); }
+.check-value { overflow-wrap: anywhere; }
+.check-missing { color: var(--warn-ink); background: var(--warn-bg); padding: 0 var(--space-1); border-radius: var(--radius); }
+.check-unknown, .check-none { color: var(--muted); }

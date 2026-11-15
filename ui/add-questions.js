@@ -10,6 +10,8 @@ import { normalizeForSearch } from '../core/search.js';
 import { parseContentsLines } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
 import { translatorNames } from '../core/people.js';
+import { workLanguageQuestion, originalTitleQuestion, searchTitle } from '../core/date-search.js';
+import { searchLinkHtml } from './date-help.js';
 
 /** The original languages offered as one-tap buttons; any other is typed. */
 export const LANGUAGES = ['English', 'Latin', 'Greek', 'German', 'Hebrew', 'French'];
@@ -46,44 +48,28 @@ export function navHtml(nextLabel = 'Next') {
 /** Whether a language is English, however it was typed. */
 export const isEnglish = language => /^english$/i.test(String(language || '').trim());
 
-// The work's original language and, for any other than English, its original title.
-// usedLanguages: the languages of the library's works, offered in a mixed collection's rows.
-export function languageStepHtml(book, usedLanguages = []) {
-  if (book.contents !== null && book.workLanguages) return workLanguagesHtml(book, usedLanguages);
+// The work's original language and, for any other than English, its original title, each with a
+// "Search the web" link. A collection is asked once, for most of its works; each work's card
+// (ui/add-works.js) comes next and can say otherwise.
+export function languageStepHtml(book) {
   const chipsHtml = LANGUAGES.map(language => chipHtml('language', language, book.language === language)).join('');
   const other = LANGUAGES.includes(book.language) ? '' : book.language;
   const foreign = book.language && !isEnglish(book.language);
   const workTitle = book.work && book.work.workTitle;
   const suggestionHtml = foreign && workTitle && workTitle !== book.originalTitle && normalizeForSearch(workTitle) !== normalizeForSearch(book.found.title)
     ? `<p class="step-hint">${escapeHtml(`Open Library's title for the work: ${workTitle}`)} <button type="button" class="chip" data-action="original-title">Use it</button></p>` : '';
-  // A collection is asked once for all its works; each work's own original title is given later, in "Works in this book".
   const many = book.contents !== null;
-  const hint = many ? 'For every work in this book; a work first written in another language can be changed later on the book page, under "Edit the works".'
+  const hint = many ? 'The language most of the works in this book were first written in. Each work comes next on its own card, where any can be changed.'
     : "The work's own language, not this book's: Latin for a translation of Augustine. Tap one, or type another below.";
-  const mixedHtml = many ? `<div class="choices">${choiceHtml('mixed-languages', 'Not all the same', 'Choose a language for each work')}</div>` : '';
-  return `<h2 class="step-title">${escapeHtml(many ? 'What language were these works first written in?' : 'What language was this work first written in?')}</h2>
+  const searchHtml = question => `<p class="search-line">${searchLinkHtml(question)}</p>`;
+  const titled = searchTitle(book.found);
+  return `<h2 class="step-title">${escapeHtml(many ? 'What language were most of these works first written in?' : 'What language was this work first written in?')}</h2>
     <p class="step-hint">${escapeHtml(hint)}</p>
-    <div class="chips step-chips">${chipsHtml}</div>${mixedHtml}
+    <div class="chips step-chips">${chipsHtml}</div>
     <form class="form">${fieldHtml('Another language', 'originalLanguage', other, { help: true })}
-      ${foreign && !many ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml : ''}
+      ${many ? '' : searchHtml(workLanguageQuestion(titled, book.found.authors))}
+      ${foreign && !many ? fieldHtml('Original title', 'originalTitle', book.originalTitle, { help: true }) + suggestionHtml + searchHtml(originalTitleQuestion(titled, book.found.authors)) : ''}
       ${navHtml()}</form>`;
-}
-
-// A collection whose works were first written in different languages (Lucretius in Latin,
-// Epictetus in Greek): one row per work, each starting at the language chosen for it, a known
-// set's list, or the one answer for the whole book.
-function workLanguagesHtml(book, usedLanguages) {
-  const chosen = new Map((book.workLanguages || []).map(row => [normalizeForSearch(row.title), row.language]));
-  const rowsHtml = parseContentsLines(book.contents).map(line => {
-    const language = chosen.get(normalizeForSearch(line.title)) || book.language || '';
-    const options = [...new Set(['', ...LANGUAGES, ...usedLanguages, language])];
-    const optionsHtml = options.map(name => `<option value="${attr(name)}"${name === language ? ' selected' : ''}>${escapeHtml(name || 'Not known yet')}</option>`).join('');
-    const label = line.author ? `${line.title} · ${line.author}` : line.title;
-    return `<label class="field">${escapeHtml(label)}<select name="workLanguage" data-title="${attr(line.title)}">${optionsHtml}</select></label>`;
-  }).join('');
-  return `<h2 class="step-title">What language was each work first written in?</h2>
-    <p class="step-hint">${escapeHtml(`A language not listed here, and each work's original title, can be given later on the book page, under "Edit the works".`)}</p>
-    <form class="form">${rowsHtml}${choiceHtml('same-language', 'All in one language after all')}${navHtml()}</form>`;
 }
 
 const MOST_USED_TAGS = 20; // tags offered as chips; every other is suggested as it is typed
@@ -152,13 +138,13 @@ export function workTranslatorsStepHtml(book) {
 // Our copy: when we got it, what it cost and is worth, markings, and notes.
 export function copyStepHtml(book) {
   const { copy } = book;
-  return `<h2 class="step-title">This copy</h2><p class="step-hint">All optional. "Save the book" saves it and gets ready for the next one.</p>
+  return `<h2 class="step-title">This copy</h2><p class="step-hint">All optional. Next shows everything about the book before it is saved.</p>
     <form class="form">
       <div class="field-row">${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}${fieldHtml('Price paid', 'price', copy.price, { type: 'number' })}</div>
       ${fieldHtml('Estimated value', 'value', copy.value, { type: 'number' })}
       <label class="check"><input type="checkbox" name="markings"${copy.markings ? ' checked' : ''}> Writing or markings when acquired</label>
       <label class="field">Notes: why we own it, a gift and from whom, its condition<textarea name="notes" rows="3">${escapeHtml(copy.notes)}</textarea></label>
-      ${navHtml('Save the book')}</form>`;
+      ${navHtml()}</form>`;
 }
 
 /**
@@ -170,12 +156,6 @@ export function readQuestions(book, stepArea) {
   const value = name => ((stepArea.querySelector(`[name="${name}"]`) || {}).value || '').trim();
   if (book.step === 'language') {
     if (value('originalLanguage')) book.language = value('originalLanguage');
-    const rows = [...stepArea.querySelectorAll('[name="workLanguage"]')].map(select => ({ title: select.dataset.title, language: select.value }));
-    if (rows.length) {
-      book.workLanguages = rows;
-      // The translation step asks whenever a work was not first written in English.
-      book.language = (rows.find(row => row.language && !isEnglish(row.language)) || rows.find(row => row.language) || { language: '' }).language;
-    }
     if (stepArea.querySelector('[name="originalTitle"]')) book.originalTitle = value('originalTitle');
   }
   if (book.step === 'subjects') {

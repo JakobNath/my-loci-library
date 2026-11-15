@@ -158,7 +158,7 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `publisher` | text or null | | Several publishers, as on a Loeb, are kept in order with "; " between them: "Harvard University Press; William Heinemann". |
 | `place` | text or null | | Place of publication. Several in the same order as the publishers: "Cambridge, MA; London". |
 | `year` | number or null | | The year this edition or printing was published. |
-| `firstPrinted` | number or null | | The year this edition was first printed, as its copyright page says ("First published 1912"), when this copy is a later printing or says so. Typed by a person, never taken from a lookup. (Version 6.) |
+| `firstPrinted` | number or null | | The year this book first appeared in any edition, as its copyright page says: "First published 1912", or the earliest year of "© 1978, 1972" on a second edition (1972 for The Marx-Engels Reader, 2d ed., 1978). Typed by a person, never taken from a lookup. (Version 6; its meaning was settled on 14 November 2026, see `docs/decisions/data-format.md`.) |
 | `editionStatement` | text or null | | As printed: "3rd ed.", "28th revised edition". |
 | `series` | text or null | | "Loeb Classical Library". |
 | `seriesNumber` | text or null | | "36". Text, because some are "38A". |

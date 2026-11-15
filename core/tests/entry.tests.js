@@ -273,6 +273,12 @@ export const tests = [
       const works = recordsFromForm(form, null, context()).records.filter(record => record.type === 'work');
       same(works.map(work => [work.title, work.originalLanguage, work.originalTitle]),
         [['On the Nature of Things', 'Latin', 'De rerum natura'], ['Discourses', 'Greek', null], ['Meditations', 'Greek', null]]);
+      // Loeb Greek Lyric I: two works called "Fragments", told apart by their authors.
+      const lyric = blankForm({
+        title: 'Greek Lyric I', contents: 'Sappho — Fragments\nAlcaeus — Fragments',
+        workDetails: [{ title: 'Fragments', author: 'Sappho', originalLanguage: 'Greek', originalTitle: '' }, { title: 'Fragments', author: 'Alcaeus', originalLanguage: 'Latin', originalTitle: '' }],
+      });
+      same(recordsFromForm(lyric, null, context()).records.filter(record => record.type === 'work').map(work => work.originalLanguage), ['Greek', 'Latin']);
     },
   },
   {

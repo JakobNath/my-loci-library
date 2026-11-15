@@ -66,6 +66,10 @@ export const tests = [
       ok(cardAnswered({ ...civilWar, language: 'English' }), 'written in English, date not known');
       ok(!cardAnswered({ ...jewish, date: 'soon' }), 'a date that cannot be read');
       same(mustMissing(reader(), 'works').map(field => field.label), ['Manifesto of the Communist Party', 'The Civil War in France']);
+      const rest = reader();
+      rest.cards[2].unknown = true; // "Don't know the rest"
+      equal(mustMissing(rest, 'works').length, 1, 'only the Manifesto is still asked');
+      equal(checkRows(rest, { single: false })[1].rows[2].state, 'unknown');
     },
   },
   {

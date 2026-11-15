@@ -195,3 +195,18 @@ These could not be tried in the browser preview while building (it would not ope
 - [ ] Phone, after saving: the book page shows "First printed 1912" and "Other ISBNs 9780434990122". Scan the British ISBN barcode (or type 0434990124 in the Add box): "You already have this edition" should come up. Searching the Library for 9780434990122 finds the book.
 - [ ] Phone: "Fix details" on "Is this the book?" now asks only the title, subtitle, authors, editors, translators and the "several works" tick; the publisher, year, series, set, volume and pages are on the next step. A book not found online ("None of these") goes the same way.
 - [ ] Phone: Edit book shows "First printed" beside "Year" and "Other ISBNs (separate with ;)" beside "ISBN"; change them and save, and the book page follows. Settings shows data format 6.
+
+## Each work, must fields and the check (1.22.0, 14 November 2026)
+
+The Marx-Engels Reader was moved to the trash after this release, to be added again as the test.
+
+- [ ] Phone: scan The Marx-Engels Reader (ISBN 0-393-09040-0). The contents step lists 46 works with no " -" at the ends and no part headings ("The Early Marx"). Tap "Yes, these works", choose German, and "The works in this book" shows one card per work with Karl Marx as author and German lit, and "0 of 46 answered" (or more if Wikidata's dates were used).
+- [ ] Phone, same cards: "Wikidata knows … of these works" with "Use Wikidata's dates". Tapping it fills On the Jewish Question 1843, Theses on Feuerbach 1845 and others, but not the 1844 Manuscripts (1932) or the Grundrisse (1939): those cards say "first printed …, after the author died". The Poverty of Philosophy extract offers "French (Wikidata)".
+- [ ] Phone, same cards: change Engels's works to Friedrich Engels and the Manifesto to "Karl Marx and Friedrich Engels"; "Ask Wikidata again" appears; tapping it later shows "Wikidata has answered" with "Show its suggestions", and nothing typed is lost. Tapping a chip on card 30 changes only that card; the page does not jump.
+- [ ] Phone, same cards: each card's three "Search the web" links open a new tab with a question about that work ("What language was The Holy Family by Karl Marx first written in?" for "Alienation and Social Classes (from the Holy Family)"). "Not a work (a heading): remove" takes a card away.
+- [ ] Phone, same book: Next with cards unanswered outlines them and offers "Don't know the rest"; tapping it goes on.
+- [ ] Phone, same book: on "Title page and copyright page", leave "First printed (first edition)" empty and tap Next: the step stays, with "Still empty: First printed" and "Don't know or not printed". Type 1972 (the first edition's year) instead.
+- [ ] Phone, same book: the spine step has "Height in cm (measure later is fine)" with "A library record gives 22 cm". Type 23.5.
+- [ ] Phone, same book: "This copy" now says Next, and "Check before saving" lists the book, the works and this copy, with amber "missing" where nothing was given. Tap "Binding", choose one, Next: back on the check, with the binding filled. "Save the book" saves.
+- [ ] Phone, after saving: the Library finds the Reader by searching "Engels"; the book page lists the works with their dates; Edit the works shows the original titles (Zur Judenfrage) and English for the Inaugural Address; the height is 23.5 cm.
+- [ ] Phone: add a single work (Fear and Trembling, Penguin): the language step has "Search the web" under the languages and, after Danish is typed, under the original title. On the date step, Next with nothing typed names "Original date" with "Don't know".

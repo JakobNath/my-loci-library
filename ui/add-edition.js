@@ -26,11 +26,11 @@ export function editionStepHtml(book) {
     `<p class="step-hint">${escapeHtml(`The record also lists ${isbn}. Add it only if it is printed in this book.`)} <button type="button" class="chip" data-action="add-isbn" data-value="${attr(isbn)}">Add</button></p>`).join('');
   const problemsHtml = (book.editionProblems || []).map(problem => `<p class="step-hint is-missing">${escapeHtml(problem)}</p>`).join('');
   return `<h2 class="step-title">Title page and copyright page</h2>
-    <p class="step-hint">Check these against the title page and the page behind it. A box outlined in color is still empty.</p>
+    <p class="step-hint">Check these against the title page and the page behind it. A box outlined in color is still empty: fill it in, or Next offers "Don't know or not printed".</p>
     <form class="form">${problemsHtml}${rowsHtml}
       <p><button type="button" class="link" data-action="add-publisher">Add another publisher</button></p>
       <div class="field-row">${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}`
-    + `${fieldHtml('First printed', 'firstPrinted', found.firstPrinted, { missing: !found.firstPrinted, type: 'number', help: true })}</div>
+    + `${fieldHtml('First printed (first edition)', 'firstPrinted', found.firstPrinted, { missing: !found.firstPrinted, type: 'number', help: true, hint: 'The first time this book appeared, in any edition: the earliest year its copyright page gives.' })}</div>
       ${earlyHtml}<p><button type="button" class="chip" data-action="same-printing">First printed: same as this printing</button></p>
       ${fieldHtml('Edition statement', 'editionStatement', found.editionStatement, { help: true })}
       ${fieldHtml('ISBN', 'isbn', found.isbn, { missing: !found.isbn })}

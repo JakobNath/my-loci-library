@@ -3,12 +3,15 @@
 // step: is this the book, its title page and copyright page (publisher, year,
 // first printing, ISBNs, series, set, pages), is it a collection (when a record lists contents),
 // is it the same work as one we have, when was it written, its original
-// language, category and tags, the translation, the cover, the spine, the
-// binding, where it goes, and this copy. Adding asks what only a person
-// knows; the lookups and the laptop fill catalog facts ("Needs details").
-// Steps with nothing to ask are skipped. The camera stays open for the whole
-// stack (paused during the steps), and the next scan is ready as soon as a
-// book is saved. The questions' own drawing is in ui/add-questions.js.
+// language (for a collection, then a card per work: ui/add-works.js),
+// category and tags, the translation, the cover, the spine and height, the
+// binding, where it goes, this copy, and "Check before saving"
+// (ui/add-check.js). Every field wanted is filled from a source and shown,
+// or asked: a must field left empty keeps its step open until it is filled
+// or answered "Don't know" (core/add-check.js). Steps with nothing to ask are
+// skipped. The camera stays open for the whole stack (paused during the
+// steps), and the next scan is ready as soon as a book is saved. The
+// questions' own drawing is in ui/add-questions.js and ui/add-edition.js.
 
 import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
@@ -30,8 +33,11 @@ import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, searchTitle, webSearchUrl } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml } from './date-help.js';
+import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
+import { mustMissing, checkRows, cardAnswered } from '../core/add-check.js';
+import { cardsFromLines, contentsFromCards, workDetailsFromCards, worksStepHtml, readCards, cardAction, redrawCard, showCount, showCardPreview } from './add-works.js';
+import { checkStepHtml, nudgeHtml } from './add-check.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
 import { editionStepHtml, readEditionStep, editionStepProblems } from './add-edition.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
@@ -45,8 +51,8 @@ const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLA
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
 
 const STEP_NAMES = {
-  book: 'The book', volume: 'Volume', edition: 'Title page and copyright page', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
-  translation: 'Translation and editors', translators: 'Each translator', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
+  book: 'The book', volume: 'Volume', edition: 'Title page and copyright page', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', works: 'Each work', subjects: 'Category and tags',
+  translation: 'Translation and editors', translators: 'Each translator', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy', check: 'Check before saving',
 };
 
 /** Draw the batch add screen. Returns a cleanup that closes the camera. */
@@ -269,6 +275,11 @@ export function render(container, state, actions) {
       fixing: !found.source, // not found online: the details are asked for at once
       publisherRows: null, // the publisher and place boxes, once the copyright page step has been seen
       otherIsbnsText: '', editionProblems: [], // other ISBNs as typed; what to correct before leaving that step
+      cards: null, // a collection's works, one card each (ui/add-works.js), once the contents step is left
+      heightCm: '', // the height as typed on the spine step
+      // Must fields (core/add-check.js): those answered "Don't know", the step whose Next found one empty,
+      // and whether a step was opened from "Check before saving", so its Next goes back there.
+      unknown: new Set(), nudged: '', returnTo: false,
     };
     // Leaving the screen now would lose the answers and photos, so main.js asks first.
     actions.setDraft(`"${full.title || 'The book being added'}" is not saved yet.`);
@@ -313,10 +324,10 @@ export function render(container, state, actions) {
     // Each work's translator, when the list names one, is on its line, to be corrected like the rest.
     book.contentsText = set.checked ? contentsLinesOf(volume)
       : volume.works.map(work => [work.author, work.title, work.translator ? `trans. ${work.translator}` : ''].filter(Boolean).join(' — ')).join('\n');
+    // Works first written in different languages (Lucretius and Epictetus) each start at the list's own, on their cards.
     const languages = [...new Set(volume.works.map(work => work.originalLanguage).filter(Boolean))];
     if (languages.length === 1) book.language = languages[0];
-    // Works first written in different languages (Lucretius and Epictetus): the language step opens with a row for each.
-    book.workLanguages = languages.length > 1 ? volume.works.map(work => ({ title: work.title, language: work.originalLanguage || '' })) : null;
+    book.cards = null;
     const translators = [...new Set(volume.works.map(work => work.translator).filter(Boolean))];
     if (translators.length) Object.assign(book, { translator: translators.join('; '), hasTranslator: true });
     book.works = suggestWorks(found.title, found.authors, state.library);
@@ -359,10 +370,33 @@ export function render(container, state, actions) {
     return linked ? linked.originalLanguage : book.language;
   }
 
-  // A translation: a translator is named, or the work was first written in another language.
+  // A translation: a translator is named, or the work (for a collection, any of its works) was first written in another language.
   function isTranslated() {
+    if (book.hasTranslator) return true;
+    if (book.contents !== null && book.cards) return book.cards.some(card => card.language && !isEnglish(card.language));
     const language = originalLanguage();
-    return book.hasTranslator || Boolean(language && !isEnglish(language));
+    return Boolean(language && !isEnglish(language));
+  }
+
+  // What the must-field rules need to know beyond the book itself (core/add-check.js).
+  function about() {
+    return { translated: isTranslated(), bookLanguages: isTranslated() ? shownBookLanguages() : '', single: book.contents === null, steps: steps() };
+  }
+
+  // A card's starting author: the line's, else the book's; a known set's line keeps its own, even none (the Didache).
+  const defaultAuthor = () => (book.knownVolume ? '' : book.found.authors.join(' and '));
+  // A known set's own details for a work of the volume (its original language and title).
+  const listedWork = title => (book.knownVolume ? book.knownVolume.works.find(work => normalizeForSearch(work.title) === normalizeForSearch(title)) || null : null);
+
+  // The language answered once for a collection, given to every card whose own was not chosen.
+  function fillCardLanguages() {
+    for (const card of book.cards || []) if (!card.languageChosen) card.language = book.language || '';
+  }
+
+  // A Loeb title taken on "Is this the book?" follows the works as corrected ("Alecestic" made "Alcestis").
+  function followLoebTitle(titles) {
+    if (!book.loebTitle || !titles.length) return;
+    book.found.title = loebStyleTitle({ ...book.found, title: '', contents: titles.map(title => ({ title })) }) || book.found.title;
   }
 
   // "This book is in", until the person answers: the original and English for a facing-page
@@ -389,8 +423,9 @@ export function render(container, state, actions) {
       book.contentsOffered || book.severalChosen ? 'contents' : null,
       single && book.works.length ? 'work' : null,
       single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
-      // A collection is asked its language, category and tags once, for all its new works.
+      // A collection is asked its language once, then each work on its own card; category and tags once for all.
       ownWork || !single ? 'language' : null,
+      !single ? 'works' : null,
       ownWork || !single ? 'subjects' : null,
       // Translators and editors: for a translation, any collection, or a book a record names editors for.
       isTranslated() || !single || book.editors ? 'translation' : null,
@@ -398,18 +433,31 @@ export function render(container, state, actions) {
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
       'where', 'copy',
+      // Every field with its value or "missing", before the book is saved.
+      'check',
     ].filter(Boolean);
   }
 
   function goTo(step) {
     book.step = step;
+    book.nudged = '';
     hideScanArea();
     stepArea.hidden = false;
     drawStep();
     stepArea.scrollIntoView({ block: 'start' });
   }
 
+  // On to the next step. A must field left empty keeps the step open, marked, until it is
+  // filled or answered "Don't know" (core/add-check.js). A step opened from the check goes back there.
   function next() {
+    if (book.step === 'language' && book.contents !== null) fillCardLanguages();
+    if (book.step !== 'check' && mustMissing(book, book.step, about()).length) {
+      book.nudged = book.step;
+      drawStep();
+      stepArea.scrollIntoView({ block: 'start' });
+      return;
+    }
+    if (book.returnTo && book.step !== 'check') { book.returnTo = false; goTo('check'); return; }
     const list = steps();
     const at = list.indexOf(book.step);
     if (at === list.length - 1) saveBook();
@@ -438,20 +486,38 @@ export function render(container, state, actions) {
   function drawStep() {
     const draw = {
       book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), edition: () => editionStepHtml(book), contents: contentsStep, work: workStep, date: dateStep,
-      language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices(), categoriesFromSubjects(book.found.subjects || [])),
+      language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices(), categoriesFromSubjects(book.found.subjects || [])),
       translation: () => translationStepHtml({ ...book, bookLanguages: shownBookLanguages() }, isTranslated(), bookLanguageChoices(originalLanguage())), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
+      works: () => worksStepHtml(book, worksAbout()), check: () => checkStepHtml(checkRows(book, { ...about(), linkedDating: linkedDating() }), book.found.title),
     }[book.step];
-    stepArea.innerHTML = progressHtml() + draw();
+    // A must field left empty on Next: named at the top, with "Don't know" (the cards mark their own).
+    const missing = book.nudged === book.step && book.step !== 'works' ? mustMissing(book, book.step, about()) : [];
+    stepArea.innerHTML = progressHtml() + nudgeHtml(missing, book.step, book.fixing) + draw();
     stepArea.oninput = event => {
       if (event.target.name === 'dating') showDatingPreview();
       if (event.target.name === 'translator') stepArea.querySelector('[data-translators]').textContent = translatorsReadAs(event.target.value);
+      // Typing on a card: its date read back, and its tick and the count kept up to date.
+      const card = event.target.closest('[data-card]');
+      if (card) {
+        if (event.target.name === 'cardDate') showCardPreview(event.target);
+        readCards(book, stepArea);
+        showCount(stepArea, book, Number(card.dataset.card));
+      }
     };
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
+      // A card's search asks about its title and author as typed now; the link then opens as usual.
+      const search = event.target.closest('[data-search-web^="card-"]');
+      if (search) { refreshCardSearch(search); return; }
       const button = event.target.closest('[data-action]');
       if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
-      else if (button) answer(button.dataset.action, button.dataset.value);
+      else if (button && button.dataset.action.startsWith('card-')) {
+        readFields();
+        const index = Number(button.closest('[data-card]').dataset.card);
+        if (cardAction(book, button.dataset.action, button.dataset.value, index)) drawStep();
+        else redrawCard(stepArea, book, index, worksAbout());
+      } else if (button) answer(button.dataset.action, button.dataset.value);
     };
     stepArea.onsubmit = event => { event.preventDefault(); answer('done'); };
     showDatingPreview();
@@ -511,76 +577,91 @@ export function render(container, state, actions) {
       <div class="choices">${choicesHtml}${choiceHtml('volume-other', 'Not in the list', 'Type its details instead')}</div>${backHtml()}`;
   }
 
-  // Ask Wikidata about some works of this book, once for each list of titles; draw the step again when it answers.
+  // Ask Wikidata about some works of this book (by any of their authors), once for each list of titles. The date
+  // step is drawn again when it answers; on the cards a line offers to show the answer, so nothing typed is lost.
   function askWikidata(current, titles, author) {
     const lookups = state.settings.lookups || {};
-    const key = `${author}|${titles.join('|')}`;
+    const key = wikidataKey(titles, author);
     if (lookups.wikidata === false || !titles.length || current.wikidataAsked === key) return;
     current.wikidataAsked = key;
+    const answered = text => {
+      if (book !== current) return;
+      if (book.step === 'date') drawStep();
+      const note = book.step === 'works' && stepArea.querySelector('[data-wikidata-arrived]');
+      if (note) { note.hidden = false; if (text) note.textContent = text; }
+    };
     lookUpWorks(titles, author).then(found => {
       current.wikidataAnswered = key;
       for (const [title, work] of found) current.wikidata.set(title, work);
       // "Possibly the same as…": a work already held under the same Wikidata item is offered in "Same work?".
       const held = current.contents === null && sameWikidataWorks(found, state.library.worksById).get(current.found.title);
       if (held && !current.works.includes(held)) { current.works.push(held); current.sameItem = held.id; }
-      if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
+      answered('');
     }).catch(error => {
       current.wikidataProblem = { key, message: error.message };
-      if (book === current && ['contents', 'date'].includes(book.step)) drawStep();
+      answered(error.message);
     });
   }
+  const wikidataKey = (titles, author) => `${[].concat(author).join(', ')}|${titles.join('|')}`;
 
-  // The works listed in the contents box, and their most common author (the book's when none is given).
-  function listedWorks(text) {
-    const pieces = parseContentsLines(text);
-    const counts = new Map();
-    for (const piece of pieces) if (piece.author) counts.set(piece.author, (counts.get(piece.author) || 0) + 1);
-    const author = [...counts].sort((a, b) => b[1] - a[1]).map(([name]) => name)[0] || book.found.authors[0] || '';
-    return { pieces, author };
+  // Wikidata is asked about the works by the title a search would use ("The Holy Family" for an extract
+  // "(from The Holy Family)"), and by every author named, or the book's for a work naming none.
+  function wikidataQuestion(pieces) {
+    const names = pieces.flatMap(piece => (piece.author ? piece.author.split(/\s+and\s+/) : book.found.authors)).map(name => name.trim()).filter(Boolean);
+    return { titles: [...new Set(pieces.map(piece => searchableTitle(piece.title)))], authors: [...new Set(names)] };
+  }
+  const wikidataOf = title => book.wikidata.get(searchableTitle(title)) || null;
+
+  // The dates of a list nobody has checked yet: offered on each card with one tap, like Wikidata's (PLAN.md, "Original dates").
+  const listDateOf = title => (book.knownVolume ? (book.knownVolume.works.find(work => work.title === title) || {}).date || '' : '');
+
+  // What the cards are drawn with (ui/add-works.js).
+  function worksAbout() {
+    const cards = book.cards || [];
+    const missing = new Set(book.nudged === 'works' ? cards.map((card, i) => (cardAnswered(card) || card.unknown ? -1 : i)).filter(i => i >= 0) : []);
+    return { wikidataOf, listDateOf, missing, nudged: book.nudged === 'works', wikidataHtml: wikidataLineHtml(cards), sameHtml: book.knownVolume ? '' : sameWorksHtml(cards) };
   }
 
-  // Wikidata's dates for listed works still without one, offered with one tap (PLAN.md, "Original dates"),
-  // and the original titles it knows, which are kept with the new works (withWikidata).
-  function wikidataDatesHtml(text) {
-    const pieces = parseContentsLines(text);
-    const offered = pieces.filter(piece => !piece.date && (book.wikidata.get(piece.title) || {}).date);
-    // A problem is shown only when it came from asking about these works, not about the book's own title.
+  // What Wikidata said about the cards' works, or that it is still being asked; and, once titles or
+  // authors were corrected on the cards, a button to ask again with them.
+  function wikidataLineHtml(cards) {
+    if ((state.settings.lookups || {}).wikidata === false || book.knownVolume) return '';
+    const question = wikidataQuestion(cards);
+    const again = wikidataKey(question.titles, question.authors) !== book.wikidataAsked
+      ? ' <button type="button" class="chip" data-action="wikidata-again">Ask Wikidata again, with the titles and authors as corrected</button>' : '';
+    const arrived = '<p class="step-hint" data-wikidata-arrived hidden>Wikidata has answered. <button type="button" class="chip" data-action="works-refresh">Show its suggestions</button></p>';
     const problem = book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
-    if (!offered.length && problem) return `<p class="step-hint">${escapeHtml(problem)}</p>`;
-    const titled = pieces.filter(piece => (book.wikidata.get(piece.title) || {}).originalTitle);
-    const titlesHtml = titled.length ? `<p class="step-hint">${escapeHtml(`Wikidata's original titles, kept with the works: ${titled.map(piece => `${piece.title}, ${book.wikidata.get(piece.title).originalTitle}`).join('; ')}.`)}</p>` : '';
-    if (offered.length) {
-      const list = offered.map(piece => `${piece.title} ${book.wikidata.get(piece.title).date}`).join('; ');
-      return `<div class="field"><p class="step-hint">${escapeHtml(`Wikidata gives when ${offered.length} of these were written or first published: ${list}.`)}</p>`
-        + `<button type="button" class="chip" data-action="wikidata-dates">Use these dates</button></div>${titlesHtml}`;
-    }
-    // Wikidata answered and knows no date for any of them: said, so the silence is not taken for waiting,
-    // with a web search for each work still undated.
-    const undated = pieces.filter(piece => !piece.date);
-    if (book.wikidataAnswered !== book.wikidataAsked || !undated.length) return titlesHtml;
-    const author = listedWorks(text).author;
-    const linksHtml = undated.map(piece => {
-      const question = workDateQuestion(piece.title, [piece.author || author].filter(Boolean));
-      return `<a class="link" href="${attr(webSearchUrl(question))}" target="_blank" rel="noopener">${escapeHtml(piece.title)}</a>`;
-    }).join(' · ');
-    return `<p class="step-hint">${escapeHtml('Wikidata knows no dates for these works. Type each date at the end of its line, as "— 431 BC". Search the web:')} ${linksHtml}</p>${titlesHtml}`;
+    if (problem) return `<p class="step-hint">${escapeHtml(problem)}${again}</p>`;
+    if (book.wikidataAnswered !== book.wikidataAsked) return `<p class="step-hint">Asking Wikidata about these works…${again}</p>${arrived}`;
+    const known = cards.filter(card => wikidataOf(card.title));
+    const datable = cards.filter(card => !card.date && !card.dateUnknown && (wikidataOf(card.title) || {}).date && !wikidataOf(card.title).posthumous);
+    const text = known.length ? `Wikidata knows ${known.length} of these works; its dates and original titles are shown on their cards.`
+      : 'Wikidata knows none of these works. Use "Search the web" on each card.';
+    const useHtml = datable.length ? ` <button type="button" class="chip" data-action="wikidata-dates">${escapeHtml(`Use Wikidata's dates (${datable.length})`)}</button>` : '';
+    return `<p class="step-hint">${escapeHtml(text)}${useHtml}${again}</p>${arrived}`;
   }
 
-  // The dates of a list nobody has checked yet: offered with one tap, like Wikidata's (PLAN.md, "Original dates").
-  const listDateOf = title => ((book.knownVolume.works.find(work => work.title === title) || {}).date || '');
-  function listDatesHtml(text) {
-    const offered = parseContentsLines(text).filter(piece => !piece.date && listDateOf(piece.title));
-    if (!offered.length) return '';
-    // Every date is shown, so each can be checked before the one tap.
-    const list = offered.map(piece => `${piece.title} ${listDateOf(piece.title)}`).join('; ');
-    return `<div class="field"><p class="step-hint">${escapeHtml(`The list, not yet checked by a person, gives when ${offered.length} of these were written: ${list}.`)}</p>`
-      + '<button type="button" class="chip" data-action="list-dates">Use these dates</button></div>';
+  // A card's search link, pointed at its title and author as typed now.
+  function refreshCardSearch(link) {
+    readCards(book, stepArea);
+    const card = book.cards[Number(link.closest('[data-card]').dataset.card)];
+    if (!card) return;
+    const authors = card.author ? card.author.split(/\s+and\s+/) : [];
+    const ask = { 'card-date': workDateQuestion, 'card-language': workLanguageQuestion, 'card-title': originalTitleQuestion }[link.dataset.searchWeb];
+    refreshSearchLink(link, ask(card.title, authors));
+  }
+
+  // The date of a work already held that a single book was joined to ("Same work?"), for the check.
+  function linkedDating() {
+    const linked = book.contents === null && book.works.find(work => work.id === book.workId);
+    const dating = linked && workingDating(linked);
+    return dating ? dating.text : '';
   }
 
   // "Possibly the same as…" in a collection: works Wikidata names with the same item as works already held.
-  function sameWorksHtml(pieces) {
+  function sameWorksHtml(cards) {
     const same = sameWikidataWorks(book.wikidata, state.library.worksById);
-    const matches = pieces.filter(piece => same.has(piece.title)).map(piece => ({ title: piece.title, work: same.get(piece.title) }));
+    const matches = cards.filter(card => same.has(searchableTitle(card.title))).map(card => ({ title: card.title, work: same.get(searchableTitle(card.title)) }));
     if (!matches.length) return '';
     const holder = work => (state.library.entries.find(entry => entry.works.includes(work)) || { edition: { title: '' } }).edition.title;
     const names = matches.map(match => `${match.title}${holder(match.work) ? ` (in ${holder(match.work)})` : ''}`).join('; ');
@@ -592,22 +673,23 @@ export function render(container, state, actions) {
 
   // 2. A collection of works? When a record lists contents, or the person said so.
   function contentsStep() {
-    const lines = book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
-    const listed = listedWorks(lines);
+    // Back from the cards, the list shows them as corrected there.
+    const lines = book.cards ? contentsFromCards(book.cards)
+      : book.contents ?? book.contentsText ?? book.found.contents.map(entry => (entry.author ? `${entry.author} — ${entry.title}` : entry.title)).join('\n');
     const set = book.knownVolume && book.knownSet;
-    // A known set's list gives the dates itself (filled in when checked, offered when not), so Wikidata is not asked.
-    if (!set) askWikidata(book, listed.pieces.map(piece => piece.title), listed.author);
-    const datesHtml = (set ? listDatesHtml(lines) : wikidataDatesHtml(lines)) + (set ? '' : sameWorksHtml(listed.pieces));
+    // Wikidata is asked now, so its answer is there by the cards. A known set's list gives the dates itself
+    // (filled in when checked, offered when not), so Wikidata is not asked.
+    if (!set) { const question = wikidataQuestion(parseContentsLines(lines)); askWikidata(book, question.titles, question.authors); }
     const searchHtml = `<p class="search-line">${searchLinkHtml(`Table of contents of ${searchTitle(book.found)}`, 'contents')}</p>`;
     if (set) {
       return `<h2 class="step-title">The works in this volume</h2>
-        <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator. A translator can be added at the end of a line: "— trans. Edward Sittler".`)}</p>
-        <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${datesHtml}
+        <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator. A translator can be added at the end of a line: "— trans. Edward Sittler". Each work's language and date come next, one card each.`)}</p>
+        <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
     const hint = book.contentsOffered
-      ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Each line becomes a work with its own date.'
-      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like, a date if you know it, and the work\'s own translator ("Plato — Phaedo — c. 360 BC — trans. Benjamin Jowett").';
+      ? 'The record online lists these contents. If the book holds several works (an anthology), correct the list: one work per line, with its author first if you like ("Plato — Phaedo"). Take out part headings. Each work\'s author, language and date come next, one card each.'
+      : 'No record online lists them. Type or paste the works, one per line, with the author first if you like and the work\'s own translator ("Plato — Phaedo — trans. Benjamin Jowett"). Each work\'s author, language and date come next, one card each.';
     // The phone itself can read the printed page: copy its text and paste it, a page at a time (docs/decisions/screens.md).
     const copyHint = book.contentsOffered ? '' : `<p class="step-hint">${escapeHtml('To copy the printed contents: on an iPhone, point the camera at the page (or open a photo of it), tap the text button, then "Copy All". On Android, use Google Lens, then "Copy text". Paste here once per page; page numbers and dotted lines are taken out.')}</p>`;
     // With no contents known, photos of the contents pages are kept with the book, to be typed in
@@ -618,7 +700,7 @@ export function render(container, state, actions) {
       : pagesHtml + photoButtonsHtml('contents', pages.length ? 'Photograph the next page' : 'Photograph the contents page', 'Kept with the book, so the works can be typed in later');
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>${copyHint}
-      <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${datesHtml}
+      <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}
         <div class="choices">${photoHtml}${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
   }
@@ -640,10 +722,11 @@ export function render(container, state, actions) {
     return suggestOriginalDates(book.work, book.found.year, { authors: book.found.authors, translated: translatorNames(book.translator).length > 0 });
   }
 
-  // Wikidata's date for this one work, offered first when it knows one.
+  // Wikidata's date for this one work, offered first when it knows one; not when it was first printed
+  // after the author died, since the working date is then when it was written (core/wikidata.js).
   function wikidataSuggestion() {
     const work = book.wikidata.get(book.found.title);
-    return work && work.date ? [{ text: work.date, label: 'written or first published (Wikidata)' }] : [];
+    return work && work.date && !work.posthumous ? [{ text: work.date, label: 'written or first published (Wikidata)' }] : [];
   }
 
   // 3. When was it written?
@@ -654,21 +737,19 @@ export function render(container, state, actions) {
     const waitingHtml = book.work ? '' : '<p class="step-hint">Looking for the first publication…</p>';
     // Wikidata refused or did not answer: say so, rather than leave its suggestion quietly missing.
     const problem = book.wikidataProblem.key && book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
-    const problemHtml = problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '';
+    const known = book.wikidata.get(book.found.title);
+    const posthumousHtml = known && known.date && known.posthumous
+      ? `<p class="step-hint">${escapeHtml(`Wikidata: first printed ${known.date}, after the author died. The working date is when it was written.`)}</p>` : '';
+    const problemHtml = (problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '') + posthumousHtml;
     return `<h2 class="step-title">When was this work written?</h2>
-      <p class="step-hint${book.dateNudge ? ' is-missing' : ''}">${escapeHtml(book.dateNudge ? `Tap a suggestion, type a date, or tap "Don't know yet".` : `When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
+      <p class="step-hint">${escapeHtml(`When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
       ${dateRuleHtml()}
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}${problemHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
         <p class="search-line">${searchLinkHtml(workDateQuestion(searchTitle(book.found), book.found.authors))}</p>
-        <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know yet</button>
+        <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
-  }
-
-  // The original languages of the works in the library, offered in each work's row of a mixed collection.
-  function usedLanguages() {
-    return [...new Set([...state.library.worksById.values()].map(work => work.originalLanguage).filter(Boolean))];
   }
 
   // The categories in use, by name, and the tags in use, most used first.
@@ -709,13 +790,16 @@ export function render(container, state, actions) {
       <div class="choices">${photoButtonHtml('Take a photo of the cover')}${choiceHtml('next', 'Skip', 'A plain drawn cover is shown instead')}</div>${backHtml()}`;
   }
 
-  // 5. The spine.
+  // 5. The spine, and the height: wanted, not required (a record's height is only a library's measure).
   function spineStep() {
     const doneHtml = book.photos.spine ? `<div class="found"><img class="step-spine" src="${attr(book.photos.spine.preview)}" alt=""></div>` : '';
+    const measured = book.photos.spine && book.photos.spine.height ? String(book.photos.spine.height / 10) : '';
+    const recordHint = book.found.height ? `A library record gives ${Math.round(book.found.height / 10)} cm.` : '';
     return `<h2 class="step-title">${escapeHtml(book.photos.spine ? 'Your spine photo' : 'Add a spine photo?')}</h2>
-      <p class="step-hint">Optional. A spine photo shows on the book page and in the shelf view, so the book is easy to spot on the shelf.</p>${doneHtml}
+      <p class="step-hint">A spine photo shows on the book page and in the shelf view, so the book is easy to spot on the shelf.</p>${doneHtml}
+      <div class="form">${fieldHtml('Height in cm (measure later is fine)', 'heightCm', book.heightCm || measured, { type: 'number', hint: recordHint })}</div>
       <div class="choices">${photoButtonsHtml('spine', book.photos.spine ? 'Take it again' : 'Take a photo of the spine')}
-        ${choiceHtml('next', book.photos.spine ? 'Use this photo' : 'Skip')}</div>${backHtml()}`;
+        ${choiceHtml('next', book.photos.spine ? 'Use this photo' : 'Skip the photo')}</div>${backHtml()}`;
   }
 
   // 6. The binding: one binding, a material if it matters, and any extras.
@@ -766,6 +850,12 @@ export function render(container, state, actions) {
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
+    if (book.step === 'spine') book.heightCm = (value('heightCm') || '').trim();
+    if (book.step === 'works') {
+      readCards(book, stepArea);
+      // The lines saved and read by the later steps (each translator) follow the cards as corrected.
+      book.contents = contentsFromCards(book.cards);
+    }
     if (book.step === 'binding') Object.assign(book, readBindingChoices(stepArea));
     if (book.step === 'where') {
       const typed = [...stepArea.querySelectorAll('[name="where"]')].map(input => input.value.trim()).filter(Boolean);
@@ -788,16 +878,14 @@ export function render(container, state, actions) {
         if (book.editionProblems.length) return drawStep();
       }
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
-      // An empty date is a choice, not an oversight: ask for "Don't know yet".
-      if (book.step === 'date' && !book.dating) { book.dateNudge = true; return drawStep(); }
       if (book.step === 'contents') {
         book.contents = book.contentsText.trim() || null;
-        // A Loeb title taken on "Is this the book?" follows the corrected works ("Alecestic" made "Alcestis").
-        if (book.loebTitle && book.contents) {
-          const works = parseContentsLines(book.contents).map(line => ({ title: line.title }));
-          book.found.title = loebStyleTitle({ ...book.found, title: '', contents: works }) || book.found.title;
-        }
+        // Each work gets its card, keeping what was already answered on it.
+        book.cards = book.contents ? cardsFromLines(book.contents, book.cards, { author: defaultAuthor(), listed: listedWork }) : null;
+        if (book.cards && book.language) fillCardLanguages();
+        if (book.cards) followLoebTitle(book.cards.map(card => card.title));
       }
+      if (book.step === 'works') followLoebTitle(book.cards.map(card => card.title));
       book.fixing = false;
       return next();
     }
@@ -807,17 +895,33 @@ export function render(container, state, actions) {
       Object.assign(book, { volumeSkipped: true, knownVolume: null, fixing: !setInfo });
       return next();
     }
-    if (action === 'single') { book.contents = null; return next(); }
-    if (action === 'wikidata-dates' || action === 'list-dates') {
-      // Each listed work without a date gets the offered one, as if typed; they can still be changed before going on.
-      const dateOf = action === 'list-dates' ? listDateOf : title => (book.wikidata.get(title) || {}).date || '';
-      book.contentsText = (book.contentsText ?? '').split('\n').map(line => {
-        const [piece] = parseContentsLines(line);
-        const date = piece && !piece.date && dateOf(piece.title);
-        return date ? `${line.trimEnd()} — ${date}` : line;
-      }).join('\n');
+    if (action === 'single') { book.contents = null; book.cards = null; return next(); }
+    // "Don't know" for the must fields a step's Next found empty (core/add-check.js).
+    if (action === 'dont-know') {
+      for (const field of mustMissing(book, book.step, about())) book.unknown.add(field.name);
+      return next();
+    }
+    // The cards: every work still unanswered (and without a date that cannot be read) is "Don't know".
+    if (action === 'cards-unknown') {
+      for (const card of book.cards) if (!cardAnswered(card) && !card.date) card.unknown = true;
+      return next();
+    }
+    // Each card without a date gets Wikidata's, as if typed; never one printed after the author died.
+    if (action === 'wikidata-dates') {
+      for (const card of book.cards) {
+        const known = wikidataOf(card.title);
+        if (!card.date && !card.dateUnknown && known && known.date && !known.posthumous) card.date = known.date;
+      }
       return drawStep();
     }
+    if (action === 'wikidata-again') {
+      const question = wikidataQuestion(book.cards);
+      askWikidata(book, question.titles, question.authors);
+      return drawStep();
+    }
+    if (action === 'works-refresh') return drawStep();
+    // From "Check before saving": the step that asks a field, whose Next then comes back.
+    if (action === 'jump') { book.returnTo = true; return goTo(value); }
     if (action === 'join-same') {
       book.sameWorks = Object.fromEntries((book.sameMatches || []).map(match => [normalizeForSearch(match.title), match.work.id]));
       return drawStep();
@@ -830,7 +934,7 @@ export function render(container, state, actions) {
       book.datingNote = hint ? `suggested: ${hint.label}` : '';
       return next();
     }
-    if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; return next(); }
+    if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; book.unknown.add('dating'); return next(); }
     if (action === 'add-publisher') { book.publisherRows = [...book.publisherRows, { publisher: '', place: '' }]; return drawStep(); }
     if (action === 'same-printing') { book.found.firstPrinted = book.found.year; return drawStep(); }
     if (action === 'add-isbn') { book.otherIsbnsText = [book.otherIsbnsText, value].filter(Boolean).join('; '); return drawStep(); }
@@ -839,8 +943,6 @@ export function render(container, state, actions) {
     if (action === 'book-languages') { book.bookLanguages = value; return drawStep(); }
     // English needs no original title, so tapping it goes straight on.
     if (action === 'language') { book.language = value; return isEnglish(value) ? next() : drawStep(); }
-    if (action === 'mixed-languages') { book.workLanguages = []; return drawStep(); }
-    if (action === 'same-language') { book.workLanguages = null; return drawStep(); }
     if (action === 'category') { book.category = book.category === value ? '' : value; return drawStep(); }
     if (action === 'tag') { book.tags = book.tags.includes(value) ? book.tags.filter(tag => tag !== value) : [...book.tags, value]; return drawStep(); }
     if (action === 'place') {
@@ -899,7 +1001,7 @@ export function render(container, state, actions) {
   // A new work Wikidata knows gets its ID, its other titles and (if none was given) its original title,
   // and a date taken from Wikidata says so in its note (DATA_FORMAT.md, "Datings").
   function withWikidata(record) {
-    const known = record.type === 'work' && !state.library.worksById.has(record.id) && book.wikidata.get(record.title);
+    const known = record.type === 'work' && !state.library.worksById.has(record.id) && wikidataOf(record.title);
     if (!known) return record;
     const datings = record.datings.map(dating => (dating.text === known.date && !dating.note ? { ...dating, note: 'from Wikidata' } : dating));
     return { ...record, wikidata: known.wikidata, otherTitles: known.otherTitles, originalTitle: record.originalTitle || known.originalTitle || null, datings };
@@ -907,6 +1009,8 @@ export function render(container, state, actions) {
 
   async function saveBook() {
     const { found, copy } = book;
+    // A collection is saved from its cards: each a contents line, with its own language and original title.
+    const collection = book.contents !== null && book.cards;
     const languages = editionLanguages({
       typed: isTranslated() ? shownBookLanguages() : '', found: found.languages,
       original: originalLanguage(), isTranslated: isTranslated(),
@@ -915,10 +1019,11 @@ export function render(container, state, actions) {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),
       publisher: found.publisher, place: found.place, year: found.year, firstPrinted: found.firstPrinted || '', editionStatement: found.editionStatement,
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
-      isbn: found.isbn, otherIsbns: book.otherIsbnsText, pages: found.pages, languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
+      isbn: found.isbn, otherIsbns: book.otherIsbnsText, pages: found.pages, languages, medium: 'physical', logosId: '',
+      contents: collection ? contentsFromCards(book.cards) : book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
-      workLanguages: book.contents !== null ? book.workLanguages || null : null,
+      workDetails: collection ? workDetailsFromCards(book.cards) : null,
       workTranslators: steps().includes('translators') ? book.workTranslators : null,
       setRecord: setRecordFor(found.set),
       work: {
@@ -1081,7 +1186,9 @@ export function render(container, state, actions) {
     for (const page of book.photos.contents || []) add('contents', 'photo', page, true);
     // Sizes from a record are stored as "catalog"; a height typed on the spine photo is "measured" and wins.
     const { height, thickness } = book.found;
-    const measured = book.photos.spine && book.photos.spine.height;
+    // The spine step's box starts with the photo's height, so what it holds at the end is the person's measure.
+    const typedCm = Number(String(book.heightCm || '').replace(',', '.'));
+    const measured = typedCm > 0 ? Math.round(typedCm * 10) : book.photos.spine && book.photos.spine.height;
     const { lccn, oclc, lcc, ddc, openLibrary, hathiTrust } = book.found.identifiers;
     return {
       ...edition, images,

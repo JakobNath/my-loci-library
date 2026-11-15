@@ -331,22 +331,29 @@ The app has two tabs, **Library** and **Wishlist**, built from the same componen
 
 **Batch add** (one screen for a whole stack or a single book; each book is reviewed as it is scanned, before the next scan)
 
-Adding works in two passes (Jakob's decision, 11 November 2026). When adding, the app asks only what a person with the book in hand knows, or what no catalog records. Catalog facts (pages as printed, height, place, series number, call numbers, editors' roles, subjects) come from the phone's lookups and the laptop's nightly check (`loci-enrich`). A "needs details" filter then shows what is still empty.
+Adding fills the record while the book is in hand (Jakob's decision, 14 November 2026, replacing the "two passes" of 11 November 2026). Every field wanted is filled from a source and shown for a check, or asked, while adding, not left for later. Only what a person cannot see is left to the laptop's nightly check (`loci-enrich`): call numbers, subjects and catalog heights. The fields are of three kinds:
+
+- **Must**, when the book has one: title, subtitle, authors, translators, editors, every publisher and place, the year of this printing, the year first printed (the first edition's), series and number, set and volume, every ISBN printed, the languages on the page, the binding, and each work's original language and original date. A cover picture and a spine are almost must: a found image or a photo.
+- **Wanted, not required**: the height, usually measured by hand.
+- **Nice**: original title, category and tags, shelf, acquired, how or from whom, price, value, condition, markings, notes.
+
+A must field left empty keeps its step open on Next, named at the top, until it is filled or answered "Don't know" (never stored; the field stays empty, and "Needs details" finds it later). Fields most books lack (subtitle, editors, series, set, edition statement) are shown but not asked again.
 
 1. Scan a barcode, or type an ISBN or title.
-2. The book is looked up in Open Library, falling back to Google Books. If neither finds it, manual entry opens.
-3. The app suggests a matching existing work ("Same work as *Confessions*?"), which we confirm with one tap. It never links automatically.
-4. One question per screen, each skippable, with large one-tap answers:
-   - the original date;
-   - the original language (English, Latin, Greek, German, Hebrew, French, or typed), and the original title when it is not English;
+2. The book is looked up in Open Library, HathiTrust and Google Books. If none finds it, it is typed in from the title page.
+3. "Is this the book?", then "Title page and copyright page": every edition fact as a box, filled from the lookups, the empty ones outlined.
+4. One question per screen, with large one-tap answers:
+   - for a collection, its contents (from a record or a known set, pasted from the printed page, or photographed), then the language most of its works were written in, then **one card per work**: its title, author, original language, original title and original date, the last three each with a "Search the web" link;
+   - "Same work as *Confessions*?" when the catalog holds a work of that title, confirmed with one tap and never linked automatically;
+   - for one work, its original date and original language (English, Latin, Greek, German, Hebrew, French, or typed), and the original title when it is not English, each with a "Search the web" link;
    - the category and tags, from those already used or typed new;
-   - for a translation, the translator;
-   - the cover and spine photos, the binding, and where it goes;
+   - translation and editors: the translator, the editors and the languages on the page;
+   - the cover and spine photos and the height, the binding, and where it goes;
    - this copy: when it was acquired, price paid, estimated value, writing or markings, and notes.
-   A work already in the library keeps its own language, category and tags, so those are not asked again. Missing title, author, publisher and year are pointed out (settings choose which).
-   For a collection (11 November 2026): "Is this the book?" also offers "Yes, and it holds several works", even when no source lists them; contents found by HathiTrust or a known set are offered filled in, with their dates from Wikidata or the list; the language, category and tags are asked once for all its works; and when no contents are known, "Photograph the contents page" is offered. Everyone gets the same steps; a step is left out only when a laptop source will surely fill it.
-5. A found cover is saved automatically. If none was found, or it is wrong, take or choose a photo and line it up in the editor. Cover downloads and syncing run in the background and never hold up the next scan.
-6. Next book, or finish.
+   A work already in the library keeps its own language, category and tags, so those are not asked again. Original dates from Wikidata or a list are offered with one tap, never one first printed after the author died.
+5. **Check before saving**: every field in three groups (the book, the works, this copy), with the missing ones marked; a tap opens a field's step. "Save the book" is always allowed.
+6. A found cover is saved with the book. If none was found, or it is wrong, take or choose a photo and line it up in the editor. Cover downloads and syncing run in the background and never hold up the next scan.
+7. Next book, or finish.
 
 **Adding a set.** A choice on the add screen. The set's shared facts are given once: title, publisher, year, edition, general editors and binding. Then, mixed as needed:
 

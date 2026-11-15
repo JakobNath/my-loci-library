@@ -9,7 +9,8 @@
 //     authors, publisher, place, year, firstPrinted, editionStatement, isbn,
 //     series, seriesNumber, set, volume, pages, height)
 //   otherIsbnsText, editors, translator: as typed
-//   cards: a collection's works, { title, author, language, originalTitle, date, dateUnknown }
+//   cards: a collection's works, { title, author, language, originalTitle, date, dateUnknown, unknown }
+//     (unknown: "Don't know the rest" was tapped while the card was unanswered)
 //   language, originalTitle, dating, dateUnknown: a single work's answers
 //   category, tags, binding, material, extras, location, copy, photos, cover, heightCm
 //   unknown: the fields answered "Don't know" (a Set of the names used below)
@@ -51,7 +52,7 @@ function mustFields(book, step, { translated = false, bookLanguages = '', single
     return [['translator', 'Translator', filled(book.translator)], ['bookLanguages', 'This book is in', filled(bookLanguages)]];
   }
   if (step === 'binding') return [['binding', 'Binding', filled(book.binding) || filled(book.material) || filled(book.extras)]];
-  if (step === 'works') return (book.cards || []).map((card, i) => [`work:${i}`, card.title, cardAnswered(card)]);
+  if (step === 'works') return (book.cards || []).map((card, i) => [`work:${i}`, card.title, cardAnswered(card) || Boolean(card.unknown)]);
   return [];
 }
 
@@ -128,7 +129,7 @@ export function checkRows(book, about = {}) {
     ...(book.cards || []).map(card => ({
       label: card.title,
       value: [card.author || 'no author', card.language, filled(card.date) ? card.date : card.dateUnknown ? "date: don't know" : '', card.originalTitle].filter(filled).join(' · '),
-      state: cardAnswered(card) ? 'filled' : 'missing', step: stepOf('works'),
+      state: cardAnswered(card) ? 'filled' : card.unknown ? 'unknown' : 'missing', step: stepOf('works'),
     })),
     ...subjects,
   ];

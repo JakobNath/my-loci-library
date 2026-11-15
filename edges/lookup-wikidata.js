@@ -24,7 +24,7 @@ const TIMEOUT = 10000; // milliseconds; the dates are offered when they come, an
 /**
  * Ask about the works of one book.
  * @param {string[]} titles the works' English titles
- * @param {string} author the author's name
+ * @param {string|string[]} author the author's name, or several (core/wikidata.js, worksQuery)
  * @param {typeof fetch} [fetchFn] for the self-tests
  * @returns {Promise<Map<string, object>>} by title (core/wikidata.js, worksFromWikidata); empty when nothing could be asked
  */

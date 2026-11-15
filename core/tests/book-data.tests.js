@@ -342,6 +342,8 @@ export const tests = [
       same(['date', 'posthumous', 'originalLanguage'].map(key => found.get('Economic and Philosophic Manuscripts of 1844')[key]), ['1932', true, 'German']);
       same(['date', 'posthumous', 'originalLanguage'].map(key => found.get('The Poverty of Philosophy')[key]), ['1847', false, 'French']);
       ok(worksQuery(['Capital'], 'Karl Marx').includes('wdt:P570'), "the author's death is asked in the same query");
+      const both = worksQuery(['Anti-Dühring', 'Capital'], ['Karl Marx', 'Friedrich Engels', '']);
+      ok(both.includes('"marx"') && both.includes('"engels"'), 'a reader of two authors is asked about both at once');
     },
   },
   {

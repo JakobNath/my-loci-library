@@ -25,21 +25,24 @@ const literal = text => `"${String(text).replace(/\\/g, '\\\\').replace(/"/g, '\
  * refuses many quick queries, so a book is never asked work by work). Editions
  * and translations, which have their own items, are left out.
  * @param {string[]} titles the works' English titles
- * @param {string} author the author's name, as the book gives it ("Plato", "Edgar Allan Poe")
+ * @param {string|string[]} author the author's name, as the book gives it ("Plato", "Edgar Allan Poe"), or
+ *   several (a reader of Marx and Engels): a work by any of them is found
  * @param {string} [prefixes] the PREFIX lines naming Wikidata's vocabularies, which the query service needs
  *   written out; they name Wikidata's address, so they are kept in edges/lookup-wikidata.js
  * @returns {string} the query, or '' when there is nothing to ask (no author: a title alone matches too much)
  */
 export function worksQuery(titles, author, prefixes = '') {
-  const surname = normalizeForSearch(author).split(' ').pop();
+  const names = Array.isArray(author) ? author : [author];
+  const surnames = [...new Set(names.map(name => normalizeForSearch(name || '').split(' ').pop()).filter(Boolean))];
   const labels = [...new Set(titles.flatMap(labelsFor))];
-  if (!surname || !labels.length) return '';
+  if (!surnames.length || !labels.length) return '';
+  const byName = surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`).join(' || ');
   return `${prefixes}
 SELECT ?title ?work ?time ?precision ?original ?other ?died WHERE {
   VALUES ?title { ${labels.map(literal).join(' ')} }
   ?work rdfs:label ?title ; wdt:P50 ?author .
   ?author rdfs:label ?authorName .
-  FILTER(LANG(?authorName) = "en" && CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)}))
+  FILTER(LANG(?authorName) = "en" && (${byName}))
   FILTER NOT EXISTS { ?work wdt:P629 ?editionOf }
   OPTIONAL { ?work (p:P571|p:P577)/(psv:P571|psv:P577) ?value . ?value wikibase:timeValue ?time ; wikibase:timePrecision ?precision . }
   OPTIONAL { ?work wdt:P1476 ?original }

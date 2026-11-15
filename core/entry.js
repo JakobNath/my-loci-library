@@ -353,7 +353,8 @@ export function recordsFromForm(form, existing, context) {
       // A new work in a collection takes the language, category and tags asked once for the whole book,
       // and from a known set's list its own original title and language. What was given for this work
       // alone (its card while adding, form.workDetails) comes first.
-      const own = (form.workDetails || []).find(row => key(row.title) === key(line.title)) || {};
+      // Matched by title and, when the row names one, author: Sappho's and Alcaeus's "Fragments" are two works.
+      const own = (form.workDetails || []).find(row => key(row.title) === key(line.title) && (row.author === undefined || key(row.author) === key(line.author || ''))) || {};
       const originalTitle = (own.originalTitle || '').trim() || (listed && listed.originalTitle) || '';
       const shared = {
         originalLanguage: own.originalLanguage || (listed && listed.originalLanguage) || form.work.originalLanguage || null,
