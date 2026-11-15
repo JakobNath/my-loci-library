@@ -7,9 +7,8 @@
 
 import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
-import { parseContentsLines } from '../core/contents.js';
+import { parseContentsLines, typedNames } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
-import { translatorNames } from '../core/people.js';
 import { workLanguageQuestion, originalTitleQuestion, searchTitle } from '../core/date-search.js';
 import { searchLinkHtml } from './date-help.js';
 
@@ -120,7 +119,7 @@ export function translationStepHtml(book, isTranslated, languageChoices = []) {
 // A collection with several translators: which one translated each work.
 // Each row starts at the translator its contents line names, or the list's.
 export function workTranslatorsStepHtml(book) {
-  const names = translatorNames(book.translator);
+  const names = typedNames(book.translator);
   const chosen = new Map((book.workTranslators || []).map(row => [normalizeForSearch(row.title), row.translator]));
   const rowsHtml = parseContentsLines(book.contents).map(line => {
     const title = normalizeForSearch(line.title);
@@ -182,7 +181,7 @@ export function readQuestions(book, stepArea) {
 
 /** What the translator box will save, said back under it: "Read as 4 translators: …". */
 export function translatorsReadAs(text) {
-  const names = translatorNames(text);
+  const names = typedNames(text);
   return names.length > 1 ? `Read as ${names.length} translators: ${names.join(' · ')}` : '';
 }
 

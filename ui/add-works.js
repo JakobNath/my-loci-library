@@ -12,7 +12,7 @@
 
 import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
-import { parseContentsLines } from '../core/contents.js';
+import { parseContentsLines, typedNames } from '../core/contents.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
 import { workDateQuestion, workLanguageQuestion, originalTitleQuestion } from '../core/date-search.js';
 import { cardAnswered } from '../core/add-check.js';
@@ -24,19 +24,23 @@ import { attr, navHtml, isEnglish, LANGUAGES } from './add-questions.js';
  * answers (matched by title), so going back to correct the list loses nothing.
  * @param {string} text the contents, one work per line
  * @param {object[]|null} previous the cards so far
- * @param {{ author: string, listed: (title: string) => ({ originalLanguage?: string, originalTitle?: string }|null) }} defaults
- *   author: for a line naming none (the book's authors, joined with "and"); listed: a known set's details for a title
+ * @param {{ authors: string[], listed: (title: string) => ({ originalLanguage?: string, originalTitle?: string }|null) }} defaults
+ *   authors: the book's, for a line naming none: one is filled in; of two or more (Marx and Engels) none is,
+ *   and the card offers each as a chip (authorAsked), since they seldom wrote every work together;
+ *   listed: a known set's details for a title
  */
-export function cardsFromLines(text, previous, { author = '', listed = () => null } = {}) {
-  // By title and author: Sappho's and Alcaeus's "Fragments" are two cards.
-  const keyOf = (title, name) => `${normalizeForSearch(title)}|${normalizeForSearch(name || '')}`;
+export function cardsFromLines(text, previous, { authors = [], listed = () => null } = {}) {
+  const author = authors.length === 1 ? authors[0] : '';
+  // By title and author: Sappho's and Alcaeus's "Fragments" are two cards. The names are compared one
+  // by one, so "Marx; Engels" corrected to "Marx and Engels" is still the same card.
+  const keyOf = (title, name) => `${normalizeForSearch(title)}|${typedNames(name).map(normalizeForSearch).join(';')}`;
   const kept = new Map((previous || []).map(card => [keyOf(card.title, card.author), card]));
   return parseContentsLines(text).map(line => {
     const old = kept.get(keyOf(line.title, line.author || author)) || kept.get(keyOf(line.title, ''));
     if (old) return { ...old, title: line.title, author: line.author || old.author, date: line.date || '', translator: line.translator || '' };
     const list = listed(line.title) || {};
     return {
-      title: line.title, author: line.author || author,
+      title: line.title, author: line.author || author, authorAsked: !line.author && authors.length > 1,
       language: list.originalLanguage || '', languageChosen: Boolean(list.originalLanguage),
       originalTitle: list.originalTitle || null, // null: not given yet, so Wikidata's is shown
       date: line.date || '', dateUnknown: false, translator: line.translator || '',
@@ -55,6 +59,25 @@ export function workDetailsFromCards(cards) {
   return cards.map(card => ({ title: card.title, author: card.author || '', originalLanguage: card.language || '', originalTitle: card.originalTitle || '' }));
 }
 
+/**
+ * The authors a card offers with one tap: for a book of two or more authors,
+ * each of them and "Both" (or "All"), and "Anonymous"; and the authors
+ * Wikidata gives for the work ("Friedrich Engels (Wikidata)"), never filled
+ * in without a tap. None when the card already has the only author offered.
+ */
+function authorChoices(card, bookAuthors, known) {
+  const choices = [];
+  if (bookAuthors.length > 1) {
+    choices.push(...bookAuthors.map(name => ({ text: name, label: name })));
+    choices.push({ text: bookAuthors.join(' and '), label: bookAuthors.length === 2 ? 'Both' : 'All' });
+  }
+  const fromWikidata = known && known.authors ? known.authors.join(' and ') : '';
+  if (fromWikidata && !choices.some(item => item.text === fromWikidata)) choices.push({ text: fromWikidata, label: `${fromWikidata} (Wikidata)` });
+  else if (fromWikidata) choices.find(item => item.text === fromWikidata).label += ' (Wikidata)';
+  if (bookAuthors.length > 1) choices.push({ text: '', label: 'Anonymous' });
+  return choices.length === 1 && choices[0].text === card.author ? [] : choices;
+}
+
 /** The original title a card shows: its own, else Wikidata's until the person types one. */
 const shownOriginalTitle = (card, known) => card.originalTitle ?? (known && known.originalTitle) ?? '';
 
@@ -67,7 +90,7 @@ const answeredText = cards => `${cards.filter(cardAnswered).length} of ${cards.l
  */
 export function cardHtml(card, i, about) {
   const known = about.wikidataOf(card.title);
-  const authors = card.author ? card.author.split(/\s+and\s+/) : [];
+  const authors = typedNames(card.author);
   const done = cardAnswered(card);
   // The language chips: the usual six, Wikidata's if it is another, and the card's own.
   const offered = [...new Set([...LANGUAGES, ...(known && known.originalLanguage ? [known.originalLanguage] : []), ...(card.language ? [card.language] : [])])];
@@ -89,10 +112,15 @@ export function cardHtml(card, i, about) {
     ? `<p class="preview">${escapeHtml(`Wikidata: first printed ${known.date}, after the author died. The working date is when it was written.`)}</p>` : '';
   const read = card.date ? parseDating(card.date) : null;
   const previewText = !read ? '' : read.ok ? `Read as ${formatYearRange(read.dating.earliest, read.dating.latest)} (${read.dating.certainty})` : read.problem;
+  const authorChipsHtml = authorChoices(card, about.bookAuthors || [], known).map(item => {
+    const on = item.text === card.author && !card.authorAsked;
+    return `<button type="button" class="chip${on ? ' is-on' : ''}" data-action="card-author" data-value="${attr(item.text)}" aria-pressed="${on}">${escapeHtml(item.label)}</button>`;
+  }).join('');
   return `<fieldset class="work-card${about.missing.has(i) && !done ? ' is-missing' : ''}" data-card="${i}">
       <legend>${escapeHtml(`${done ? '✓ ' : ''}${i + 1}. ${card.title}`)}</legend>
       <label class="field">Title<input name="cardTitle" value="${attr(card.title)}" autocomplete="off"></label>
       <label class="field">Author (empty if anonymous)<input name="cardAuthor" value="${attr(card.author)}" autocomplete="off"></label>
+      ${authorChipsHtml ? `<div class="chips">${authorChipsHtml}</div>` : ''}
       <div class="field">First written in<div class="chips">${chipsHtml}</div></div>
       <label class="field">Another language<input name="cardLanguage" value="" autocomplete="off"></label>
       <p class="search-line">${searchLinkHtml(workLanguageQuestion(card.title, authors), 'card-language')}</p>
@@ -152,6 +180,7 @@ export function cardAction(book, action, value, index) {
   const card = book.cards[index];
   if (!card) return false;
   if (action === 'card-language') Object.assign(card, { language: value, languageChosen: true });
+  if (action === 'card-author') Object.assign(card, { author: value, authorAsked: false });
   if (action === 'card-date') Object.assign(card, { date: value, dateUnknown: false });
   if (action === 'card-unknown') Object.assign(card, { date: '', dateUnknown: !card.dateUnknown });
   if (action === 'card-remove') { book.cards.splice(index, 1); return true; }

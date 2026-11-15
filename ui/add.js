@@ -17,8 +17,8 @@ import { escapeHtml } from '../core/html.js';
 import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, nextVolumeLabel, withSetFacts } from '../core/entry.js';
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
-import { mergeFound, withLibraryContents, isYearTooEarly, categoriesFromSubjects, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../core/book-data.js';
-import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
+import { mergeFound, withLibraryContents, withLibraryAuthors, isYearTooEarly, categoriesFromSubjects, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../core/book-data.js';
+import { tidyPeople, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
@@ -30,7 +30,7 @@ import { lookUpHathiTrust } from '../edges/lookup-hathitrust.js';
 import { lookUpWorks } from '../edges/lookup-wikidata.js';
 import { photoButtonsHtml } from './photo-buttons.js';
 import { wireTidyPaste } from './paste-contents.js';
-import { parseContentsLines } from '../core/contents.js';
+import { parseContentsLines, typedNames } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
 import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
@@ -213,6 +213,8 @@ export function render(container, state, actions) {
     // Translators, editors and publishers the records list as authors are put in their place (core/people.js).
     const known = [...state.library.authorsById.values()].map(author => author.name);
     found = tidyPeople(found, { search: await workSearch, work: await work, known });
+    // A library record naming more of the book's authors (Marx and Engels for the Reader) adds them.
+    found = withLibraryAuthors(found, answers.map(answer => answer.found));
     const sources = answers.filter(answer => answer.found).map(answer => answer.name);
     // A year too early for a book with an ISBN was left out (core/book-data.js); with no other year, "Is this the book?" says why.
     const early = answers.map(answer => answer.found).find(answer => answer && isYearTooEarly(answer));
@@ -384,8 +386,9 @@ export function render(container, state, actions) {
     return { translated: isTranslated(), bookLanguages: isTranslated() ? shownBookLanguages() : '', single: book.contents === null, steps: steps() };
   }
 
-  // A card's starting author: the line's, else the book's; a known set's line keeps its own, even none (the Didache).
-  const defaultAuthor = () => (book.knownVolume ? '' : book.found.authors.join(' and '));
+  // The authors a card may start with or offer: the line's, else the book's (one is filled in, several are
+  // offered as chips); a known set's line keeps its own, even none (the Didache).
+  const bookAuthors = () => (book.knownVolume ? [] : book.found.authors);
   // A known set's own details for a work of the volume (its original language and title).
   const listedWork = title => (book.knownVolume ? book.knownVolume.works.find(work => normalizeForSearch(work.title) === normalizeForSearch(title)) || null : null);
 
@@ -430,7 +433,7 @@ export function render(container, state, actions) {
       ownWork || !single ? 'subjects' : null,
       // Translators and editors: for a translation, any collection, or a book a record names editors for.
       isTranslated() || !single || book.editors ? 'translation' : null,
-      !single && translatorNames(book.translator).length > 1 && parseContentsLines(book.contents).length > 1 ? 'translators' : null,
+      !single && typedNames(book.translator).length > 1 && parseContentsLines(book.contents).length > 1 ? 'translators' : null,
       'cover', 'spine',
       prompts.has('binding') ? 'binding' : null,
       'where', 'copy',
@@ -609,7 +612,7 @@ export function render(container, state, actions) {
   // Wikidata is asked about the works by the title a search would use ("The Holy Family" for an extract
   // "(from The Holy Family)"), and by every author named, or the book's for a work naming none.
   function wikidataQuestion(pieces) {
-    const names = pieces.flatMap(piece => (piece.author ? piece.author.split(/\s+and\s+/) : book.found.authors)).map(name => name.trim()).filter(Boolean);
+    const names = pieces.flatMap(piece => (piece.author ? typedNames(piece.author) : book.found.authors)).map(name => name.trim()).filter(Boolean);
     return { titles: [...new Set(pieces.map(piece => searchableTitle(piece.title)))], authors: [...new Set(names)] };
   }
   const wikidataOf = title => book.wikidata.get(searchableTitle(title)) || null;
@@ -621,7 +624,7 @@ export function render(container, state, actions) {
   function worksAbout() {
     const cards = book.cards || [];
     const missing = new Set(book.nudged === 'works' ? cards.map((card, i) => (cardAnswered(card) || card.unknown ? -1 : i)).filter(i => i >= 0) : []);
-    return { wikidataOf, listDateOf, missing, nudged: book.nudged === 'works', wikidataHtml: wikidataLineHtml(cards), sameHtml: book.knownVolume ? '' : sameWorksHtml(cards) };
+    return { wikidataOf, listDateOf, bookAuthors: bookAuthors(), missing, nudged: book.nudged === 'works', wikidataHtml: wikidataLineHtml(cards), sameHtml: book.knownVolume ? '' : sameWorksHtml(cards) };
   }
 
   // What Wikidata said about the cards' works, or that it is still being asked; and, once titles or
@@ -657,8 +660,8 @@ export function render(container, state, actions) {
     readCards(book, stepArea);
     const card = book.cards[Number(link.closest('[data-card]').dataset.card)];
     if (!card) return;
-    const authors = card.author ? card.author.split(/\s+and\s+/) : [];
-    const ask = { 'card-date': workDateQuestion, 'card-language': workLanguageQuestion, 'card-title': originalTitleQuestion }[link.dataset.searchWeb];
+    const authors = typedNames(card.author);
+    const ask ={ 'card-date': workDateQuestion, 'card-language': workLanguageQuestion, 'card-title': originalTitleQuestion }[link.dataset.searchWeb];
     refreshSearchLink(link, ask(card.title, authors));
   }
 
@@ -729,7 +732,7 @@ export function render(container, state, actions) {
   // The ticked record authors move to "Edited by"; an unticked one goes back among the authors.
   function moveAuthorsToEditors(ticked) {
     const names = [...new Set([...book.found.authors, ...book.authorsAsEditors])];
-    const typed = translatorNames(book.editors).filter(name => !names.includes(name));
+    const typed = typedNames(book.editors).filter(name => !names.includes(name));
     book.authorsAsEditors = names.filter(name => ticked.includes(name));
     book.found.authors = names.filter(name => !ticked.includes(name));
     book.editors = [...book.authorsAsEditors, ...typed].join('; ');
@@ -749,7 +752,7 @@ export function render(container, state, actions) {
 
   // Open Library's suggestions, checked against the book's own authors and whether it is translated.
   function dateSuggestions() {
-    return suggestOriginalDates(book.work, book.found.year, { authors: book.found.authors, translated: translatorNames(book.translator).length > 0 });
+    return suggestOriginalDates(book.work, book.found.year, { authors: book.found.authors, translated: typedNames(book.translator).length > 0 });
   }
 
   // Wikidata's date for this one work, offered first when it knows one; not when it was first printed
@@ -864,7 +867,7 @@ export function render(container, state, actions) {
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
       book.editors = (value('editors') || '').trim();
       book.translator = (value('translator') || '').trim();
-      if (translatorNames(book.translator).length) book.hasTranslator = true;
+      if (typedNames(book.translator).length) book.hasTranslator = true;
       book.works = suggestWorks(found.title, found.authors, state.library);
     }
     if (book.step === 'edition') {
@@ -913,7 +916,7 @@ export function render(container, state, actions) {
       if (book.step === 'contents') {
         book.contents = book.contentsText.trim() || null;
         // Each work gets its card, keeping what was already answered on it.
-        book.cards = book.contents ? cardsFromLines(book.contents, book.cards, { author: defaultAuthor(), listed: listedWork }) : null;
+        book.cards = book.contents ? cardsFromLines(book.contents, book.cards, { authors: bookAuthors(), listed: listedWork }) : null;
         if (book.cards && book.language) fillCardLanguages();
         if (book.cards) followLoebTitle(book.cards.map(card => card.title));
       }

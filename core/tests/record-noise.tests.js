@@ -1,10 +1,13 @@
 // What lookup records get wrong in real anthologies, set right before a person
 // sees them (docs/decisions/book-data.md, "Record noise in anthologies"). Each
-// book's answers were recorded on 14 November 2026 and are read as adding reads
-// them: Open Library first, then HathiTrust, merged, then tidyPeople.
+// book's answers were recorded on 14 November 2026 (the Marx-Engels Reader
+// and Plutarch's Lives II on 15 November) and are read as adding reads them:
+// Open Library first, then HathiTrust, merged, then tidyPeople.
 
 import { fromHathiTrust } from '../marc.js';
-import { fromOpenLibraryDetails, mergeFound, printedTitle, editionFromSeller } from '../book-data.js';
+import { fromOpenLibraryDetails, mergeFound, printedTitle, editionFromSeller, withLibraryAuthors } from '../book-data.js';
+import * as reader from './answers/9780393090406.js';
+import * as plutarch from './answers/9780674990531.js';
 import { contributorsFrom, cleanPages, emptyFound, authorsFromWorkSearch } from '../lookup.js';
 import { tidyPeople, possibleEditors } from '../people.js';
 import { parseContentsLines } from '../contents.js';
@@ -27,8 +30,9 @@ const json = text => (text === null ? null : JSON.parse(text));
 function lookedUp(book) {
   const openLibrary = fromOpenLibraryDetails(json(book.openLibraryDetails), book.isbn, '');
   if (openLibrary && !openLibrary.authors.length) openLibrary.authors = authorsFromWorkSearch(json(book.openLibraryWorkSearch));
-  const found = mergeFound([openLibrary, book.hathiTrust && fromHathiTrust(book.hathiTrust, book.isbn)]);
-  return tidyPeople({ ...emptyFound(''), ...found }, { search: json(book.openLibraryWorkSearch) });
+  const answers = [openLibrary, book.hathiTrust && fromHathiTrust(book.hathiTrust, book.isbn)];
+  const found = mergeFound(answers);
+  return withLibraryAuthors(tidyPeople({ ...emptyFound(''), ...found }, { search: json(book.openLibraryWorkSearch) }), answers);
 }
 const names = found => found.contributors.map(person => `${person.name} (${person.role})`);
 
@@ -65,7 +69,9 @@ export const tests = [
     name: 'a series number listing the whole set\'s volumes is left empty: Loeb Greek Lyric\'s "142, 144, 461, 476"',
     fn() {
       const found = lookedUp(greekLyric);
-      same([found.series, found.seriesNumber, found.pages], ['The Loeb classical library', '', '512'], 'pages: Open Library\'s count, not "5 v."');
+      // Pages: a record whose pagination is "5 v." describes the set, so its count is not trusted for this
+      // volume either (batch 6, 15 November 2026: Plutarch II's 608 was wrong); the box is left to be typed.
+      same([found.series, found.seriesNumber, found.pages], ['Loeb Classical Library', '', '']);
       equal(mergeFound([{ ...emptyFound('openlibrary'), title: 'Institutes', seriesNumber: '20-21' }]).seriesNumber, '20-21', 'one book in two volumes keeps both numbers');
     },
   },
@@ -127,6 +133,37 @@ export const tests = [
       same(possibleEditors(['Michael W. Holmes'], typed), ['Michael W. Holmes']);
       same(possibleEditors(['Euripides'], parseContentsLines('Euripides — Ion\nEuripides — Medea')), [], 'the contents name his works');
       same(possibleEditors(['Karl Marx', 'Friedrich Engels'], parseContentsLines('Marx and Engels — The Communist Manifesto')), []);
+    },
+  },
+  {
+    name: 'a library record with no main author names the people whose works it holds: the Reader is by Marx and Engels, edited by Tucker',
+    fn() {
+      same(fromHathiTrust(reader.hathiTrust, reader.isbn).authors, ['Friedrich Engels', 'Karl Marx']);
+      const found = lookedUp(reader);
+      same(found.authors, ['Karl Marx', 'Friedrich Engels'], 'Open Library\'s Marx first, then the record\'s Engels');
+      same(names(found), ['Robert C. Tucker (editor)']);
+    },
+  },
+  {
+    name: 'a Loeb volume keeps both publishers and places, takes its own number from the set\'s list, and no page count from "11v."',
+    fn() {
+      const found = lookedUp(plutarch);
+      same([found.publisher, found.place], ['Harvard University Press; W. Heinemann', 'Cambridge, Mass; London']);
+      same([found.series, found.seriesNumber, found.set, found.volume], ['Loeb Classical Library', '47', 'Plutarch\'s Lives', '2']);
+      equal(found.pages, '', 'no record gives one Loeb volume\'s pages; 608 is not this volume\'s');
+      same(['11v.', '2 v.', 'v. <1-3>', '11 volumes', 'v'].map(cleanPages), ['', '', '', '', '']);
+      same(['xlii, 788', 'v, 311'].map(cleanPages), ['xlii, 788', 'v, 311'], 'pages starting at v are still pages');
+    },
+  },
+  {
+    name: 'a library imprint gives every publisher with the place printed before it',
+    fn() {
+      const imprint = subfields => `<datafield tag="260" ind1=" " ind2=" ">${subfields.map(([code, text]) => `<subfield code="${code}">${text}</subfield>`).join('')}</datafield>`;
+      const record = field => JSON.stringify({ records: { 1: { 'marc-xml': `<record><datafield tag="020" ind1=" " ind2=" "><subfield code="a">9780674990531</subfield></datafield><datafield tag="245" ind1="1" ind2="0"><subfield code="a">Lives</subfield></datafield>${field}</record>` } } });
+      const both = fromHathiTrust(record(imprint([['a', 'Cambridge, Mass. :'], ['b', 'Harvard University Press ;'], ['a', 'London :'], ['b', 'W. Heinemann,'], ['c', '1982-']])), '9780674990531');
+      same([both.publisher, both.place], ['Harvard University Press; W. Heinemann', 'Cambridge, Mass.; London']);
+      const onePublisher = fromHathiTrust(record(imprint([['a', 'New York ;'], ['a', 'London :'], ['b', 'Norton,'], ['c', '1978']])), '9780674990531');
+      same([onePublisher.publisher, onePublisher.place], ['Norton', 'New York'], 'two places for one publisher: the first');
     },
   },
 ];

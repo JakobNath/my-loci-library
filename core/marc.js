@@ -74,6 +74,40 @@ function relatedPeople(record, known) {
   return people;
 }
 
+// The authors of a book whose record names no main author (no 100 field): the
+// people of its 700 fields that carry a title ($t), since their works are in
+// the book ("Engels, Friedrich. Works. Selections" in The Marx-Engels Reader).
+// Someone named with a relator (the editor) is not an author.
+function authorsOfWorks(record) {
+  const names = fieldsOf(record, '700')
+    .filter(field => subfield(field, 't') && !subfield(field, 'e') && !subfield(field, '4'))
+    .map(personName);
+  return [...new Set(names)];
+}
+
+// Every publisher of an imprint (260 or 264), each with the first place
+// printed before it: "Cambridge, Mass. : Harvard University Press ; London :
+// W. Heinemann" gives both, and "New York ; London : Norton" gives Norton with
+// New York, as Chicago cites the first place. Joined with "; ", as the
+// edition's fields keep several.
+function imprintOf(field) {
+  const publishers = [];
+  const places = [];
+  let place = '';
+  let placeTaken = false;
+  for (const [code, text] of (field ? field.subfields : [])) {
+    if (code === 'a' && (placeTaken || !place)) { place = plain(text).replace(/^S\.\s?l\.?$/i, ''); placeTaken = false; }
+    if (code !== 'b') continue;
+    const publisher = plain(text).replace(/\bPub\.(?=\s|$)/, 'Publishing').replace(/^publisher not identified$/i, '');
+    if (!publisher) continue;
+    publishers.push(publisher);
+    places.push(place);
+    placeTaken = true;
+  }
+  if (!publishers.length) return { publisher: '', place: place };
+  return { publisher: publishers.join('; '), place: places.some(Boolean) ? places.join('; ') : '' };
+}
+
 // "B358 .C3 1997", "891.73/3" (the slash only marks where a library may shorten it).
 const callNumber = field => tidy(`${subfield(field, 'a')} ${subfield(field, 'b')}`);
 
@@ -211,6 +245,25 @@ function volumeContents(record, volume) {
   return contents.filter(entry => entry.title && isWorkTitle(entry.title));
 }
 
+// A set volume's own number in its series, from the set's list of numbers.
+// Plutarch's Lives in the Loeb Classical Library lists "46-47; 65; 80; 87;
+// 98-103": written out, eleven numbers for "11 volumes", so volume 2 is 47.
+// Only when the count matches the volumes is a number given; otherwise the
+// list cannot say which is this volume's ("142, 144, 461, 476" for five
+// volumes of Greek Lyric), and it is left empty. One number is kept as it is.
+function numberOfVolume(numbers, description, volume) {
+  if (!/[,;–-]/.test(numbers)) return numbers;
+  const written = [];
+  for (const part of numbers.split(/\s*[,;]\s*/)) {
+    const [from, to = from] = part.split(/\s*[–-]\s*/).map(Number);
+    if (!Number.isInteger(from) || !Number.isInteger(to) || to < from || to - from > 100) return '';
+    for (let n = from; n <= to; n++) written.push(String(n));
+  }
+  const volumes = Number((String(description).match(/^\s*(\d+)\s*(?:v\b|vol)/i) || [])[1]);
+  const index = labelValue(volume);
+  return volumes === written.length && index >= 1 && index <= volumes ? written[index - 1] : '';
+}
+
 // A book whose title is a list of short titles ("Euthyphro, Apology, Crito, Phaedo, Phaedrus") holds those works.
 function contentsInTitle(title) {
   const parts = title.split(/\s*[,;]\s*/).filter(Boolean);
@@ -264,11 +317,11 @@ function fromMarc(xml, isbn, source) {
   found.title = sentenceToTitleCase(withoutStop([subfield(titleField, 'a'), ...allSubfields(titleField, 'n'), ...allSubfields(titleField, 'p')].join(' ')));
   found.subtitle = sentenceToTitleCase(withoutStop(subfield(titleField, 'b')));
   found.authors = fieldsOf(record, '100').map(personName);
+  if (!found.authors.length) found.authors = authorsOfWorks(record);
   found.contributors = contributorsFrom(subfield(titleField, 'c'));
   found.contributors.push(...relatedPeople(record, found.contributors));
   const imprint = fieldsOf(record, '264').find(item => item.ind2 === '1') || field('260');
-  found.place = plain(subfield(imprint, 'a')).replace(/^S\.\s?l\.?$/i, '');
-  found.publisher = plain(subfield(imprint, 'b')).replace(/\bPub\.(?=\s|$)/, 'Publishing').replace(/^publisher not identified$/i, '');
+  Object.assign(found, imprintOf(imprint));
   found.year = yearOf(subfield(imprint, 'c'));
   found.editionStatement = plain(subfield(field('250'), 'a'));
   const seriesField = field('490') || field('440') || field('830');
@@ -295,7 +348,7 @@ function fromMarc(xml, isbn, source) {
     // A volume the contents note gives one title ("v. 1. Apocalyptic literature and testaments") is titled by it.
     found.subtitle = found.contents.length === 1 ? found.contents[0].title : '';
     if (found.contents.length === 1) found.contents = [];
-    if (/[,–-]/.test(found.seriesNumber)) found.seriesNumber = ''; // the set's numbers, "36, 123, 164-167"
+    found.seriesNumber = numberOfVolume(found.seriesNumber, subfield(description, 'a'), chosen.volume);
   }
   found.subjects = [...new Set(record.filter(item => /^6(00|10|11|30|50|51)$/.test(item.tag) && item.ind2 === '0').map(subjectHeading))];
   found.identifiers = {

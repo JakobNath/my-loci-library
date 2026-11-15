@@ -6,7 +6,7 @@
 // Loeb's style of title.
 
 import { isbn13 } from './entry.js';
-import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson } from './lookup.js';
+import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson, describesVolumes } from './lookup.js';
 import { normalizeForSearch } from './search.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
@@ -120,10 +120,11 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.subtitle = titleCase(tidy(edition.subtitle));
   found.contributors = contributorsFrom(edition.by_statement);
   if (!found.contributors.length) found.contributors = contributorsFromContributions(edition.contributions);
-  found.publisher = first(edition.publishers);
-  found.place = first(edition.publish_places).replace(/[\s:;,]+$/, '');
+  // Every publisher and place, joined as the edition's fields keep several ("Harvard University Press; W. Heinemann").
+  found.publisher = (edition.publishers || []).map(tidy).filter(Boolean).join('; ');
+  found.place = (edition.publish_places || []).map(place => tidy(place).replace(/[\s:;,]+$/, '')).filter(Boolean).join('; ');
   found.year = yearOf(edition.publish_date);
-  found.pages = cleanPages(edition.pagination) || (edition.number_of_pages ? String(edition.number_of_pages) : '');
+  found.pages = cleanPages(edition.pagination) || (edition.number_of_pages && !describesVolumes(edition.pagination) ? String(edition.number_of_pages) : '');
   found.isbn = isbn;
   found.otherIsbns = otherIsbnsListed(listed, isbn);
   found.editionStatement = editionFromSeller(edition.edition_name);
@@ -244,9 +245,17 @@ const nameWordCount = name => normalizeForSearch(name).split(' ').filter(Boolean
 // for Loeb's Greek Lyric), not this book's; two may be one book's ("20-21", "v. 7, 8").
 const isSetNumbers = number => String(number || '').split(/[,;]/).filter(part => tidy(part)).length >= 3;
 
+// A facing-page series by its own name: "Loeb classical library. Greek authors"
+// and "The Loeb classical library" are the Loeb Classical Library, which
+// numbers its Greek and Latin volumes in one sequence.
+function seriesByName(series) {
+  const stem = seriesStem(series);
+  return (stem && FACING_PAGE_SERIES.find(known => seriesStem(known) === stem)) || series;
+}
+
 // One source's answer with what records get wrong set right before merging:
 // a series written as the subtitle, an older printing's year, a title as
-// filed rather than printed, and a set's series numbers.
+// filed rather than printed, a set's series numbers, and a known series' name.
 function corrected(found) {
   const fixed = { ...found, ...printedTitle(found) };
   const series = seriesFromSubtitle(fixed.subtitle);
@@ -257,6 +266,7 @@ function corrected(found) {
   }
   if (isYearTooEarly(found)) fixed.year = '';
   if (isSetNumbers(fixed.seriesNumber)) fixed.seriesNumber = '';
+  if (fixed.series) fixed.series = seriesByName(fixed.series);
   return fixed;
 }
 
@@ -300,6 +310,27 @@ export function mergeFound(answers) {
 export function withLibraryContents(merged, answers) {
   const library = answers.find(found => found && ['libraryofcongress', 'hathitrust'].includes(found.source) && found.contents.length > 1);
   return merged && library ? { ...merged, contents: library.contents } : merged;
+}
+
+/**
+ * The book's authors with the others a library record names: when the
+ * Library of Congress or HathiTrust names every author found and more, the
+ * others are added after them (Open Library names only Marx for The
+ * Marx-Engels Reader; HathiTrust names Marx and Engels). Used on the phone
+ * after tidyPeople, which would otherwise move the added author aside as an
+ * edition's extra; someone it put among the contributors is not added.
+ * @param {import('./lookup.js').Found|null} found as merged and tidied
+ * @param {(import('./lookup.js').Found|null)[]} answers every source's own answer
+ * @returns {import('./lookup.js').Found|null} a new object; nothing given is changed
+ */
+export function withLibraryAuthors(found, answers) {
+  if (!found || !found.authors.length) return found;
+  const has = (names, name) => names.some(other => samePerson(other, name));
+  const library = answers.find(answer => answer && ['libraryofcongress', 'hathitrust'].includes(answer.source)
+    && answer.authors.length > found.authors.length && found.authors.every(name => has(answer.authors, name)));
+  if (!library) return found;
+  const others = library.authors.filter(name => !has(found.authors, name) && !has(found.contributors.map(person => person.name), name));
+  return others.length ? { ...found, authors: [...found.authors, ...others] } : found;
 }
 
 // Booksellers' subject headings ("Fiction / Classics") start with a broad

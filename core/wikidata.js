@@ -38,7 +38,7 @@ export function worksQuery(titles, author, prefixes = '') {
   if (!surnames.length || !labels.length) return '';
   const byName = surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`).join(' || ');
   return `${prefixes}
-SELECT ?title ?work ?time ?precision ?original ?other ?died WHERE {
+SELECT ?title ?work ?authorName ?time ?precision ?original ?other ?died WHERE {
   VALUES ?title { ${labels.map(literal).join(' ')} }
   ?work rdfs:label ?title ; wdt:P50 ?author .
   ?author rdfs:label ?authorName .
@@ -107,13 +107,14 @@ function clearlyTheWork(dated) {
 /**
  * What Wikidata's answer says about each title asked: its item, the earliest
  * date given (written or first published), its original title and that
- * title's language, and its other English titles. posthumous: the date is
+ * title's language, its other English titles, and its authors as Wikidata
+ * names them (those whose names matched the query). posthumous: the date is
  * after the author died (the 1844 Manuscripts, first printed 1932). A title
  * matching more than one dated work is left out, since Wikidata cannot tell
  * which is meant, unless one clearly stands out (clearlyTheWork).
  * @param {object} answer the query's JSON answer
  * @param {string[]} titles the titles asked (as in worksQuery)
- * @returns {Map<string, { wikidata: string, date: string, posthumous: boolean, originalTitle: string, originalLanguage: string, otherTitles: string[] }>} by the asked title
+ * @returns {Map<string, { wikidata: string, date: string, posthumous: boolean, originalTitle: string, originalLanguage: string, otherTitles: string[], authors: string[] }>} by the asked title
  */
 export function worksFromWikidata(answer, titles) {
   const byLabel = new Map();
@@ -121,7 +122,8 @@ export function worksFromWikidata(answer, titles) {
     const label = row.title.value;
     const id = row.work.value.split('/').pop();
     const works = byLabel.get(label) || new Map();
-    const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', originalLanguage: '', otherTitles: new Set(), died: null };
+    const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', originalLanguage: '', otherTitles: new Set(), authors: new Set(), died: null };
+    if (row.authorName) work.authors.add(row.authorName.value);
     if (row.time) work.dates.push({ time: row.time.value, precision: Number(row.precision.value) });
     if (row.original) {
       work.originalTitle = row.original.value;
@@ -148,6 +150,7 @@ export function worksFromWikidata(answer, titles) {
       originalTitle: work.originalTitle && work.originalTitle !== title ? work.originalTitle : '',
       originalLanguage: work.originalLanguage,
       otherTitles: [...work.otherTitles].filter(other => other !== title).slice(0, 5),
+      authors: [...work.authors],
     });
   }
   return found;

@@ -3,7 +3,8 @@
 
 import { fromOpenLibrary, fromGoogleBooks, combineFound, candidatesFromSearch, searchQueries, workFromOpenLibrary, suggestOriginalDates, yearFromText, titleCase } from '../lookup.js';
 import { emptyFound } from '../lookup.js';
-import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages } from '../people.js';
+import { tidyPeople, contributorsFromSteps, editionLanguages } from '../people.js';
+import { typedNames } from '../contents.js';
 import { editionsWithIsbn, suggestWorks } from '../matching.js';
 import { buildLibrary } from '../library.js';
 import { equal, same, ok } from './check.js';
@@ -242,9 +243,9 @@ export const tests = [
   {
     name: 'translators typed in one box are told apart by ";", "and" or "&"',
     fn() {
-      same(translatorNames('L. W. Spitz Jr.; Jaroslav Pelikan;'), ['L. W. Spitz Jr.', 'Jaroslav Pelikan']);
-      same(translatorNames('Richard Pevear and Larissa Volokhonsky'), ['Richard Pevear', 'Larissa Volokhonsky']);
-      same(translatorNames(' '), []);
+      same(typedNames('L. W. Spitz Jr.; Jaroslav Pelikan;'), ['L. W. Spitz Jr.', 'Jaroslav Pelikan']);
+      same(typedNames('Richard Pevear and Larissa Volokhonsky'), ['Richard Pevear', 'Larissa Volokhonsky']);
+      same(typedNames(' '), []);
     },
   },
   {

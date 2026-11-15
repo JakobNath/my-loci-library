@@ -351,6 +351,16 @@ export const tests = [
     },
   },
   {
+    name: 'a contents line naming "Karl Marx; Friedrich Engels" gives the work two authors, as "and" does',
+    fn() {
+      const result = recordsFromForm(blankForm({ title: 'The Marx-Engels Reader', contents: 'Karl Marx; Friedrich Engels — The German Ideology\nKarl Marx and Friedrich Engels — Manifesto of the Communist Party' }), null, context());
+      same(result.records.filter(r => r.type === 'author').map(r => r.name), ['Karl Marx', 'Friedrich Engels']);
+      const works = result.records.filter(r => r.type === 'work');
+      same(works.map(w => w.authors.length), [2, 2]);
+      same(works[0].authors, works[1].authors);
+    },
+  },
+  {
     name: 'the new works of a collection take the language, category and tags asked once for the whole book',
     fn() {
       const work = { ...blankForm({}).work, originalLanguage: 'Greek', category: 'Patristics', tags: ['Church order'] };

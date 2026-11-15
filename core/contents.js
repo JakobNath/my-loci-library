@@ -11,6 +11,17 @@ const SEPARATOR = /\s+(?:—|--|\|)\s+|\s*—\s*/;
 const TRANSLATOR_PART = /^(?:trans\.|translated by)\s+(.+)$/i;
 
 /**
+ * The names typed in a box of people (authors, translators, editors) or on a
+ * contents line: separated by ";", or by "and" or "&" between two names
+ * ("Pevear and Volokhonsky", "Karl Marx; Friedrich Engels"), as people write them.
+ * @param {string|null} text
+ * @returns {string[]}
+ */
+export function typedNames(text) {
+  return String(text || '').split(/;|\s+(?:and|&)\s+/i).map(name => name.replace(/\s+/g, ' ').trim()).filter(Boolean);
+}
+
+/**
  * Read pasted contents.
  * @param {string} text one work per line
  * @returns {{ author: string|null, title: string, date: string|null, translator: string|null }[]}

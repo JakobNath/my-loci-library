@@ -56,9 +56,19 @@ export const yearOf = text => (String(text || '').match(/(?<!\d)(1[4-9]\d\d|20\d
  * volumes ("v. <1-3>", "2 v.", or "v." alone for a set still coming out); all give nothing.
  */
 export function cleanPages(text) {
+  if (describesVolumes(text)) return ''; // "2 v." is two volumes, not pages; nor is "v." page v
   const pages = String(text || '').replace(/\s*\bp(?:p|ages)?\.?/gi, '').replace(/\bcm\b/gi, '').replace(/[\s;:,.]+$/, '').trim();
-  if (/^(?:\d+\s+)?v$/i.test(pages)) return ''; // "2 v." is two volumes, not pages; nor is "v." page v
   return /\d|^[ivxlc]+$/i.test(pages) && /^[\divxlcdm[\]\s,–-]+$/i.test(pages) ? pages : '';
+}
+
+/**
+ * Whether a record's pagination describes a set's volumes, not pages: "2 v.",
+ * "11v." (Open Library, Plutarch's Lives), "11 volumes", "v. <1-3>", "v.".
+ * Such a record's page count (608 for one Loeb volume of eleven) is not the
+ * book's own either.
+ */
+export function describesVolumes(text) {
+  return /^\s*(?:\d+\s*)?v(?:ol(?:ume)?s?)?\.?\s*(?:<[^>]*>)?\s*[;:,.]?\s*$/i.test(String(text || '')) && /v/i.test(String(text || ''));
 }
 
 // The roles named before "by": someone who "translated, with an introduction"
@@ -123,10 +133,11 @@ export function fromOpenLibrary(answer, isbn, coverUrl) {
   found.subtitle = titleCase(tidy(book.subtitle));
   found.authors = (book.authors || []).map(author => tidy(author.name)).filter(Boolean);
   found.contributors = contributorsFrom(book.by_statement);
-  found.publisher = (book.publishers && book.publishers[0] && book.publishers[0].name) || '';
-  found.place = (book.publish_places && book.publish_places[0] && book.publish_places[0].name) || '';
+  // Every publisher and place, joined as the edition's fields keep several ("Harvard University Press; W. Heinemann").
+  found.publisher = (book.publishers || []).map(item => tidy(item && item.name)).filter(Boolean).join('; ');
+  found.place = (book.publish_places || []).map(item => tidy(item && item.name)).filter(Boolean).join('; ');
   found.year = yearOf(book.publish_date);
-  found.pages = cleanPages(book.pagination) || (book.number_of_pages ? String(book.number_of_pages) : '');
+  found.pages = cleanPages(book.pagination) || (book.number_of_pages && !describesVolumes(book.pagination) ? String(book.number_of_pages) : '');
   found.isbn = isbn;
   found.cover = coverUrl ? { url: coverUrl, source: 'openlibrary', waiting: false } : null;
   return found;

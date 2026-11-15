@@ -96,4 +96,22 @@ export const tests = [
       equal(groups[0].rows.find(item => item.label === 'Translators').state, 'missing', 'a translation with no translator named');
     },
   },
+  {
+    name: 'a card made with the book\'s several authors to choose from is answered once an author is chosen, or "Anonymous"',
+    fn() {
+      const card = { title: 'The German Ideology', author: '', authorAsked: true, language: 'German', date: '1846', dateUnknown: false };
+      ok(!cardAnswered(card), 'no author chosen yet');
+      ok(cardAnswered({ ...card, author: 'Karl Marx and Friedrich Engels' }));
+      ok(cardAnswered({ ...card, authorAsked: false }), '"Anonymous" leaves the author empty');
+    },
+  },
+  {
+    name: 'a card\'s authors typed with ";" are two names, each listed once on the check',
+    fn() {
+      const book = reader();
+      book.cards[1].author = 'Karl Marx; Friedrich Engels';
+      const groups = checkRows(book, { single: false, steps: ['works'] });
+      equal(groups[0].rows.find(item => item.label === 'Authors').value, 'Karl Marx; Friedrich Engels');
+    },
+  },
 ];
