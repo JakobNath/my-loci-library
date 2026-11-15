@@ -18,7 +18,7 @@ import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, 
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound, withLibraryContents, isYearTooEarly, categoriesFromSubjects, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../core/book-data.js';
-import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages } from '../core/people.js';
+import { tidyPeople, translatorNames, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating } from '../core/dating.js';
@@ -262,6 +262,7 @@ export function render(container, state, actions) {
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), hasTranslator: translators.length > 0,
       editors: full.contributors.filter(person => person.role === 'editor').map(person => person.name).join('; '),
+      authorsAsEditors: [], // record authors the person ticked as the collection's editors (contents step)
       // The language of the pages in hand, asked of a translation; null until answered (shownBookLanguages).
       bookLanguages: null,
       workTranslators: null, // who translated each work of a collection, when it has several translators
@@ -710,9 +711,28 @@ export function render(container, state, actions) {
       : pagesHtml + photoButtonsHtml('contents', pages.length ? 'Photograph the next page' : 'Photograph the contents page', 'Kept with the book, so the works can be typed in later');
     return `<h2 class="step-title">${escapeHtml(book.contentsOffered ? 'Is this a collection of works?' : 'Which works does it hold?')}</h2>
       <p class="step-hint">${escapeHtml(hint)}</p>${copyHint}
-      <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}
+      <form class="form"><label class="field">Contents<textarea name="contents" rows="8" data-tidy-paste>${escapeHtml(lines)}</textarea></label>${searchHtml}${editedByHtml(lines)}
         <div class="choices">${photoHtml}${choiceHtml('single', 'No, it is one work', 'These are chapters or parts of one work')}</div>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Yes, these works</button></div></form>`;
+  }
+
+  // Records often name a collection's editor as its author, with nothing to show it (Holmes's
+  // Apostolic Fathers, Richardson's Early Christian Fathers), so the person says which it is
+  // before the cards give every work the book's author (docs/decisions/book-data.md).
+  function editedByHtml(lines) {
+    const names = [...possibleEditors(book.found.authors, parseContentsLines(lines)), ...book.authorsAsEditors];
+    if (!names.length) return '';
+    const ticksHtml = names.map(name => `<label class="check"><input type="checkbox" name="authorEdited" value="${attr(name)}"${book.authorsAsEditors.includes(name) ? ' checked' : ''}> ${escapeHtml(`${name} edited this collection; the works are by others`)}</label>`).join('');
+    return `<p class="step-hint">${escapeHtml(`The record names ${names.join(' and ')} as the author. In a collection that is often the editor.`)}</p>${ticksHtml}`;
+  }
+
+  // The ticked record authors move to "Edited by"; an unticked one goes back among the authors.
+  function moveAuthorsToEditors(ticked) {
+    const names = [...new Set([...book.found.authors, ...book.authorsAsEditors])];
+    const typed = translatorNames(book.editors).filter(name => !names.includes(name));
+    book.authorsAsEditors = names.filter(name => ticked.includes(name));
+    book.found.authors = names.filter(name => !ticked.includes(name));
+    book.editors = [...book.authorsAsEditors, ...typed].join('; ');
   }
 
   // 3. Same work as one we already have?
@@ -859,6 +879,8 @@ export function render(container, state, actions) {
     }
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
+    const ticks = [...stepArea.querySelectorAll('[name="authorEdited"]')];
+    if (book.step === 'contents' && ticks.length) moveAuthorsToEditors(ticks.filter(tick => tick.checked).map(tick => tick.value));
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
     if (book.step === 'spine') book.heightCm = (value('heightCm') || '').trim();
     if (book.step === 'works') {

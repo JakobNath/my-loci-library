@@ -210,3 +210,11 @@ The Marx-Engels Reader saved on 1.21.0 (51 works ending in " -") was moved to th
 - [ ] Phone, same book: "This copy" now says Next, and "Check before saving" lists the book, the works and this copy, with amber "missing" where nothing was given. Tap "Binding", choose one, Next: back on the check, with the binding filled. "Save the book" saves.
 - [ ] Phone, after saving: the Library finds the Reader by searching "Engels"; the book page lists the works with their dates; Edit the works shows the original titles (Zur Judenfrage) and English for the Inaugural Address; the height is 23.5 cm.
 - [ ] Phone: add a single work (Fear and Trembling, Penguin): the language step has "Search the web" under the languages and, after Danish is typed, under the original title. On the date step, Next with nothing typed names "Original date" with "Don't know".
+
+## Record noise in anthologies (1.23.0, 14 November 2026)
+
+- [ ] Phone: scan Holmes's The Apostolic Fathers (ISBN 978-0-8010-3468-8). "Is this the book?" shows "The Apostolic Fathers", not "Apostolic Fathers, The,". Tap "Yes, and it holds several works"; the contents step says "The record names Michael W. Holmes as the author. In a collection that is often the editor." Tick "Michael W. Holmes edited this collection; the works are by others", type two works, and the cards show no author filled in; "Editors" later starts with Michael W. Holmes.
+- [ ] Phone: add Euripides IV again: the contents step does not ask whether Euripides edited it.
+- [ ] Phone: scan Calvin's Institutes (LCC, ISBN 978-0-664-22028-0): the title is "Institutes of the Christian religion" by Jean Calvin, with John T. McNeill as editor and only Ford Lewis Battles as translator.
+- [ ] Phone: scan Loeb Greek Lyric I (978-0-674-99157-6): the copyright page step's series number is empty (not "142, 144, 461, 476"), ready for 142 and volume 1.
+- [ ] Phone: scan Bettenson's Documents of the Christian Church (978-0-19-956898-7): no author, editors Henry Scowcroft Bettenson and Chris Maunder. The Book of Concord (978-0-8006-2740-9): no author, editors Kolb and Wengert. Lull (978-0-8006-3680-7): edition "2nd ed.". Charlesworth I (978-0-385-09630-0): subtitle "Apocalyptic Literature and Testaments", pages empty.

@@ -6,7 +6,7 @@
 // Loeb's style of title.
 
 import { isbn13 } from './entry.js';
-import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns } from './lookup.js';
+import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson } from './lookup.js';
 import { normalizeForSearch } from './search.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
@@ -15,7 +15,8 @@ export const LANGUAGE_NAMES = {
   ang: 'Old English', ara: 'Arabic', arc: 'Aramaic', arm: 'Armenian', chi: 'Chinese', chu: 'Church Slavic',
   cop: 'Coptic', cze: 'Czech', dan: 'Danish', dut: 'Dutch', eng: 'English', enm: 'Middle English',
   eth: 'Ethiopic', fin: 'Finnish', fre: 'French', frm: 'Middle French', fro: 'Old French', geo: 'Georgian',
-  ger: 'German', gmh: 'Middle High German', grc: 'Ancient Greek', gre: 'Greek', heb: 'Hebrew',
+  // Greek for both ancient and modern, as the add screen's chips and Wikidata's reading have it.
+  ger: 'German', gmh: 'Middle High German', grc: 'Greek', gre: 'Greek', heb: 'Hebrew',
   hun: 'Hungarian', ice: 'Icelandic', ita: 'Italian', jpn: 'Japanese', kor: 'Korean', lat: 'Latin',
   nor: 'Norwegian', per: 'Persian', pol: 'Polish', por: 'Portuguese', rus: 'Russian', san: 'Sanskrit',
   spa: 'Spanish', swe: 'Swedish', syr: 'Syriac',
@@ -86,6 +87,25 @@ function contributorsFromContributions(list) {
 
 const first = list => tidy((list || []).find(item => tidy(item)) || '');
 
+// A bookseller's format codes in an edition statement: "Pap/Cdr" is a paperback with a CD-ROM.
+const FORMAT_CODES = /\b[A-Za-z]{3}(?:\/[A-Za-z]{3})+\b/g;
+const ordinal = number => `${number}${/1[123]$/.test(number) ? 'th' : ['th', 'st', 'nd', 'rd'][Number(number.slice(-1))] || 'th'}`;
+
+/**
+ * An edition statement as a person would write it. Records copied from
+ * booksellers say "New Ed edition" (New ed.) and "2 Pap/Cdr edition" (the
+ * second edition, a paperback with a CD-ROM): the format codes are dropped
+ * and the number written as "2nd ed.".
+ * @param {string} text
+ * @returns {string}
+ */
+export function editionFromSeller(text) {
+  const plain = tidy(String(text || '').replace(/[[\]]/g, '').replace(FORMAT_CODES, '')).replace(/\.\.$/, '.');
+  const numbered = plain.match(/^(\d+)(?:st|nd|rd|th)?\.?\s+edition$/i);
+  if (numbered) return `${ordinal(numbered[1])} ed.`;
+  return /^edition$/i.test(plain) ? '' : plain.replace(/\bEd\.? edition$/i, 'ed.');
+}
+
 /**
  * Read Open Library's full edition record (/isbn/<isbn>.json, after its redirect).
  * @param {object} edition the parsed record
@@ -106,8 +126,7 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.pages = cleanPages(edition.pagination) || (edition.number_of_pages ? String(edition.number_of_pages) : '');
   found.isbn = isbn;
   found.otherIsbns = otherIsbnsListed(listed, isbn);
-  // Records copied from booksellers say "New Ed edition", meaning "New ed.".
-  found.editionStatement = tidy(edition.edition_name).replace(/[[\]]/g, '').replace(/\.\.$/, '.').replace(/\bEd\.? edition$/i, 'ed.');
+  found.editionStatement = editionFromSeller(edition.edition_name);
   Object.assign(found, edition.series && edition.series.length ? seriesParts(edition.series) : {});
   found.binding = bindingFromFormat(edition.physical_format);
   const dimensions = String(edition.physical_dimensions || '').match(/^\s*([\d.]*)\s*x\s*([\d.]*)\s*x\s*([\d.]*)\s*(\w+)/i);
@@ -201,17 +220,43 @@ export function isYearTooEarly(found) {
   return Boolean(found.isbn && found.year && Number(found.year) < FIRST_ISBN_YEAR);
 }
 
+// A title filed under its first real word: "Apostolic Fathers, The," is "The Apostolic Fathers".
+const INVERTED_ARTICLE = /^(.+?),\s*(the|an|a)\s*[,.;:]?$/i;
+
+/**
+ * A title as printed, from a record's: an article filed at the end comes
+ * first again, and a title that only names the book's author ("Calvin", with
+ * the subtitle "Institutes of the Christian Religion", as the Library of
+ * Christian Classics prints it) gives way to its subtitle, the work's title.
+ * @param {{ title: string, subtitle: string, authors: string[] }} found
+ * @returns {{ title: string, subtitle: string }}
+ */
+export function printedTitle({ title, subtitle, authors }) {
+  const inverted = tidy(title).match(INVERTED_ARTICLE);
+  const named = inverted ? `${titleCase(inverted[2].toLowerCase())} ${inverted[1]}` : tidy(title);
+  const isAuthorOnly = tidy(subtitle) && authors.some(author => samePerson(named, author) && nameWordCount(named) <= nameWordCount(author));
+  return isAuthorOnly ? { title: titleCase(tidy(subtitle)), subtitle: '' } : { title: named, subtitle };
+}
+
+const nameWordCount = name => normalizeForSearch(name).split(' ').filter(Boolean).length;
+
+// A series number listing three or more numbers is the whole set's ("142, 144, 461, 476"
+// for Loeb's Greek Lyric), not this book's; two may be one book's ("20-21", "v. 7, 8").
+const isSetNumbers = number => String(number || '').split(/[,;]/).filter(part => tidy(part)).length >= 3;
+
 // One source's answer with what records get wrong set right before merging:
-// a series written as the subtitle, and an older printing's year.
+// a series written as the subtitle, an older printing's year, a title as
+// filed rather than printed, and a set's series numbers.
 function corrected(found) {
-  const fixed = { ...found };
-  const series = seriesFromSubtitle(found.subtitle);
+  const fixed = { ...found, ...printedTitle(found) };
+  const series = seriesFromSubtitle(fixed.subtitle);
   if (series) {
     fixed.subtitle = '';
     if (!fixed.series) fixed.series = series.series;
     if (!fixed.seriesNumber) fixed.seriesNumber = series.seriesNumber;
   }
   if (isYearTooEarly(found)) fixed.year = '';
+  if (isSetNumbers(fixed.seriesNumber)) fixed.seriesNumber = '';
   return fixed;
 }
 

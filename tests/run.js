@@ -10,6 +10,7 @@ const testFiles = [
   '../core/tests/entry.tests.js',
   '../core/tests/lookup.tests.js',
   '../core/tests/book-data.tests.js',
+  '../core/tests/record-noise.tests.js',
   '../core/tests/exports.tests.js',
   '../core/tests/outline.tests.js',
   '../core/tests/known-sets.tests.js',
