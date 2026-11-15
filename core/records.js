@@ -5,14 +5,14 @@
 
 import { readBindingText } from './bindings.js';
 
-export const FORMAT_VERSION = 4;
+export const FORMAT_VERSION = 5;
 
 // The fields of each record type, in file order, with the value of an empty field.
 export const FIELDS = {
   work: { title: '', subtitle: null, authors: [], originalTitle: null, otherTitles: [], originalLanguage: null, datings: [], sortYear: null, category: null, tags: [], wikidata: null },
   edition: {
     title: '', subtitle: null, contents: [], contributors: [], publisher: null, place: null, year: null,
-    editionStatement: null, translationFirstPublished: null, series: null, seriesNumber: null, set: null, volume: null, setRecord: null,
+    editionStatement: null, series: null, seriesNumber: null, set: null, volume: null, setRecord: null,
     isbn: null, identifiers: { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, languages: [], subjects: [], foundContents: [], pages: null, height: null, heightSource: null, thickness: null, thicknessSource: null,
     medium: 'physical', logosId: null, logosExtra: {}, cite: false, images: [],
   },
@@ -104,11 +104,19 @@ export function withField(record, name, value, now) {
  */
 export function recordToFileText(record) {
   const ordered = { format: record.format, type: record.type, id: record.id };
-  for (const name of Object.keys(FIELDS[record.type])) ordered[name] = orderNested(name, record[name], record.format);
+  for (const name of fieldNames(record.type, record.format)) ordered[name] = orderNested(name, record[name], record.format);
   ordered.trashed = record.trashed;
   ordered.created = record.created;
   ordered.changed = Object.fromEntries(Object.entries(record.changed).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
   return JSON.stringify(ordered, null, 2) + '\n';
+}
+
+// The fields of a record in file order. An edition before version 5 also had
+// translationFirstPublished, kept in place so its file text stays as stored.
+function fieldNames(type, format) {
+  const names = Object.keys(FIELDS[type]);
+  if (type === 'edition' && format < 5) names.splice(names.indexOf('editionStatement') + 1, 0, 'translationFirstPublished');
+  return names;
 }
 
 // A record of an older version is written with that version's keys only, so
@@ -141,6 +149,17 @@ export function migrate(record) {
   if (upgraded.format === 1) upgraded = fromVersion1(upgraded);
   if (upgraded.format === 2) upgraded = fromVersion2(upgraded);
   if (upgraded.format === 3) upgraded = fromVersion3(upgraded);
+  if (upgraded.format === 4) upgraded = fromVersion4(upgraded);
+  return upgraded;
+}
+
+// Version 5 (November 2026) dropped the year an edition's translation first
+// appeared, which nobody used. Its value and its edit stamp go.
+function fromVersion4(record) {
+  if (record.type !== 'edition') return { ...record, format: 5 };
+  const upgraded = { ...record, format: 5, changed: { ...record.changed } };
+  delete upgraded.translationFirstPublished;
+  delete upgraded.changed.translationFirstPublished;
   return upgraded;
 }
 

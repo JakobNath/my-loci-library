@@ -317,7 +317,7 @@ export function recordsFromForm(form, existing, context) {
   const editionValues = {
     title: form.title.trim(), subtitle: form.subtitle || null, contents, contributors: form.contributors.filter(person => person.name.trim()),
     publisher: form.publisher || null, place: form.place || null, year: form.year ? Number(form.year) : null,
-    editionStatement: form.editionStatement || null, translationFirstPublished: form.translationFirstPublished ? Number(form.translationFirstPublished) : null,
+    editionStatement: form.editionStatement || null,
     series: form.series || null, seriesNumber: form.seriesNumber || null, set: form.set || null, volume: form.volume || null,
     isbn, languages: form.languages, pages: form.pages || null, medium: form.medium, logosId: form.logosId || null,
   };

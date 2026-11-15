@@ -13,7 +13,7 @@ const context = (authors = []) => ({ newId: () => `t${String(++counter).padStart
 function blankForm(values) {
   return {
     title: '', subtitle: '', authors: [], contributors: [], publisher: '', place: '', year: '', editionStatement: '',
-    translationFirstPublished: '', series: '', seriesNumber: '', set: '', volume: '', isbn: '', pages: '', languages: [],
+    series: '', seriesNumber: '', set: '', volume: '', isbn: '', pages: '', languages: [],
     medium: 'physical', logosId: '', contents: null,
     work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [] },
     copy: { binding: '', location: ['', '', '', ''], acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },
