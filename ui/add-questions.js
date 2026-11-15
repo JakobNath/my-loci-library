@@ -9,9 +9,7 @@ import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
 import { parseContentsLines } from '../core/contents.js';
 import { helpHtml } from './field-help.js';
-import { translationDateQuestion, searchTitle } from '../core/date-search.js';
 import { translatorNames } from '../core/people.js';
-import { searchLinkHtml } from './date-help.js';
 
 /** The original languages offered as one-tap buttons; any other is typed. */
 export const LANGUAGES = ['English', 'Latin', 'Greek', 'German', 'Hebrew', 'French'];
@@ -110,8 +108,7 @@ export function subjectsStepHtml(book, choices) {
       ${navHtml()}</form>`;
 }
 
-// Who translated and edited it, when this translation first appeared, and the
-// language of this book. A book that is not a translation (an anthology in its
+// Who translated and edited it, and the language of this book. A book that is not a translation (an anthology in its
 // own language) is asked only for its editors.
 export function translationStepHtml(book, isTranslated) {
   const editorsHtml = fieldHtml('Edited by', 'editors', book.editors, { hint: 'Several: separate the names with ;. An assistant editor goes in Edit book with the role "other (not cited)".' });
@@ -121,11 +118,9 @@ export function translationStepHtml(book, isTranslated) {
       <form class="form">${editorsHtml}${navHtml()}</form>`;
   }
   return `<h2 class="step-title">Translation and editors</h2>
-    <p class="step-hint">Who translated and edited it, and the year this translation first appeared, which may be long before this printing. A revision's year goes in the notes. All optional.</p>
+    <p class="step-hint">Who translated and edited it. All optional.</p>
     <form class="form">${fieldHtml('Translator', 'translator', book.translator, { hint: 'Several translators: separate the names with ;' })}
       <p class="preview" data-translators>${escapeHtml(translatorsReadAs(book.translator))}</p>
-      ${fieldHtml('Translation first published (year)', 'translationFirstPublished', book.translationYear, { type: 'number', help: true })}
-      <p class="search-line">${searchLinkHtml(translationDateQuestion(searchTitle(book.found), translatorNames(book.translator)), 'translation')}</p>
       ${editorsHtml}
       ${fieldHtml('This book is in', 'bookLanguages', book.bookLanguages, { hint: 'The language of the pages in your hand. Two for a facing-page edition: "Greek, English".' })}
       ${navHtml()}</form>`;
@@ -187,7 +182,6 @@ export function readQuestions(book, stepArea) {
     // The step for a book that is not a translation has only the editors' box.
     const has = name => Boolean(stepArea.querySelector(`[name="${name}"]`));
     if (has('translator')) book.translator = value('translator');
-    if (has('translationFirstPublished')) book.translationYear = value('translationFirstPublished');
     if (has('bookLanguages')) book.bookLanguages = value('bookLanguages');
     book.editors = value('editors');
   }

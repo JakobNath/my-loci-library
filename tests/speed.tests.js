@@ -184,7 +184,7 @@ export const tests = [
       const authors = catalog.filter(record => record.type === 'author');
       const form = {
         title: 'Confessions', subtitle: '', authors: ['Augustine of Hippo'], contributors: [{ name: 'F. J. Sheed', role: 'translator' }],
-        publisher: 'Hackett', place: 'Indianapolis', year: '2006', editionStatement: '', translationFirstPublished: '', series: '', seriesNumber: '',
+        publisher: 'Hackett', place: 'Indianapolis', year: '2006', editionStatement: '', series: '', seriesNumber: '',
         set: '', volume: '', isbn: '9780872208162', pages: 'xxxvi, 345', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
         work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [{ text: 'c. 397–400', note: '', working: true }] },
         copy: { binding: 'Paperback', location: ['Home', 'Office', 'Case 9', 'Shelf 1'], shelfOrder: 'g', acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },

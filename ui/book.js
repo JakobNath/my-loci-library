@@ -85,7 +85,6 @@ export function render(container, state, actions) {
     ['Publisher', [edition.publisher, edition.place].filter(Boolean).join(', ')],
     ['Year', edition.year],
     ['Edition', edition.editionStatement],
-    ['Translation first published', edition.translationFirstPublished],
     ['ISBN', edition.isbn],
     ['Library of Congress number', edition.identifiers.lccn],
     ['OCLC number', edition.identifiers.oclc],

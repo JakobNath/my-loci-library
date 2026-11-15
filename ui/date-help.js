@@ -18,7 +18,7 @@ export function dateRuleHtml() {
  * refresh its address on click (refreshSearchLink), so it asks about what is
  * in the boxes at that moment.
  * @param {string} question from core/date-search.js
- * @param {string} kind "work" or "translation", for the screen's click handler
+ * @param {string} kind "work" or "contents", for the screen's click handler
  */
 export function searchLinkHtml(question, kind = 'work') {
   return `<a class="link search-web" data-search-web="${kind}" href="${escapeHtml(webSearchUrl(question))}" target="_blank" rel="noopener">Search the web</a>`;

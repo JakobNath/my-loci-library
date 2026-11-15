@@ -90,7 +90,6 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 - Contributors with roles: translator, editor, introduction, and others. Authors come from the work or works the edition contains.
 - Publisher, place, edition publication year, and pages as printed (filled from lookups when available). Pages are kept exactly as printed ("xxviii, 311", or "89–132" for a journal issue), and the app works out the real count from them (339, 44).
 - Size: height and thickness in millimeters, both optional, each marked with where it came from: *measured* (a person), *catalog* (a library record) or *photo* (thickness worked out from a spine photo and the height). See "Book sizes" below.
-- Translation first published (for reprints of older translations).
 - Series and series number (Loeb Classical Library 36), and set title plus volume label (*Church Dogmatics* I/1). Both optional. From format version 4 (12 November 2026), a set may have its own record, which its volumes point to: its short form for citing (LW or AE for Luther's Works), general editors, how many volumes it has, what the whole set cost and is worth (with a value history), and notes. A set bought whole is often worth more than its volumes one by one, and a set gathered over years is valued volume by volume, so the set record has a switch, "Count one value for the whole set" (see "Value view").
 - ISBN, and a languages list ("Greek, English" marks a diglot; three languages, a triglot).
 - Contents: one work, or several for an anthology (see below).
@@ -178,7 +177,6 @@ Most dates are found by a web search, whose summary at the top usually answers a
 
 - A work with an author: *When was Pride and Prejudice by Jane Austen written and first published?*
 - A work with no author: *When was the Didache written and first published?*
-- Beside an edition's translation date: *When was Robert Fagles' translation of The Odyssey first published?*
 
 The question asks for both the written and the published date, so the answer gives what the rule above needs. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change. The laptop's page for filling in what is missing has the same link.
 
@@ -212,7 +210,7 @@ A work can carry several datings, each with its own range and a free-text note o
 
 **Edition dates are separate**
 
-An edition records its own publication year and, for reprints, when the translation first appeared. A 2010 reprint of an 1871 translation shows both, beside the work's original date.
+An edition records only its own publication year, shown beside the work's original date. *Changed with Jakob on 14 November 2026:* the year a reprinted translation first appeared is no longer kept; it was too much effort for very little return (data format 5).
 
 **Anthology dates**
 
@@ -342,7 +340,7 @@ Adding works in two passes (Jakob's decision, 11 November 2026). When adding, th
    - the original date;
    - the original language (English, Latin, Greek, German, Hebrew, French, or typed), and the original title when it is not English;
    - the category and tags, from those already used or typed new;
-   - for a translation, the translator and the year the translation first appeared;
+   - for a translation, the translator;
    - the cover and spine photos, the binding, and where it goes;
    - this copy: when it was acquired, price paid, estimated value, writing or markings, and notes.
    A work already in the library keeps its own language, category and tags, so those are not asked again. Missing title, author, publisher and year are pointed out (settings choose which).

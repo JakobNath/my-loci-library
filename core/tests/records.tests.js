@@ -314,7 +314,7 @@ export const tests = [
     },
   },
   {
-    name: 'a version-1 edition reads, edits and saves as the current version, with nothing lost',
+    name: 'a version-1 edition reads, edits and saves as the current version, losing only the translation year',
     fn() {
       // An edition file as the test catalog held it before November 2026.
       const stored = JSON.parse("{\n  \"format\": 1,\n  \"type\": \"edition\",\n  \"id\": \"2gebc2ep9fp2\",\n  \"title\": \"Confessions\",\n  \"subtitle\": null,\n  \"contents\": [\n    {\n      \"work\": \"6jwwbbrvgvdy\",\n      \"extent\": \"complete\",\n      \"translator\": null,\n      \"pages\": null\n    }\n  ],\n  \"contributors\": [\n    {\n      \"name\": \"Henry Chadwick\",\n      \"role\": \"translator\"\n    }\n  ],\n  \"publisher\": \"Oxford University Press\",\n  \"place\": \"Oxford\",\n  \"year\": 1991,\n  \"editionStatement\": null,\n  \"translationFirstPublished\": null,\n  \"series\": \"Oxford World's Classics\",\n  \"seriesNumber\": null,\n  \"set\": null,\n  \"volume\": null,\n  \"isbn\": \"9780199537822\",\n  \"languages\": [\n    \"English\"\n  ],\n  \"pages\": \"311\",\n  \"height\": null,\n  \"heightSource\": null,\n  \"thickness\": null,\n  \"thicknessSource\": null,\n  \"medium\": \"physical\",\n  \"logosId\": null,\n  \"logosExtra\": {},\n  \"cite\": false,\n  \"images\": [],\n  \"trashed\": null,\n  \"created\": \"2026-11-09T12:00:00Z\",\n  \"changed\": {}\n}");
@@ -323,7 +323,8 @@ export const tests = [
       equal(recordToFileText(stored), `${JSON.stringify(stored, null, 2)}\n`, 'a version-1 record is written exactly as stored, for comparing with its file');
       same([read.format, read.identifiers, read.subjects, read.foundContents], [FORMAT_VERSION, { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, [], []]);
       same(read.contents, [{ work: '6jwwbbrvgvdy', piece: null, extent: 'complete', translator: null, pages: null, cite: false }], 'each contents entry gains no piece and is not cited');
-      for (const name of Object.keys(stored).filter(name => !['format', 'contents'].includes(name))) same(read[name], stored[name], name);
+      // Version 5 dropped the translation year on purpose (see the version-4 test below).
+      for (const name of Object.keys(stored).filter(name => !['format', 'contents', 'translationFirstPublished'].includes(name))) same(read[name], stored[name], name);
       const edited = withField(read, 'pages', 'xxviii, 311', '2026-11-12T09:00:00Z');
       same(validateRecord(edited), []);
       const text = recordToFileText(edited);
@@ -413,7 +414,7 @@ export const tests = [
       delete copy.extras;
       equal(recordToFileText(copy), `${JSON.stringify(copy, null, 2)}\n`, 'a version-3 copy, as stored');
       const read = migrate(copy);
-      same([read.format, read.binding, read.material, read.extras], [4, 'Hardcover', null, ['Dust jacket']]);
+      same([read.format, read.binding, read.material, read.extras], [FORMAT_VERSION, 'Hardcover', null, ['Dust jacket']]);
       same(validateRecord(read), []);
       ok(recordToFileText(read).includes('"binding": "Hardcover",\n  "material": null,\n  "extras": [\n    "Dust jacket"\n  ],\n  "location"'), 'the new fields sit after the binding');
       equal(copy.binding, 'Hardcover with dust jacket', 'the record read is not changed');
@@ -424,10 +425,31 @@ export const tests = [
     fn() {
       const edition = { ...chadwick, format: 3 };
       delete edition.setRecord;
-      same([migrate(edition).format, migrate(edition).setRecord], [4, null]);
+      same([migrate(edition).format, migrate(edition).setRecord], [FORMAT_VERSION, null]);
       same(validateRecord(migrate(edition)), []);
       same(migrate({ ...augustine, format: 3 }), augustine);
       ok(validateRecord({ ...chadwick, setRecord: 'Luther\'s Works' }).some(p => p.includes('setRecord')), 'a link holds an ID, not a title');
+    },
+  },
+  {
+    name: 'a version-4 edition is read without its translation year, and is written exactly as stored until edited',
+    fn() {
+      const stored = { ...chadwick, format: 4, editionStatement: null, translationFirstPublished: 1991, changed: { translationFirstPublished: '2026-11-10T09:00:00Z', title: '2026-11-10T09:00:00Z' } };
+      const fileText = recordToFileText(stored);
+      ok(fileText.includes('"editionStatement": null,\n  "translationFirstPublished": 1991,\n  "series"'), 'a version-4 edition, as stored');
+      const read = migrate(stored);
+      equal(read.format, FORMAT_VERSION);
+      ok(!('translationFirstPublished' in read), 'the year is gone');
+      same(read.changed, { title: '2026-11-10T09:00:00Z' }, 'and its edit stamp');
+      same(validateRecord(read), []);
+      ok(!recordToFileText(read).includes('translationFirstPublished'), 'not written once read');
+      equal(stored.translationFirstPublished, 1991, 'the record read is not changed');
+    },
+  },
+  {
+    name: 'a version-4 work only changes its format number',
+    fn() {
+      same(migrate({ ...augustine, format: 4 }), augustine);
     },
   },
   {

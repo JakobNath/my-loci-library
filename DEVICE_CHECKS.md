@@ -146,7 +146,6 @@ Things that can only be checked on a real phone or a particular browser. Work th
 ## Original dates made quick (13 November 2026)
 
 - [ ] iPhone home-screen app and Android: in Edit book, tap "Search the web" under the original date. A browser tab should open on a search for "When was <title> by <author> written and first published?", and going back should return to the form with nothing lost.
-- [ ] Phone: add a translated book and, on the translation step, type the translator, then tap "Search the web". The search should name that translator.
 
 ## Fixes from the first real book (1.16.0, 14 November 2026)
 
@@ -162,3 +161,7 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone: add an anthology with two or more translators (Luther's Works 14): the step "Translation and editors" should have "Edited by" and "This book is in: English", and the next step "Who translated each work?" one menu per work. The book page should then show "trans. …" beside each work.
 - [ ] iPhone or Android: paste the contents page of Luther's Works 14 copied with the phone (Live Text or Google Lens): each Psalm line should end "— trans. …" with its translator.
 - [ ] Phone: on a book page, "Edit the works": each work has a translator box; change one and save, and the book page shows the change.
+
+## No translation year (data format 5, 14 November 2026)
+
+- [ ] Both phones: after updating, add a translated book. "Translation and editors" should ask for the translator, editors and the book's language, and no year. In Edit book and on the book page of a translation that had a year, no translation year should show; Settings should show data format 5.

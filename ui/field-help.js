@@ -12,7 +12,6 @@ export const FIELD_HELP = {
   category: 'One broad grouping for the work, such as Patristics, Philosophy or Fiction, shared by every edition of it. Keep to a short list; tags carry the details.',
   tags: 'Topics the work is about, as many as help, such as Christology or Stoicism, separated by commas. Every edition of the work shares them.',
   editionStatement: 'The edition as printed on the title page or its back, such as "2nd ed." or "Revised edition".',
-  translationFirstPublished: 'For a translation, the year this translation first appeared, which may be long before this printing (the Maude translation of Anna Karenina: 1918).',
   series: 'A publisher\'s numbered line of different works, such as Loeb Classical Library 36 or Everyman\'s Library 112. The number goes in Number.',
   set: 'One work or collection in several volumes, such as Luther\'s Works or Great Books of the Western World. Each volume is its own book here; its volume goes in Volume.',
   pages: 'Copied as printed, roman numerals and all, such as "xxviii, 311". The app works out the total.',

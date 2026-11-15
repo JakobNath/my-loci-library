@@ -29,8 +29,8 @@ import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, translationDateQuestion, searchTitle } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
+import { workDateQuestion, searchTitle } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml } from './date-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 import { findKnownVolume, contentsLinesOf, volumeFromText } from '../core/known-sets.js';
@@ -249,7 +249,7 @@ export function render(container, state, actions) {
       problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
       // What only a person knows, asked by the steps in ui/add-questions.js.
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
-      translator: translators.join('; '), translationYear: '', hasTranslator: translators.length > 0,
+      translator: translators.join('; '), hasTranslator: translators.length > 0,
       editors: full.contributors.filter(person => person.role === 'editor').map(person => person.name).join('; '),
       // The language of the pages in hand, asked of a translation; English unless a record says otherwise.
       bookLanguages: (full.languages || []).join(', ') || 'English',
@@ -429,11 +429,6 @@ export function render(container, state, actions) {
     stepArea.onchange = event => { if (event.target.dataset.photo) takePhoto(event.target.dataset.photo, event.target.files[0]); };
     stepArea.onclick = event => {
       if (event.target.dataset.help) { toggleHelp(stepArea, event.target); return; }
-      // The translator may have just been typed: ask about that name.
-      if (event.target.dataset.searchWeb === 'translation') {
-        const typed = stepArea.querySelector('[name="translator"]').value;
-        refreshSearchLink(event.target, translationDateQuestion(searchTitle(book.found), translatorNames(typed)));
-      }
       const button = event.target.closest('[data-action]');
       if (button && button.dataset.action === 'binding-part') toggleBindingChip(button);
       else if (button) answer(button.dataset.action, button.dataset.value);
@@ -840,7 +835,7 @@ export function render(container, state, actions) {
     });
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),
-      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement, translationFirstPublished: number(book.translationYear),
+      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement,
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
       isbn: found.isbn, pages: found.pages, languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
@@ -977,7 +972,7 @@ export function render(container, state, actions) {
     for (const { volume, title } of volumes) {
       const form = {
         title, subtitle: '', authors: [], contributors: setInfo.editors.map(name => ({ name, role: 'editor' })),
-        publisher: setInfo.publisher, place: '', year: setInfo.year, editionStatement: setInfo.editionStatement, translationFirstPublished: '',
+        publisher: setInfo.publisher, place: '', year: setInfo.year, editionStatement: setInfo.editionStatement,
         series: '', seriesNumber: '', set: setInfo.title, volume, setRecord: setInfo.setRecord, isbn: '', pages: '', languages: [], medium: 'physical', logosId: '', contents: null, workId: null,
         work: { title: '', originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [] },
         copy: { binding: setInfo.binding, material: setInfo.material, extras: setInfo.extras, location, acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },

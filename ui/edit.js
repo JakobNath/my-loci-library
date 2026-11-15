@@ -14,7 +14,7 @@ import { iconHtml } from './icons.js';
 import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
 import { wireTidyPaste } from './paste-contents.js';
-import { workDateQuestion, translationDateQuestion, searchTitle } from '../core/date-search.js';
+import { workDateQuestion, searchTitle } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
@@ -107,7 +107,7 @@ export function render(container, state, actions) {
   const pieceCount = (edition.contents || []).filter(item => item.piece).length;
   const piecesHtml = pieceCount ? `<p class="page-meta">${pieceCount === 1 ? 'One shorter piece' : `${pieceCount} shorter pieces`} from the set's list ${pieceCount === 1 ? 'is' : 'are'} also in this book and kept as ${pieceCount === 1 ? 'it is' : 'they are'}.</p>` : '';
   // The boxes as first drawn, for the search links' first questions; a click asks about what is typed then.
-  const form0 = { title: edition.title, subtitle: edition.subtitle || '', set: edition.set || '', volume: edition.volume || '', authors: authorsText, translators: edition.contributors.filter(person => person.role === 'translator').map(person => person.name) };
+  const form0 = { title: edition.title, subtitle: edition.subtitle || '', set: edition.set || '', volume: edition.volume || '', authors: authorsText };
   const trashHtml = entry ? '<button class="btn" type="button" data-action="trash">Move to trash</button>' : '';
   // A volume of a set with its own value (core/value.js): say how this copy's value is counted.
   const set = entry && entry.set && entry.set.value !== null ? entry.set : null;
@@ -134,8 +134,7 @@ export function render(container, state, actions) {
       </fieldset>
       <fieldset><legend>Edition</legend>
         <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}${fieldHtml('Year', 'year', edition.year, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}${fieldHtml('Translation first published', 'translationFirstPublished', edition.translationFirstPublished, { type: 'number', help: true })}</div>
-        <p class="search-line">${searchLinkHtml(translationQuestion(form0), 'translation')}</p>
+        <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}</div>
         <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series', help: true })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
         <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets', help: true })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
         <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
@@ -173,7 +172,7 @@ export function render(container, state, actions) {
   container.onclick = event => {
     if (event.target.dataset.help) { toggleHelp(container, event.target); return; }
     const searchKind = event.target.dataset.searchWeb;
-    if (searchKind) refreshSearchLink(event.target, (searchKind === 'translation' ? translationQuestion : workQuestion)(typedNames(form)));
+    if (searchKind) refreshSearchLink(event.target, workQuestion(typedNames(form)));
     const action = event.target.dataset.action;
     if (action === 'binding-part') toggleBindingChip(event.target);
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
@@ -244,16 +243,13 @@ function showPreview(input) {
   preview.innerHTML = `Read as <strong>${escapeHtml(formatYearRange(earliest, latest))}</strong> (${escapeHtml(certainty)})`;
 }
 
-// The title, authors and translators as typed now, for the search questions.
+// The title and authors as typed now, for the search question.
 function typedNames(form) {
   const data = new FormData(form);
-  const roles = data.getAll('contributorRole');
-  const translators = data.getAll('contributorName').filter((name, i) => roles[i] === 'translator').map(String);
-  return { title: String(data.get('title') || ''), subtitle: String(data.get('subtitle') || ''), set: String(data.get('set') || ''), volume: String(data.get('volume') || ''), authors: String(data.get('authors') || ''), translators };
+  return { title: String(data.get('title') || ''), subtitle: String(data.get('subtitle') || ''), set: String(data.get('set') || ''), volume: String(data.get('volume') || ''), authors: String(data.get('authors') || '') };
 }
 
 const workQuestion = typed => workDateQuestion(searchTitle(typed), typed.authors.split(';'));
-const translationQuestion = typed => translationDateQuestion(searchTitle(typed), typed.translators);
 
 // The form's values in the shape core/entry.js expects.
 function readForm(form) {
@@ -266,7 +262,7 @@ function readForm(form) {
     title: text('title'), subtitle: text('subtitle'), authors: list('authors', ';'),
     contributors: data.getAll('contributorName').map((name, i) => ({ name: name.toString().trim(), role: roles[i] })),
     publisher: text('publisher'), place: text('place'), year: text('year'), editionStatement: text('editionStatement'),
-    translationFirstPublished: text('translationFirstPublished'), series: text('series'), seriesNumber: text('seriesNumber'),
+    series: text('series'), seriesNumber: text('seriesNumber'),
     set: text('set'), volume: text('volume'), isbn: text('isbn'), pages: text('pages'), languages: list('languages', ','),
     medium: text('medium') || 'physical', logosId: text('logosId'),
     contents: data.get('several') ? text('contents') : null,

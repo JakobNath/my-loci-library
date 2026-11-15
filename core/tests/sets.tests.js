@@ -132,7 +132,7 @@ export const tests = [
       const edition = volume('31');
       const existing = { edition, copy: copy('31'), works: [work] };
       const form = {
-        title: edition.title, subtitle: '', contributors: [], publisher: '', place: '', year: '', editionStatement: '', translationFirstPublished: '',
+        title: edition.title, subtitle: '', contributors: [], publisher: '', place: '', year: '', editionStatement: '',
         series: '', seriesNumber: '', set: 'Luther\'s Works', volume: '31', isbn: '', pages: '', languages: [], medium: 'physical', logosId: '', contents: null,
         authors: [], work: { title: work.title, originalTitle: '', originalLanguage: '', category: '', tags: [], datings: [] },
         copy: { binding: 'Hardcover', material: 'Cloth', extras: ['Dust jacket'], location: ['Home', 'Office', 'Case 1', ''], acquired: '', price: '', value: '', status: 'owned', markings: false, notes: '' },

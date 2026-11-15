@@ -2,7 +2,7 @@
 
 This file describes every record and field in the catalog. It is the most important document in the project: if the app is ever lost, the data can be read, and a new app written, from this file alone.
 
-Format version: **4** (November 2026). Version 1, 2 and 3 records are still read; see "Format versions".
+Format version: **5** (November 2026). Version 1 to 4 records are still read; see "Format versions".
 
 ## The idea in one paragraph
 
@@ -83,7 +83,7 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 4. |
+| `format` | number | The format version this record was written in. Currently 5. |
 | `type` | text | `work`, `edition`, `copy`, `author`, `wishlist` or `set`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
@@ -159,7 +159,6 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `place` | text or null | | Place of publication. |
 | `year` | number or null | | The year this edition or printing was published. |
 | `editionStatement` | text or null | | As printed: "3rd ed.", "28th revised edition". |
-| `translationFirstPublished` | number or null | | For a reprint of an older translation: the year the translation first appeared. |
 | `series` | text or null | | "Loeb Classical Library". |
 | `seriesNumber` | text or null | | "36". Text, because some are "38A". |
 | `set` | text or null | | "Chemnitz's Works". |
@@ -417,6 +416,7 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 - Version 2 (November 2026): each edition gained `identifiers` and `subjects`. A version-1 edition is read as version 2 with `identifiers` all null and `subjects` empty; any other version-1 record only changes its `format`. Nothing else changes, and a version-1 file stays as it is until the record is next saved.
 - Version 3 (November 2026): each work gained `otherTitles` and `wikidata`; each edition gained `foundContents` and the identifiers `openLibrary` and `hathiTrust`; each contents entry gained `piece` and `cite`, and its `work` may be null for a piece. A version-2 work is read with no other titles and no Wikidata ID; a version-2 edition with both new identifiers null, nothing found, and every contents entry a work (`piece` null) not cited. Other records only change their `format`. A version-2 file stays as it is until the record is next saved.
 - Version 4 (November 2026): each copy gained `material` and `extras`, and its `binding` holds only a binding; each edition gained `setRecord`; and there is a new record type, `set`, in the folder `sets/`. A version-3 copy's binding text is read into the three parts by a fixed table (`readBindingText` in `core/bindings.js`): "Hardcover with dust jacket" is Hardcover and Dust jacket; "Cloth and hardcover in slip case" is Hardcover, Cloth and Slipcase; "Cloth" alone is the material Cloth. Text that cannot be read wholly (a word left over, or two bindings at once) stays in `binding` as it was, with no material and no extras, so nothing is guessed or lost. A version-3 edition is read with no set record. Other records only change their `format`. A version-3 file stays as it is until the record is next saved.
+- Version 5 (November 2026): each edition lost `translationFirstPublished`, the year its translation first appeared, which was not worth asking for. A version-4 edition is read without it (the value and its stamp in `changed` are dropped); other records only change their `format`. A version-4 file keeps the field, in its place after `editionStatement`, until the record is next saved.
 - Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
 - When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
@@ -426,7 +426,7 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
@@ -453,7 +453,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
@@ -470,7 +470,6 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "place": "Stuttgart",
   "year": 2012,
   "editionStatement": "28th revised edition",
-  "translationFirstPublished": null,
   "series": null,
   "seriesNumber": null,
   "set": null,
@@ -503,7 +502,7 @@ A copy:
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
@@ -530,7 +529,7 @@ An author:
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -546,7 +545,7 @@ A set:
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "set",
   "id": "s3tw0rks0001",
   "title": "Luther's Works",
@@ -568,7 +567,7 @@ A wishlist item:
 
 ```json
 {
-  "format": 4,
+  "format": 5,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",
