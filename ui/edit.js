@@ -135,7 +135,7 @@ export function render(container, state, actions) {
       </fieldset>
       <fieldset><legend>Edition</legend>
         <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}</div>
-        <div class="field-row">${fieldHtml('Year', 'year', edition.year, { type: 'number' })}${fieldHtml('First printed', 'firstPrinted', edition.firstPrinted, { type: 'number', help: true })}${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}</div>
+        <div class="field-row">${fieldHtml('Year of this edition or printing', 'year', edition.year, { type: 'number' })}${fieldHtml('First edition\'s year', 'firstPrinted', edition.firstPrinted, { type: 'number', help: true })}${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}</div>
         <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series', help: true })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
         <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets', help: true })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
         <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Other ISBNs (separate with ;)', 'otherIsbns', edition.otherIsbns.join('; '), { help: true })}</div>

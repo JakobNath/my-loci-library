@@ -47,7 +47,7 @@ function mustFields(book, step, { translated = false, bookLanguages = '', single
   if (step === 'edition') {
     return [
       ['publisher', 'Publisher', filled(found.publisher)], ['place', 'Place', filled(found.place)],
-      ['year', 'Year of this printing', filled(found.year)], ['firstPrinted', 'First printed', filled(found.firstPrinted)],
+      ['year', 'Year of this edition or printing', filled(found.year)], ['firstPrinted', 'First edition\'s year', filled(found.firstPrinted)],
       ['isbn', 'ISBN', filled(found.isbn)], ['pages', 'Pages', filled(found.pages)],
     ];
   }
@@ -109,8 +109,8 @@ export function checkRows(book, about = {}) {
     row('Translators', book.translator, translated ? 'wanted' : 'none', 'translator', stepOf('translation', 'book')),
     row('Publisher', found.publisher, 'wanted', 'publisher', stepOf('edition')),
     row('Place', found.place, 'wanted', 'place', stepOf('edition')),
-    row('Year of this printing', found.year, 'wanted', 'year', stepOf('edition')),
-    row('First printed', found.firstPrinted, 'wanted', 'firstPrinted', stepOf('edition')),
+    row('Year of this edition or printing', found.year, 'wanted', 'year', stepOf('edition')),
+    row('First edition\'s year', found.firstPrinted, 'wanted', 'firstPrinted', stepOf('edition')),
     row('Edition', found.editionStatement, 'none', '', stepOf('edition')),
     row('ISBN', found.isbn, 'wanted', 'isbn', stepOf('edition')),
     row('Other ISBNs', book.otherIsbnsText, 'none', '', stepOf('edition')),

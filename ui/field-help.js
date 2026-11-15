@@ -11,7 +11,7 @@ export const FIELD_HELP = {
   originalLanguage: 'The language the work was first written in, not the language of this book: Latin for a translation of Augustine, English for a book written in English.',
   category: 'One broad grouping for the work, such as Patristics, Philosophy or Fiction, shared by every edition of it. Keep to a short list; tags carry the details.',
   tags: 'Topics the work is about, as many as help, such as Christology or Stoicism, separated by commas. Every edition of the work shares them.',
-  firstPrinted: 'The year this book first appeared in any edition: the earliest year its copyright page gives ("First published 1972", or "© 1978, 1972" for a second edition). The year of this printing goes in Year. Leave it empty if the book does not say.',
+  firstPrinted: 'Look at the copyright page. One year only (© 1995): type it in both boxes, or tap "same as this printing". Several years (© 1972, 1978): the earliest is the first edition, the latest is this one. If the page gives only this edition\'s year, use Search the web.',
   otherIsbns: 'Any other ISBN printed in this book, such as a British one beside the American, or the paperback\'s on a hardcover. Scanning either finds the book.',
   editionStatement: 'The edition as printed on the title page or its back, such as "2nd ed." or "Revised edition".',
   series: 'A publisher\'s numbered line of different works, such as Loeb Classical Library 36 or Everyman\'s Library 112. The number goes in Number.',

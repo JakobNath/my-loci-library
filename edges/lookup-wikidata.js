@@ -19,7 +19,7 @@ PREFIX psv: <http://www.wikidata.org/prop/statement/value/>
 PREFIX wikibase: <http://wikiba.se/ontology#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>`;
-const TIMEOUT = 10000; // milliseconds; the dates are offered when they come, and never hold up adding
+const TIMEOUT = 25000; // milliseconds; the dates are offered when they come, and never hold up adding (10 s often timed out)
 
 /**
  * Ask about the works of one book.

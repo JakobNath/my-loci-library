@@ -413,8 +413,10 @@ export function suggestOriginalDates(work, editionYear, { authors = null, transl
   if (firstPublished !== null && firstPublished > LAST_EARLY_PRINTING_YEAR) {
     const same = editionYear && Number(editionYear) === firstPublished;
     // With a translator and no lifetime to check it against, the year is often the translation's.
-    const label = same ? 'first published, the same year as this printing (Open Library): check it is not an older work'
-      : translated && !lifetime ? 'first published (Open Library); with a translator, this may be the translation\'s year' : 'first published (Open Library)';
+    // Worded as what it is: an old work's earliest edition there is often a late printing (Grimm's tales, 2020).
+    const label = same ? 'Open Library\'s earliest edition, the same year as this printing: for an old work this is a later printing'
+      : translated && !lifetime ? 'Open Library\'s earliest edition; with a translator, this may be the translation\'s year'
+        : 'Open Library\'s earliest edition; for an old work this is a later printing';
     suggestions.push({ text: String(firstPublished), label });
   }
   if (lifetime) suggestions.push(lifetime);

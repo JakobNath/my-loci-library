@@ -6,7 +6,10 @@
 
 import { escapeHtml } from '../core/html.js';
 import { isbn13, otherIsbnsFromText, firstPrintedFromText, publisherRows, publishersFromRows } from '../core/entry.js';
+import { typedNames } from '../core/contents.js';
+import { firstEditionQuestion } from '../core/date-search.js';
 import { attr, fieldHtml, navHtml } from './add-questions.js';
+import { searchLinkHtml } from './date-help.js';
 
 /**
  * The step's screen.
@@ -29,9 +32,10 @@ export function editionStepHtml(book) {
     <p class="step-hint">Check these against the title page and the page behind it. A box outlined in color is still empty: fill it in, or Next offers "Don't know or not printed".</p>
     <form class="form">${problemsHtml}${rowsHtml}
       <p><button type="button" class="link" data-action="add-publisher">Add another publisher</button></p>
-      <div class="field-row">${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}`
-    + `${fieldHtml('First printed (first edition)', 'firstPrinted', found.firstPrinted, { missing: !found.firstPrinted, type: 'number', help: true, hint: 'The first time this book appeared, in any edition: the earliest year its copyright page gives.' })}</div>
-      ${earlyHtml}<p><button type="button" class="chip" data-action="same-printing">First printed: same as this printing</button></p>
+      <div class="field-row">${fieldHtml('Year of this edition or printing', 'year', found.year, { missing: !found.year, type: 'number' })}`
+    + `${fieldHtml('First edition\'s year', 'firstPrinted', found.firstPrinted, { missing: !found.firstPrinted, type: 'number', help: true, hint: 'The year this book first came out, in any edition.' })}</div>
+      ${earlyHtml}<p><button type="button" class="chip" data-action="same-printing">First edition: same as this printing</button></p>
+      <p class="search-line">${searchLinkHtml(firstEditionQuestion(found, { translators: typedNames(book.translator), editors: typedNames(book.editors) }), 'first-edition')}</p>
       ${fieldHtml('Edition statement', 'editionStatement', found.editionStatement, { help: true })}
       ${fieldHtml('ISBN', 'isbn', found.isbn, { missing: !found.isbn })}
       ${fieldHtml('Other ISBNs printed (separate with ;)', 'otherIsbns', book.otherIsbnsText, { help: true })}${offeredHtml}

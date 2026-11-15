@@ -33,7 +33,7 @@ import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines, typedNames } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
+import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, contentsQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
 import { mustMissing, checkRows, cardAnswered } from '../core/add-check.js';
 import { cardsFromLines, contentsFromCards, workDetailsFromCards, worksStepHtml, readCards, cardAction, redrawCard, showCount, showCardPreview } from './add-works.js';
@@ -492,7 +492,7 @@ export function render(container, state, actions) {
       book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), edition: () => editionStepHtml(book), contents: contentsStep, work: workStep, date: dateStep,
       language: () => languageStepHtml(book), subjects: () => subjectsStepHtml(book, subjectChoices(), categoriesFromSubjects(book.found.subjects || [])),
       translation: () => translationStepHtml({ ...book, bookLanguages: shownBookLanguages() }, isTranslated(), bookLanguageChoices(originalLanguage())), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
-      works: () => worksStepHtml(book, worksAbout()), check: () => checkStepHtml(checkRows(book, { ...about(), linkedDating: linkedDating() }), book.found.title),
+      works: () => { askAboutCards(); return worksStepHtml(book, worksAbout()); }, check: () => checkStepHtml(checkRows(book, { ...about(), linkedDating: linkedDating() }), book.found.title),
     }[book.step];
     // A must field left empty on Next: named at the top, with "Don't know" (the cards mark their own).
     const missing = book.nudged === book.step && book.step !== 'works' ? mustMissing(book, book.step, about()) : [];
@@ -587,8 +587,11 @@ export function render(container, state, actions) {
   function askWikidata(current, titles, author) {
     const lookups = state.settings.lookups || {};
     const key = wikidataKey(titles, author);
-    if (lookups.wikidata === false || !titles.length || current.wikidataAsked === key) return;
+    // The same question is asked again only after it failed ("Try again").
+    const failed = current.wikidataProblem.key === key;
+    if (lookups.wikidata === false || !titles.length || (current.wikidataAsked === key && !failed)) return;
     current.wikidataAsked = key;
+    current.wikidataProblem = { key: '', message: '' };
     const answered = text => {
       if (book !== current) return;
       if (book.step === 'date') drawStep();
@@ -635,7 +638,8 @@ export function render(container, state, actions) {
     const again = ` <button type="button" class="chip" data-action="wikidata-again"${wikidataChanged(cards) ? '' : ' hidden'}>Ask Wikidata again, with the titles and authors as corrected</button>`;
     const arrived = '<p class="step-hint" data-wikidata-arrived hidden>Wikidata has answered. <button type="button" class="chip" data-action="works-refresh">Show its suggestions</button></p>';
     const problem = book.wikidataProblem.key === book.wikidataAsked ? book.wikidataProblem.message : '';
-    if (problem) return `<p class="step-hint">${escapeHtml(problem)}${again}</p>`;
+    // After a failure the question can always be asked again, whether or not anything was corrected.
+    if (problem) return `<p class="step-hint">${escapeHtml(problem)} <button type="button" class="chip" data-action="wikidata-again">Try again</button></p>`;
     if (book.wikidataAnswered !== book.wikidataAsked) return `<p class="step-hint">Asking Wikidata about these works…${again}</p>${arrived}`;
     const known = cards.filter(card => wikidataOf(card.title));
     const datable = cards.filter(card => !card.date && !card.dateUnknown && (wikidataOf(card.title) || {}).date && !wikidataOf(card.title).posthumous);
@@ -643,6 +647,14 @@ export function render(container, state, actions) {
       : 'Wikidata knows none of these works. Use "Search the web" on each card.';
     const useHtml = datable.length ? ` <button type="button" class="chip" data-action="wikidata-dates">${escapeHtml(`Use Wikidata's dates (${datable.length})`)}</button>` : '';
     return `<p class="step-hint">${escapeHtml(text)}${useHtml}${again}</p>${arrived}`;
+  }
+
+  // The cards step asks by itself when it opens with titles or authors corrected since Wikidata was
+  // asked (on the contents step, or before going back); while it is open, "Ask Wikidata again" does.
+  function askAboutCards() {
+    if (book.knownVolume || !book.cards || !book.cards.length || !wikidataChanged(book.cards)) return;
+    const question = wikidataQuestion(book.cards);
+    askWikidata(book, question.titles, question.authors);
   }
 
   // Whether the cards' titles or authors differ from what Wikidata was last asked.
@@ -694,7 +706,8 @@ export function render(container, state, actions) {
     // Wikidata is asked now, so its answer is there by the cards. A known set's list gives the dates itself
     // (filled in when checked, offered when not), so Wikidata is not asked.
     if (!set) { const question = wikidataQuestion(parseContentsLines(lines)); askWikidata(book, question.titles, question.authors); }
-    const searchHtml = `<p class="search-line">${searchLinkHtml(`Table of contents of ${searchTitle(book.found)}`, 'contents')}</p>`;
+    const people = { translators: typedNames(book.translator), editors: typedNames(book.editors) };
+    const searchHtml = `<p class="search-line">${searchLinkHtml(contentsQuestion(book.found, people), 'contents')}</p>`;
     if (set) {
       return `<h2 class="step-title">The works in this volume</h2>
         <p class="step-hint">${escapeHtml(`From the ${set.checked ? 'checked ' : ''}list of ${set.set}, volume ${book.knownVolume.label}. Correct any line your copy differs in; a line left as it is keeps the list's original title, language and translator. A translator can be added at the end of a line: "— trans. Edward Sittler". Each work's language and date come next, one card each.`)}</p>
@@ -773,7 +786,7 @@ export function render(container, state, actions) {
     const known = book.wikidata.get(book.found.title);
     const posthumousHtml = known && known.date && known.posthumous
       ? `<p class="step-hint">${escapeHtml(`Wikidata: first printed ${known.date}, after the author died. The working date is when it was written.`)}</p>` : '';
-    const problemHtml = (problem ? `<p class="step-hint">${escapeHtml(problem)}</p>` : '') + posthumousHtml;
+    const problemHtml = (problem ? `<p class="step-hint">${escapeHtml(problem)} <button type="button" class="chip" data-action="wikidata-retry">Try again</button></p>` : '') + posthumousHtml;
     return `<h2 class="step-title">When was this work written?</h2>
       <p class="step-hint">${escapeHtml(`When the work itself was first written or published, not ${year}. Tap a suggestion or type a date.`)}</p>
       ${dateRuleHtml()}
@@ -952,6 +965,11 @@ export function render(container, state, actions) {
     if (action === 'wikidata-again') {
       const question = wikidataQuestion(book.cards);
       askWikidata(book, question.titles, question.authors);
+      return drawStep();
+    }
+    if (action === 'wikidata-retry') {
+      // The date step's "Try again": the single work, asked as when the book was found.
+      if (book.found.title && book.found.authors[0]) askWikidata(book, [book.found.title], book.found.authors[0]);
       return drawStep();
     }
     if (action === 'works-refresh') return drawStep();

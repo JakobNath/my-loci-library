@@ -80,7 +80,7 @@ export function firstPrintedFromText(text) {
   const plain = String(text ?? '').trim();
   if (!plain) return { year: null, problem: null };
   // A printed book's year: four digits from the age of printing on.
-  if (!/^\d{4}$/.test(plain)) return { year: null, problem: `"${plain}" is not a year for "First printed" (such as 1912).` };
+  if (!/^\d{4}$/.test(plain)) return { year: null, problem: `"${plain}" is not a year for "First edition's year" (such as 1912).` };
   return { year: Number(plain), problem: null };
 }
 

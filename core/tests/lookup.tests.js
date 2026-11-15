@@ -160,7 +160,9 @@ export const tests = [
     name: 'a first publication in the same year as the printing is flagged for checking, and BC years read right',
     fn() {
       const suggestions = suggestOriginalDates({ firstPublished: 2007, author: null }, '2007');
-      ok(suggestions[0].label.includes('check'), 'asks for a check');
+      ok(suggestions[0].label.includes('same year as this printing') && suggestions[0].label.includes('later printing'), 'says it may be a later printing');
+      ok(suggestOriginalDates({ firstPublished: 2020, author: null }, '2025')[0].label.startsWith('Open Library\'s earliest edition'),
+        'Grimm\'s tales: named as the earliest edition Open Library knows, not as the first publication');
       equal(yearFromText('c. 427 BC'), -427);
       same(suggestOriginalDates({ firstPublished: 1514, author: { name: 'Plato', born: -428, died: -348 } }, 1914).map(s => s.text), ['428–348 BC']);
     },

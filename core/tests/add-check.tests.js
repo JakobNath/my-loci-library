@@ -80,7 +80,7 @@ export const tests = [
       const groups = checkRows(book, { steps: ['book', 'edition', 'date', 'language', 'cover', 'spine', 'binding', 'where', 'copy'] });
       same(groups.map(group => group.title), ['The book', 'The work', 'This copy']);
       const state = label => groups.flatMap(group => group.rows).find(item => item.label === label);
-      same(['Place', 'First printed', 'Series', 'Cover', 'Height'].map(label => state(label).state), ['unknown', 'missing', 'none', 'missing', 'missing']);
+      same(['Place', 'First edition\'s year', 'Series', 'Cover', 'Height'].map(label => state(label).state), ['unknown', 'missing', 'none', 'missing', 'missing']);
       equal(state('Publisher').step, 'edition', 'a tap goes back to the copyright page step');
       equal(state('Translators').state, 'none', 'not a translation');
     },
