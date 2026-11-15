@@ -6,7 +6,7 @@
 // Loeb's style of title.
 
 import { isbn13 } from './entry.js';
-import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson, describesVolumes } from './lookup.js';
+import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson, describesVolumes, isEditionNotPublisher } from './lookup.js';
 import { normalizeForSearch } from './search.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
@@ -121,7 +121,7 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.contributors = contributorsFrom(edition.by_statement);
   if (!found.contributors.length) found.contributors = contributorsFromContributions(edition.contributions);
   // Every publisher and place, joined as the edition's fields keep several ("Harvard University Press; W. Heinemann").
-  found.publisher = (edition.publishers || []).map(tidy).filter(Boolean).join('; ');
+  found.publisher = (edition.publishers || []).map(tidy).filter(name => name && !isEditionNotPublisher(name)).join('; ');
   found.place = (edition.publish_places || []).map(place => tidy(place).replace(/[\s:;,]+$/, '')).filter(Boolean).join('; ');
   found.year = yearOf(edition.publish_date);
   found.pages = cleanPages(edition.pagination) || (edition.number_of_pages && !describesVolumes(edition.pagination) ? String(edition.number_of_pages) : '');

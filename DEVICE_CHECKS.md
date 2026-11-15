@@ -218,3 +218,14 @@ The Marx-Engels Reader saved on 1.21.0 (51 works ending in " -") was moved to th
 - [ ] Phone: scan Calvin's Institutes (LCC, ISBN 978-0-664-22028-0): the title is "Institutes of the Christian religion" by Jean Calvin, with John T. McNeill as editor and only Ford Lewis Battles as translator.
 - [ ] Phone: scan Loeb Greek Lyric I (978-0-674-99157-6): the copyright page step's series number is empty (not "142, 144, 461, 476"), ready for 142 and volume 1.
 - [ ] Phone: scan Bettenson's Documents of the Christian Church (978-0-19-956898-7): no author, editors Henry Scowcroft Bettenson and Chris Maunder. The Book of Concord (978-0-8006-2740-9): no author, editors Kolb and Wengert. Lull (978-0-8006-3680-7): edition "2nd ed.". Charlesworth I (978-0-385-09630-0): subtitle "Apocalyptic Literature and Testaments", pages empty.
+
+## Lookups and cards, testing day batch 6, stage A (1.24.0, 15 November 2026)
+
+Checked in the browser preview at phone width on 15 November 2026 (the Reader and Plutarch by ISBN, not saved), so these are for the phones themselves.
+
+- [ ] Phone: move the Reader, Plutarch's Lives II and the Grimm to the trash first, then add the Reader again (ISBN 978-0-393-09040-6). "Is this the book?" shows "Karl Marx, Friedrich Engels" and editor Robert C. Tucker. The copyright page step says "Year of this edition or printing" and "First edition's year", with "Search the web" under them asking about the first edition "edited by Robert C. Tucker".
+- [ ] Phone, same book: the contents step's "Search the web" asks for the table of contents "(Norton, 1978, edited by Robert C. Tucker)". On the cards, a work whose line names no author has an empty author with the chips Karl Marx, Friedrich Engels, Both and Anonymous; a work Wikidata knows shows its author as "(Wikidata)". A card stays outlined until an author is chosen or typed.
+- [ ] Phone, same book: type "Karl Marx; Friedrich Engels" as one card's author. "Check before saving" lists each name once under Authors. After saving, the book page shows both as separate authors of that work.
+- [ ] Phone, with the Wi-Fi and data off just before the cards: the line says Wikidata could not be reached, with "Try again". Turn the connection on and tap it: Wikidata's suggestions arrive.
+- [ ] Phone: add Plutarch's Lives II (978-0-674-99053-1). The copyright page step has two publisher rows (Harvard University Press, Cambridge, Mass; W. Heinemann, London), series "Loeb Classical Library", number 47, set Plutarch's Lives, volume 2, and pages empty and outlined (type "x, 631"). The contents search names "Loeb Classical Library, translated by Bernadotte Perrin".
+- [ ] Phone: add the Grimm (978-93-90093-02-1): the publisher is "Fingerprint! Publishing" alone, and the date step's Open Library suggestion reads "Open Library's earliest edition…: for an old work this is a later printing", never "first published".

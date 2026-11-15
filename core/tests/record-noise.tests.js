@@ -156,6 +156,14 @@ export const tests = [
     },
   },
   {
+    name: 'a bookseller\'s edition statement listed as a second publisher is left out, and so are invisible marks',
+    fn() {
+      const answer = { 'ISBN:9789390093021': { details: { title: 'The Complete Grimms\' Fairy Tales', isbn_13: ['9789390093021'],
+        publishers: ['‎Fingerprint! Publishing', 'Reprint edition (Sept. 1 2020)'], publish_date: '2020' } } };
+      equal(fromOpenLibraryDetails(answer, '9789390093021', '').publisher, 'Fingerprint! Publishing');
+    },
+  },
+  {
     name: 'a library imprint gives every publisher with the place printed before it',
     fn() {
       const imprint = subfields => `<datafield tag="260" ind1=" " ind2=" ">${subfields.map(([code, text]) => `<subfield code="${code}">${text}</subfield>`).join('')}</datafield>`;

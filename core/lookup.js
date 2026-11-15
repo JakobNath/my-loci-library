@@ -31,8 +31,20 @@ export function emptyFound(source) {
   };
 }
 
-/** Catalog text without doubled spaces ("The  cost of discipleship"). */
-export const tidy = text => String(text || '').replace(/\s+/g, ' ').trim();
+/**
+ * Catalog text without doubled spaces ("The  cost of discipleship"), and
+ * without the invisible direction marks a bookseller's record may carry
+ * ("\u200eFingerprint! Publishing").
+ */
+export const tidy = text => String(text || '').replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, '').replace(/\s+/g, ' ').trim();
+
+/**
+ * Whether a record's "publisher" is an edition statement a bookseller put in its
+ * place ("Reprint edition (Sept. 1 2020)" beside Fingerprint! Publishing).
+ * Only "edition": "Printing" is in real publishers' names (the Government
+ * Printing Office), and "Editions Gallimard" is a publisher.
+ */
+export const isEditionNotPublisher = name => /\bedition\b/i.test(name);
 
 // The words of a name, for comparing "Luther, Martin" with "Martin Luther".
 const nameWords = name => normalizeForSearch(name).split(' ').filter(word => word.length > 1);
@@ -134,7 +146,7 @@ export function fromOpenLibrary(answer, isbn, coverUrl) {
   found.authors = (book.authors || []).map(author => tidy(author.name)).filter(Boolean);
   found.contributors = contributorsFrom(book.by_statement);
   // Every publisher and place, joined as the edition's fields keep several ("Harvard University Press; W. Heinemann").
-  found.publisher = (book.publishers || []).map(item => tidy(item && item.name)).filter(Boolean).join('; ');
+  found.publisher = (book.publishers || []).map(item => tidy(item && item.name)).filter(name => name && !isEditionNotPublisher(name)).join('; ');
   found.place = (book.publish_places || []).map(item => tidy(item && item.name)).filter(Boolean).join('; ');
   found.year = yearOf(book.publish_date);
   found.pages = cleanPages(book.pagination) || (book.number_of_pages && !describesVolumes(book.pagination) ? String(book.number_of_pages) : '');
