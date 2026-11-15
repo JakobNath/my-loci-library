@@ -126,7 +126,8 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.year = yearOf(edition.publish_date);
   found.pages = cleanPages(edition.pagination) || (edition.number_of_pages && !describesVolumes(edition.pagination) ? String(edition.number_of_pages) : '');
   found.isbn = isbn;
-  found.otherIsbns = otherIsbnsListed(listed, isbn);
+  // A record of a whole set ("11v.", Plutarch's Lives) lists every volume's ISBN; none is printed in this volume.
+  found.otherIsbns = describesVolumes(edition.pagination) ? [] : otherIsbnsListed(listed, isbn);
   found.editionStatement = editionFromSeller(edition.edition_name);
   Object.assign(found, edition.series && edition.series.length ? seriesParts(edition.series) : {});
   found.binding = bindingFromFormat(edition.physical_format);

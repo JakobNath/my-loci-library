@@ -156,6 +156,13 @@ export const tests = [
     },
   },
   {
+    name: 'a record of a whole set ("11v.") offers none of its ISBNs as this volume\'s other ISBNs',
+    fn() {
+      // Open Library's Plutarch's Lives record lists all eleven volumes' ISBNs; none but its own is printed in volume 2.
+      same(lookedUp(plutarch).otherIsbns, []);
+    },
+  },
+  {
     name: 'a bookseller\'s edition statement listed as a second publisher is left out, and so are invisible marks',
     fn() {
       const answer = { 'ISBN:9789390093021': { details: { title: 'The Complete Grimms\' Fairy Tales', isbn_13: ['9789390093021'],
