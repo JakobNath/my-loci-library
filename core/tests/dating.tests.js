@@ -2,7 +2,7 @@
 // forms named in PLAN.md, and the historical century convention.
 
 import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating } from '../dating.js';
-import { workDateQuestion, webSearchUrl, searchTitle } from '../date-search.js';
+import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle } from '../date-search.js';
 import { equal, same, ok } from './check.js';
 
 function reads(text, earliest, latest, certainty) {
@@ -136,6 +136,23 @@ export const tests = [
     fn() {
       equal(workDateQuestion('Didache', []), 'When was the Didache written and first published?');
       equal(workDateQuestion('The Epic of Gilgamesh', []), 'When was The Epic of Gilgamesh written and first published?');
+    },
+  },
+  {
+    name: 'a work is also asked about its original language and its original title',
+    fn() {
+      equal(workLanguageQuestion('The Poverty of Philosophy', ['Karl Marx']), 'What language was The Poverty of Philosophy by Karl Marx first written in?');
+      equal(originalTitleQuestion('On the Jewish Question', ['Karl Marx']), 'What is the original title of On the Jewish Question by Karl Marx?');
+      equal(workLanguageQuestion('Didache', []), 'What language was the Didache first written in?');
+    },
+  },
+  {
+    name: 'an extract in a reader is searched for by the work it comes from',
+    fn() {
+      // The Marx-Engels Reader titles its extracts "Alienation and Social Classes (from The Holy Family)".
+      equal(searchableTitle('Alienation and Social Classes (from the Holy Family)'), 'The Holy Family');
+      equal(searchableTitle('Discovering Hegel (Marx to His Father)'), 'Discovering Hegel (Marx to His Father)', 'other brackets stay');
+      equal(workDateQuestion('On Morality (from Anti-Dühring)', ['Friedrich Engels']), 'When was Anti-Dühring by Friedrich Engels written and first published?');
     },
   },
   {

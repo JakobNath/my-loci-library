@@ -3,7 +3,10 @@
 // The question is sent by edges/lookup-wikidata.js. Only standard SPARQL 1.1
 // is used, with every prefix written out and no label service, because the
 // Wikidata Query Service is moving to a backend without them (SOURCES.md).
-// A date found here is only offered: a person accepts it with one tap.
+// A date found here is only offered: a person accepts it with one tap. A date
+// after the author's death is a posthumous first printing, which the
+// working-date rule does not use (PLAN.md, "Which date is the working date"),
+// so it is marked and never offered for one tap.
 
 import { normalizeForSearch } from './search.js';
 
@@ -22,25 +25,29 @@ const literal = text => `"${String(text).replace(/\\/g, '\\\\').replace(/"/g, '\
  * refuses many quick queries, so a book is never asked work by work). Editions
  * and translations, which have their own items, are left out.
  * @param {string[]} titles the works' English titles
- * @param {string} author the author's name, as the book gives it ("Plato", "Edgar Allan Poe")
+ * @param {string|string[]} author the author's name, as the book gives it ("Plato", "Edgar Allan Poe"), or
+ *   several (a reader of Marx and Engels): a work by any of them is found
  * @param {string} [prefixes] the PREFIX lines naming Wikidata's vocabularies, which the query service needs
  *   written out; they name Wikidata's address, so they are kept in edges/lookup-wikidata.js
  * @returns {string} the query, or '' when there is nothing to ask (no author: a title alone matches too much)
  */
 export function worksQuery(titles, author, prefixes = '') {
-  const surname = normalizeForSearch(author).split(' ').pop();
+  const names = Array.isArray(author) ? author : [author];
+  const surnames = [...new Set(names.map(name => normalizeForSearch(name || '').split(' ').pop()).filter(Boolean))];
   const labels = [...new Set(titles.flatMap(labelsFor))];
-  if (!surname || !labels.length) return '';
+  if (!surnames.length || !labels.length) return '';
+  const byName = surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`).join(' || ');
   return `${prefixes}
-SELECT ?title ?work ?time ?precision ?original ?other WHERE {
+SELECT ?title ?work ?time ?precision ?original ?other ?died WHERE {
   VALUES ?title { ${labels.map(literal).join(' ')} }
   ?work rdfs:label ?title ; wdt:P50 ?author .
   ?author rdfs:label ?authorName .
-  FILTER(LANG(?authorName) = "en" && CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)}))
+  FILTER(LANG(?authorName) = "en" && (${byName}))
   FILTER NOT EXISTS { ?work wdt:P629 ?editionOf }
   OPTIONAL { ?work (p:P571|p:P577)/(psv:P571|psv:P577) ?value . ?value wikibase:timeValue ?time ; wikibase:timePrecision ?precision . }
   OPTIONAL { ?work wdt:P1476 ?original }
   OPTIONAL { ?work skos:altLabel ?other . FILTER(LANG(?other) = "en") }
+  OPTIONAL { ?author wdt:P570 ?died }
 }`;
 }
 
@@ -70,6 +77,16 @@ export function wikidataDateText(time, precision) {
   return `${year}${bc}`;
 }
 
+// The language of an original title, from the code Wikidata tags it with, in
+// the names this catalog uses ("Greek" for both ancient and modern, as the add
+// screen's chips do). A code not listed gives no language.
+const LANGUAGES_BY_CODE = {
+  en: 'English', la: 'Latin', grc: 'Greek', el: 'Greek', he: 'Hebrew', hbo: 'Hebrew', de: 'German', fr: 'French',
+  it: 'Italian', es: 'Spanish', pt: 'Portuguese', nl: 'Dutch', da: 'Danish', sv: 'Swedish', nb: 'Norwegian', no: 'Norwegian',
+  ru: 'Russian', pl: 'Polish', cs: 'Czech', fi: 'Finnish', hu: 'Hungarian', is: 'Icelandic', ar: 'Arabic', fa: 'Persian',
+  arc: 'Aramaic', syc: 'Syriac', cop: 'Coptic', sa: 'Sanskrit', zh: 'Chinese', ja: 'Japanese', ang: 'Old English',
+};
+
 // An item's number: Q170583 is 170583. Long-known works got low numbers early on.
 const itemNumber = work => Number(work.wikidata.slice(1));
 
@@ -89,12 +106,14 @@ function clearlyTheWork(dated) {
 
 /**
  * What Wikidata's answer says about each title asked: its item, the earliest
- * date given (written or first published), its original title and its other
- * English titles. A title matching more than one dated work is left out, since
- * Wikidata cannot tell which is meant, unless one clearly stands out (clearlyTheWork).
+ * date given (written or first published), its original title and that
+ * title's language, and its other English titles. posthumous: the date is
+ * after the author died (the 1844 Manuscripts, first printed 1932). A title
+ * matching more than one dated work is left out, since Wikidata cannot tell
+ * which is meant, unless one clearly stands out (clearlyTheWork).
  * @param {object} answer the query's JSON answer
  * @param {string[]} titles the titles asked (as in worksQuery)
- * @returns {Map<string, { wikidata: string, date: string, originalTitle: string, otherTitles: string[] }>} by the asked title
+ * @returns {Map<string, { wikidata: string, date: string, posthumous: boolean, originalTitle: string, originalLanguage: string, otherTitles: string[] }>} by the asked title
  */
 export function worksFromWikidata(answer, titles) {
   const byLabel = new Map();
@@ -102,9 +121,14 @@ export function worksFromWikidata(answer, titles) {
     const label = row.title.value;
     const id = row.work.value.split('/').pop();
     const works = byLabel.get(label) || new Map();
-    const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', otherTitles: new Set() };
+    const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', originalLanguage: '', otherTitles: new Set(), died: null };
     if (row.time) work.dates.push({ time: row.time.value, precision: Number(row.precision.value) });
-    if (row.original) work.originalTitle = row.original.value;
+    if (row.original) {
+      work.originalTitle = row.original.value;
+      work.originalLanguage = LANGUAGES_BY_CODE[String(row.original['xml:lang'] || '').toLowerCase()] || work.originalLanguage;
+    }
+    // With two authors, the later death: a work printed while either lived was printed in an author's lifetime.
+    if (row.died) work.died = Math.max(work.died ?? -Infinity, yearOf(row.died.value));
     if (row.other) work.otherTitles.add(row.other.value);
     works.set(id, work);
     byLabel.set(label, works);
@@ -120,7 +144,9 @@ export function worksFromWikidata(answer, titles) {
     found.set(title, {
       wikidata: work.wikidata,
       date: earliest ? wikidataDateText(earliest.time, earliest.precision) : '',
+      posthumous: Boolean(earliest && work.died !== null && earliest.year > work.died),
       originalTitle: work.originalTitle && work.originalTitle !== title ? work.originalTitle : '',
+      originalLanguage: work.originalLanguage,
       otherTitles: [...work.otherTitles].filter(other => other !== title).slice(0, 5),
     });
   }
