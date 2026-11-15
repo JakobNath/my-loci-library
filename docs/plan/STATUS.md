@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.17.0).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 14 November 2026 (app version 1.18.0).
 
 ## Where things stand
 
@@ -45,7 +45,7 @@ Phase 15 step 10 was built in the tools the same day: Zotero gets books only, ne
 
 - **Version 1.17.0** (testing day, batch 1, 14 November 2026; Luther's Works 12 and 14): a phone catches up with the other before saying "You already have this edition" (Volume 12, trashed on one phone, was offered as held on the other); the Add box is emptied and the keyboard stays closed after saving; "Added this time" lost its "0."; a known set's contents step shows every offered date and a "Search the web" link. Any translation, collection or book with editors is asked "Translation and editors" ("Edited by", and for a translation "This book is in: English"); a collection with several translators is asked "Who translated each work?"; "Works in this book" has a translator box per work; a contents line may end "— trans. Name", and a pasted contents page keeps "translated by". Zotero still gets books only (Jakob: Z1); roles for volume, assistant and general editors are in `docs/decisions/zotero-and-citations.md`. The Luther's Works list has volume 14's translators, checked against Jakob's copy. The same day, with Jakob's yes, the catalog was tidied: the stray copy on the trashed Volume 12 went to the trash, Volume 14 got its translators per work, "Jaroslav", Poellot as "other" and English, and the catalog's first set record, Luther's Works (LW, general editors Pelikan and Lehmann), was made and Volume 14 linked to it.
 
-- **Not yet released** (14 November 2026, branch `remove-translation-year` in the app and the tools): data format 5 drops the year a translation first appeared, at Jakob's request, from adding, Edit book, the book page, field help and the docs (`docs/decisions/data-format.md`). Tests pass; the browser check is still to do (the preview pane was hidden), then merge both branches and release 1.18.0.
+- **Version 1.18.0** (14 November 2026): data format 5. At Jakob's request the year a translation first appeared is gone from everywhere: adding ("Translation and editors" asks only for the translator, editors and the book's language), Edit book, the book page, field help, the translation "Search the web" link and the docs. Version-4 editions are read without it; the catalog's files were not rewritten, so the 15 years typed so far stay only in untouched files and git history (`docs/decisions/data-format.md`). The tools were updated the same day.
 
 All tests pass: 246 in the app (and 229 on the self-test page), 285 in the tools.
 
