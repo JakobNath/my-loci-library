@@ -155,11 +155,15 @@ export const tests = [
   {
     name: 'a record\'s other ISBNs are offered, each once, without a mistyped one, and no source gives a first printing',
     fn() {
-      // Open Library's record for Chemnitz's Loci (9780758615473) also lists the other binding's
-      // ISBN, and an ISBN-10 whose digits are swapped (0785615477), which is left out.
-      same(fromOpenLibraryEdition(json(chemnitz.openLibraryEdition), chemnitz.isbn).otherIsbns, ['9780758615466']);
+      // Open Library's record for Chemnitz's Loci (9780758615473) also lists 9780758615466, and an
+      // ISBN-10 whose digits are swapped (0785615477), which is left out. Read as a one-book record:
+      const oneBook = { ...json(chemnitz.openLibraryEdition), pagination: '' };
+      same(fromOpenLibraryEdition(oneBook, chemnitz.isbn).otherIsbns, ['9780758615466']);
+      // As recorded it describes two volumes ("v. <1-2>"), so which ISBN is which book's cannot be told: none is offered.
+      same(fromOpenLibraryEdition(json(chemnitz.openLibraryEdition), chemnitz.isbn).otherIsbns, []);
       same(fromGoogleBooksVolume(json(chemnitz.googleBooksVolume), chemnitz.isbn).otherIsbns, [], 'Google Books lists only this one');
-      same(merged(chemnitz).otherIsbns, ['9780758615466'], 'joined from every source');
+      same(mergeFound([{ ...emptyFound('openlibrary'), isbn: '9780758615473', otherIsbns: ['9780758615466'] }, { ...emptyFound('googlebooks'), otherIsbns: [] }]).otherIsbns,
+        ['9780758615466'], 'joined from every source');
       for (const book of [confessions, crime, chemnitz, plato, lewis, loeb, anna, na28, holmes]) equal(merged(book).firstPrinted, '', book.isbn);
       same(mergeFound([{ ...emptyFound('openlibrary'), isbn: '9780674990128', otherIsbns: ['9780434990122'] }, { ...emptyFound('googlebooks'), otherIsbns: ['9780434990122', '9780674990128'] }]).otherIsbns,
         ['9780434990122'], 'never the ISBN itself');
