@@ -9,7 +9,7 @@
 //     authors, publisher, place, year, firstPrinted, editionStatement, isbn,
 //     series, seriesNumber, set, volume, pages, height)
 //   otherIsbnsText, editors, translator: as typed
-//   cards: a collection's works, { title, author, language, originalTitle, date, dateUnknown, unknown }
+//   cards: a collection's works, { title, author, authorAsked, language, originalTitle, date, dateUnknown, unknown }
 //     (unknown: "Don't know the rest" was tapped while the card was unanswered)
 //   language, originalTitle, dating, dateUnknown: a single work's answers
 //   category, tags, binding, material, extras, location, copy, photos, cover, heightCm
@@ -22,13 +22,18 @@
 // an empty one shows a dash.
 
 import { parseDating } from './dating.js';
+import { typedNames } from './contents.js';
 
 const filled = value => (Array.isArray(value) ? value.length > 0 : String(value ?? '').trim() !== '');
 
-/** Whether a card of a collection has its language and its date (or "Don't know"). */
+/**
+ * Whether a card of a collection has its language and its date (or "Don't
+ * know"), and, when it was made with the book's several authors to choose
+ * from (authorAsked), an author typed or chosen, or "Anonymous".
+ */
 export function cardAnswered(card) {
   const dateGiven = filled(card.date) ? parseDating(card.date).ok : card.dateUnknown;
-  return filled(card.language) && Boolean(dateGiven);
+  return filled(card.language) && Boolean(dateGiven) && (!card.authorAsked || filled(card.author));
 }
 
 // The must fields of each step: [name, label, whether it is filled]. A field
@@ -42,7 +47,7 @@ function mustFields(book, step, { translated = false, bookLanguages = '', single
   if (step === 'edition') {
     return [
       ['publisher', 'Publisher', filled(found.publisher)], ['place', 'Place', filled(found.place)],
-      ['year', 'Year of this printing', filled(found.year)], ['firstPrinted', 'First printed', filled(found.firstPrinted)],
+      ['year', 'Year of this edition or printing', filled(found.year)], ['firstPrinted', 'First edition\'s year', filled(found.firstPrinted)],
       ['isbn', 'ISBN', filled(found.isbn)], ['pages', 'Pages', filled(found.pages)],
     ];
   }
@@ -98,14 +103,14 @@ export function checkRows(book, about = {}) {
     row('Title', found.title, 'wanted', 'title', stepOf('book')),
     row('Subtitle', found.subtitle, 'none', '', stepOf('book')),
     single ? row('Authors', found.authors, 'wanted', 'authors', stepOf('book'))
-      // A collection's authors are its works' ("Karl Marx and Friedrich Engels" on a card is two).
-      : row('Authors', [...new Set((book.cards || []).flatMap(card => String(card.author || '').split(/\s+and\s+/)).map(name => name.trim()).filter(filled))], 'none', '', stepOf('works')),
+      // A collection's authors are its works' ("Karl Marx and Friedrich Engels" or "Karl Marx; Friedrich Engels" on a card is two).
+      : row('Authors', [...new Set((book.cards || []).flatMap(card => typedNames(card.author)).filter(filled))], 'none', '', stepOf('works')),
     row('Editors', book.editors, 'none', '', stepOf('translation', 'book')),
     row('Translators', book.translator, translated ? 'wanted' : 'none', 'translator', stepOf('translation', 'book')),
     row('Publisher', found.publisher, 'wanted', 'publisher', stepOf('edition')),
     row('Place', found.place, 'wanted', 'place', stepOf('edition')),
-    row('Year of this printing', found.year, 'wanted', 'year', stepOf('edition')),
-    row('First printed', found.firstPrinted, 'wanted', 'firstPrinted', stepOf('edition')),
+    row('Year of this edition or printing', found.year, 'wanted', 'year', stepOf('edition')),
+    row('First edition\'s year', found.firstPrinted, 'wanted', 'firstPrinted', stepOf('edition')),
     row('Edition', found.editionStatement, 'none', '', stepOf('edition')),
     row('ISBN', found.isbn, 'wanted', 'isbn', stepOf('edition')),
     row('Other ISBNs', book.otherIsbnsText, 'none', '', stepOf('edition')),

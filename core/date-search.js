@@ -90,6 +90,47 @@ export function originalTitleQuestion(title, authorNames) {
   return `What is the original title of ${subjectOf(title, authorNames)}?`;
 }
 
+// At most two names, then "and others", so a long list of translators does not crowd the search out.
+const fewNames = names => namesText(names.slice(0, 2)) + (names.length > 2 ? ' and others' : '');
+
+/**
+ * The question asked about a book's table of contents, naming what tells this
+ * printing from others of the same title: the series (or else the publisher
+ * and year), and the translators (or else the editors). Asking only for
+ * "Plutarch's Lives, volume 2" found Dryden's translation.
+ * @param {{ title?: string, subtitle?: string, set?: string, volume?: string, series?: string, publisher?: string, year?: string }} found
+ * @param {{ translators?: string[], editors?: string[] }} people as typed or found
+ * @returns {string} "Table of contents of Plutarch's Lives, volume 2 (Loeb Classical Library, translated by Bernadotte Perrin)"
+ */
+export function contentsQuestion(found, { translators = [], editors = [] } = {}) {
+  const firstPublisher = plain(found.publisher).split(';')[0].trim();
+  const where = plain(found.series) || [firstPublisher, plain(found.year)].filter(Boolean).join(', ');
+  const who = translators.length ? `translated by ${fewNames(translators)}` : editors.length ? `edited by ${fewNames(editors)}` : '';
+  const about = [where, who].filter(Boolean).join(', ');
+  return `Table of contents of ${searchTitle(found)}${about ? ` (${about})` : ''}`;
+}
+
+/**
+ * The question asked about the year a book first came out, in any edition,
+ * for the "First edition's year" box when the copyright page gives only this
+ * edition's year. It names the editors and translators, since a translation
+ * or a reader's first edition is that book's, not the work's.
+ * @param {{ title?: string, subtitle?: string, set?: string, volume?: string, authors?: string[] }} found
+ * @param {{ translators?: string[], editors?: string[] }} people as typed or found
+ * @returns {string} "What year was the first edition of The Marx-Engels Reader, edited by Robert C. Tucker, published?"
+ */
+export function firstEditionQuestion(found, { translators = [], editors = [] } = {}) {
+  const authors = editors.length ? [] : found.authors || [];
+  const parts = [
+    `${searchTitle(found)}${authors.length ? ` by ${fewNames(authors)}` : ''}`,
+    editors.length ? `edited by ${fewNames(editors)}` : '',
+    translators.length ? `translated by ${fewNames(translators)}` : '',
+  ];
+  const named = parts.filter(Boolean);
+  // "…, edited by Robert C. Tucker, published?": the names set off by commas, as one would write it.
+  return `What year was the first edition of ${named.join(', ')}${named.length > 1 ? ',' : ''} published?`;
+}
+
 /**
  * The web address that searches for a question.
  * @param {string} question

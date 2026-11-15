@@ -4,7 +4,7 @@
 
 import { newRecord, withField } from './records.js';
 import { parseDating } from './dating.js';
-import { parseContentsLines } from './contents.js';
+import { parseContentsLines, typedNames } from './contents.js';
 import { normalizeForSearch } from './search.js';
 import { trashRecord } from './trash.js';
 
@@ -80,7 +80,7 @@ export function firstPrintedFromText(text) {
   const plain = String(text ?? '').trim();
   if (!plain) return { year: null, problem: null };
   // A printed book's year: four digits from the age of printing on.
-  if (!/^\d{4}$/.test(plain)) return { year: null, problem: `"${plain}" is not a year for "First printed" (such as 1912).` };
+  if (!/^\d{4}$/.test(plain)) return { year: null, problem: `"${plain}" is not a year for "First edition's year" (such as 1912).` };
   return { year: Number(plain), problem: null };
 }
 
@@ -293,7 +293,7 @@ export function recordsFromForm(form, existing, context) {
   if (form.contents !== null) {
     contents = [];
     const lines = parseContentsLines(form.contents);
-    const namesOn = line => (line.author ? line.author.split(/\s+and\s+/).map(name => name.trim()).filter(Boolean) : []);
+    const namesOn = line => typedNames(line.author);
     const sameAuthors = (work, line) => {
       const ids = namesOn(line).map(name => known.get(key(name)));
       return ids.length === work.authors.length && ids.every(id => work.authors.includes(id));
@@ -333,7 +333,7 @@ export function recordsFromForm(form, existing, context) {
         contents.push({ work: joined.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false });
         continue;
       }
-      const ids = authorIds(line.author ? line.author.split(/\s+and\s+/) : []);
+      const ids = authorIds(namesOn(line));
       const note = listed && line.date === listed.date ? `from the ${knownSet.set} list` : '';
       const fresh = { work: null, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false };
       if (match) {

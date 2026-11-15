@@ -2,7 +2,7 @@
 // forms named in PLAN.md, and the historical century convention.
 
 import { parseDating, centurySpan, formatYear, formatYearRange, formatDating, sortYearOf, workingDating } from '../dating.js';
-import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle } from '../date-search.js';
+import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, searchableTitle, webSearchUrl, searchTitle, contentsQuestion, firstEditionQuestion } from '../date-search.js';
 import { equal, same, ok } from './check.js';
 
 function reads(text, earliest, latest, certainty) {
@@ -136,6 +136,25 @@ export const tests = [
     fn() {
       equal(workDateQuestion('Didache', []), 'When was the Didache written and first published?');
       equal(workDateQuestion('The Epic of Gilgamesh', []), 'When was The Epic of Gilgamesh written and first published?');
+    },
+  },
+  {
+    name: 'a contents search names the series and translator, so Plutarch\'s Loeb volume is not taken for Dryden\'s',
+    fn() {
+      const plutarch = { title: 'Plutarch\'s Lives', set: 'Plutarch\'s Lives', volume: '2', series: 'Loeb Classical Library', publisher: 'Harvard University Press; W. Heinemann', year: '1985' };
+      equal(contentsQuestion(plutarch, { translators: ['Bernadotte Perrin'] }), 'Table of contents of Plutarch\'s Lives, volume 2 (Loeb Classical Library, translated by Bernadotte Perrin)');
+      equal(contentsQuestion({ title: 'The Marx-Engels Reader', publisher: 'Norton', year: '1978' }, { editors: ['Robert C. Tucker'] }),
+        'Table of contents of The Marx-Engels Reader (Norton, 1978, edited by Robert C. Tucker)', 'without a series: the publisher and year');
+      equal(contentsQuestion({ title: 'Hellenistic Philosophy' }), 'Table of contents of Hellenistic Philosophy');
+    },
+  },
+  {
+    name: 'the first edition\'s year is asked about by title and editor, or title and author',
+    fn() {
+      equal(firstEditionQuestion({ title: 'The Marx-Engels Reader', authors: ['Karl Marx', 'Friedrich Engels'] }, { editors: ['Robert C. Tucker'] }),
+        'What year was the first edition of The Marx-Engels Reader, edited by Robert C. Tucker, published?');
+      equal(firstEditionQuestion({ title: 'Fear and Trembling', authors: ['Søren Kierkegaard'] }, { translators: ['Alastair Hannay'] }),
+        'What year was the first edition of Fear and Trembling by Søren Kierkegaard, translated by Alastair Hannay, published?');
     },
   },
   {

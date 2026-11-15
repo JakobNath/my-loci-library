@@ -80,7 +80,7 @@ export const tests = [
       const groups = checkRows(book, { steps: ['book', 'edition', 'date', 'language', 'cover', 'spine', 'binding', 'where', 'copy'] });
       same(groups.map(group => group.title), ['The book', 'The work', 'This copy']);
       const state = label => groups.flatMap(group => group.rows).find(item => item.label === label);
-      same(['Place', 'First printed', 'Series', 'Cover', 'Height'].map(label => state(label).state), ['unknown', 'missing', 'none', 'missing', 'missing']);
+      same(['Place', 'First edition\'s year', 'Series', 'Cover', 'Height'].map(label => state(label).state), ['unknown', 'missing', 'none', 'missing', 'missing']);
       equal(state('Publisher').step, 'edition', 'a tap goes back to the copyright page step');
       equal(state('Translators').state, 'none', 'not a translation');
     },
@@ -94,6 +94,24 @@ export const tests = [
       equal(works[0].value, 'Karl Marx · German · 1843 · Zur Judenfrage');
       equal(groups[0].rows.find(item => item.label === 'Authors').value, 'Karl Marx; Friedrich Engels');
       equal(groups[0].rows.find(item => item.label === 'Translators').state, 'missing', 'a translation with no translator named');
+    },
+  },
+  {
+    name: 'a card made with the book\'s several authors to choose from is answered once an author is chosen, or "Anonymous"',
+    fn() {
+      const card = { title: 'The German Ideology', author: '', authorAsked: true, language: 'German', date: '1846', dateUnknown: false };
+      ok(!cardAnswered(card), 'no author chosen yet');
+      ok(cardAnswered({ ...card, author: 'Karl Marx and Friedrich Engels' }));
+      ok(cardAnswered({ ...card, authorAsked: false }), '"Anonymous" leaves the author empty');
+    },
+  },
+  {
+    name: 'a card\'s authors typed with ";" are two names, each listed once on the check',
+    fn() {
+      const book = reader();
+      book.cards[1].author = 'Karl Marx; Friedrich Engels';
+      const groups = checkRows(book, { single: false, steps: ['works'] });
+      equal(groups[0].rows.find(item => item.label === 'Authors').value, 'Karl Marx; Friedrich Engels');
     },
   },
 ];

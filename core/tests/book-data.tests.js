@@ -330,6 +330,16 @@ export const tests = [
     },
   },
   {
+    name: 'Wikidata names each work\'s authors, so a reader\'s card can offer Engels for a work of his',
+    fn() {
+      const row = (author, title) => ({ work: { value: 'http://www.wikidata.org/entity/Q1145929' }, title: { value: title },
+        authorName: { value: author }, time: { value: '1845-01-01T00:00:00Z' }, precision: { value: '9' } });
+      const answer = { results: { bindings: [row('Friedrich Engels', 'The Condition of the Working Class in England')] } };
+      same(worksFromWikidata(answer, ['The Condition of the Working Class in England']).get('The Condition of the Working Class in England').authors, ['Friedrich Engels']);
+      ok(worksQuery(['The German Ideology'], ['Karl Marx', 'Friedrich Engels']).includes('?authorName ?time'), 'the query asks for the names');
+    },
+  },
+  {
     name: "Wikidata gives each original title's language, and marks a date after the author's death as posthumous",
     fn() {
       equal(worksFromWikidata(JSON.parse(wikidata.plato.answer), wikidata.plato.titles).get('Phaedo').originalLanguage, 'Greek');

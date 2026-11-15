@@ -10,20 +10,11 @@
 
 import { normalizeForSearch } from './search.js';
 import { latin, nameInLatin, samePerson, tidy } from './lookup.js';
+import { typedNames } from './contents.js';
 
 // A publisher's name without the words every publisher has: "Vandenhoeck & Ruprecht." is "vandenhoeck ruprecht".
 const COMPANY_WORDS = new Set(['and', 'verlag', 'verlage', 'press', 'publishing', 'publishers', 'house', 'inc', 'ltd', 'co', 'gmbh', 'books']);
 const companyKey = name => normalizeForSearch(name).split(' ').filter(word => word && !COMPANY_WORDS.has(word)).join(' ');
-
-/**
- * The names typed in a translator box: separated by ";", or by "and" or "&"
- * between two names ("Pevear and Volokhonsky"), as people write them.
- * @param {string} text
- * @returns {string[]}
- */
-export function translatorNames(text) {
-  return String(text || '').split(/;|\s+(?:and|&)\s+/i).map(name => tidy(name)).filter(Boolean);
-}
 
 // A name's words, for comparing a misspelt "Henery Bettenson" with "Henry Scowcroft Bettenson".
 const nameWords = name => normalizeForSearch(name).split(' ').filter(Boolean);
@@ -115,7 +106,7 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
  * @returns {string[]}
  */
 export function possibleEditors(authors, lines) {
-  const writers = lines.flatMap(line => String(line.author || '').split(/\s+and\s+/)).filter(Boolean);
+  const writers = lines.flatMap(line => typedNames(line.author));
   return authors.filter(name => !writers.some(writer => samePerson(writer, name)));
 }
 
@@ -130,7 +121,7 @@ export function possibleEditors(authors, lines) {
  */
 export function contributorsFromSteps(contributors, translatorText, editorText) {
   const others = contributors.filter(person => person.role !== 'translator' && person.role !== 'editor');
-  const named = (text, role) => translatorNames(text).map(name => ({ name, role }));
+  const named = (text, role) => typedNames(text).map(name => ({ name, role }));
   return [...named(editorText, 'editor'), ...named(translatorText, 'translator'), ...others];
 }
 
