@@ -35,6 +35,83 @@ export function isbnInText(text) {
   return /^[\d\sX-]+$/i.test(String(text ?? '').trim()) ? isbn13(text) : null;
 }
 
+/**
+ * The other ISBNs typed for an edition ("0 434 99012 4; 978…"): separated by
+ * ";" or ",", each as 13 digits, without repeats or the edition's own ISBN.
+ * @param {string} text
+ * @param {string|null} isbn the edition's own ISBN, 13 digits
+ * @returns {{ isbns: string[], problems: string[] }}
+ */
+export function otherIsbnsFromText(text, isbn) {
+  const isbns = [];
+  const problems = [];
+  for (const part of String(text ?? '').split(/[;,]/).map(item => item.trim()).filter(Boolean)) {
+    const read = isbn13(part);
+    if (!read) problems.push(`"${part}" is not an ISBN (10 or 13 digits).`);
+    else if (!hasValidCheckDigit(part)) problems.push(`"${part}" is not an ISBN: its last digit does not fit. Check it against the book.`);
+    else if (read !== isbn && !isbns.includes(read)) isbns.push(read);
+  }
+  return { isbns, problems };
+}
+
+/**
+ * Whether an ISBN's last digit fits the others, which catches most slips in
+ * typing or in a catalog ("0785615477" for "0758615477" on an Open Library record).
+ * @param {string} text 10 or 13 digits, with or without spaces and hyphens
+ */
+export function hasValidCheckDigit(text) {
+  const plain = String(text ?? '').toUpperCase().replace(/[^0-9X]/g, '');
+  let sum = 0;
+  if (/^\d{13}$/.test(plain)) {
+    for (let i = 0; i < 13; i++) sum += Number(plain[i]) * (i % 2 ? 3 : 1);
+    return sum % 10 === 0;
+  }
+  if (!/^\d{9}[\dX]$/.test(plain)) return false;
+  for (let i = 0; i < 10; i++) sum += (plain[i] === 'X' ? 10 : Number(plain[i])) * (10 - i);
+  return sum % 11 === 0;
+}
+
+/**
+ * The year an edition was first printed, as typed ("1912"; the copyright
+ * page's "First published 1912").
+ * @returns {{ year: number|null, problem: string|null }}
+ */
+export function firstPrintedFromText(text) {
+  const plain = String(text ?? '').trim();
+  if (!plain) return { year: null, problem: null };
+  // A printed book's year: four digits from the age of printing on.
+  if (!/^\d{4}$/.test(plain)) return { year: null, problem: `"${plain}" is not a year for "First printed" (such as 1912).` };
+  return { year: Number(plain), problem: null };
+}
+
+/**
+ * An edition's publishers and places as rows, one per publisher, for the
+ * "Title page and copyright page" step. Several publishers are kept in the
+ * one text field, in order, with "; " between them ("Harvard University
+ * Press; William Heinemann" with "Cambridge, MA; London").
+ * @param {string|null} publisher
+ * @param {string|null} place
+ * @returns {{ publisher: string, place: string }[]} at least one row
+ */
+export function publisherRows(publisher, place) {
+  const split = text => String(text ?? '').split(';').map(part => part.trim());
+  const publishers = split(publisher);
+  const places = split(place);
+  const count = Math.max(publishers.length, places.length);
+  return Array.from({ length: count }, (_, i) => ({ publisher: publishers[i] || '', place: places[i] || '' }));
+}
+
+/**
+ * The rows joined back into the edition's two fields, in the same order. A
+ * row without a place gives none, so "; London" is never written.
+ * @param {{ publisher: string, place: string }[]} rows
+ * @returns {{ publisher: string, place: string }}
+ */
+export function publishersFromRows(rows) {
+  const join = values => values.map(value => value.trim()).filter(Boolean).join('; ');
+  return { publisher: join(rows.map(row => row.publisher)), place: join(rows.map(row => row.place)) };
+}
+
 const key = text => normalizeForSearch(text);
 
 /**
@@ -156,7 +233,7 @@ export function wishFromForm(form, existing, { newId, now }) {
  */
 export function formFromWish(wish) {
   return {
-    edition: { title: wish.title, subtitle: wish.subtitle, contributors: wish.contributors, publisher: wish.publisher, isbn: wish.isbn, languages: [], medium: 'physical', images: wish.images },
+    edition: { title: wish.title, subtitle: wish.subtitle, contributors: wish.contributors, publisher: wish.publisher, isbn: wish.isbn, otherIsbns: [], languages: [], medium: 'physical', images: wish.images },
     authorsText: wish.authors.join('; '),
     notes: wish.notes,
   };
@@ -181,6 +258,19 @@ export function recordsFromForm(form, existing, context) {
   if (!form.title.trim()) problems.push('A title is needed.');
   const isbn = form.isbn.trim() ? isbn13(form.isbn) : null;
   if (form.isbn.trim() && !isbn) problems.push(`"${form.isbn}" is not an ISBN (10 or 13 digits).`);
+  // The first printing and the other ISBNs (format 6). A form without their boxes
+  // (undefined) leaves them as they are, so an edit elsewhere never clears them.
+  const printing = {};
+  if (form.firstPrinted !== undefined) {
+    const read = firstPrintedFromText(form.firstPrinted);
+    if (read.problem) problems.push(read.problem);
+    printing.firstPrinted = read.year;
+  }
+  if (form.otherIsbns !== undefined) {
+    const read = otherIsbnsFromText(form.otherIsbns, isbn);
+    problems.push(...read.problems);
+    printing.otherIsbns = read.isbns;
+  }
 
   // Authors: an existing record with the same name or name form, or a new one.
   const known = new Map();
@@ -320,6 +410,7 @@ export function recordsFromForm(form, existing, context) {
     editionStatement: form.editionStatement || null,
     series: form.series || null, seriesNumber: form.seriesNumber || null, set: form.set || null, volume: form.volume || null,
     isbn, languages: form.languages, pages: form.pages || null, medium: form.medium, logosId: form.logosId || null,
+    ...printing,
   };
   // The link to a set's own record: given when adding a volume of a set with
   // one, kept when editing, and dropped when the set's title is changed to

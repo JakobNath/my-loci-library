@@ -37,7 +37,7 @@ export function normalizeForSearch(text) {
  */
 export function searchTextOf(edition, worksById, authorsById, copies = [], set = null) {
   // Publisher, year and volume too: "plato hackett" and "gibbon 3" are how a person narrows a search.
-  const parts = [edition.title, edition.subtitle, edition.series, edition.seriesNumber, edition.set, edition.volume, edition.isbn, edition.publisher, edition.year];
+  const parts = [edition.title, edition.subtitle, edition.series, edition.seriesNumber, edition.set, edition.volume, edition.isbn, ...(edition.otherIsbns || []), edition.publisher, edition.year];
   if (set) parts.push(set.title, set.shortTitle, set.shortTitle && edition.volume && `${set.shortTitle} ${edition.volume}`);
   for (const contributor of edition.contributors) parts.push(contributor.name);
   for (const entry of edition.contents) {

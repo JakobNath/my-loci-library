@@ -6,6 +6,7 @@
 // when a work was written.
 
 import { normalizeForSearch } from './search.js';
+import { isbn13, hasValidCheckDigit } from './entry.js';
 
 /**
  * The shape every lookup is turned into. Empty values are '', null or [].
@@ -13,8 +14,10 @@ import { normalizeForSearch } from './search.js';
  * works as a record gives them ({ title, author }). identifiers are the
  * catalogue numbers of DATA_FORMAT.md (lccn, oclc, lcc, ddc). set and volume
  * are given when a library record describes the book as one volume of a set.
+ * otherIsbns are the record's other ISBNs (another binding's or country's),
+ * only ever offered; firstPrinted is never filled by a lookup and stays ''.
  * @typedef {{ title: string, subtitle: string, authors: string[], contributors: { name: string, role: string }[],
- *   publisher: string, place: string, year: string, pages: string, languages: string[], isbn: string,
+ *   publisher: string, place: string, year: string, firstPrinted: string, pages: string, languages: string[], isbn: string, otherIsbns: string[],
  *   editionStatement: string, series: string, seriesNumber: string, height: number|null, thickness: number|null,
  *   binding: string, originalTitle: string, originalLanguage: string, contents: { title: string, author: string }[],
  *   subjects: string[], identifiers: { lccn: string, oclc: string, lcc: string, ddc: string, openLibrary: string, hathiTrust: string },
@@ -22,7 +25,7 @@ import { normalizeForSearch } from './search.js';
  */
 export function emptyFound(source) {
   return {
-    title: '', subtitle: '', authors: [], contributors: [], publisher: '', place: '', year: '', pages: '', languages: [], isbn: '',
+    title: '', subtitle: '', authors: [], contributors: [], publisher: '', place: '', year: '', firstPrinted: '', pages: '', languages: [], isbn: '', otherIsbns: [],
     editionStatement: '', series: '', seriesNumber: '', height: null, thickness: null, binding: '', originalTitle: '', originalLanguage: '',
     contents: [], subjects: [], identifiers: { lccn: '', oclc: '', lcc: '', ddc: '', openLibrary: '', hathiTrust: '' }, cover: null, set: '', volume: '', source,
   };
@@ -145,10 +148,34 @@ export function fromGoogleBooks(answer, isbn) {
   found.pages = volume.pageCount ? String(volume.pageCount) : '';
   found.languages = volume.language ? [LANGUAGES[volume.language] || volume.language] : [];
   found.isbn = isbn;
+  found.otherIsbns = otherIsbnsListed(googleIsbns(volume), isbn);
   const picture = volume.imageLinks && (volume.imageLinks.thumbnail || volume.imageLinks.smallThumbnail);
   if (picture) found.cover = { url: picture.replace(/^http:/, 'https:').replace('&edge=curl', ''), source: 'googlebooks', waiting: true };
   return found;
 }
+
+/**
+ * The ISBNs a record lists other than the one asked for, as 13 digits, each
+ * once. Open Library and Google Books often list another binding's or
+ * another country's ISBN on the same record; these are offered while adding,
+ * never filled in without a tap, since a wrong one would make a later scan
+ * of that other book say "You already have this edition".
+ * @param {string[]} codes the record's ISBNs, as written (10 or 13 digits)
+ * @param {string} isbn the ISBN asked for, 13 digits
+ * @returns {string[]}
+ */
+export function otherIsbnsListed(codes, isbn) {
+  const others = [];
+  for (const code of codes) {
+    const read = isbn13(code);
+    if (read && hasValidCheckDigit(code) && read !== isbn && !others.includes(read)) others.push(read);
+  }
+  return others;
+}
+
+/** The ISBNs a Google Books volume lists (it also lists library numbers, which are not ISBNs). */
+export const googleIsbns = volumeInfo => ((volumeInfo && volumeInfo.industryIdentifiers) || [])
+  .filter(code => /^ISBN/.test(code.type)).map(code => code.identifier);
 
 /** Whether a Google Books volume lists this ISBN (as ISBN-13 or ISBN-10). */
 export function listsIsbn(volumeInfo, isbn) {

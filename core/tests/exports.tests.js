@@ -61,6 +61,10 @@ export const tests = [
       ok(confessionsLine.includes('c. 397–400'), 'the original date as written');
       ok(confessionsLine.includes('"Gift, with ""inscription"", 2019"'), 'a note with a comma and quotes stays one cell');
       ok(lines.some(line => line.startsWith('Euthyphro. Apology. Crito. Phaedo. Phaedrus.,')), 'an anthology');
+      ok(lines[0].includes(',Year,First printed,Edition,') && lines[0].includes(',ISBN,Other ISBNs,LCCN,'), 'the first printing and other ISBNs have columns');
+      const loebLine = catalogCsv(buildLibrary([...records.filter(record => record.id !== chadwick.id), { ...chadwick, firstPrinted: 1912, otherIsbns: ['9780434990122', '9780434990139'] }]).entries)
+        .split('\r\n').find(line => line.includes('Gift'));
+      ok(loebLine.includes(',1912,') && loebLine.includes(',9780434990122; 9780434990139,'), 'and are filled');
       ok(valueCsv(library.entries).includes('Total,,,,,,88.5'), 'the insurance CSV ends with the total');
       ok(!valueCsv(library.entries).includes('Logos'), 'Logos books are left out of the insurance list');
     },

@@ -88,10 +88,10 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 
 - Title and subtitle as printed (can differ from the work's).
 - Contributors with roles: translator, editor, introduction, and others. Authors come from the work or works the edition contains.
-- Publisher, place, edition publication year, and pages as printed (filled from lookups when available). Pages are kept exactly as printed ("xxviii, 311", or "89–132" for a journal issue), and the app works out the real count from them (339, 44).
+- Publisher, place, edition publication year, and pages as printed (filled from lookups when available). Several publishers (a Loeb's Harvard and Heinemann) are kept in order in the one field. From format version 6 (14 November 2026), also the year the edition was first printed, as its copyright page says ("First published 1912"), typed while adding and never taken from a lookup. Pages are kept exactly as printed ("xxviii, 311", or "89–132" for a journal issue), and the app works out the real count from them (339, 44).
 - Size: height and thickness in millimeters, both optional, each marked with where it came from: *measured* (a person), *catalog* (a library record) or *photo* (thickness worked out from a spine photo and the height). See "Book sizes" below.
 - Series and series number (Loeb Classical Library 36), and set title plus volume label (*Church Dogmatics* I/1). Both optional. From format version 4 (12 November 2026), a set may have its own record, which its volumes point to: its short form for citing (LW or AE for Luther's Works), general editors, how many volumes it has, what the whole set cost and is worth (with a value history), and notes. A set bought whole is often worth more than its volumes one by one, and a set gathered over years is valued volume by volume, so the set record has a switch, "Count one value for the whole set" (see "Value view").
-- ISBN, and a languages list ("Greek, English" marks a diglot; three languages, a triglot).
+- ISBN, any other ISBNs printed in the book (format version 6: a British ISBN beside the American; a scan of either finds the book), and a languages list ("Greek, English" marks a diglot; three languages, a triglot).
 - Contents: one work, or several for an anthology (see below).
 - Format: physical or Logos digital. A digital edition carries its Logos resource ID.
 - A "cite" toggle that sends a Logos edition to Zotero. Physical editions are always sent.

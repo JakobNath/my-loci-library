@@ -9,12 +9,14 @@ import { normalizeForSearch } from './search.js';
 const titleKey = title => normalizeForSearch(title).replace(/^(the|a|an) /, '');
 
 /**
- * Editions already in the catalog with this ISBN.
+ * Editions already in the catalog with this ISBN, as their main ISBN or as
+ * one of the others printed in them (a British ISBN beside the American).
  * @param {string} isbn 13 digits
  * @param {object[]} entries library entries (core/library.js)
  */
 export function editionsWithIsbn(isbn, entries) {
-  return isbn ? entries.filter(entry => entry.edition.isbn === isbn) : [];
+  if (!isbn) return [];
+  return entries.filter(entry => entry.edition.isbn === isbn || (entry.edition.otherIsbns || []).includes(isbn));
 }
 
 /**

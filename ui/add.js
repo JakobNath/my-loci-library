@@ -1,6 +1,7 @@
 // Batch add (PLAN.md, "Batch add"), one question per screen. Scan a barcode,
 // type an ISBN (a USB scanner types it too) or type a title; then, step by
-// step: is this the book, is it a collection (when a record lists contents),
+// step: is this the book, its title page and copyright page (publisher, year,
+// first printing, ISBNs, series, set, pages), is it a collection (when a record lists contents),
 // is it the same work as one we have, when was it written, its original
 // language, category and tags, the translation, the cover, the spine, the
 // binding, where it goes, and this copy. Adding asks what only a person
@@ -32,6 +33,7 @@ import { toggleHelp } from './field-help.js';
 import { workDateQuestion, searchTitle, webSearchUrl } from '../core/date-search.js';
 import { dateRuleHtml, searchLinkHtml } from './date-help.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
+import { editionStepHtml, readEditionStep, editionStepProblems } from './add-edition.js';
 import { setFormHtml, readSetForm, setBannerHtml, finishSetHtml, volumeStepHtml, pasteStepHtml } from './add-set.js';
 import { findKnownVolume, contentsLinesOf, volumeFromText } from '../core/known-sets.js';
 import { loadKnownSets } from './known-sets.js';
@@ -43,7 +45,7 @@ const MIN_COVER_HEIGHT = 400; // a smaller online cover counts as not found (PLA
 const NO_WORK = { workTitle: '', firstPublished: null, author: null };
 
 const STEP_NAMES = {
-  book: 'The book', volume: 'Volume', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
+  book: 'The book', volume: 'Volume', edition: 'Title page and copyright page', contents: 'Contents', work: 'Same work?', date: 'Original date', language: 'Original language', subjects: 'Category and tags',
   translation: 'Translation and editors', translators: 'Each translator', cover: 'Cover', spine: 'Spine', binding: 'Binding', where: 'Place', copy: 'This copy',
 };
 
@@ -265,6 +267,8 @@ export function render(container, state, actions) {
       severalChosen: false, // "Yes, and it holds several works", when no source listed them
       wikidata: new Map(), wikidataAsked: '', wikidataAnswered: '', wikidataProblem: { key: '', message: '' }, // what Wikidata says about the works, by title
       fixing: !found.source, // not found online: the details are asked for at once
+      publisherRows: null, // the publisher and place boxes, once the copyright page step has been seen
+      otherIsbnsText: '', editionProblems: [], // other ISBNs as typed; what to correct before leaving that step
     };
     // Leaving the screen now would lose the answers and photos, so main.js asks first.
     actions.setDraft(`"${full.title || 'The book being added'}" is not saved yet.`);
@@ -380,6 +384,8 @@ export function render(container, state, actions) {
       askVolumeFirst ? 'volume' : null,
       'book',
       setInfo ? 'volume' : null,
+      // Every book: what its title page and copyright page print, checked while it is in hand.
+      'edition',
       book.contentsOffered || book.severalChosen ? 'contents' : null,
       single && book.works.length ? 'work' : null,
       single && !(linked && linked.datings.length) && prompts.has('datings') ? 'date' : null,
@@ -431,7 +437,7 @@ export function render(container, state, actions) {
 
   function drawStep() {
     const draw = {
-      book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), contents: contentsStep, work: workStep, date: dateStep,
+      book: bookStep, volume: () => (book.knownSet ? knownVolumeStep() : volumeStepHtml(book, setInfo)), edition: () => editionStepHtml(book), contents: contentsStep, work: workStep, date: dateStep,
       language: () => languageStepHtml(book, usedLanguages()), subjects: () => subjectsStepHtml(book, subjectChoices(), categoriesFromSubjects(book.found.subjects || [])),
       translation: () => translationStepHtml({ ...book, bookLanguages: shownBookLanguages() }, isTranslated(), bookLanguageChoices(originalLanguage())), translators: () => workTranslatorsStepHtml(book), cover: coverStep, spine: spineStep, binding: bindingStep, where: whereStep, copy: () => copyStepHtml(book),
     }[book.step];
@@ -466,16 +472,17 @@ export function render(container, state, actions) {
           ${fieldHtml('Authors (separate with ;)', 'authors', found.authors.join('; '), { missing: !found.authors.length })}
           ${fieldHtml('Editors (separate with ;)', 'editors', book.editors)}
           ${fieldHtml('Translators (separate with ;)', 'translator', book.translator)}
-          <div class="field-row">${fieldHtml('Publisher', 'publisher', found.publisher, { missing: !found.publisher })}${fieldHtml('Place', 'place', found.place)}</div>
-          <div class="field-row">${fieldHtml('Year of this printing', 'year', found.year, { missing: !found.year, type: 'number' })}${fieldHtml('Pages, as printed', 'pages', found.pages)}</div>
-          <div class="field-row">${fieldHtml('Series', 'series', found.series)}${fieldHtml('Number in series', 'seriesNumber', found.seriesNumber)}</div>
-          <div class="field-row">${fieldHtml('Set', 'set', found.set)}${fieldHtml('Volume', 'volume', found.volume)}</div>
           ${severalHtml}
+          <p class="step-hint">Publisher, year, ISBNs, series, set and pages come next, with the copyright page.</p>
           <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
     }
-    // A year set aside as too early is always pointed out, since the record did give one.
-    const missing = [prompts.has('authors') && !found.authors.length && 'author', prompts.has('publisher') && !found.publisher && 'publisher', (prompts.has('year') || found.yearSetAside) && !found.year && 'year'].filter(Boolean);
-    const earlyHtml = found.yearSetAside && !found.year ? escapeHtml(` The record's year, ${found.yearSetAside}, is older than ISBNs, so it is an earlier printing's: type the year printed in this copy.`) : '';
+    // A year set aside as too early is always pointed out, since the record did give one. The author is
+    // added under "Fix details"; the publisher and year on the next step, the copyright page.
+    const noAuthor = prompts.has('authors') && !found.authors.length;
+    const later = [prompts.has('publisher') && !found.publisher && 'publisher', (prompts.has('year') || found.yearSetAside) && !found.year && 'year'].filter(Boolean);
+    const missing = [noAuthor && 'author', ...later].filter(Boolean);
+    const missingText = [noAuthor ? 'Tap "Fix details" to add the author.' : '', later.length ? `The next step asks for the ${later.join(' and ')}.` : ''].filter(Boolean).join(' ');
+    const earlyHtml = found.yearSetAside && !found.year ? escapeHtml(` The record's year, ${found.yearSetAside}, is older than ISBNs, so it is an earlier printing's.`) : '';
     // Loeb's own style of title, offered for a tap, since some Loebs are titled by one work.
     const loeb = loebStyleTitle(found);
     const loebHtml = loeb ? `<p class="step-hint">${escapeHtml(`Loeb's own style: ${loeb}`)} <button type="button" class="chip" data-action="loeb-title">Use this title</button></p>` : '';
@@ -487,8 +494,8 @@ export function render(container, state, actions) {
     return `<h2 class="step-title">Is this the book?</h2><p class="step-hint">${foundOnHtml}</p>
       <div class="found">${coverHtml}<div><p class="found-title">${escapeHtml(found.title)}</p><p class="found-sub">${escapeHtml(found.subtitle)}</p>
         <p class="found-meta">${detailsHtml}</p><p class="found-meta">${peopleHtml}</p></div></div>
-      ${loebHtml}${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. Tap "Fix details" to add.`)}${earlyHtml}</p>` : ''}
-      <div class="choices">${choiceHtml('yes', 'Yes, this is it')}${book.contentsOffered ? '' : choiceHtml('several', 'Yes, and it holds several works', 'Collected works or an anthology: list them next')}${choiceHtml('fix', 'Fix details', missing.length ? `Add the ${missing.join(', ')}` : 'Correct the title, author or year')}
+      ${loebHtml}${missing.length ? `<p class="step-hint is-missing">${escapeHtml(`Missing online: ${missing.join(', ')}. ${missingText}`)}${earlyHtml}</p>` : ''}
+      <div class="choices">${choiceHtml('yes', 'Yes, this is it')}${book.contentsOffered ? '' : choiceHtml('several', 'Yes, and it holds several works', 'Collected works or an anthology: list them next')}${choiceHtml('fix', 'Fix details', noAuthor ? 'Add the author' : 'Correct the title, authors, editors or translators')}
         ${choiceHtml('back', 'Wrong book', 'Back to scanning')}</div>`;
   }
 
@@ -737,8 +744,7 @@ export function render(container, state, actions) {
     const value = name => (stepArea.querySelector(`[name="${name}"]`) || {}).value;
     const found = book.found;
     if (book.step === 'book' && book.fixing) {
-      for (const name of ['title', 'subtitle', 'publisher', 'place', 'year', 'pages', 'series', 'seriesNumber', 'set']) found[name] = (value(name) || '').trim();
-      found.volume = (value('volume') || '').trim();
+      for (const name of ['title', 'subtitle']) found[name] = (value(name) || '').trim();
       const several = stepArea.querySelector('[name="several"]');
       if (several) book.severalChosen = several.checked;
       found.authors = (value('authors') || '').split(';').map(name => name.trim()).filter(Boolean);
@@ -746,9 +752,16 @@ export function render(container, state, actions) {
       book.translator = (value('translator') || '').trim();
       if (translatorNames(book.translator).length) book.hasTranslator = true;
       book.works = suggestWorks(found.title, found.authors, state.library);
+    }
+    if (book.step === 'edition') {
+      readEditionStep(book, stepArea);
       // A set and volume a known list holds ("Luther's Works", 14) take their works from the list, as when chosen.
       const known = found.set && found.volume ? findKnownVolume(knownSets, { set: found.set, volume: found.volume }) : null;
-      if (known && known.volume && known.volume !== book.knownVolume) { book.severalChosen = false; useKnownVolume(known.set, known.volume); }
+      if (known && known.volume && known.volume !== book.knownVolume) {
+        book.severalChosen = false;
+        useKnownVolume(known.set, known.volume);
+        book.publisherRows = null; // drawn again from the list's publisher and place, if they were empty
+      }
     }
     if (book.step === 'volume' && (value('volume') || '').trim()) found.volume = value('volume').trim();
     if (book.step === 'contents' && value('contents') !== undefined) book.contentsText = value('contents');
@@ -769,6 +782,11 @@ export function render(container, state, actions) {
     if (action === 'several') { book.fixing = false; book.severalChosen = true; return next(); }
     if (action === 'done') {
       if (book.step === 'book' && !book.found.title) return drawStep();
+      // An ISBN or year that cannot be read keeps the copyright page step open, its problem shown.
+      if (book.step === 'edition') {
+        book.editionProblems = editionStepProblems(book);
+        if (book.editionProblems.length) return drawStep();
+      }
       if (book.step === 'date' && book.dating && !parseDating(book.dating).ok) return drawStep();
       // An empty date is a choice, not an oversight: ask for "Don't know yet".
       if (book.step === 'date' && !book.dating) { book.dateNudge = true; return drawStep(); }
@@ -813,6 +831,9 @@ export function render(container, state, actions) {
       return next();
     }
     if (action === 'unknown') { book.dating = ''; book.dateUnknown = true; return next(); }
+    if (action === 'add-publisher') { book.publisherRows = [...book.publisherRows, { publisher: '', place: '' }]; return drawStep(); }
+    if (action === 'same-printing') { book.found.firstPrinted = book.found.year; return drawStep(); }
+    if (action === 'add-isbn') { book.otherIsbnsText = [book.otherIsbnsText, value].filter(Boolean).join('; '); return drawStep(); }
     if (action === 'original-title') { book.originalTitle = book.work.workTitle; return drawStep(); }
     if (action === 'loeb-title') { Object.assign(book.found, { title: loebStyleTitle(book.found), subtitle: '' }); book.loebTitle = true; return drawStep(); }
     if (action === 'book-languages') { book.bookLanguages = value; return drawStep(); }
@@ -892,9 +913,9 @@ export function render(container, state, actions) {
     });
     const form = {
       title: found.title, subtitle: found.subtitle, authors: found.authors, contributors: contributorsFromSteps(found.contributors, book.translator, book.editors),
-      publisher: found.publisher, place: found.place, year: found.year, editionStatement: found.editionStatement,
+      publisher: found.publisher, place: found.place, year: found.year, firstPrinted: found.firstPrinted || '', editionStatement: found.editionStatement,
       series: found.series || '', seriesNumber: found.seriesNumber || '', set: found.set || '', volume: found.volume || '',
-      isbn: found.isbn, pages: found.pages, languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
+      isbn: found.isbn, otherIsbns: book.otherIsbnsText, pages: found.pages, languages, medium: 'physical', logosId: '', contents: book.contents, workId: book.contents === null ? book.workId : null,
       knownWorks: book.knownVolume && book.contents !== null ? { set: book.knownSet.set, works: book.knownVolume.works } : null,
       sameWorks: book.contents !== null ? book.sameWorks || null : null,
       workLanguages: book.contents !== null ? book.workLanguages || null : null,

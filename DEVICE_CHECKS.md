@@ -179,3 +179,14 @@ Things that can only be checked on a real phone or a particular browser. Work th
 - [ ] Phone, same book: tap "Use this title", go on, and correct "Alecestic" to "Alcestis" in the contents. The step counter should then show the title with "Alcestis". If Wikidata answers with no dates, a line says so with a link for each work; each link opens a web search in a new tab.
 - [ ] Phone, same book: the language step has clear space between the chips, "Not all the same" and "Another language". Category offers "Drama" "From the record". "Translation and editors" starts "This book is in" at "Greek, English" (or "Ancient Greek, English"), with three chips; tapping one fills the box and keeps the translator typed.
 - [ ] Phone, after saving: the book page shows the series Loeb Classical Library 12, and "Contents" with no dot when no work has a date.
+
+## Title page and copyright page (data format 6, 1.21.0, 14 November 2026)
+
+These could not be tried in the browser preview while building (it would not open), so they are the first look at the new step on any screen.
+
+- [ ] Phone: move Euripides IV to the trash, then scan its barcode. After "Is this the book?" comes "Title page and copyright page": two publisher rows (Harvard University Press, Cambridge, MA; William Heinemann, London) if the record has both, else one row with "Add another publisher". The year box is outlined, with the note that 1920 is an earlier printing's. Type 1980, then 1912 in "First printed" (or tap "First printed: same as this printing" on a first printing).
+- [ ] Phone, same step: type the British ISBN (0 434 99012 4) in "Other ISBNs printed". Typing "0 434 99012 5" instead should keep the step open with "its last digit does not fit". If the record lists another ISBN, "The record also lists …" shows with "Add", and tapping it puts the ISBN in the box.
+- [ ] Phone, same step at phone width: the publisher and place boxes sit side by side and readable, and the "i" beside "First printed" and "Other ISBNs printed" opens a short explanation.
+- [ ] Phone, after saving: the book page shows "First printed 1912" and "Other ISBNs 9780434990122". Scan the British ISBN barcode (or type 0434990124 in the Add box): "You already have this edition" should come up. Searching the Library for 9780434990122 finds the book.
+- [ ] Phone: "Fix details" on "Is this the book?" now asks only the title, subtitle, authors, editors, translators and the "several works" tick; the publisher, year, series, set, volume and pages are on the next step. A book not found online ("None of these") goes the same way.
+- [ ] Phone: Edit book shows "First printed" beside "Year" and "Other ISBNs (separate with ;)" beside "ISBN"; change them and save, and the book page follows. Settings shows data format 6.
