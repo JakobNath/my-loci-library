@@ -8,10 +8,11 @@
 //   found: the book's facts as looked up and corrected (title, subtitle,
 //     authors, publisher, place, year, firstPrinted, editionStatement, isbn,
 //     series, seriesNumber, set, volume, pages, height)
-//   otherIsbnsText, editors, translator: as typed
-//   cards: a collection's works, { title, author, authorAsked, language, originalTitle, date, dateUnknown, unknown }
+//   otherIsbnsText, editors, translator: as typed; variousTranslators: "Various translators" chosen
+//   cards: a collection's works, { title, author, authorAsked, language, originalTitle, date, dateUnknown, unknown, revised, version }
 //     (unknown: "Don't know the rest" was tapped while the card was unanswered)
-//   language, originalTitle, dating, dateUnknown: a single work's answers
+//   language, originalTitle, dating, dateUnknown, revised, version: a single work's answers
+//     (revised: the final edition's date, when the work was revised later; version: which text the book prints)
 //   category, tags, binding, material, extras, location, copy, photos, cover, heightCm
 //   unknown: the fields answered "Don't know" (a Set of the names used below)
 //
@@ -54,7 +55,7 @@ function mustFields(book, step, { translated = false, bookLanguages = '', single
   if (step === 'date') return [['dating', 'Original date', filled(book.dating) || book.dateUnknown]];
   if (step === 'language') return [['language', 'Original language', filled(book.language)]];
   if (step === 'translation' && translated) {
-    return [['translator', 'Translator', filled(book.translator)], ['bookLanguages', 'This book is in', filled(bookLanguages)]];
+    return [['translator', 'Translator', filled(book.translator) || Boolean(book.variousTranslators)], ['bookLanguages', 'This book is in', filled(bookLanguages)]];
   }
   if (step === 'binding') return [['binding', 'Binding', filled(book.binding) || filled(book.material) || filled(book.extras)]];
   if (step === 'works') return (book.cards || []).map((card, i) => [`work:${i}`, card.title, cardAnswered(card) || Boolean(card.unknown)]);
@@ -76,6 +77,8 @@ export function mustMissing(book, step, about = {}) {
 }
 
 const joined = (...parts) => parts.filter(filled).join(', ');
+// A date with its final revised edition after it, as the book page shows it: "1812–15; rev. 1857".
+const withRevision = (date, revised) => (filled(date) && filled(revised) ? `${String(date).trim()}; rev. ${String(revised).trim()}` : date);
 
 /**
  * Every field of the book for "Check before saving", in three groups. Each
@@ -106,7 +109,7 @@ export function checkRows(book, about = {}) {
       // A collection's authors are its works' ("Karl Marx and Friedrich Engels" or "Karl Marx; Friedrich Engels" on a card is two).
       : row('Authors', [...new Set((book.cards || []).flatMap(card => typedNames(card.author)).filter(filled))], 'none', '', stepOf('works')),
     row('Editors', book.editors, 'none', '', stepOf('translation', 'book')),
-    row('Translators', book.translator, translated ? 'wanted' : 'none', 'translator', stepOf('translation', 'book')),
+    row('Translators', book.variousTranslators ? 'Various translators' : book.translator, translated ? 'wanted' : 'none', 'translator', stepOf('translation', 'book')),
     row('Publisher', found.publisher, 'wanted', 'publisher', stepOf('edition')),
     row('Place', found.place, 'wanted', 'place', stepOf('edition')),
     row('Year of this edition or printing', found.year, 'wanted', 'year', stepOf('edition')),
@@ -128,12 +131,13 @@ export function checkRows(book, about = {}) {
     row('Original language', book.language, 'wanted', 'language', stepOf('language')),
     row('Original title', book.originalTitle, 'none', '', stepOf('language')),
     linkedDating ? row('Original date', `${linkedDating} (the work you already have)`, 'wanted', '', '')
-      : row('Original date', book.dateUnknown && !filled(book.dating) ? '' : book.dating, 'wanted', 'dating', stepOf('date')),
+      : row('Original date', book.dateUnknown && !filled(book.dating) ? '' : withRevision(book.dating, book.revised), 'wanted', 'dating', stepOf('date')),
+    ...(filled(book.revised) ? [row('Text in this book', book.version, 'none', '', stepOf('date'))] : []),
     ...subjects,
   ] : [
     ...(book.cards || []).map(card => ({
       label: card.title,
-      value: [card.author || 'no author', card.language, filled(card.date) ? card.date : card.dateUnknown ? "date: don't know" : '', card.originalTitle].filter(filled).join(' · '),
+      value: [card.author || 'no author', card.language, filled(card.date) ? withRevision(card.date, card.revised) : card.dateUnknown ? "date: don't know" : '', card.originalTitle, filled(card.revised) ? card.version : ''].filter(filled).join(' · '),
       state: cardAnswered(card) ? 'filled' : card.unknown ? 'unknown' : 'missing', step: stepOf('works'),
     })),
     ...subjects,

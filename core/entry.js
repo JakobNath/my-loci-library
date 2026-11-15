@@ -3,7 +3,7 @@
 // only the fields that changed are stamped, so merging stays precise.
 
 import { newRecord, withField } from './records.js';
-import { parseDating } from './dating.js';
+import { parseDating, isRevised, opinionsOf, revisedDating, workingDating, revisionProblem, NEEDS_FIRST_DATE } from './dating.js';
 import { parseContentsLines, typedNames } from './contents.js';
 import { normalizeForSearch } from './search.js';
 import { trashRecord } from './trash.js';
@@ -113,6 +113,7 @@ export function publishersFromRows(rows) {
 }
 
 const key = text => normalizeForSearch(text);
+const textOrNull = text => String(text ?? '').trim() || null;
 
 /**
  * Datings from the form's rows, read with the date parser.
@@ -125,12 +126,37 @@ export function datingsFromRows(rows) {
     if (!row.text.trim()) continue;
     const read = parseDating(row.text);
     if (!read.ok) { problems.push(read.problem); continue; }
-    datings.push({ ...read.dating, kind: row.kind || null, note: row.note || '', working: !!row.working });
+    // A final revised edition (kind "revised", format 7) is never the working dating.
+    datings.push({ ...read.dating, kind: row.kind || null, note: row.note || '', working: row.kind === 'revised' ? false : !!row.working });
   }
-  if (datings.length && datings.filter(dating => dating.working).length !== 1) {
-    datings.forEach((dating, i) => { dating.working = i === 0; });
+  const opinions = datings.filter(dating => !isRevised(dating));
+  if (opinions.length && opinions.filter(dating => dating.working).length !== 1) {
+    opinions.forEach((dating, i) => { dating.working = i === 0; });
   }
+  if (datings.length && !opinions.length) problems.push(NEEDS_FIRST_DATE);
   return { datings, problems };
+}
+
+/**
+ * A work's datings with its final revised edition as typed in the "Revised
+ * later?" box: added, changed, or (an empty box) taken away. The other
+ * datings are kept. Undefined (a form with no such box) keeps the revision as it is.
+ * @param {object[]} datings the work's other datings, as they will be saved
+ * @param {string|undefined} text the final edition's date as typed
+ * @param {object|null} old the revision the work had, kept with its note when the text is unchanged
+ * @returns {{ datings: object[], problems: string[] }}
+ */
+export function withRevision(datings, text, old) {
+  const others = datings.filter(dating => !isRevised(dating));
+  // Without a first date a revision means nothing, so clearing the date takes it too.
+  if (text === undefined) return { datings: old && others.length ? [...others, old] : others, problems: [] };
+  const typed = String(text).trim();
+  if (!typed) return { datings: others, problems: [] };
+  if (!others.length) return { datings: others, problems: [NEEDS_FIRST_DATE] };
+  if (old && old.text === typed) return { datings: [...others, old], problems: [] };
+  const read = parseDating(typed);
+  if (!read.ok) return { datings: others, problems: [revisionProblem(others[0].text, typed)] };
+  return { datings: [...others, { ...read.dating, kind: 'revised', note: '', working: false }], problems: [] };
 }
 
 // Change a record field by field, stamping only what differs.
@@ -186,7 +212,7 @@ function withOldPieces(contents, oldContents) {
 // A work's datings with its working dating changed to the date typed on its
 // contents line. The dating's note and kind, and any other datings, are kept.
 function withWorkingDate(work, text, problems) {
-  const working = work.datings.find(dating => dating.working) || work.datings[0];
+  const working = workingDating(work);
   if (working && working.text === text) return work.datings;
   const reading = datingsFromRows([{ text, working: true, note: working ? working.note : '', kind: working ? working.kind : null }]);
   problems.push(...reading.problems);
@@ -314,7 +340,7 @@ export function recordsFromForm(form, existing, context) {
       const listed = knownSet.works.find(item => key(item.title) === key(line.title) && key(item.author) === key(line.author || ''));
       if (listed && listed.piece) {
         const piece = { title: line.title, author: line.author || null, originalTitle: listed.originalTitle || null, date: line.date || null };
-        contents.push({ work: null, piece, extent: 'complete', translator: translatorOf(line, listed), pages: listed.pages || null, cite: false });
+        contents.push({ work: null, piece, extent: 'complete', translator: translatorOf(line, listed), version: null, pages: listed.pages || null, cite: false });
         continue;
       }
       // A work the list puts in several volumes (Gibbon, the Summa) is one work: a later volume links to the
@@ -322,7 +348,7 @@ export function recordsFromForm(form, existing, context) {
       const inSet = listed && !match
         && (context.setWorks || []).find(work => key(work.title) === key(line.title) && sameAuthors(work, line));
       if (inSet) {
-        contents.push({ work: inSet.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: listed.pages || null, cite: false });
+        contents.push({ work: inSet.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), version: null, pages: listed.pages || null, cite: false });
         continue;
       }
       // A line a person joined to a work already held ("Possibly the same as…", form.sameWorks:
@@ -330,12 +356,12 @@ export function recordsFromForm(form, existing, context) {
       const joined = form.sameWorks && !match
         && context.works && context.works.get(form.sameWorks[key(line.title)]);
       if (joined) {
-        contents.push({ work: joined.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false });
+        contents.push({ work: joined.id, piece: null, extent: 'complete', translator: translatorOf(line, listed), version: null, pages: (listed && listed.pages) || null, cite: false });
         continue;
       }
       const ids = authorIds(namesOn(line));
       const note = listed && line.date === listed.date ? `from the ${knownSet.set} list` : '';
-      const fresh = { work: null, piece: null, extent: 'complete', translator: translatorOf(line, listed), pages: (listed && listed.pages) || null, cite: false };
+      const fresh = { work: null, piece: null, extent: 'complete', translator: translatorOf(line, listed), version: null, pages: (listed && listed.pages) || null, cite: false };
       if (match) {
         // A work the book already holds: only what the line changed is changed.
         const datings = line.date ? withWorkingDate(match, line.date, problems) : match.datings;
@@ -353,8 +379,10 @@ export function recordsFromForm(form, existing, context) {
       // Matched by title and, when the row names one, author: Sappho's and Alcaeus's "Fragments" are two works.
       const own = (form.workDetails || []).find(row => key(row.title) === key(line.title) && (row.author === undefined || key(row.author) === key(line.author || ''))) || {};
       const reading = line.date ? datingsFromRows([{ text: line.date, working: true, note, kind: own.datingKind || null }]) : { datings: [], problems: [] };
-      problems.push(...reading.problems);
-      const values = { title: line.title, authors: ids, ...(line.date ? { datings: reading.datings } : {}) };
+      // The final revised edition given on the card, beside the first (format 7).
+      const revision = own.revised ? withRevision(reading.datings, own.revised, null) : { datings: reading.datings, problems: [] };
+      problems.push(...reading.problems, ...revision.problems.map(problem => `${line.title}: ${problem}`));
+      const values = { title: line.title, authors: ids, ...(revision.datings.length ? { datings: revision.datings } : {}) };
       const originalTitle = (own.originalTitle || '').trim() || (listed && listed.originalTitle) || '';
       const shared = {
         originalLanguage: own.originalLanguage || (listed && listed.originalLanguage) || form.work.originalLanguage || null,
@@ -363,7 +391,7 @@ export function recordsFromForm(form, existing, context) {
       };
       const work = newRecord('work', newId(), now, { ...values, ...shared });
       records.push(work);
-      contents.push({ ...fresh, work: work.id });
+      contents.push({ ...fresh, work: work.id, version: textOrNull(own.version) });
     }
     if (!contents.length) problems.push('List at least one work in the contents, one per line.');
     contents = withOldPieces(contents, oldContents);
@@ -374,28 +402,33 @@ export function recordsFromForm(form, existing, context) {
     if (!work) problems.push('The work chosen to link to is no longer in the catalog.');
     else {
       const reading = datingsFromRows(form.work.datings);
-      problems.push(...reading.problems);
-      if (!work.datings.length && reading.datings.length) records.push(withField(work, 'datings', reading.datings, now));
-      contents = [{ work: work.id, piece: null, extent: 'complete', translator: null, pages: null, cite: false }];
+      const revision = withRevision(reading.datings, form.work.revised, null);
+      problems.push(...reading.problems, ...revision.problems);
+      if (!work.datings.length && revision.datings.length) records.push(withField(work, 'datings', revision.datings, now));
+      contents = [{ work: work.id, piece: null, extent: 'complete', translator: null, version: textOrNull(form.version), pages: null, cite: false }];
     }
   } else if (existing && !oldWorks.length && oldContents.some(entry => entry.piece)) {
     // A volume of pieces only has no work to edit; its contents stay as they are.
     contents = oldContents;
   } else {
     const reading = datingsFromRows(form.work.datings);
-    problems.push(...reading.problems);
     const old = oldWorks.length === 1 ? oldWorks[0] : null;
+    // The final revised edition has its own box; a form without it (undefined) keeps the work's.
+    const revision = withRevision(reading.datings, form.work.revised, old ? revisedDating(old) : null);
+    problems.push(...reading.problems, ...revision.problems);
     // The form has no box for the work's own title. It follows the book's title while the two
     // were the same; a work with its own title ("Confessions", shared by two books) keeps it.
     const ownTitle = old && old.title !== existing.edition.title ? old.title : '';
     const values = {
       title: form.work.title || ownTitle || form.title.trim(), authors: authorIds(form.authors),
       originalTitle: form.work.originalTitle || null, originalLanguage: form.work.originalLanguage || null,
-      datings: reading.datings, category: form.work.category || null, tags: form.work.tags,
+      datings: revision.datings, category: form.work.category || null, tags: form.work.tags,
     };
     const work = old ? update(old, values, now) : newRecord('work', newId(), now, values);
     if (work !== old) records.push(work);
-    contents = withOldPieces([entryFor(work.id, { work: work.id, piece: null, extent: 'complete', translator: null, pages: null, cite: false })], oldContents);
+    const entry = entryFor(work.id, { work: work.id, piece: null, extent: 'complete', translator: null, version: null, pages: null, cite: false });
+    // Which text of the work this book prints (format 7); a form without the box keeps it.
+    contents = withOldPieces([form.version === undefined ? entry : { ...entry, version: textOrNull(form.version) }], oldContents);
   }
   if (problems.length) return { records: [], editionId: null, problems };
   // A work this book no longer lists goes to the trash, unless another book holds it too
@@ -413,6 +446,8 @@ export function recordsFromForm(form, existing, context) {
     series: form.series || null, seriesNumber: form.seriesNumber || null, set: form.set || null, volume: form.volume || null,
     isbn, languages: form.languages, pages: form.pages || null, medium: form.medium, logosId: form.logosId || null,
     ...printing,
+    // "Various translators" (format 7); a form without the choice leaves it as it is.
+    ...(form.variousTranslators !== undefined ? { variousTranslators: Boolean(form.variousTranslators) } : {}),
   };
   // The link to a set's own record: given when adding a volume of a set with
   // one, kept when editing, and dropped when the set's title is changed to
@@ -529,9 +564,11 @@ export function isBookBarcode(code) {
  * category and tags. A box in "same for all" fills that field for every work
  * whose own box was left empty. Only fields that changed are stamped. A work
  * with several datings (a disputed work) keeps them: its date is changed on its
- * own, in the entry form of a book holding only it.
- * @param {{ id: string, title: string, originalTitle: string, originalLanguage: string, dating: string, kind?: string|null, category: string, tags: string[] }[]} rows
- *   kind: the dating's kind, when a kind of work was chosen (null for one that sets none); left out, the old kind stays
+ * own, in the entry form of a book holding only it. A final revised edition is
+ * no second opinion, so a work with one dating and a revision is not disputed.
+ * @param {{ id: string, title: string, originalTitle: string, originalLanguage: string, dating: string, kind?: string|null, revised?: string, category: string, tags: string[] }[]} rows
+ *   kind: the dating's kind, when a kind of work was chosen (null for one that sets none); left out, the old kind stays;
+ *   revised: the final edition's date as typed (empty takes it away); left out, the old revision stays
  * @param {{ originalLanguage: string, category: string, tags: string[] }} same the "same for all" boxes
  * @param {Map<string, object>} works the works, by ID
  * @param {string} now timestamp for the changed fields
@@ -552,17 +589,22 @@ export function worksFromRows(rows, same, works, now) {
       category: row.category.trim() || same.category.trim() || null,
       tags: row.tags.length ? row.tags : same.tags,
     };
-    if (work.datings.length <= 1) {
-      const current = work.datings[0];
+    const opinions = opinionsOf(work);
+    if (opinions.length <= 1) {
+      const current = opinions[0];
       const text = row.dating.trim();
       // A kind of work chosen beside the box (row.kind) sets the dating's kind; none chosen keeps the old one.
       const kind = row.kind === undefined ? (current && current.kind) || null : row.kind;
-      if (!text) values.datings = [];
+      let first = current ? [current] : [];
+      if (!text) first = [];
       else if (!current || current.text !== text || (current.kind || null) !== kind) {
         const reading = datingsFromRows([{ text, note: current ? current.note : '', kind, working: true }]);
         if (reading.problems.length) { problems.push(`${title}: ${reading.problems[0]}`); continue; }
-        values.datings = reading.datings;
+        first = reading.datings;
       }
+      const revision = withRevision(first, row.revised, revisedDating(work));
+      if (revision.problems.length) { problems.push(`${title}: ${revision.problems[0]}`); continue; }
+      values.datings = revision.datings;
     }
     const changed = update(work, values, now);
     if (changed !== work) records.push(changed);
@@ -571,18 +613,25 @@ export function worksFromRows(rows, same, works, now) {
 }
 
 /**
- * Each work's own translator in this book, from the rows of "Works in this
- * book". The translator belongs to the book's contents entry, not to the work,
- * since another book may hold the same work in another translation. An empty
- * box means the work has no translator of its own (the book's translators stand).
+ * Each work's own translator in this book, and which text of it the book
+ * prints (its version, format 7), from the rows of "Works in this book". Both
+ * belong to the book's contents entry, not to the work, since another book may
+ * hold the same work in another translation or text. An empty translator box
+ * means the work has no translator of its own (the book's translators stand).
  * @param {object} edition
- * @param {{ id: string, translator: string }[]} rows work IDs and the translator typed for each
+ * @param {{ id: string, translator: string, version?: string }[]} rows work IDs and what was typed for each;
+ *   a row without a version leaves it as it is
  * @param {string} now timestamp for the changed field
- * @returns {object} the edition, a new record only if a translator changed
+ * @returns {object} the edition, a new record only if something changed
  */
-export function withWorkTranslators(edition, rows, now) {
-  const typed = new Map(rows.map(row => [row.id, String(row.translator || '').trim() || null]));
-  const contents = edition.contents.map(entry => (entry.work && typed.has(entry.work) && typed.get(entry.work) !== entry.translator
-    ? { ...entry, translator: typed.get(entry.work) } : entry));
+export function withEntryDetails(edition, rows, now) {
+  const byWork = new Map(rows.map(row => [row.id, row]));
+  const contents = edition.contents.map(entry => {
+    const row = entry.work && byWork.get(entry.work);
+    if (!row) return entry;
+    const translator = textOrNull(row.translator);
+    const version = row.version === undefined ? entry.version ?? null : textOrNull(row.version);
+    return translator === (entry.translator ?? null) && version === (entry.version ?? null) ? entry : { ...entry, translator, version };
+  });
   return contents.some((entry, i) => entry !== edition.contents[i]) ? withField(edition, 'contents', contents, now) : edition;
 }

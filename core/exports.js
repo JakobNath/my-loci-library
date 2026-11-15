@@ -3,7 +3,7 @@
 // (for citation managers) and BibTeX (for LaTeX). Each keeps titles, authors,
 // editions and original dates. Pure text in, text out; the screen saves it.
 
-import { workingDating, formatYearRange } from './dating.js';
+import { workingDating, revisedDating, formatYearRange } from './dating.js';
 import { editionToCsl, citationKeyBase, freeCitationKey } from './zotero.js';
 import { valueSummary, copyValueOf } from './value.js';
 import { bindingText } from './bindings.js';
@@ -15,14 +15,15 @@ function cell(value) {
 }
 const csvText = rows => `${rows.map(row => row.map(cell).join(',')).join('\r\n')}\r\n`;
 
-/** The original date as written: one work's working dating, or an anthology's span. */
+/** The original date as written: one work's working dating, with its revision ("1812–15; rev. 1857"), or an anthology's span. */
 export function originalDateText(entry, style = 'AD') {
   if (entry.range) return entry.range.earliest === null ? '' : formatYearRange(entry.range.earliest, entry.range.latest, style);
   const dating = entry.works[0] && workingDating(entry.works[0]);
-  return dating ? dating.text : '';
+  const revised = entry.works[0] && revisedDating(entry.works[0]);
+  return !dating ? '' : revised ? `${dating.text}; rev. ${revised.text}` : dating.text;
 }
 
-const CSV_COLUMNS = ['Title', 'Subtitle', 'Authors', 'Original date', 'Translators', 'Editors', 'Publisher', 'Place', 'Year',
+const CSV_COLUMNS = ['Title', 'Subtitle', 'Authors', 'Original date', 'Translators', 'Various translators', 'Editors', 'Publisher', 'Place', 'Year',
   'First printed', 'Edition', 'Series', 'Volume', 'ISBN', 'Other ISBNs', 'LCCN', 'OCLC', 'LC call number', 'Dewey number', 'Subjects', 'Pages', 'Format', 'Binding', 'Location', 'Status', 'Value', 'Price paid', 'Added', 'Notes', 'ID'];
 
 /**
@@ -35,7 +36,7 @@ export function catalogCsv(entries, { dateStyle = 'AD' } = {}) {
     const { edition } = entry;
     const people = role => edition.contributors.filter(person => person.role === role).map(person => person.name).join('; ');
     const book = [edition.title, edition.subtitle, entry.authors.map(author => author.name).join('; '), originalDateText(entry, dateStyle),
-      people('translator'), people('editor'), edition.publisher, edition.place, edition.year, edition.firstPrinted, edition.editionStatement,
+      people('translator'), edition.variousTranslators ? 'yes' : '', people('editor'), edition.publisher, edition.place, edition.year, edition.firstPrinted, edition.editionStatement,
       [edition.series, edition.seriesNumber].filter(Boolean).join(' '), [edition.set, edition.volume].filter(Boolean).join(', vol. '),
       edition.isbn, edition.otherIsbns.join('; '), edition.identifiers.lccn, edition.identifiers.oclc, edition.identifiers.lcc, edition.identifiers.ddc, edition.subjects.join('; '),
       edition.pages, entry.isDigital ? 'Logos' : 'Physical'];

@@ -5,13 +5,13 @@
 
 import { readBindingText } from './bindings.js';
 
-export const FORMAT_VERSION = 6;
+export const FORMAT_VERSION = 7;
 
 // The fields of each record type, in file order, with the value of an empty field.
 export const FIELDS = {
   work: { title: '', subtitle: null, authors: [], originalTitle: null, otherTitles: [], originalLanguage: null, datings: [], sortYear: null, category: null, tags: [], wikidata: null },
   edition: {
-    title: '', subtitle: null, contents: [], contributors: [], publisher: null, place: null, year: null, firstPrinted: null,
+    title: '', subtitle: null, contents: [], contributors: [], variousTranslators: false, publisher: null, place: null, year: null, firstPrinted: null,
     editionStatement: null, series: null, seriesNumber: null, set: null, volume: null, setRecord: null,
     isbn: null, otherIsbns: [], identifiers: { lccn: null, oclc: null, lcc: null, ddc: null, openLibrary: null, hathiTrust: null }, languages: [], subjects: [], foundContents: [], pages: null, height: null, heightSource: null, thickness: null, thicknessSource: null,
     medium: 'physical', logosId: null, logosExtra: {}, cite: false, images: [],
@@ -28,7 +28,7 @@ export const FIELDS = {
 // Key order of the objects inside lists, so files always read the same.
 const NESTED_ORDER = {
   datings: ['text', 'earliest', 'latest', 'certainty', 'kind', 'note', 'working'],
-  contents: ['work', 'piece', 'extent', 'translator', 'pages', 'cite'],
+  contents: ['work', 'piece', 'extent', 'translator', 'version', 'pages', 'cite'],
   foundContents: ['author', 'title', 'extent'],
   contributors: ['name', 'role'],
   images: ['id', 'kind', 'source', 'color', 'ratio', 'master', 'waiting'],
@@ -41,6 +41,8 @@ export const IDENTIFIER_KEYS = ['lccn', 'oclc', 'lcc', 'ddc', 'openLibrary', 'ha
 // What records of older versions hold, so their files are written exactly as stored.
 const OLDER_KEYS = { 2: { contents: ['work', 'extent', 'translator', 'pages'], identifiers: ['lccn', 'oclc', 'lcc', 'ddc'] } };
 OLDER_KEYS[1] = OLDER_KEYS[2];
+// Before version 7 a contents entry had no version (which text of the work the book prints).
+for (const format of [3, 4, 5, 6]) OLDER_KEYS[format] = { contents: ['work', 'piece', 'extent', 'translator', 'pages', 'cite'] };
 
 export const STATUSES = ['owned', 'given away', 'sold', 'lost', 'gone from Logos'];
 export const ROLES = ['translator', 'editor', 'introduction', 'illustrator', 'other'];
@@ -112,11 +114,13 @@ export function recordToFileText(record) {
 }
 
 // The fields of a record in file order. An edition before version 5 also had
-// translationFirstPublished, and one before version 6 had no firstPrinted or
-// otherIsbns; both are kept as they were, so its file text stays as stored.
+// translationFirstPublished, one before version 6 had no firstPrinted or
+// otherIsbns, and one before version 7 no variousTranslators; each is kept as
+// it was, so its file text stays as stored.
 function fieldNames(type, format) {
   let names = Object.keys(FIELDS[type]);
   if (type !== 'edition') return names;
+  if (format < 7) names = names.filter(name => name !== 'variousTranslators');
   if (format < 6) names = names.filter(name => name !== 'firstPrinted' && name !== 'otherIsbns');
   if (format < 5) names.splice(names.indexOf('editionStatement') + 1, 0, 'translationFirstPublished');
   return names;
@@ -154,7 +158,19 @@ export function migrate(record) {
   if (upgraded.format === 3) upgraded = fromVersion3(upgraded);
   if (upgraded.format === 4) upgraded = fromVersion4(upgraded);
   if (upgraded.format === 5) upgraded = fromVersion5(upgraded);
+  if (upgraded.format === 6) upgraded = fromVersion6(upgraded);
   return upgraded;
+}
+
+// Version 7 (November 2026) let a work keep its final revised edition beside
+// its first (a dating of kind "revised"), gave each contents entry the text of
+// the work the book prints (version), and each edition "Various translators".
+function fromVersion6(record) {
+  if (record.type !== 'edition') return { ...record, format: 7 };
+  const contents = record.contents.map(entry => ({
+    work: entry.work, piece: entry.piece ?? null, extent: entry.extent, translator: entry.translator ?? null, version: null, pages: entry.pages ?? null, cite: entry.cite === true,
+  }));
+  return { ...record, format: 7, variousTranslators: false, contents };
 }
 
 // Version 6 (November 2026) gave each edition the year it was first printed,
