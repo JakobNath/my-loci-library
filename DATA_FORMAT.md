@@ -2,7 +2,7 @@
 
 This file describes every record and field in the catalog. It is the most important document in the project: if the app is ever lost, the data can be read, and a new app written, from this file alone.
 
-Format version: **5** (November 2026). Version 1 to 4 records are still read; see "Format versions".
+Format version: **7** (November 2026). Version 1 to 6 records are still read; see "Format versions".
 
 ## The idea in one paragraph
 
@@ -83,7 +83,7 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 6. |
+| `format` | number | The format version this record was written in. Currently 7. |
 | `type` | text | `work`, `edition`, `copy`, `author`, `wishlist` or `set`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
@@ -119,11 +119,13 @@ Each dating is an object:
 | `earliest` | number or null | The first year the dating allows. BC years are negative. Null only for "before ..." datings. |
 | `latest` | number or null | The last year it allows. Null for open-ended datings ("after 1517"). |
 | `certainty` | text | `exact`, `circa`, `range`, `century` or `open`. |
-| `kind` | text or null | Rarely needed: `composed`, `first published`, `delivered`, `first performed`. |
+| `kind` | text or null | Rarely needed: `composed`, `first published`, `delivered`, `first performed`, or `revised` (version 7, below). |
 | `note` | text | Who holds this dating, or why: "majority view". May be empty. |
 | `working` | true or false | Exactly one dating of a work is the working dating, used for sorting. |
 
 A work with more than one dating is a disputed work. Its datings are kept side by side and none is lost.
+
+A dating of kind `revised` (version 7) is no second opinion: it is the final edition of a work its author revised after it first appeared (Grimm's tales, first published 1812–15, revised to 1857; Calvin's *Institutes*, 1536, rev. 1559). A work has at most one, it is never the working dating, and it needs another dating beside it. It is shown after the working dating, "1812–15; rev. 1857"; sorting, lists and Zotero use the working dating only. A work with one dating and a revision is not disputed.
 
 How typed dates are read (the app shows its reading before saving):
 
@@ -155,6 +157,7 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `subtitle` | text or null | | As printed. |
 | `contents` | list | yes | The works in this edition, in order; see "Contents". At least one. |
 | `contributors` | list | | `{ "name": "Henry Chadwick", "role": "translator" }`. Roles: `translator`, `editor`, `introduction`, `illustrator`, `other`. Authors come from the works, not from here. |
+| `variousTranslators` | true or false | | Many people translated the works in this book and no one is named for the whole of it, as in a reader of collected pieces. Shown as "Various translators"; never sent to Zotero as a name. A work's own translator can still be given on its contents entry. (Version 7.) |
 | `publisher` | text or null | | Several publishers, as on a Loeb, are kept in order with "; " between them: "Harvard University Press; William Heinemann". |
 | `place` | text or null | | Place of publication. Several in the same order as the publishers: "Cambridge, MA; London". |
 | `year` | number or null | | The year this edition or printing was published. |
@@ -211,6 +214,7 @@ Each entry:
 | `piece` | object or null | A short work kept inside this book instead of as a work record (version 3): a poem, hymn, sermon or letter. See below. Null for a work. |
 | `extent` | text | `complete`, `selections`, or a free range: "Books I–IV". |
 | `translator` | text or null | This work's own translator in this book, when it is not simply the edition's (the book has several translators, or another translated this work). The edition's `contributors` still list every translator. In the contents box it is written at the end of the work's line: "Martin Luther — Psalm 117 — 1530 — trans. Edward Sittler". |
+| `version` | text or null | Which text of a revised work this book prints, as typed: "final edition, 1857", "first edition", "second edition, 1819". Null when not said. Belongs to the entry, not the work, since another book may print another text. (Version 7.) |
 | `pages` | text or null | Where it is in the book: "1–55". |
 | `cite` | true or false | Planned as "send this work to Zotero as a section of the book" (version 3). Not used since 13 November 2026, when Zotero was given books only; always false, and kept so records stay the same shape. |
 
@@ -420,6 +424,7 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 - Version 4 (November 2026): each copy gained `material` and `extras`, and its `binding` holds only a binding; each edition gained `setRecord`; and there is a new record type, `set`, in the folder `sets/`. A version-3 copy's binding text is read into the three parts by a fixed table (`readBindingText` in `core/bindings.js`): "Hardcover with dust jacket" is Hardcover and Dust jacket; "Cloth and hardcover in slip case" is Hardcover, Cloth and Slipcase; "Cloth" alone is the material Cloth. Text that cannot be read wholly (a word left over, or two bindings at once) stays in `binding` as it was, with no material and no extras, so nothing is guessed or lost. A version-3 edition is read with no set record. Other records only change their `format`. A version-3 file stays as it is until the record is next saved.
 - Version 5 (November 2026): each edition lost `translationFirstPublished`, the year its translation first appeared, which was not worth asking for. A version-4 edition is read without it (the value and its stamp in `changed` are dropped); other records only change their `format`. A version-4 file keeps the field, in its place after `editionStatement`, until the record is next saved.
 - Version 6 (November 2026): each edition gained `firstPrinted`, the year it was first printed (after `year`), and `otherIsbns`, the other ISBNs printed in it (after `isbn`). A version-5 edition is read with no first printing and no other ISBNs; other records only change their `format`. A version-5 file stays as it is, without the two fields, until the record is next saved.
+- Version 7 (November 2026): a dating's `kind` may be `revised`, the final edition of a work its author revised; each edition gained `variousTranslators` (after `contributors`); each contents entry gained `version`, the text of the work the book prints (after `translator`). A version-6 edition is read with "various translators" false and every entry's version null; other records only change their `format`. A version-6 file stays as it is, without the two fields, until the record is next saved.
 - Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
 - When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
@@ -429,7 +434,7 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
@@ -456,19 +461,20 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
   "subtitle": null,
   "contents": [
-    { "work": "m4t7h3w2q9zk", "piece": null, "extent": "complete", "translator": null, "pages": null, "cite": false },
-    { "work": "m4rk8x2p6ywa", "piece": null, "extent": "complete", "translator": null, "pages": null, "cite": false }
+    { "work": "m4t7h3w2q9zk", "piece": null, "extent": "complete", "translator": null, "version": null, "pages": null, "cite": false },
+    { "work": "m4rk8x2p6ywa", "piece": null, "extent": "complete", "translator": null, "version": null, "pages": null, "cite": false }
   ],
   "contributors": [
     { "name": "Barbara Aland", "role": "editor" },
     { "name": "Kurt Aland", "role": "editor" }
   ],
+  "variousTranslators": false,
   "publisher": "Deutsche Bibelgesellschaft",
   "place": "Stuttgart",
   "year": 2012,
@@ -507,7 +513,7 @@ A copy:
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
@@ -534,7 +540,7 @@ An author:
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -550,7 +556,7 @@ A set:
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "set",
   "id": "s3tw0rks0001",
   "title": "Luther's Works",
@@ -572,7 +578,7 @@ A wishlist item:
 
 ```json
 {
-  "format": 6,
+  "format": 7,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",
