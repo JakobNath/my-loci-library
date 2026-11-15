@@ -89,7 +89,8 @@ const GUIDE = [
     paragraphs: [
       'The original date is when the work was written or first published, not when this book was printed. Only a person sets it: online sources usually give the printing\'s year, so lookups never fill it.',
       'Type it as a scholar would: 1689, c. 397, 397–400, 4th c. BC, after 1517. A work whose date is disputed can have more than one dating, with one marked as ours for sorting.',
-      'Every work is dated the same way: a work printed in its author\'s lifetime by its first publication (Frankenstein, 1818); one written before printing, or first printed after the author died, by when it was written (Augustine\'s Confessions, c. 397–400); a play by its first performance where known. Another date worth keeping goes in as a further dating with a note ("1831, revised edition"). "Search the web" beside the date box asks a search engine when the work was written and first published.',
+      'Every work is dated the same way, by the first time it appeared: a work printed in its author\'s lifetime by its first publication (Frankenstein, 1818); one published in parts by the years of its first edition (Grimm\'s tales, 1812–15); one the author revised by its first edition (Calvin\'s Institutes, 1536); one written before printing, or first printed after the author died, by when it was written (Augustine\'s Confessions, c. 397–400); a letter by its date; a speech or sermon by when it was delivered; a play by its first performance where known. "Which date?" beside the date box lists these.',
+      'Another date worth keeping, such as a final revision, goes in as a further dating with a note ("1559, final edition"). The kind-of-work chips under the date box are optional: a tap shows that kind\'s rule and narrows the search. "Search the web" asks a search engine for the one date the rule wants.',
     ],
   },
   {

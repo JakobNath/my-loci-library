@@ -3,8 +3,10 @@
 // book is in hand (docs/decisions/screens.md, "Adding fills the record while
 // the book is in hand"). Each card has the work's title and author, the
 // language it was first written in, its original title and its original
-// date, with a "Search the web" link beside each of the last three. A card is
-// ticked once its language and date are answered (core/add-check.js).
+// date, with one "Search the web" link at its top asking for all four, and the
+// optional kind-of-work chips under the date. A card is ticked once its
+// language and date are answered (core/add-check.js). Above the cards, one
+// date or the author's lifetime can be given to every work without a date.
 //
 // The cards are made from the contents step's lines and turned back into
 // lines for saving, so core/entry.js reads them as it reads any contents.
@@ -14,9 +16,9 @@ import { escapeHtml } from '../core/html.js';
 import { normalizeForSearch } from '../core/search.js';
 import { parseContentsLines, typedNames } from '../core/contents.js';
 import { parseDating, formatYearRange } from '../core/dating.js';
-import { workDateQuestion, workLanguageQuestion, originalTitleQuestion } from '../core/date-search.js';
+import { workDetailsQuestion, collectionDateQuestion } from '../core/date-search.js';
 import { cardAnswered } from '../core/add-check.js';
-import { dateRuleHtml, searchLinkHtml } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, kindChipsHtml, datingKindOf } from './date-help.js';
 import { attr, navHtml, isEnglish, LANGUAGES } from './add-questions.js';
 
 /**
@@ -44,6 +46,7 @@ export function cardsFromLines(text, previous, { authors = [], listed = () => nu
       language: list.originalLanguage || '', languageChosen: Boolean(list.originalLanguage),
       originalTitle: list.originalTitle || null, // null: not given yet, so Wikidata's is shown
       date: line.date || '', dateUnknown: false, translator: line.translator || '',
+      kind: '', // the kind of work, if a chip was chosen (ui/date-help.js)
     };
   });
 }
@@ -56,7 +59,21 @@ export function contentsFromCards(cards) {
 
 /** What each card says beyond its line, for core/entry.js (form.workDetails). */
 export function workDetailsFromCards(cards) {
-  return cards.map(card => ({ title: card.title, author: card.author || '', originalLanguage: card.language || '', originalTitle: card.originalTitle || '' }));
+  return cards.map(card => ({
+    title: card.title, author: card.author || '', originalLanguage: card.language || '', originalTitle: card.originalTitle || '',
+    datingKind: datingKindOf(card.kind || '') || null,
+  }));
+}
+
+/**
+ * Give a date to every card that has none and is not marked "Don't know"
+ * (a whole collection written about the same time, or its author's lifetime).
+ * Each card stays editable. Returns how many cards it filled.
+ */
+export function fillUndatedCards(cards, date) {
+  const undated = cards.filter(card => !card.date && !card.dateUnknown && !card.unknown);
+  for (const card of undated) card.date = date;
+  return undated.length;
 }
 
 /**
@@ -90,7 +107,6 @@ const answeredText = cards => `${cards.filter(cardAnswered).length} of ${cards.l
  */
 export function cardHtml(card, i, about) {
   const known = about.wikidataOf(card.title);
-  const authors = typedNames(card.author);
   const done = cardAnswered(card);
   // The language chips: the usual six, Wikidata's if it is another, and the card's own.
   const offered = [...new Set([...LANGUAGES, ...(known && known.originalLanguage ? [known.originalLanguage] : []), ...(card.language ? [card.language] : [])])];
@@ -100,8 +116,7 @@ export function cardHtml(card, i, about) {
   }).join('');
   const foreign = card.language && !isEnglish(card.language);
   const originalHtml = foreign ? `<label class="field">Original title<input name="cardOriginalTitle" value="${attr(shownOriginalTitle(card, known))}" autocomplete="off">`
-    + `${card.originalTitle === null && known && known.originalTitle ? '<span class="preview">From Wikidata; correct it if it is wrong.</span>' : ''}</label>`
-    + `<p class="search-line">${searchLinkHtml(originalTitleQuestion(card.title, authors), 'card-title')}</p>` : '';
+    + `${card.originalTitle === null && known && known.originalTitle ? '<span class="preview">From Wikidata; correct it if it is wrong.</span>' : ''}</label>` : '';
   // A date to tap: Wikidata's, unless it was printed after the author died (then the working date is when it was written).
   const suggestions = [];
   if (known && known.date && !known.posthumous && known.date !== card.date) suggestions.push({ text: known.date, label: `${known.date} (Wikidata)` });
@@ -118,17 +133,17 @@ export function cardHtml(card, i, about) {
   }).join('');
   return `<fieldset class="work-card${about.missing.has(i) && !done ? ' is-missing' : ''}" data-card="${i}">
       <legend>${escapeHtml(`${done ? '✓ ' : ''}${i + 1}. ${card.title}`)}</legend>
+      <p class="search-line">${searchLinkHtml(workDetailsQuestion(card.title, about.found || {}, card.kind), 'card-details', 'Search the web: author, language, title and date')}</p>
       <label class="field">Title<input name="cardTitle" value="${attr(card.title)}" autocomplete="off"></label>
       <label class="field">Author (empty if anonymous)<input name="cardAuthor" value="${attr(card.author)}" autocomplete="off"></label>
       ${authorChipsHtml ? `<div class="chips">${authorChipsHtml}</div>` : ''}
       <div class="field">First written in<div class="chips">${chipsHtml}</div></div>
       <label class="field">Another language<input name="cardLanguage" value="" autocomplete="off"></label>
-      <p class="search-line">${searchLinkHtml(workLanguageQuestion(card.title, authors), 'card-language')}</p>
       ${originalHtml}
       <label class="field">Original date<input name="cardDate" value="${attr(card.date)}" placeholder="c. 397, 1843, early 2nd c." autocomplete="off"><span class="preview" data-preview>${escapeHtml(previewText)}</span></label>
       <div class="chips">${suggestionsHtml}<button type="button" class="chip${card.dateUnknown && !card.date ? ' is-on' : ''}" data-action="card-unknown" aria-pressed="${card.dateUnknown && !card.date}">Don't know</button></div>
       ${posthumousHtml}
-      <p class="search-line">${searchLinkHtml(workDateQuestion(card.title, authors), 'card-date')}</p>
+      ${kindChipsHtml(card.kind || '', 'card-kind')}
       <p><button type="button" class="link" data-action="card-remove">Not a work (a heading): remove</button></p>
     </fieldset>`;
 }
@@ -137,7 +152,8 @@ export function cardHtml(card, i, about) {
  * The step's screen.
  * @param {object} book the book being added; book.cards holds the cards
  * @param {object} about as for cardHtml, and wikidataHtml: the line about what Wikidata said, or is still asked;
- *   sameHtml: the "Possibly the same as…" line; nudged: whether Next was tapped with works unanswered
+ *   sameHtml: the "Possibly the same as…" line; nudged: whether Next was tapped with works unanswered;
+ *   found: the book as found; lifetime: the author's lifetime, { name, text }, when the lookups know it
  */
 export function worksStepHtml(book, about) {
   const cards = book.cards || [];
@@ -149,7 +165,20 @@ export function worksStepHtml(book, about) {
     ${dateRuleHtml()}
     <p class="step-hint" data-works-count>${escapeHtml(answeredText(cards))}</p>
     ${about.wikidataHtml || ''}${about.sameHtml || ''}${nudgeHtml}
-    <form class="form">${cardsHtml}${navHtml()}</form>`;
+    <form class="form">${sameDateHtml(book, about)}${cardsHtml}${navHtml()}</form>`;
+}
+
+// "All written about the same time?": one date, or the author's lifetime, for every work without one.
+function sameDateHtml(book, about) {
+  const lifetimeHtml = about.lifetime
+    ? `<button type="button" class="chip" data-action="cards-lifetime" data-value="${attr(about.lifetime.text)}">${escapeHtml(`${about.lifetime.name}'s lifetime, ${about.lifetime.text}`)}</button>` : '';
+  const read = book.allDate ? parseDating(book.allDate) : null;
+  const problemHtml = read && !read.ok ? `<span class="preview is-problem">${escapeHtml(read.problem)}</span>` : '';
+  return `<fieldset class="work-card"><legend>All written about the same time?</legend>
+      <label class="field">One date for every work without a date<input name="allDate" value="${attr(book.allDate || '')}" placeholder="c. 100, 1843–48" autocomplete="off">${problemHtml}</label>
+      <p class="search-line">${searchLinkHtml(collectionDateQuestion(about.found || {}), 'collection')}</p>
+      <div class="chips"><button type="button" class="chip" data-action="cards-all-date">Use for every work without a date</button>${lifetimeHtml}</div>
+    </fieldset>`;
 }
 
 /**
@@ -173,7 +202,7 @@ export function readCards(book, stepArea) {
 }
 
 /**
- * A tap on a card: its language, a date suggestion, "Don't know", or removing
+ * A tap on a card: its language, author, a date suggestion, the kind of work, "Don't know", or removing
  * it. Returns true when the whole step must be drawn again (a card was removed).
  */
 export function cardAction(book, action, value, index) {
@@ -182,6 +211,7 @@ export function cardAction(book, action, value, index) {
   if (action === 'card-language') Object.assign(card, { language: value, languageChosen: true });
   if (action === 'card-author') Object.assign(card, { author: value, authorAsked: false });
   if (action === 'card-date') Object.assign(card, { date: value, dateUnknown: false });
+  if (action === 'card-kind') card.kind = card.kind === value ? '' : value;
   if (action === 'card-unknown') Object.assign(card, { date: '', dateUnknown: !card.dateUnknown });
   if (action === 'card-remove') { book.cards.splice(index, 1); return true; }
   return false;

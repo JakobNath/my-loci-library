@@ -404,7 +404,8 @@ export function authorsFromWorkSearch(searchAnswer) {
  * bounds when the work was written.
  * @param {{ firstPublished: number|null, author: object|null }} work from workFromOpenLibrary
  * @param {number|null} editionYear the year of the edition in hand
- * @returns {{ text: string, label: string }[]} most likely first
+ * @returns {{ text: string, label: string, lifetimeOf?: string }[]} most likely first; lifetimeOf names
+ *   the author when the suggestion is the author's lifetime
  */
 export function suggestOriginalDates(work, editionYear, { authors = null, translated = false } = {}) {
   const suggestions = [];
@@ -413,7 +414,7 @@ export function suggestOriginalDates(work, editionYear, { authors = null, transl
   // (Jaroslav Pelikan for Luther's Works): a lifetime is only offered for one of the book's own authors.
   const author = work.author && (!authors || !latin(work.author.name) || authors.some(name => samePerson(name, work.author.name))) ? work.author : null;
   const lifetime = author && author.died !== null
-    ? { text: author.born !== null ? lifeText(author.born, author.died) : `before ${yearText(author.died)}`, label: `written in ${author.name}'s lifetime` }
+    ? { text: author.born !== null ? lifeText(author.born, author.died) : `before ${yearText(author.died)}`, label: `written in ${author.name}'s lifetime`, lifetimeOf: author.name }
     : null;
   if (firstPublished !== null && lifetime && firstPublished > author.died) {
     // The earliest edition came after the author's death: it is a printing, not the original.

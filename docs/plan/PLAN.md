@@ -166,19 +166,28 @@ A work can be dated several ways: when it was written, first performed, first pu
 | The work | Working date | Examples |
 | --- | --- | --- |
 | Printed in the author's lifetime | First publication | *Frankenstein* 1818; *Pride and Prejudice* 1813 |
+| Published in parts over several years | The range of its first edition | Grimm's tales 1812–15 |
+| Revised by the author afterwards | The first edition; the final revision is kept beside it | Calvin, *Institutes* 1536 (rev. 1559) |
 | Written before printing, or first printed after the author died | When it was written | Augustine, *Confessions* c. 397–400; Pascal, *Pensées* 1657–62 |
+| A letter | The date on it | |
+| A speech, sermon or lecture | When it was delivered | |
 | A play | First performance where known, otherwise when written | Sophocles, *Oedipus the King* c. 429 BC |
+| A poem | As any other work: first publication, or when written | Poe, "The Raven" 1845 |
 
-Any other date worth keeping goes in as a further dating with its type and a short note: *Frankenstein*'s revised text, "1831, revised edition"; *Pride and Prejudice*'s first draft, "1796–97, written as First Impressions". The date field carries this rule as one short line of help, so whoever is adding the book does not have to remember it. The date of a translation is not the work's date: it belongs to the edition ("Edition dates are separate", below).
+*Extended with Jakob on 15 November 2026* (testing day, batch 6): works published in parts, revised works, letters, speeches and poems. A revised work is dated by its first edition, as library cataloging dates a work by the earliest date tied to it and as scholars write it ("1812–15; rev. 1857"); sorting uses the first date. Until the revised date has a box of its own (data format 7), it goes in as a further dating with a note.
+
+Any other date worth keeping goes in as a further dating with its type and a short note: *Frankenstein*'s revised text, "1831, revised edition"; *Pride and Prejudice*'s first draft, "1796–97, written as First Impressions". The date field carries this rule as one short line of help ("The first time it appeared: first published, or written if it was not printed in the author's lifetime"), with "Which date?" opening the table above as a short list, so whoever is adding the book does not have to remember it. Under each date box, optional chips name the kind of work (Book or essay, Letter, Speech or sermon, Play, Poem, Ancient or medieval). None is chosen to start and nothing needs one; a tap shows that kind's rule, narrows the search question to it, and saves the dating's type (first performed, delivered, composed; a book or a poem saves none, since either of two dates may be its date). The date of a translation is not the work's date: it belongs to the edition ("Edition dates are separate", below).
 
 **Search the web** (Jakob, 13 November 2026)
 
 Most dates are found by a web search, whose summary at the top usually answers a plain question well. So beside every original-date box (adding, editing, "Works in this book") the app shows a "Search the web" link that opens the browser on a search already worded as a question, so nothing needs editing:
 
-- A work with an author: *When was Pride and Prejudice by Jane Austen written and first published?*
-- A work with no author: *When was the Didache written and first published?*
+- A work: *What is the original date of Pride and Prejudice by Jane Austen? Give one date: the year it was first published if that was in the author's lifetime, otherwise when it was written. For a letter give its date, for a speech or sermon when it was delivered, for a play its first performance. If the author later revised it, also give the year of the final edition.*
+- A work with no author is named as "the Didache"; a kind of work chosen narrows the question (*When was the play Oedipus the King by Sophocles first performed?*).
+- Each work's card while adding a collection has one link, "Search the web: author, language, title and date", which does not assume the author: *'The Condition of the Working Class in England', printed in The Marx-Engels Reader (works by Karl Marx and Friedrich Engels): who wrote it, in what language, under what original title, and what is its original date? Give one date: …*
+- Above a collection's cards, "All written about the same time?" asks *When did Plutarch write the works in Plutarch's Lives?*, and the date typed, or the author's lifetime with one tap, fills every work still without a date.
 
-The question asks for both the written and the published date, so the answer gives what the rule above needs. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change. The laptop's page for filling in what is missing has the same link.
+The question carries the rule above (changed on 15 November 2026: it used to ask "written and first published?", and the summary answered with several dates), so the answer is the one date the catalog wants. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change. The laptop's page for filling in what is missing has the same link.
 
 **Typing a date**
 

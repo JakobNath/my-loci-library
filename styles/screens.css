@@ -157,6 +157,9 @@ button.menu-row:first-child { border-top: 0; }
 .preview.is-problem { color: var(--warn-ink); }
 .search-line { margin: 0 0 var(--space-3); }
 .date-rule { margin-bottom: var(--space-3); }
+.date-rules > summary { color: var(--accent-ink); font: 600 var(--fs-small) var(--font-ui); cursor: pointer; margin-top: var(--space-1); }
+.date-rules > ul { margin: var(--space-2) 0 0; padding-left: var(--space-4); display: grid; gap: var(--space-1); }
+.date-kinds { display: grid; gap: var(--space-2); }
 .problems { margin: 0; padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: var(--warn-bg); color: var(--warn-ink); font: var(--fs-small) var(--font-ui); }
 .trash-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-2); }
 .trash-list li { display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; }

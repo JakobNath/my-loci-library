@@ -15,7 +15,7 @@ import { helpHtml, toggleHelp } from './field-help.js';
 import { fillImages } from './images.js';
 import { wireTidyPaste } from './paste-contents.js';
 import { workDateQuestion, searchTitle } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind } from './date-help.js';
 import { bindingChoicesHtml, toggleBindingChip, readBindingChoices } from './binding-choices.js';
 
 const attr = value => escapeHtml(value ?? '');
@@ -50,7 +50,9 @@ function datingRowHtml(dating, i) {
   return `<div class="field-row dating-row"><label class="field">Original date${i ? ` (dating ${i + 1})` : ''}`
     + `<input name="datingText" value="${attr(dating.text)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"><span class="preview" data-preview></span></label>`
     + `<label class="field">Note<input name="datingNote" value="${attr(dating.note)}" placeholder="majority view"></label>`
-    + `<label class="check"><input type="radio" name="working" value="${i}"${dating.working || (!i && !dating.text) ? ' checked' : ''}> Working date</label></div>`;
+    + `<label class="check"><input type="radio" name="working" value="${i}"${dating.working || (!i && !dating.text) ? ' checked' : ''}> Working date</label>`
+    // The dating's kind is kept as it was, unless a kind of work is chosen for the working dating.
+    + `<input type="hidden" name="datingKind" value="${attr(dating.kind || '')}"></div>`;
 }
 
 function contributorRowHtml(person) {
@@ -86,6 +88,7 @@ export function render(container, state, actions) {
   const translatorIn = w => (edition.contents.find(item => item.work === w.id) || {}).translator || null;
   const contentsText = isAnthology ? entry.works.map(w => contentsLine(w, w.authors.map(id => state.library.authorsById.get(id)?.name || ''), translatorIn(w))).join('\n') : '';
   const datingsHtml = [...work.datings, { text: '', note: '', working: false }].map(datingRowHtml).join('');
+  const workingKind = (work.datings.find(dating => dating.working) || work.datings[0] || {}).kind;
   const contributorsHtml = [...edition.contributors, { name: '', role: 'translator' }].map(contributorRowHtml).join('');
   const statusHtml = STATUSES.map(status => `<option${status === copy.status ? ' selected' : ''}>${status}</option>`).join('');
   const locationHtml = ['Place', 'Room', 'Case', 'Shelf'].map((label, i) => fieldHtml(label, 'location', copy.location[i], { list: `location${i}` })).join('');
@@ -128,7 +131,7 @@ export function render(container, state, actions) {
         ${contributorsHtml}<button type="button" class="link" data-action="contributor">Add another contributor</button>
       </fieldset>
       <fieldset data-work${isAnthology ? ' hidden' : ''}><legend>The work</legend>
-        <div data-single>${dateRuleHtml()}${datingsHtml}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
+        <div data-single>${dateRuleHtml()}${datingsHtml}${kindChipsHtml(kindForDating(workingKind))}<p class="search-line">${searchLinkHtml(workQuestion(form0))}</p><button type="button" class="link" data-action="dating">Add another dating</button>
         <div class="field-row">${fieldHtml('Original title', 'originalTitle', work.originalTitle, { help: true })}</div></div>
         <div class="field-row">${fieldHtml('Original language', 'originalLanguage', work.originalLanguage, { list: 'languages', help: true })}${fieldHtml('Category', 'category', work.category, { list: 'categories', help: true })}</div>
         <div class="field-row">${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
@@ -182,6 +185,7 @@ export function render(container, state, actions) {
     const searchKind = event.target.dataset.searchWeb;
     if (searchKind) refreshSearchLink(event.target, workQuestion(typedNames(form)));
     const action = event.target.dataset.action;
+    if (action === 'date-kind') toggleKind(event.target);
     if (action === 'binding-part') toggleBindingChip(event.target);
     if (action === 'dating') event.target.insertAdjacentHTML('beforebegin', datingRowHtml({ text: '', note: '' }, form.querySelectorAll('.dating-row').length));
     if (action === 'trash') moveToTrash(entry, state, actions);
@@ -254,10 +258,14 @@ function showPreview(input) {
 // The title and authors as typed now, for the search question.
 function typedNames(form) {
   const data = new FormData(form);
-  return { title: String(data.get('title') || ''), subtitle: String(data.get('subtitle') || ''), set: String(data.get('set') || ''), volume: String(data.get('volume') || ''), authors: String(data.get('authors') || '') };
+  const kinds = form.querySelector('[data-single] .date-kinds');
+  return {
+    title: String(data.get('title') || ''), subtitle: String(data.get('subtitle') || ''), set: String(data.get('set') || ''), volume: String(data.get('volume') || ''),
+    authors: String(data.get('authors') || ''), kind: kinds ? kinds.dataset.kind : '',
+  };
 }
 
-const workQuestion = typed => workDateQuestion(searchTitle(typed), typed.authors.split(';'));
+const workQuestion = typed => workDateQuestion(searchTitle(typed), typed.authors.split(';'), typed.kind);
 
 // The form's values in the shape core/entry.js expects.
 function readForm(form) {
@@ -266,6 +274,9 @@ function readForm(form) {
   const list = (name, separator) => text(name).split(separator).map(part => part.trim()).filter(Boolean);
   const roles = data.getAll('contributorRole');
   const working = Number(data.get('working') || 0);
+  const kinds = data.getAll('datingKind').map(String);
+  const chosenKind = chosenDatingKind(form.querySelector('[data-single] .date-kinds'));
+  const kindOfRow = i => (i === working && chosenKind !== undefined ? chosenKind : kinds[i] || null);
   return {
     title: text('title'), subtitle: text('subtitle'), authors: list('authors', ';'),
     contributors: data.getAll('contributorName').map((name, i) => ({ name: name.toString().trim(), role: roles[i] })),
@@ -276,7 +287,7 @@ function readForm(form) {
     contents: data.get('several') ? text('contents') : null,
     work: {
       title: '', originalTitle: text('originalTitle'), originalLanguage: text('originalLanguage'), category: text('category'), tags: list('tags', ','),
-      datings: data.getAll('datingText').map((value, i) => ({ text: value.toString(), note: (data.getAll('datingNote')[i] || '').toString().trim(), working: i === working })),
+      datings: data.getAll('datingText').map((value, i) => ({ text: value.toString(), note: (data.getAll('datingNote')[i] || '').toString().trim(), kind: kindOfRow(i), working: i === working })),
     },
     copy: {
       ...readBindingChoices(form), location: data.getAll('location').map(part => part.toString().trim()), acquired: text('acquired'),

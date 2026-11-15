@@ -11,7 +11,7 @@ import { parseDating, formatYearRange } from '../core/dating.js';
 import { worksFromRows, withWorkTranslators } from '../core/entry.js';
 import { iconHtml } from './icons.js';
 import { workDateQuestion } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, kindForDating, toggleKind, chosenDatingKind } from './date-help.js';
 
 const attr = value => escapeHtml(value ?? '');
 const fieldHtml = (label, name, value, list = '') => `<label class="field">${escapeHtml(label)}<input name="${name}" value="${attr(value)}"${list ? ` list="${list}"` : ''} autocomplete="off"></label>`;
@@ -34,7 +34,8 @@ function rowHtml(work, i, authorNames, translator) {
   const dating = work.datings.find(item => item.working) || work.datings[0];
   const dateHtml = disputed
     ? `<p class="preview">${escapeHtml(`${work.datings.length} datings (working: ${dating.text}); changed in the entry form of a book holding only this work.`)}</p><input type="hidden" name="dating" value="">`
-    : `<label class="field">Original date<input name="dating" value="${attr(dating ? dating.text : '')}" placeholder="c. 397, 4th c. BC" autocomplete="off"><span class="preview" data-preview></span></label>`;
+    : `<label class="field">Original date<input name="dating" value="${attr(dating ? dating.text : '')}" placeholder="c. 397, 4th c. BC" autocomplete="off"><span class="preview" data-preview></span></label>`
+      + kindChipsHtml(kindForDating(dating && dating.kind));
   const searchHtml = `<p class="search-line">${searchLinkHtml(workDateQuestion(work.title, authorNames))}</p>`;
   return `<fieldset data-row="${attr(work.id)}"><legend>${escapeHtml(`${i + 1}. ${work.title}`)}</legend>
       ${fieldHtml('Title', 'title', work.title)}
@@ -79,17 +80,19 @@ export function render(container, state, actions) {
   container.oninput = event => { if (event.target.name === 'dating') showPreview(event.target); };
   // The search asks about the title as typed now.
   container.onclick = event => {
+    if (event.target.dataset.action === 'date-kind') { toggleKind(event.target); return; }
     if (!event.target.dataset.searchWeb) return;
     const row = event.target.closest('[data-row]');
     const work = works.find(item => item.id === row.dataset.row);
-    refreshSearchLink(event.target, workDateQuestion(row.querySelector('[name="title"]').value, authorsOf(work)));
+    const kinds = row.querySelector('.date-kinds');
+    refreshSearchLink(event.target, workDateQuestion(row.querySelector('[name="title"]').value, authorsOf(work), kinds ? kinds.dataset.kind : ''));
   };
   container.onsubmit = async event => {
     event.preventDefault();
     const value = (scope, name) => (scope.querySelector(`[name="${name}"]`) || { value: '' }).value;
     const rows = [...form.querySelectorAll('[data-row]')].map(row => ({
       id: row.dataset.row, title: value(row, 'title'), originalTitle: value(row, 'originalTitle'), originalLanguage: value(row, 'originalLanguage'),
-      dating: value(row, 'dating'), category: value(row, 'category'), tags: splitTags(value(row, 'tags')),
+      dating: value(row, 'dating'), kind: chosenDatingKind(row.querySelector('.date-kinds')), category: value(row, 'category'), tags: splitTags(value(row, 'tags')),
     }));
     const same = { originalLanguage: value(form, 'sameLanguage'), category: value(form, 'sameCategory'), tags: splitTags(value(form, 'sameTags')) };
     const result = worksFromRows(rows, same, state.library.worksById, actions.now());

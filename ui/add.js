@@ -33,10 +33,10 @@ import { wireTidyPaste } from './paste-contents.js';
 import { parseContentsLines, typedNames } from '../core/contents.js';
 import { normalizeForSearch } from '../core/search.js';
 import { toggleHelp } from './field-help.js';
-import { workDateQuestion, workLanguageQuestion, originalTitleQuestion, contentsQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
-import { dateRuleHtml, searchLinkHtml, refreshSearchLink } from './date-help.js';
+import { workDateQuestion, workDetailsQuestion, contentsQuestion, searchTitle, searchableTitle } from '../core/date-search.js';
+import { dateRuleHtml, searchLinkHtml, refreshSearchLink, kindChipsHtml, datingKindOf } from './date-help.js';
 import { mustMissing, checkRows, cardAnswered } from '../core/add-check.js';
-import { cardsFromLines, contentsFromCards, workDetailsFromCards, worksStepHtml, readCards, cardAction, redrawCard, showCount, showCardPreview } from './add-works.js';
+import { cardsFromLines, contentsFromCards, workDetailsFromCards, fillUndatedCards, worksStepHtml, readCards, cardAction, redrawCard, showCount, showCardPreview } from './add-works.js';
 import { checkStepHtml, nudgeHtml } from './add-check.js';
 import { attr, fieldHtml, choiceHtml, isEnglish, languageStepHtml, subjectsStepHtml, translationStepHtml, workTranslatorsStepHtml, copyStepHtml, readQuestions, translatorsReadAs } from './add-questions.js';
 import { editionStepHtml, readEditionStep, editionStepProblems } from './add-edition.js';
@@ -260,6 +260,8 @@ export function render(container, state, actions) {
     book = {
       found: full,
       problem, work: null, workId: null, dating: '', datingNote: '', dateUnknown: false,
+      datingKind: '', // the kind of work chosen beside the date box, if any (ui/date-help.js)
+      allDate: '', // "All written about the same time?" above a collection's cards
       // What only a person knows, asked by the steps in ui/add-questions.js.
       language: full.originalLanguage || last.language, originalTitle: full.originalTitle || '', category: last.category, tags: [...last.tags],
       translator: translators.join('; '), hasTranslator: translators.length > 0,
@@ -627,7 +629,18 @@ export function render(container, state, actions) {
   function worksAbout() {
     const cards = book.cards || [];
     const missing = new Set(book.nudged === 'works' ? cards.map((card, i) => (cardAnswered(card) || card.unknown ? -1 : i)).filter(i => i >= 0) : []);
-    return { wikidataOf, listDateOf, bookAuthors: bookAuthors(), missing, nudged: book.nudged === 'works', wikidataHtml: wikidataLineHtml(cards), sameHtml: book.knownVolume ? '' : sameWorksHtml(cards) };
+    return {
+      wikidataOf, listDateOf, bookAuthors: bookAuthors(), missing, nudged: book.nudged === 'works', wikidataHtml: wikidataLineHtml(cards), sameHtml: book.knownVolume ? '' : sameWorksHtml(cards),
+      found: { ...book.found, authors: bookAuthors() }, lifetime: authorLifetime(),
+    };
+  }
+
+  // The one author's lifetime, when Open Library knows it, offered for every work of a collection
+  // ("Plutarch's lifetime, 46–119"). Not for a book of several authors, whose works have different ones.
+  function authorLifetime() {
+    if (!book.work || bookAuthors().length !== 1) return null;
+    const life = dateSuggestions().find(suggestion => suggestion.lifetimeOf);
+    return life ? { name: life.lifetimeOf, text: life.text } : null;
   }
 
   // What Wikidata said about the cards' works, or that it is still being asked; and, once titles or
@@ -667,14 +680,12 @@ export function render(container, state, actions) {
     if (button) button.hidden = !wikidataChanged(book.cards);
   }
 
-  // A card's search link, pointed at its title and author as typed now.
+  // A card's search link, pointed at its title as typed now and the kind of work chosen.
   function refreshCardSearch(link) {
     readCards(book, stepArea);
     const card = book.cards[Number(link.closest('[data-card]').dataset.card)];
     if (!card) return;
-    const authors = typedNames(card.author);
-    const ask ={ 'card-date': workDateQuestion, 'card-language': workLanguageQuestion, 'card-title': originalTitleQuestion }[link.dataset.searchWeb];
-    refreshSearchLink(link, ask(card.title, authors));
+    refreshSearchLink(link, workDetailsQuestion(card.title, { ...book.found, authors: bookAuthors() }, card.kind));
   }
 
   // The date of a work already held that a single book was joined to ("Same work?"), for the check.
@@ -793,7 +804,8 @@ export function render(container, state, actions) {
       <div class="choices">${suggestionsHtml}</div>${waitingHtml}${problemHtml}
       <form class="form"><label class="field">Or type a date<input name="dating" value="${attr(book.dating)}" placeholder="c. 397, 1530–59, early 2nd c." autocomplete="off"></label>
         <p class="preview" data-preview></p>
-        <p class="search-line">${searchLinkHtml(workDateQuestion(searchTitle(book.found), book.found.authors))}</p>
+        ${kindChipsHtml(book.datingKind)}
+        <p class="search-line">${searchLinkHtml(workDateQuestion(searchTitle(book.found), book.found.authors, book.datingKind))}</p>
         <div class="step-nav"><button type="button" class="btn" data-action="back">Back</button><button type="button" class="btn" data-action="unknown">Don't know</button>
           <button class="btn btn-primary btn-big" type="submit">Next</button></div></form>`;
   }
@@ -900,6 +912,7 @@ export function render(container, state, actions) {
     if (book.step === 'date') book.dating = (value('dating') || '').trim();
     if (book.step === 'spine') book.heightCm = (value('heightCm') || '').trim();
     if (book.step === 'works') {
+      book.allDate = (value('allDate') || '').trim();
       readCards(book, stepArea);
       // The lines saved and read by the later steps (each translator) follow the cards as corrected.
       book.contents = contentsFromCards(book.cards);
@@ -962,6 +975,14 @@ export function render(container, state, actions) {
       }
       return drawStep();
     }
+    // "All written about the same time?": the date typed, or the author's lifetime, for every work without one.
+    if (action === 'cards-all-date' || action === 'cards-lifetime') {
+      const date = action === 'cards-lifetime' ? value : book.allDate;
+      if (date && parseDating(date).ok) fillUndatedCards(book.cards, date);
+      return drawStep();
+    }
+    // A kind of work beside the date box: its rule shown, the search narrowed, the kind saved; a second tap takes it back.
+    if (action === 'date-kind') { book.datingKind = book.datingKind === value ? '' : value; return drawStep(); }
     if (action === 'wikidata-again') {
       const question = wikidataQuestion(book.cards);
       askWikidata(book, question.titles, question.authors);
@@ -1081,7 +1102,7 @@ export function render(container, state, actions) {
       setRecord: setRecordFor(found.set),
       work: {
         title: '', originalTitle: isEnglish(book.language) || book.contents !== null ? '' : book.originalTitle, originalLanguage: book.language, category: book.category, tags: book.tags,
-        datings: [{ text: book.dating, note: book.datingNote, working: true }],
+        datings: [{ text: book.dating, note: book.datingNote, kind: datingKindOf(book.datingKind) || null, working: true }],
       },
       copy: {
         binding: book.binding, material: book.material, extras: book.extras, location: book.location,
