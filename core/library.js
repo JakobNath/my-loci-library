@@ -79,6 +79,21 @@ export function entryOf(edition, copies, worksById, authorsById, withSearch = tr
     needsDate: works.some(work => sortYearOf(work) === null),
     searchText: withSearch ? searchTextOf(edition, worksById, authorsById, copies, set) : null,
     piecesText: withSearch ? piecesTextOf(edition) : null,
+    searchOrder: withSearch ? searchOrderOf(edition, works) : null,
+  };
+}
+
+/**
+ * Where a book stands among search results: editions of one work sit
+ * together, ordered by the first work's title, then its ID, then the
+ * edition's own title. Worked out with the search text, so a keystroke
+ * that matches most of the library only compares ready-made keys
+ * (making them on every keystroke took 15 ms for 10,000 books).
+ */
+function searchOrderOf(edition, works) {
+  return {
+    work: works[0] ? `${textKey(works[0].title)} ${works[0].id}` : textKey(edition.title),
+    title: titleKey(edition),
   };
 }
 
@@ -97,7 +112,7 @@ export function authorLineOf(works, authors, editors) {
 /** The library with every entry's search text filled in. Never changes its input. */
 export function withSearchText(library) {
   const entries = library.entries.map(entry => (entry.searchText !== null ? entry
-    : { ...entry, searchText: searchTextOf(entry.edition, library.worksById, library.authorsById, entry.copies, entry.set), piecesText: piecesTextOf(entry.edition) }));
+    : { ...entry, searchText: searchTextOf(entry.edition, library.worksById, library.authorsById, entry.copies, entry.set), piecesText: piecesTextOf(entry.edition), searchOrder: searchOrderOf(entry.edition, entry.works) }));
   return { ...library, entries };
 }
 
@@ -113,8 +128,9 @@ export function sortNameOf(author) {
 // faster than comparing titles with the browser's language rules on every
 // step of the sort. Books with no value for the chosen field go last.
 const textKey = text => (text ? normalizeForSearch(text).replace(/\d+/g, digits => digits.padStart(6, '0')) : null);
+const titleKey = edition => textKey(edition.title.replace(/^(the|a|an) /i, ''));
 export const SORTS = {
-  title: { label: 'Title', key: entry => textKey(entry.edition.title.replace(/^(the|a|an) /i, '')) },
+  title: { label: 'Title', key: entry => titleKey(entry.edition) },
   subtitle: { label: 'Subtitle', key: entry => textKey(entry.edition.subtitle) },
   author: { label: 'Author', key: entry => textKey(entry.authorSort) },
   originalDate: { label: 'Original date', key: entry => entry.sortYear },
@@ -257,10 +273,8 @@ export function searchEntries(library, query, limit = 50) {
   }
   // Every match is put in order before the list is cut, so the ones shown are
   // the first in order, not whichever happened to be read first.
-  // Editions of one work sit together: order by the first work's title, then its ID.
-  const firstWork = entry => (entry.works[0] ? `${textKey(entry.works[0].title)} ${entry.works[0].id}` : textKey(entry.edition.title));
-  const keyed = found.map(entry => ({ entry, key: firstWork(entry), title: SORTS.title.key(entry) }));
-  keyed.sort((a, b) => compareKeys(a.key, b.key, false) || compareKeys(a.title, b.title, false));
+  const keyed = found.map(entry => ({ entry, order: entry.searchOrder ?? searchOrderOf(entry.edition, entry.works) }));
+  keyed.sort((a, b) => compareKeys(a.order.work, b.order.work, false) || compareKeys(a.order.title, b.order.title, false));
   return keyed.slice(0, limit).map(item => item.entry);
 }
 

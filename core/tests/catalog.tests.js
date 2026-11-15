@@ -5,7 +5,7 @@ import { countPages } from '../pages.js';
 import { estimateSize } from '../sizes.js';
 import { normalizeForSearch, searchTextOf, matchesSearch } from '../search.js';
 import { parseContentsLines, contentsLine, tidyPastedContents } from '../contents.js';
-import { buildLibrary, viewEntries, searchEntries, searchPieces, originalTextHolders, authorLineOf, sortEntries, filterChoices, missingDetails, shownTitle, SORTS } from '../library.js';
+import { buildLibrary, withSearchText, viewEntries, searchEntries, searchPieces, originalTextHolders, authorLineOf, sortEntries, filterChoices, missingDetails, shownTitle, SORTS } from '../library.js';
 import { equal, same, ok } from './check.js';
 import { newRecord } from '../records.js';
 import { isBible, isBibleBook } from '../bible.js';
@@ -273,6 +273,9 @@ export const tests = [
       same(searchEntries(library, 'sermon hackett').map(entry => entry.edition.title), ['Sermon 07']);
       same(searchEntries(library, 'sermon 1903').map(entry => entry.edition.title), ['Sermon 03']);
       same(searchEntries(library, 'study').map(entry => entry.edition.title), ['Sermon 09']);
+      const titles = lib => searchEntries(lib, 'sermon').map(entry => entry.edition.title);
+      same(titles(buildLibrary(records, { searchText: false })), titles(library), 'the same order before the search text is built');
+      same(titles(withSearchText(buildLibrary(records, { searchText: false }))), titles(library), 'and after it is added');
     },
   },
   {
