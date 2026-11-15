@@ -198,7 +198,7 @@ These could not be tried in the browser preview while building (it would not ope
 
 ## Each work, must fields and the check (1.22.0, 14 November 2026)
 
-The Marx-Engels Reader was moved to the trash after this release, to be added again as the test.
+First move The Marx-Engels Reader already in the catalog (saved on 1.21.0, with 51 works ending in " -") to the trash from its book page, then add it again as the test.
 
 - [ ] Phone: scan The Marx-Engels Reader (ISBN 0-393-09040-0). The contents step lists 46 works with no " -" at the ends and no part headings ("The Early Marx"). Tap "Yes, these works", choose German, and "The works in this book" shows one card per work with Karl Marx as author and German lit, and "0 of 46 answered" (or more if Wikidata's dates were used).
 - [ ] Phone, same cards: "Wikidata knows … of these works" with "Use Wikidata's dates". Tapping it fills On the Jewish Question 1843, Theses on Feuerbach 1845 and others, but not the 1844 Manuscripts (1932) or the Grundrisse (1939): those cards say "first printed …, after the author died". The Poverty of Philosophy extract offers "French (Wikidata)".
