@@ -69,7 +69,7 @@ test('empty fields are filled from all three sources, and a field a person typed
     assert.deepEqual(book.identifiers, { lccn: '96053280', oclc: null, lcc: 'B358 .C3 1997', ddc: '184', openLibrary: 'OL49233743M', hathiTrust: null });
     assert.deepEqual(book.subjects, ['Socrates', 'Philosophy, Ancient']);
     assert.equal(book.format, FORMAT_VERSION, 'written in the current format');
-    assert.equal(after.get(platoWork.id).originalLanguage, 'Ancient Greek');
+    assert.equal(after.get(platoWork.id).originalLanguage, 'Greek');
     assert.deepEqual(after.get(platoWork.id).datings, [], 'an original date is never filled');
     const memory = JSON.parse(readFileSync(join(folder, MEMORY), 'utf8'));
     assert.equal(memory.books[complete.id].wrote.pages, 'xxx, 1808');

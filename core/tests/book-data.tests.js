@@ -47,7 +47,7 @@ export const tests = [
       same([found.title, found.authors], ['Complete Works', ['Plato']]);
       same(names(found), ['John M. Cooper (editor)', 'D.S. Hutchinson (other)'], 'the associate editor is not the editor');
       same([found.pages, found.height, found.publisher, found.place, found.year], ['xxx, 1808', 240, 'Hackett Publishing', 'Indianapolis, Ind.', '1997']);
-      equal(found.originalLanguage, 'Ancient Greek');
+      equal(found.originalLanguage, 'Greek');
       equal(found.originalTitle, '', '"Works" names a kind of collection, not an original title');
       same(found.identifiers, { lccn: '96053280', oclc: '', lcc: 'B358 .C3 1997', ddc: '184', openLibrary: 'OL49233743M', hathiTrust: '' });
       same(found.subjects, ['Socrates', 'Philosophy, Ancient']);
@@ -111,7 +111,7 @@ export const tests = [
       same(names(found), ['Michael W. Holmes (translator)', 'Michael W. Holmes (editor)']);
       same(found.contents.slice(0, 3).map(entry => entry.title), ['First Clement', 'Second Clement', 'The Letters of Ignatius']);
       equal(found.contents.length, 21);
-      same([found.editionStatement, found.height, found.originalLanguage], ['3rd ed.', 230, 'Ancient Greek']);
+      same([found.editionStatement, found.height, found.originalLanguage], ['3rd ed.', 230, 'Greek']);
     },
   },
   {
@@ -256,7 +256,7 @@ export const tests = [
     name: 'a volume holding part of one work (the Iliad, books 1-12) offers no contents',
     fn() {
       const found = fromHathiTrust(iliad.hathiTrust, iliad.isbn);
-      same([found.set, found.volume, found.contents.length, found.originalLanguage], ['Iliad', '1', 0, 'Ancient Greek']);
+      same([found.set, found.volume, found.contents.length, found.originalLanguage], ['Iliad', '1', 0, 'Greek']);
     },
   },
   {

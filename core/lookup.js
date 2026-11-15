@@ -53,11 +53,11 @@ export const yearOf = text => (String(text || '').match(/(?<!\d)(1[4-9]\d\d|20\d
 /**
  * Pages as printed: "xxviii, 311 p. ;" is "xxviii, 311". Library records made
  * before printing say "pages cm" (no count yet), and a set is described by its
- * volumes ("v. <1-3>", "2 v."); both give nothing.
+ * volumes ("v. <1-3>", "2 v.", or "v." alone for a set still coming out); all give nothing.
  */
 export function cleanPages(text) {
   const pages = String(text || '').replace(/\s*\bp(?:p|ages)?\.?/gi, '').replace(/\bcm\b/gi, '').replace(/[\s;:,.]+$/, '').trim();
-  if (/^\d+\s+v$/i.test(pages)) return ''; // "2 v." is two volumes, not pages
+  if (/^(?:\d+\s+)?v$/i.test(pages)) return ''; // "2 v." is two volumes, not pages; nor is "v." page v
   return /\d|^[ivxlc]+$/i.test(pages) && /^[\divxlcdm[\]\s,–-]+$/i.test(pages) ? pages : '';
 }
 
@@ -73,12 +73,17 @@ function rolesIn(words) {
   return text.includes('introduc') ? ['introduction'] : [];
 }
 
+// Words that say who else helped rather than name a person: "translated by Ford
+// Lewis Battles, in collaboration with the editor and a committee of advisers".
+// The opening words are lower case only, so "A D Melville" stays a name.
+const NOT_A_NAME = /^(?:in|with|a|an|the|by|under|assisted|together)\s|\b(?:[Cc]ollaboration|[Cc]ommittee|[Aa]dvis[eo]rs?|[Aa]ssistance|others|[Ee]ditors?|[Tt]ranslators?|staff|members)\b/;
+
 // "Robert Kolb and Timothy J. Wengert", "Charles Arand ... [et al.]". Full
 // stops after initials stay (F. J. Sheed).
 function namesIn(text) {
   return text.replace(/\.\.\.|\[?et al\.?\]?/g, '').split(/\s+and\s+|\s*,\s+|\s+&\s+/)
     .map(name => name.trim().replace(/[\s.;,]+$/, (end, at, whole) => (/[A-Z]\.$/.test(whole.trim()) ? '.' : '')))
-    .filter(name => /\p{L}{2}/u.test(name));
+    .filter(name => /\p{L}{2}/u.test(name) && !NOT_A_NAME.test(name));
 }
 
 /**

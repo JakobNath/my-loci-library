@@ -25,9 +25,41 @@ export function translatorNames(text) {
   return String(text || '').split(/;|\s+(?:and|&)\s+/i).map(name => tidy(name)).filter(Boolean);
 }
 
+// A name's words, for comparing a misspelt "Henery Bettenson" with "Henry Scowcroft Bettenson".
+const nameWords = name => normalizeForSearch(name).split(' ').filter(Boolean);
+
+// Whether two words differ by one letter added, dropped or changed ("henery" and "henry").
+function oneLetterApart(a, b) {
+  const [short, long] = a.length <= b.length ? [a, b] : [b, a];
+  if (long.length - short.length > 1) return false;
+  let at = 0;
+  while (at < short.length && short[at] === long[at]) at++;
+  const rest = short.length === long.length ? at + 1 : at;
+  return short.slice(rest) === long.slice(at + 1);
+}
+
+// The same person written two ways: as samePerson, or with the same surname and a
+// first name one letter apart or given as an initial, since a statement of
+// responsibility is typed by hand and may be misspelt ("Henery Bettenson").
+function sameLoosely(a, b) {
+  if (samePerson(a, b)) return true;
+  const [x, y] = [nameWords(a), nameWords(b)];
+  if (x.length < 2 || y.length < 2 || x[x.length - 1] !== y[y.length - 1]) return false;
+  return x[0][0] === y[0][0] && (x[0].length === 1 || y[0].length === 1 || oneLetterApart(x[0], y[0]));
+}
+
+// A church, council or society named as the author: the body whose texts a book collects
+// ("Evangelisch-Lutherische Kirche (Germany)" on the Book of Concord), not a person who wrote it.
+const BODY_WORDS = /\b(?:church|kirche|council|synod|society|association|committee|commission|conference|congregation|university|institute|academy|ministry|gesellschaft|verein)\b/i;
+const isBody = name => BODY_WORDS.test(name);
+
 /**
  * The people of a looked-up book, set right where the records make it clear:
- * - someone the record names as translator, editor or the like is not also an author;
+ * - someone the record names as translator, editor or the like is not also an
+ *   author, even when one of the two spellings is wrong; the author list's
+ *   spelling is kept, since a statement of responsibility is typed by hand;
+ * - a church or other body named as the author of a book with editors is
+ *   dropped: the editors stand for the book, and its works have their own authors;
  * - an "author" that is the publisher is dropped;
  * - an author named in another script gets the Latin form (Ὅμηρος is Homer);
  * - an edition's author whom Open Library's work record does not list
@@ -43,12 +75,18 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
   if (!found) return found;
   const doc = (search && search.docs && search.docs[0]) || {};
   const others = doc.author_alternative_name || [];
-  const contributors = [...found.contributors];
-  const named = contributors.filter(person => person.role !== 'author');
   const inOtherScript = found.authors.some(name => !latin(name)) || (doc.author_name || []).some(name => !latin(name));
-  let authors = found.authors
-    .map(name => nameInLatin(tidy(name), others, known))
+  const latinAuthors = found.authors.map(name => nameInLatin(tidy(name), others, known));
+  // A contributor misspelt in the statement of responsibility takes the author list's spelling.
+  const contributors = found.contributors.map(person => {
+    const author = person.role === 'author' ? null : latinAuthors.find(name => !samePerson(person.name, name) && sameLoosely(person.name, name));
+    return author ? { ...person, name: author } : person;
+  });
+  const named = contributors.filter(person => person.role !== 'author');
+  const hasEditor = named.some(person => person.role === 'editor');
+  let authors = latinAuthors
     .filter(name => !named.some(person => samePerson(person.name, name)))
+    .filter(name => !(hasEditor && isBody(name)))
     .filter(name => !found.publisher || companyKey(name) !== companyKey(found.publisher));
   // The same person given twice (once in each script) is kept once.
   authors = authors.filter((name, i) => authors.findIndex(other => samePerson(other, name)) === i);
@@ -64,6 +102,21 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
     authors = authors.filter(listed);
   }
   return { ...found, authors, contributors };
+}
+
+/**
+ * The record authors of a collection who may be its editors instead: those no
+ * line of its contents names as an author. Records often name the editor of
+ * an anthology as its author with nothing to show it (Michael W. Holmes for
+ * the Apostolic Fathers), so adding asks; an author whose works the contents
+ * name (Euripides) is not asked about.
+ * @param {string[]} authors the book's authors as found
+ * @param {{ author: string }[]} lines the contents, as parseContentsLines reads them
+ * @returns {string[]}
+ */
+export function possibleEditors(authors, lines) {
+  const writers = lines.flatMap(line => String(line.author || '').split(/\s+and\s+/)).filter(Boolean);
+  return authors.filter(name => !writers.some(writer => samePerson(writer, name)));
 }
 
 /**

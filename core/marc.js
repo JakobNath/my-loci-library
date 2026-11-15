@@ -292,7 +292,9 @@ function fromMarc(xml, isbn, source) {
     found.set = found.title;
     found.volume = chosen.volume;
     found.title = '';
-    found.subtitle = '';
+    // A volume the contents note gives one title ("v. 1. Apocalyptic literature and testaments") is titled by it.
+    found.subtitle = found.contents.length === 1 ? found.contents[0].title : '';
+    if (found.contents.length === 1) found.contents = [];
     if (/[,–-]/.test(found.seriesNumber)) found.seriesNumber = ''; // the set's numbers, "36, 123, 164-167"
   }
   found.subjects = [...new Set(record.filter(item => /^6(00|10|11|30|50|51)$/.test(item.tag) && item.ind2 === '0').map(subjectHeading))];
