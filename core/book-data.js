@@ -2,9 +2,12 @@
 // Books (the volume record), and how the three sources are merged
 // (PLAN.md, "Book data"). The Library of Congress is read in core/marc.js.
 // Only answers are read here; the edges and the laptop tool fetch them.
+// Also what a book's series tells about it: facing-page languages and
+// Loeb's style of title.
 
 import { isbn13 } from './entry.js';
 import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn } from './lookup.js';
+import { normalizeForSearch } from './search.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
 // like ours meets. A code not listed is shown as it is.
@@ -67,9 +70,11 @@ function contentsFromToc(toc) {
 }
 
 // "Chemnitz's works -- v. 7, 8" and "Loeb classical library ; 36" give the series and its number.
-function seriesParts(text) {
+// Open Library sometimes splits them: ["Everyman's library ;", "259"].
+function seriesParts(list) {
+  const text = /^[\d\s,.–-]+$/.test(list[1] || '') ? `${list[0]} ${list[1]}` : list[0];
   const [name, number = ''] = tidy(text).split(/\s+--\s+|\s*;\s*/);
-  return { series: titleCase(name.replace(/[.,]$/, '')), seriesNumber: number.replace(/^(?:v|vol|no)\.?\s*/i, '') };
+  return { series: titleCase(name.replace(/[.,]$/, '')), seriesNumber: number.replace(/^(?:v|vol|no)\.?\s*/i, '').replace(/\.$/, '') };
 }
 
 // "John Bayley (Introduction)" names a role; "Chadwick, Henry, 1920-" does not.
@@ -102,7 +107,7 @@ export function fromOpenLibraryEdition(edition, isbn) {
   found.isbn = isbn;
   // Records copied from booksellers say "New Ed edition", meaning "New ed.".
   found.editionStatement = tidy(edition.edition_name).replace(/[[\]]/g, '').replace(/\.\.$/, '.').replace(/\bEd\.? edition$/i, 'ed.');
-  Object.assign(found, edition.series && edition.series.length ? seriesParts(edition.series[0]) : {});
+  Object.assign(found, edition.series && edition.series.length ? seriesParts(edition.series) : {});
   found.binding = bindingFromFormat(edition.physical_format);
   const dimensions = String(edition.physical_dimensions || '').match(/^\s*([\d.]*)\s*x\s*([\d.]*)\s*x\s*([\d.]*)\s*(\w+)/i);
   if (dimensions) Object.assign(found, sizesFromDimensions(...dimensions.slice(1)));
@@ -168,6 +173,46 @@ export function fromGoogleBooksVolume(volume, isbn) {
   return found;
 }
 
+// A bookseller's subtitle naming the series and number: "Loeb Classical #012 (Works)".
+const SELLER_SERIES = /^(.+?)\s*#\s*0*(\d+)\s*(?:\([^)]*\))?$/;
+// Booksellers' short names for series, written out.
+const SERIES_NAMES = { 'loeb classical': 'Loeb Classical Library' };
+
+/**
+ * The series and number a bookseller wrote as the subtitle.
+ * @param {string} subtitle
+ * @returns {{ series: string, seriesNumber: string }|null} null for a real subtitle
+ */
+export function seriesFromSubtitle(subtitle) {
+  const match = tidy(subtitle).match(SELLER_SERIES);
+  if (!match) return null;
+  const name = tidy(match[1]);
+  return { series: SERIES_NAMES[name.toLowerCase()] || name, seriesNumber: match[2] };
+}
+
+// The first ISBNs (then Standard Book Numbers) were printed in 1966 and 1967,
+// so a book with one was printed later: an earlier year is an older printing's.
+const FIRST_ISBN_YEAR = 1966;
+
+/** Whether a source gave a year too early for the book with an ISBN in hand (Euripides IV: 1920 for a 1980 copy). */
+export function isYearTooEarly(found) {
+  return Boolean(found.isbn && found.year && Number(found.year) < FIRST_ISBN_YEAR);
+}
+
+// One source's answer with what records get wrong set right before merging:
+// a series written as the subtitle, and an older printing's year.
+function corrected(found) {
+  const fixed = { ...found };
+  const series = seriesFromSubtitle(found.subtitle);
+  if (series) {
+    fixed.subtitle = '';
+    if (!fixed.series) fixed.series = series.series;
+    if (!fixed.seriesNumber) fixed.seriesNumber = series.seriesNumber;
+  }
+  if (isYearTooEarly(found)) fixed.year = '';
+  return fixed;
+}
+
 // A page count alone ("311"), as opposed to pages as printed ("xxviii, 311").
 const isBareCount = pages => /^\d+$/.test(pages);
 
@@ -177,12 +222,13 @@ const isBareCount = pages => /^\d+$/.test(pages);
  * comes from the first source that has it, which gives the order of
  * PLAN.md for bibliographic facts, and for height, thickness and covers
  * "whichever has them". Pages as printed beat a bare page count from any
- * source. Original dates are never produced.
+ * source. A series written as the subtitle is read as the series, and a year
+ * too early for a book with an ISBN is not used. Original dates are never produced.
  * @param {(import('./lookup.js').Found|null)[]} answers in order of preference
  * @returns {import('./lookup.js').Found|null}
  */
 export function mergeFound(answers) {
-  const present = answers.filter(Boolean);
+  const present = answers.filter(Boolean).map(corrected);
   if (!present.length) return null;
   const merged = present.reduce(combineFound);
   const printed = present.map(found => found.pages).find(pages => pages && !isBareCount(pages));
@@ -205,6 +251,95 @@ export function mergeFound(answers) {
 export function withLibraryContents(merged, answers) {
   const library = answers.find(found => found && ['libraryofcongress', 'hathitrust'].includes(found.source) && found.contents.length > 1);
   return merged && library ? { ...merged, contents: library.contents } : merged;
+}
+
+// Booksellers' subject headings ("Fiction / Classics") start with a broad
+// group, which is what a category is; an old heading names one in two words.
+const BOOKSELLER_GROUPS = { 'plays / drama': 'Drama' };
+
+/**
+ * The categories a record's subjects suggest, offered while adding. Only
+ * booksellers' headings give one; a library heading ("Christian saints --
+ * Biography") is a topic, not a broad group.
+ * @param {string[]} subjects
+ * @returns {string[]}
+ */
+export function categoriesFromSubjects(subjects) {
+  const groups = subjects.filter(subject => subject.includes(' / '))
+    .map(subject => BOOKSELLER_GROUPS[subject.toLowerCase()] || subject.split(' / ')[0]);
+  return [...new Set(groups.map(group => titleCase(tidy(group).toLowerCase())))];
+}
+
+// Series that print the original text and an English translation on facing pages.
+export const FACING_PAGE_SERIES = [
+  'Loeb Classical Library', 'I Tatti Renaissance Library', 'Dumbarton Oaks Medieval Library',
+  'Murty Classical Library of India', 'Clay Sanskrit Library',
+];
+
+// "The Loeb classical library [Latin authors]" is the Loeb Classical Library.
+const seriesStem = name => normalizeForSearch(name).replace(/^the /, '').replace(/ library.*$/, '');
+
+/** Whether a series prints the original and English on facing pages. */
+export function isFacingPageSeries(series) {
+  const stem = seriesStem(series);
+  return Boolean(stem) && FACING_PAGE_SERIES.some(known => stem.startsWith(seriesStem(known)));
+}
+
+const isEnglishName = language => /^english$/i.test(tidy(language));
+
+/**
+ * What "This book is in" starts with while adding: the original and English
+ * for a facing-page series, else the languages a record gave, else English.
+ * @param {{ found: string[], series: string, original: string }} book
+ * @returns {string} as typed in the box: "Ancient Greek, English"
+ */
+export function startingBookLanguages({ found, series, original }) {
+  if (tidy(original) && !isEnglishName(original) && isFacingPageSeries(series)) return `${tidy(original)}, English`;
+  return found.join(', ') || 'English';
+}
+
+/**
+ * The one-tap answers to "This book is in" for a work first written in
+ * another language: English, the original with English on facing pages, or
+ * the original only.
+ * @param {string} original the work's original language
+ * @returns {{ text: string, label: string }[]} none for a work written in English
+ */
+export function bookLanguageChoices(original) {
+  const name = tidy(original);
+  if (!name || isEnglishName(name)) return [];
+  return [
+    { text: 'English', label: 'English' },
+    { text: `${name}, English`, label: `${name}, English (facing pages)` },
+    { text: name, label: `${name} only` },
+  ];
+}
+
+// Roman numerals up to 39, enough for any author's volumes in Loeb (Cicero has 29).
+const ROMAN = [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']];
+function roman(number) {
+  let left = number;
+  let text = '';
+  for (const [value, letters] of ROMAN) {
+    while (left >= value) { text += letters; left -= value; }
+  }
+  return text;
+}
+
+/**
+ * A Loeb volume's title in Loeb's own style: the author, the author's volume
+ * in Roman numerals, and the works, "Euripides IV: Ion. Hippolytus. Medea.
+ * Alcestis". Only offered, since some Loebs are titled by one work.
+ * @param {import('./lookup.js').Found} found
+ * @returns {string} '' when the book is not such a volume, or already has the title
+ */
+export function loebStyleTitle(found) {
+  const volume = String(found.volume || '').trim();
+  const number = /^\d+$/.test(volume) ? Number(volume) : 0;
+  const label = number >= 1 && number < 40 ? roman(number) : /^[IVX]+$/.test(volume) ? volume : '';
+  if (!seriesStem(found.series).startsWith('loeb classical') || !label || !found.authors.length || !found.contents.length) return '';
+  const title = `${found.authors[0]} ${label}: ${found.contents.map(work => work.title).join('. ')}`;
+  return title === found.title ? '' : title;
 }
 
 // Google's reasons for refusing a key (the "reason" in its error answer), in plain words.
