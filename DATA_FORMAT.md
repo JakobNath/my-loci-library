@@ -83,7 +83,7 @@ An ID is permanent. It is never changed, and never reused, even after a record i
 
 | Field | Type | Meaning |
 | --- | --- | --- |
-| `format` | number | The format version this record was written in. Currently 5. |
+| `format` | number | The format version this record was written in. Currently 6. |
 | `type` | text | `work`, `edition`, `copy`, `author`, `wishlist` or `set`. |
 | `id` | text | The record's ID (see above). |
 | ... | | The fields of its type, in the order listed below. |
@@ -155,9 +155,10 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `subtitle` | text or null | | As printed. |
 | `contents` | list | yes | The works in this edition, in order; see "Contents". At least one. |
 | `contributors` | list | | `{ "name": "Henry Chadwick", "role": "translator" }`. Roles: `translator`, `editor`, `introduction`, `illustrator`, `other`. Authors come from the works, not from here. |
-| `publisher` | text or null | | |
-| `place` | text or null | | Place of publication. |
+| `publisher` | text or null | | Several publishers, as on a Loeb, are kept in order with "; " between them: "Harvard University Press; William Heinemann". |
+| `place` | text or null | | Place of publication. Several in the same order as the publishers: "Cambridge, MA; London". |
 | `year` | number or null | | The year this edition or printing was published. |
+| `firstPrinted` | number or null | | The year this edition was first printed, as its copyright page says ("First published 1912"), when this copy is a later printing or says so. Typed by a person, never taken from a lookup. (Version 6.) |
 | `editionStatement` | text or null | | As printed: "3rd ed.", "28th revised edition". |
 | `series` | text or null | | "Loeb Classical Library". |
 | `seriesNumber` | text or null | | "36". Text, because some are "38A". |
@@ -165,6 +166,7 @@ Centuries follow the historical convention: the 2nd century is 101–200, the 4t
 | `volume` | text or null | | The volume label within the set: "1", "I/1". |
 | `setRecord` | set ID or null | | The set's own record, when it has one (version 4). The `set` text stays as well, and is kept the same as the set record's title. |
 | `isbn` | text or null | | ISBN-13, digits only. An ISBN-10 is converted when entered. |
+| `otherIsbns` | list of text | | Any other ISBN printed in the book (a British one beside the American, or another binding's), each ISBN-13, digits only, never the same as `isbn`. A scan or search of any of them finds the book. Offered from a lookup only for a person to add. (Version 6.) |
 | `identifiers` | object | | The edition's catalogue numbers, from library records; see "Identifiers". (Version 2.) |
 | `languages` | list of text | | The languages printed in it. Two make a diglot ("Greek", "English"), three a triglot. |
 | `subjects` | list of text | | Subject headings from library records, as the library writes them: "Christian saints -- Algeria -- Hippo (Extinct city) -- Biography". (Version 2.) |
@@ -417,6 +419,7 @@ Each record carries, in `changed`, the moment each field was last edited. When t
 - Version 3 (November 2026): each work gained `otherTitles` and `wikidata`; each edition gained `foundContents` and the identifiers `openLibrary` and `hathiTrust`; each contents entry gained `piece` and `cite`, and its `work` may be null for a piece. A version-2 work is read with no other titles and no Wikidata ID; a version-2 edition with both new identifiers null, nothing found, and every contents entry a work (`piece` null) not cited. Other records only change their `format`. A version-2 file stays as it is until the record is next saved.
 - Version 4 (November 2026): each copy gained `material` and `extras`, and its `binding` holds only a binding; each edition gained `setRecord`; and there is a new record type, `set`, in the folder `sets/`. A version-3 copy's binding text is read into the three parts by a fixed table (`readBindingText` in `core/bindings.js`): "Hardcover with dust jacket" is Hardcover and Dust jacket; "Cloth and hardcover in slip case" is Hardcover, Cloth and Slipcase; "Cloth" alone is the material Cloth. Text that cannot be read wholly (a word left over, or two bindings at once) stays in `binding` as it was, with no material and no extras, so nothing is guessed or lost. A version-3 edition is read with no set record. Other records only change their `format`. A version-3 file stays as it is until the record is next saved.
 - Version 5 (November 2026): each edition lost `translationFirstPublished`, the year its translation first appeared, which was not worth asking for. A version-4 edition is read without it (the value and its stamp in `changed` are dropped); other records only change their `format`. A version-4 file keeps the field, in its place after `editionStatement`, until the record is next saved.
+- Version 6 (November 2026): each edition gained `firstPrinted`, the year it was first printed (after `year`), and `otherIsbns`, the other ISBNs printed in it (after `isbn`). A version-5 edition is read with no first printing and no other ISBNs; other records only change their `format`. A version-5 file stays as it is, without the two fields, until the record is next saved.
 - Every program that reads records reads them through `migrate` in `core/records.js`, which upgrades a record one version at a time, with tests. A record newer than the program is never changed: the app asks to be refreshed and writes nothing. Old records are never silently reinterpreted.
 - When the format changes again: raise the version, say here what changed, and add the next step to `migrate`.
 
@@ -426,7 +429,7 @@ A work with a disputed dating (sample book #10):
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "work",
   "id": "d7dche0q2m4k",
   "title": "Didache",
@@ -453,7 +456,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "edition",
   "id": "n2a8ed7v1kcx",
   "title": "Novum Testamentum Graece",
@@ -469,6 +472,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "publisher": "Deutsche Bibelgesellschaft",
   "place": "Stuttgart",
   "year": 2012,
+  "firstPrinted": null,
   "editionStatement": "28th revised edition",
   "series": null,
   "seriesNumber": null,
@@ -476,6 +480,7 @@ An anthology edition (sample book #6, NA28; contents shortened here):
   "volume": null,
   "setRecord": null,
   "isbn": "9783438051400",
+  "otherIsbns": [],
   "identifiers": { "lccn": null, "oclc": null, "lcc": null, "ddc": null, "openLibrary": null, "hathiTrust": null },
   "languages": ["Greek"],
   "subjects": [],
@@ -502,7 +507,7 @@ A copy:
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "copy",
   "id": "c0pyna280001",
   "edition": "n2a8ed7v1kcx",
@@ -529,7 +534,7 @@ An author:
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "author",
   "id": "a7g5s9t1n0e2",
   "name": "Augustine",
@@ -545,7 +550,7 @@ A set:
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "set",
   "id": "s3tw0rks0001",
   "title": "Luther's Works",
@@ -567,7 +572,7 @@ A wishlist item:
 
 ```json
 {
-  "format": 5,
+  "format": 6,
   "type": "wishlist",
   "id": "w1shgerhard7",
   "title": "Theological Commonplaces",

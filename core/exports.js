@@ -23,7 +23,7 @@ export function originalDateText(entry, style = 'AD') {
 }
 
 const CSV_COLUMNS = ['Title', 'Subtitle', 'Authors', 'Original date', 'Translators', 'Editors', 'Publisher', 'Place', 'Year',
-  'Edition', 'Series', 'Volume', 'ISBN', 'LCCN', 'OCLC', 'LC call number', 'Dewey number', 'Subjects', 'Pages', 'Format', 'Binding', 'Location', 'Status', 'Value', 'Price paid', 'Added', 'Notes', 'ID'];
+  'First printed', 'Edition', 'Series', 'Volume', 'ISBN', 'Other ISBNs', 'LCCN', 'OCLC', 'LC call number', 'Dewey number', 'Subjects', 'Pages', 'Format', 'Binding', 'Location', 'Status', 'Value', 'Price paid', 'Added', 'Notes', 'ID'];
 
 /**
  * One row per copy (a book with no copy still gets a row), every edition, owned or not.
@@ -35,9 +35,9 @@ export function catalogCsv(entries, { dateStyle = 'AD' } = {}) {
     const { edition } = entry;
     const people = role => edition.contributors.filter(person => person.role === role).map(person => person.name).join('; ');
     const book = [edition.title, edition.subtitle, entry.authors.map(author => author.name).join('; '), originalDateText(entry, dateStyle),
-      people('translator'), people('editor'), edition.publisher, edition.place, edition.year, edition.editionStatement,
+      people('translator'), people('editor'), edition.publisher, edition.place, edition.year, edition.firstPrinted, edition.editionStatement,
       [edition.series, edition.seriesNumber].filter(Boolean).join(' '), [edition.set, edition.volume].filter(Boolean).join(', vol. '),
-      edition.isbn, edition.identifiers.lccn, edition.identifiers.oclc, edition.identifiers.lcc, edition.identifiers.ddc, edition.subjects.join('; '),
+      edition.isbn, edition.otherIsbns.join('; '), edition.identifiers.lccn, edition.identifiers.oclc, edition.identifiers.lcc, edition.identifiers.ddc, edition.subjects.join('; '),
       edition.pages, entry.isDigital ? 'Logos' : 'Physical'];
     const copies = entry.copies.length ? entry.copies : [null];
     for (const copy of copies) {

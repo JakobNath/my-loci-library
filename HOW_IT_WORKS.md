@@ -22,10 +22,11 @@ All colors, fonts and sizes come from `styles/tokens.css`. `sw.js` (the service 
 
 ## What happens when you add a book
 
-The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js`) asks one question per screen. The steps, in order:
+The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js` and the copyright page step by `ui/add-edition.js`) asks one question per screen. The steps, in order:
 
-1. **Find the book.** Scan the barcode, type the ISBN, or type a title. For an ISBN the phone asks Open Library and HathiTrust at the same moment, and Google Books too when a key is set or something is still missing. Open Library's facts come first; HathiTrust fills what Open Library lacks and gives the best list of the works inside a book; Google Books fills the rest. The same edition already in the catalog is noticed, and only another copy is added. A volume of a known set (`sets/`, such as Great Books) takes its title and works from the list; when the whole set shares one ISBN, the app asks "Which volume?" first.
-2. **Is this the book?** The found title, authors, publisher and cover, with "Fix details" for anything wrong. A book not found online is typed in from the title page.
+1. **Find the book.** Scan the barcode, type the ISBN, or type a title. For an ISBN the phone asks Open Library and HathiTrust at the same moment, and Google Books too when a key is set or something is still missing. Open Library's facts come first; HathiTrust fills what Open Library lacks and gives the best list of the works inside a book; Google Books fills the rest. The same edition already in the catalog is noticed, by its ISBN or any of the other ISBNs printed in it, and only another copy is added. A volume of a known set (`sets/`, such as Great Books) takes its title and works from the list; when the whole set shares one ISBN, the app asks "Which volume?" first.
+2. **Is this the book?** The found title, authors, publisher and cover, with "Fix details" for the title, authors, editors or translators. A book not found online is typed in from the title page.
+2a. **Title page and copyright page**, for every book: publishers and places (one row each), the year of this printing and the year first printed, the edition statement, the ISBN and any other ISBNs printed (an ISBN another record lists is offered with "Add", never filled in alone), series, set and volume, and pages. Each box starts with what was found; an empty one is outlined. A typed set and volume a known-set list holds takes its works from the list.
 3. **Contents**, only when a source lists works inside the book or the person says it holds several works. Each line becomes a work; Wikidata may offer their original dates ("Use these dates"). When nothing lists them, "Photograph the contents page" keeps a photo with the book, to be typed in later on the laptop ("Contents to enter").
 4. **Same work?**, only when the catalog already holds a work with this title, such as another translation of the *Confessions*.
 5. **Original date**, for a single work. Suggestions (from the lookup, Wikidata, or a checked known-set list) are offered, never saved without a tap.
@@ -37,7 +38,7 @@ The Add screen (`ui/add.js`, with its questions drawn by `ui/add-questions.js`) 
 
 **What is saved.** Nothing is written until the last step. Then the app saves four kinds of record together (`DATA_FORMAT.md`): the **work** or works (the text as written: original title, language, date), the **edition** (this printing: publisher, year, ISBN, contents, cover), the **copy** (the object on the shelf: place, binding, price) and any new **author**. They go to the device's own store at once and to GitHub at the next sync.
 
-**The rules behind it.** Original dates are set by a person, never saved from a lookup without a tap. Steps with nothing to ask are left out, so a simple book takes a few taps. Catalog facts the lookups miss (pages, series, size) are not asked: the laptop's `loci-enrich` fills them later, and "Needs details" shows what is still empty. A book can always be entered by hand when every lookup fails.
+**The rules behind it.** Original dates are set by a person, never saved from a lookup without a tap. Steps with nothing to ask are left out, so a simple book takes a few taps. Size and call numbers the lookups miss are not asked (publisher, year, pages and series are, on the copyright page step): the laptop's `loci-enrich` fills them later, and "Needs details" shows what is still empty. A book can always be entered by hand when every lookup fails.
 
 ## Sync between devices
 

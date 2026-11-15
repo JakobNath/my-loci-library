@@ -153,6 +153,19 @@ export const tests = [
     },
   },
   {
+    name: 'a record\'s other ISBNs are offered, each once, without a mistyped one, and no source gives a first printing',
+    fn() {
+      // Open Library's record for Chemnitz's Loci (9780758615473) also lists the other binding's
+      // ISBN, and an ISBN-10 whose digits are swapped (0785615477), which is left out.
+      same(fromOpenLibraryEdition(json(chemnitz.openLibraryEdition), chemnitz.isbn).otherIsbns, ['9780758615466']);
+      same(fromGoogleBooksVolume(json(chemnitz.googleBooksVolume), chemnitz.isbn).otherIsbns, [], 'Google Books lists only this one');
+      same(merged(chemnitz).otherIsbns, ['9780758615466'], 'joined from every source');
+      for (const book of [confessions, crime, chemnitz, plato, lewis, loeb, anna, na28, holmes]) equal(merged(book).firstPrinted, '', book.isbn);
+      same(mergeFound([{ ...emptyFound('openlibrary'), isbn: '9780674990128', otherIsbns: ['9780434990122'] }, { ...emptyFound('googlebooks'), otherIsbns: ['9780434990122', '9780674990128'] }]).otherIsbns,
+        ['9780434990122'], 'never the ISBN itself');
+    },
+  },
+  {
     name: 'no source ever produces an original date, and a Bible is read like any book',
     fn() {
       for (const book of [confessions, crime, chemnitz, plato, lewis, loeb, anna, na28, holmes]) {

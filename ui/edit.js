@@ -77,7 +77,7 @@ export function render(container, state, actions) {
   const entry = state.route.name === 'edit' ? state.library.entries.find(item => item.id === routeId) : null;
   const wishRecord = state.route.name === 'new' ? state.records.get(state.route.id) : null;
   const wish = wishRecord && wishRecord.type === 'wishlist' ? formFromWish(wishRecord) : null;
-  const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], medium: 'physical' };
+  const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], otherIsbns: [], medium: 'physical' };
   const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: null, material: null, extras: [], location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
   const isAnthology = entry ? entry.works.length > 1 : false;
   const work = entry && entry.works.length === 1 ? entry.works[0] : { title: '', originalTitle: '', originalLanguage: '', datings: [], category: '', tags: [] };
@@ -134,11 +134,12 @@ export function render(container, state, actions) {
         <div class="field-row">${fieldHtml('Tags (separate with ,)', 'tags', work.tags.join(', '), { help: true })}</div>
       </fieldset>
       <fieldset><legend>Edition</legend>
-        <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}${fieldHtml('Year', 'year', edition.year, { type: 'number' })}</div>
-        <div class="field-row">${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}</div>
+        <div class="field-row">${fieldHtml('Publisher', 'publisher', edition.publisher, { list: 'publishers' })}${fieldHtml('Place', 'place', edition.place, { list: 'places' })}</div>
+        <div class="field-row">${fieldHtml('Year', 'year', edition.year, { type: 'number' })}${fieldHtml('First printed', 'firstPrinted', edition.firstPrinted, { type: 'number', help: true })}${fieldHtml('Edition', 'editionStatement', edition.editionStatement, { help: true })}</div>
         <div class="field-row">${fieldHtml('Series', 'series', edition.series, { list: 'series', help: true })}${fieldHtml('Number', 'seriesNumber', edition.seriesNumber)}</div>
         <div class="field-row">${fieldHtml('Set', 'set', edition.set, { list: 'sets', help: true })}${fieldHtml('Volume', 'volume', edition.volume)}</div>
-        <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
+        <div class="field-row">${fieldHtml('ISBN', 'isbn', edition.isbn)}${fieldHtml('Other ISBNs (separate with ;)', 'otherIsbns', edition.otherIsbns.join('; '), { help: true })}</div>
+        <div class="field-row">${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
         <div class="field-row"><label class="field">Format<select name="medium"><option value="physical">Physical</option><option value="logos"${edition.medium === 'logos' ? ' selected' : ''}>Logos</option></select></label>${fieldHtml('Logos resource ID', 'logosId', edition.logosId)}</div>
       </fieldset>
       <fieldset><legend>Our copy</legend>
@@ -268,9 +269,9 @@ function readForm(form) {
   return {
     title: text('title'), subtitle: text('subtitle'), authors: list('authors', ';'),
     contributors: data.getAll('contributorName').map((name, i) => ({ name: name.toString().trim(), role: roles[i] })),
-    publisher: text('publisher'), place: text('place'), year: text('year'), editionStatement: text('editionStatement'),
+    publisher: text('publisher'), place: text('place'), year: text('year'), firstPrinted: text('firstPrinted'), editionStatement: text('editionStatement'),
     series: text('series'), seriesNumber: text('seriesNumber'),
-    set: text('set'), volume: text('volume'), isbn: text('isbn'), pages: text('pages'), languages: list('languages', ','),
+    set: text('set'), volume: text('volume'), isbn: text('isbn'), otherIsbns: text('otherIsbns'), pages: text('pages'), languages: list('languages', ','),
     medium: text('medium') || 'physical', logosId: text('logosId'),
     contents: data.get('several') ? text('contents') : null,
     work: {
