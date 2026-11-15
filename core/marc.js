@@ -83,8 +83,16 @@ function subjectHeading(field) {
   return parts.map(part => withoutStop(part).replace(/,$/, '')).filter(Boolean).join(' -- ');
 }
 
+// The separator a cataloguer ends each part with: " --", and in some records " ---".
+const withoutSeparator = text => text.replace(/\s*-{2,}\s*$/, '');
+
+// A part number the fuller form puts before a part's heading: "Part I.", "Pt. 2", "Book III".
+const PART_MARKER = /^\s*(?:part|pt|book|bk|section)\.?\s+[\divxlc]+\.?\s*$/i;
+
 // The contents note (505): "First Clement -- Second Clement -- ..." or, in its
-// fuller form, titles ($t) with their authors ($r).
+// fuller form, titles ($t) with their authors ($r). In the fuller form a title
+// right after a part number ($g "Part I.") is that part's heading ("The early
+// Marx"), not a work, and is left out (The Marx-Engels Reader, 1978).
 function contentsOf(record) {
   const contents = [];
   for (const field of fieldsOf(record, '505')) {
@@ -92,11 +100,13 @@ function contentsOf(record) {
     if (titles.length) {
       field.subfields.forEach(([code, text], i) => {
         if (code !== 't') return;
+        const before = field.subfields[i - 1];
+        if (before && before[0] === 'g' && PART_MARKER.test(before[1])) return;
         const next = field.subfields[i + 1];
-        contents.push({ title: sentenceToTitleCase(withoutStop(text.replace(/\s*--\s*$/, ''))), author: next && next[0] === 'r' ? withoutStop(next[1].replace(/\s*--\s*$/, '')) : '' });
+        contents.push({ title: sentenceToTitleCase(withoutStop(withoutSeparator(text))), author: next && next[0] === 'r' ? withoutStop(withoutSeparator(next[1])) : '' });
       });
     } else {
-      for (const part of subfield(field, 'a').split(/\s+--\s+/)) {
+      for (const part of subfield(field, 'a').split(/\s+-{2,}\s+/)) {
         const [title, author = ''] = part.split(' / ');
         if (withoutStop(title)) contents.push({ title: sentenceToTitleCase(withoutStop(title)), author: withoutStop(author) });
       }

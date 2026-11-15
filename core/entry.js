@@ -351,13 +351,14 @@ export function recordsFromForm(form, existing, context) {
       problems.push(...reading.problems);
       const values = { title: line.title, authors: ids, ...(line.date ? { datings: reading.datings } : {}) };
       // A new work in a collection takes the language, category and tags asked once for the whole book,
-      // and from a known set's list its own original title and language. A language chosen for this
-      // work alone ("Not all the same", form.workLanguages) comes first.
-      const chosen = (form.workLanguages || []).find(row => key(row.title) === key(line.title) && row.language);
+      // and from a known set's list its own original title and language. What was given for this work
+      // alone (its card while adding, form.workDetails) comes first.
+      const own = (form.workDetails || []).find(row => key(row.title) === key(line.title)) || {};
+      const originalTitle = (own.originalTitle || '').trim() || (listed && listed.originalTitle) || '';
       const shared = {
-        originalLanguage: (chosen && chosen.language) || (listed && listed.originalLanguage) || form.work.originalLanguage || null,
+        originalLanguage: own.originalLanguage || (listed && listed.originalLanguage) || form.work.originalLanguage || null,
         category: form.work.category || null, tags: form.work.tags,
-        ...(listed && listed.originalTitle ? { originalTitle: listed.originalTitle } : {}),
+        ...(originalTitle ? { originalTitle } : {}),
       };
       const work = newRecord('work', newId(), now, { ...values, ...shared });
       records.push(work);

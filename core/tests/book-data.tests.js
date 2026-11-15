@@ -194,6 +194,20 @@ export const tests = [
     },
   },
   {
+    name: 'a contents note ending each title in "---" gives clean titles, and a part\'s heading after "Part I." is not a work',
+    fn() {
+      // Shortened from HathiTrust's record of The Marx-Engels Reader, 2d ed. (Norton, 1978), asked on 14 November 2026.
+      const t = text => `<subfield code="t">${text}</subfield>`;
+      const reader = '<record xmlns="http://www.loc.gov/MARC21/slim"><datafield tag="020" ind1=" " ind2=" "><subfield code="a">0393090400</subfield></datafield>'
+        + '<datafield tag="245" ind1="1" ind2="4"><subfield code="a">The Marx-Engels reader /</subfield></datafield>'
+        + '<datafield tag="505" ind1="0" ind2="0"><subfield code="g">Part I.</subfield>' + t('The early Marx.') + t('Discovering Hegel (Marx to his father) ---')
+        + t('On the Jewish question ---') + t('Theses on Feuerbach ---') + '<subfield code="g">Part II.</subfield>' + t('The critique of capitalism.')
+        + t('Wage labour and capital ---') + '</datafield></record>';
+      same(fromLibraryOfCongress(reader, '9780393090406').contents.map(entry => entry.title),
+        ['Discovering Hegel (Marx to His Father)', 'On the Jewish Question', 'Theses on Feuerbach', 'Wage Labour and Capital']);
+    },
+  },
+  {
     name: 'volumes, parts and front matter are not offered as works, and a bookseller\'s "New Ed edition" reads "New ed."',
     fn() {
       const set = '<record xmlns="http://www.loc.gov/MARC21/slim"><datafield tag="020" ind1=" " ind2=" "><subfield code="a">9780758615404</subfield></datafield>'
@@ -313,6 +327,21 @@ export const tests = [
       equal(worksFromWikidata(answer, ['Pride and Prejudice']).get('Pride and Prejudice').date, '1813');
       const alike = { results: { bindings: [row('Q500', '1813-01-28T00:00:00Z'), row('Q900', '2015-01-01T00:00:00Z')] } };
       equal(worksFromWikidata(alike, ['Pride and Prejudice']).size, 0, 'neither stands out');
+    },
+  },
+  {
+    name: "Wikidata gives each original title's language, and marks a date after the author's death as posthumous",
+    fn() {
+      equal(worksFromWikidata(JSON.parse(wikidata.plato.answer), wikidata.plato.titles).get('Phaedo').originalLanguage, 'Greek');
+      // Shortened from Wikidata's answers of 14 November 2026 (The Marx-Engels Reader): Marx died in 1883.
+      const row = (id, title, time, original, lang) => ({ work: { value: `http://www.wikidata.org/entity/${id}` }, title: { value: title },
+        time: { value: time }, precision: { value: '9' }, original: { value: original, 'xml:lang': lang }, died: { value: '1883-03-14T00:00:00Z' } });
+      const answer = { results: { bindings: [row('Q295347', 'Economic and Philosophic Manuscripts of 1844', '1932-01-01T00:00:00Z', 'Ökonomisch-philosophische Manuskripte', 'de'),
+        row('Q1167658', 'The Poverty of Philosophy', '1847-01-01T00:00:00Z', 'Misère de la philosophie', 'fr')] } };
+      const found = worksFromWikidata(answer, ['Economic and Philosophic Manuscripts of 1844', 'The Poverty of Philosophy']);
+      same(['date', 'posthumous', 'originalLanguage'].map(key => found.get('Economic and Philosophic Manuscripts of 1844')[key]), ['1932', true, 'German']);
+      same(['date', 'posthumous', 'originalLanguage'].map(key => found.get('The Poverty of Philosophy')[key]), ['1847', false, 'French']);
+      ok(worksQuery(['Capital'], 'Karl Marx').includes('wdt:P570'), "the author's death is asked in the same query");
     },
   },
   {

@@ -14,6 +14,7 @@ const testFiles = [
   '../core/tests/outline.tests.js',
   '../core/tests/known-sets.tests.js',
   '../core/tests/sets.tests.js',
+  '../core/tests/add-check.tests.js',
   './covers.tests.js',
   './storage.tests.js',
   './speed.tests.js',

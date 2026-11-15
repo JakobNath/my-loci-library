@@ -1,6 +1,7 @@
-// The "Search the web" link beside a date box: a question worded so that a
-// web search answers it without editing (PLAN.md, "Original dates", "Search
-// the web"). Only the address is built here; the browser does the search.
+// The "Search the web" link beside a date, language or original-title box: a
+// question worded so that a web search answers it without editing (PLAN.md,
+// "Original dates", "Search the web"). Only the address is built here; the
+// browser does the search.
 
 // The one place the search address lives. If it ever changes, change it here.
 const SEARCH_ADDRESS = 'https://www.google.com/search?q=';
@@ -40,6 +41,29 @@ export function searchTitle({ title = '', subtitle = '', set = '', volume = '' }
 }
 
 /**
+ * The title a search should ask about. A reader's extract names its work after
+ * "from": "Alienation and Social Classes (from The Holy Family)" is asked about
+ * as "The Holy Family" (The Marx-Engels Reader). Any other title is kept.
+ * @param {string} title
+ * @returns {string}
+ */
+export function searchableTitle(title) {
+  const name = String(title || '').trim();
+  const from = name.match(/\((?:from|aus)\s+([^)]+)\)\s*$/i);
+  if (!from) return name;
+  const work = from[1].trim();
+  return work.charAt(0).toUpperCase() + work.slice(1);
+}
+
+// "Pride and Prejudice by Jane Austen"; a work with no author is usually named
+// with "the" (the Didache), unless its title has an article already.
+function subjectOf(title, authorNames) {
+  const name = searchableTitle(title);
+  const authors = namesText(authorNames || []);
+  return authors ? `${name} by ${authors}` : ARTICLE.test(name) ? name : `the ${name}`;
+}
+
+/**
  * The question asked about a work's original date. It asks for both the
  * written and the published date, which the working-date rule needs.
  * @param {string} title the work's title, as the catalog gives it
@@ -47,11 +71,23 @@ export function searchTitle({ title = '', subtitle = '', set = '', volume = '' }
  * @returns {string} "When was Pride and Prejudice by Jane Austen written and first published?"
  */
 export function workDateQuestion(title, authorNames) {
-  const name = String(title || '').trim();
-  const authors = namesText(authorNames || []);
-  // A work with no author is usually named with "the" (the Didache), unless its title has an article already.
-  const subject = authors ? `${name} by ${authors}` : ARTICLE.test(name) ? name : `the ${name}`;
-  return `When was ${subject} written and first published?`;
+  return `When was ${subjectOf(title, authorNames)} written and first published?`;
+}
+
+/**
+ * The question asked about a work's original language.
+ * @returns {string} "What language was The Poverty of Philosophy by Karl Marx first written in?"
+ */
+export function workLanguageQuestion(title, authorNames) {
+  return `What language was ${subjectOf(title, authorNames)} first written in?`;
+}
+
+/**
+ * The question asked about a work's title in its own language.
+ * @returns {string} "What is the original title of On the Jewish Question by Karl Marx?"
+ */
+export function originalTitleQuestion(title, authorNames) {
+  return `What is the original title of ${subjectOf(title, authorNames)}?`;
 }
 
 /**

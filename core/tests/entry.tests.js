@@ -262,16 +262,17 @@ export const tests = [
     },
   },
   {
-    name: '"Not all the same": each work of a collection takes the language chosen for it, the rest the one answer',
+    name: 'each work of a collection takes the language and original title given on its own card, the rest the one answer',
     fn() {
       const lines = 'Lucretius — On the Nature of Things\nEpictetus — Discourses\nMarcus Aurelius — Meditations';
       const form = blankForm({
         title: 'Hellenistic Philosophy', contents: lines,
         work: { title: '', originalTitle: '', originalLanguage: 'Greek', category: '', tags: [], datings: [] },
-        workLanguages: [{ title: 'On the nature of things', language: 'Latin' }, { title: 'Discourses', language: 'Greek' }],
+        workDetails: [{ title: 'On the nature of things', originalLanguage: 'Latin', originalTitle: 'De rerum natura' }, { title: 'Discourses', originalLanguage: 'Greek', originalTitle: '' }],
       });
       const works = recordsFromForm(form, null, context()).records.filter(record => record.type === 'work');
-      same(works.map(work => [work.title, work.originalLanguage]), [['On the Nature of Things', 'Latin'], ['Discourses', 'Greek'], ['Meditations', 'Greek']]);
+      same(works.map(work => [work.title, work.originalLanguage, work.originalTitle]),
+        [['On the Nature of Things', 'Latin', 'De rerum natura'], ['Discourses', 'Greek', null], ['Meditations', 'Greek', null]]);
     },
   },
   {
