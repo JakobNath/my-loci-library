@@ -8,12 +8,16 @@ import { fromHathiTrust } from '../marc.js';
 import { fromOpenLibraryDetails, mergeFound, printedTitle, editionFromSeller, withLibraryAuthors } from '../book-data.js';
 import * as reader from './answers/9780393090406.js';
 import * as plutarch from './answers/9780674990531.js';
-import { contributorsFrom, cleanPages, emptyFound, authorsFromWorkSearch } from '../lookup.js';
-import { tidyPeople, possibleEditors } from '../people.js';
+import { contributorsFrom, cleanPages, emptyFound, authorsFromWorkSearch, workFromOpenLibrary, suggestOriginalDates } from '../lookup.js';
+import { tidyPeople, possibleEditors, authorName } from '../people.js';
+import * as kittel from './answers/9780802822437.js';
+import * as karamazov from './answers/9780374528379.js';
+import * as montaigne from './answers/9781400040216.js';
+import * as aeneid from './answers/9780143106296.js';
 import { parseContentsLines } from '../contents.js';
 import * as richardson from './answers/9780684829517.js';
 import * as meyer from './answers/9780061626005.js';
-import { equal, same } from './check.js';
+import { equal, same, ok } from './check.js';
 import * as holmes from './answers/9780801034688.js';
 import * as calvin from './answers/9780664220280.js';
 import * as greekLyric from './answers/9780674991576.js';
@@ -27,12 +31,14 @@ const json = text => (text === null ? null : JSON.parse(text));
 
 // As lookUpIsbn in ui/add.js, without Google Books (none of these needed it); as there,
 // an edition record naming no author takes the work search's (edges/lookup-openlibrary.js).
-function lookedUp(book) {
+// Books recorded with Open Library's author record (from 16 November) give the work too.
+function lookedUp(book, known = []) {
   const openLibrary = fromOpenLibraryDetails(json(book.openLibraryDetails), book.isbn, '');
   if (openLibrary && !openLibrary.authors.length) openLibrary.authors = authorsFromWorkSearch(json(book.openLibraryWorkSearch));
   const answers = [openLibrary, book.hathiTrust && fromHathiTrust(book.hathiTrust, book.isbn)];
   const found = mergeFound(answers);
-  return withLibraryAuthors(tidyPeople({ ...emptyFound(''), ...found }, { search: json(book.openLibraryWorkSearch) }), answers);
+  const work = book.openLibraryAuthor ? workFromOpenLibrary(json(book.openLibraryWorkSearch), json(book.openLibraryAuthor)) : null;
+  return withLibraryAuthors(tidyPeople({ ...emptyFound(''), ...found }, { search: json(book.openLibraryWorkSearch), work, known }), answers);
 }
 const names = found => found.contributors.map(person => `${person.name} (${person.role})`);
 
@@ -188,6 +194,63 @@ export const tests = [
       same([both.publisher, both.place], ['Harvard University Press; W. Heinemann', 'Cambridge, Mass.; London']);
       const onePublisher = fromHathiTrust(record(imprint([['a', 'New York ;'], ['a', 'London :'], ['b', 'Norton,'], ['c', '1978']])), '9780674990531');
       same([onePublisher.publisher, onePublisher.place], ['Norton', 'New York'], 'two places for one publisher: the first');
+    },
+  },
+  // The lookup problems left from 14 November, recorded on 16 November 2026.
+  {
+    name: 'roles named without "by" are read: Bromiley translated and edited Kittel\'s dictionary, and is not its author',
+    fn() {
+      const found = lookedUp(kittel);
+      same(found.authors, []);
+      same(names(found), ['Gerhard Kittel (editor)', 'Geoffrey W. Bromiley (translator)', 'Geoffrey W. Bromiley (editor)']);
+      same(contributorsFrom('translator and editor Geoffrey W. Bromiley. Vol.1, A-G.'),
+        [{ name: 'Geoffrey W. Bromiley', role: 'translator' }, { name: 'Geoffrey W. Bromiley', role: 'editor' }], 'the volume label is not a name');
+      same(contributorsFrom('Michel de Montaigne'), [], 'a name with no role names no contributor');
+    },
+  },
+  {
+    name: 'an author filed surname first is turned round: "Montaigne, Michel de" is Michel de Montaigne',
+    fn() {
+      same(lookedUp(montaigne).authors, ['Michel de Montaigne']);
+      equal(authorName('Vergilius Maro, Publius'), 'Publius Vergilius Maro');
+      equal(authorName('Martin Luther King, Jr.'), 'Martin Luther King, Jr.', 'a suffix after the comma');
+      equal(authorName('Montaigne, Michel de, 1533-1592'), 'Montaigne, Michel de, 1533-1592', 'a heading with dates');
+      equal(authorName('Lutheran Church, Missouri Synod'), 'Lutheran Church, Missouri Synod', 'a body');
+    },
+  },
+  {
+    name: 'the work\'s author is named as the book\'s, so Montaigne\'s lifetime is still offered as his',
+    fn() {
+      const found = lookedUp(montaigne);
+      const work = workFromOpenLibrary(json(montaigne.openLibraryWorkSearch), json(montaigne.openLibraryAuthor));
+      const named = { ...work, author: { ...work.author, name: authorName(work.author.name, { work }) } };
+      const lifetime = suggestOriginalDates(named, 2003, { authors: found.authors }).find(suggestion => suggestion.lifetimeOf);
+      same([lifetime.text, lifetime.lifetimeOf], ['1533–1592', 'Michel de Montaigne']);
+    },
+  },
+  {
+    name: 'an author the library already holds under another of his names keeps the library\'s name: Dostoevsky, Virgil',
+    fn() {
+      equal(lookedUp(karamazov).authors[0], 'Fiódor Dostoievski', 'Open Library\'s name when the library has none of his');
+      same(lookedUp(karamazov, ['Fyodor Dostoevsky']).authors, ['Fyodor Dostoevsky']);
+      same(lookedUp(aeneid, ['Virgil']).authors, ['Virgil']);
+      same(lookedUp(montaigne, ['Fyodor Dostoevsky']).authors, ['Michel de Montaigne'], 'someone else\'s name is never taken');
+    },
+  },
+  {
+    name: 'a title Open Library misspells is taken from the library record: "Aenid" is The Aeneid',
+    fn() {
+      equal(lookedUp(aeneid).title, 'The Aeneid');
+      equal(lookedUp(montaigne).title, 'The Complete Works', 'a title differing only in capitals keeps Open Library\'s');
+    },
+  },
+  {
+    name: 'Open Library\'s author record gives the author\'s Wikidata ID and other names',
+    fn() {
+      const work = workFromOpenLibrary(json(karamazov.openLibraryWorkSearch), json(karamazov.openLibraryAuthor));
+      equal(work.author.wikidata, 'Q991');
+      ok(work.author.otherNames.includes('Dostoevsky'), 'his other names');
+      equal(workFromOpenLibrary(json(kittel.openLibraryWorkSearch), json(kittel.openLibraryAuthor)).author.wikidata, '', 'none given');
     },
   },
 ];

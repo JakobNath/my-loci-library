@@ -333,6 +333,45 @@ export const tests = [
       equal(worksFromWikidata(alike, ['Pride and Prejudice']).size, 0, 'neither stands out');
     },
   },
+  // Recorded on 16 November 2026, with the query that tells first publication (P577) from writing (P571).
+  {
+    name: 'Wikidata offers the first publication in the author\'s lifetime, not when it was written: Pride and Prejudice 1813, Frankenstein 1818',
+    fn() {
+      const austen = worksFromWikidata(JSON.parse(wikidata.austen.answer), wikidata.austen.titles).get('Pride and Prejudice');
+      same([austen.date, austen.dateKind], ['1813', 'published'], 'and says which kind of date it is');
+      equal(worksFromWikidata(JSON.parse(wikidata.shelley.answer), wikidata.shelley.titles).get(wikidata.shelley.titles[0]).date, '1818');
+      ok(worksQuery(['Emma'], 'Jane Austen').includes('?kind'), 'the query tells the kinds apart');
+    },
+  },
+  {
+    name: 'a work first printed after its author died is dated when it was written, and only a printing is marked posthumous',
+    fn() {
+      const row = (kind, time) => ({ work: { value: 'http://www.wikidata.org/entity/Q1' }, title: { value: 'Pensées' }, kind: { value: `http://www.wikidata.org/prop/${kind}` },
+        time: { value: time }, precision: { value: '9' }, died: { value: '1662-08-19T00:00:00Z' } });
+      const written = worksFromWikidata({ results: { bindings: [row('P577', '1670-01-01T00:00:00Z'), row('P571', '1657-01-01T00:00:00Z')] } }, ['Pensées']).get('Pensées');
+      same([written.date, written.dateKind, written.posthumous], ['1657', 'written', false]);
+      const printed = worksFromWikidata({ results: { bindings: [row('P577', '1670-01-01T00:00:00Z')] } }, ['Pensées']).get('Pensées');
+      same([printed.date, printed.posthumous], ['1670', true]);
+    },
+  },
+  {
+    name: '"The Bondage of the Will" finds Wikidata\'s "On the Bondage of the Will"',
+    fn() {
+      ok(worksQuery(wikidata.luther.titles, wikidata.luther.author).includes('"On the Bondage of the Will"@en'), 'asked with "On"');
+      ok(worksQuery(['On the Trinity'], 'Augustine').includes('"The Trinity"@en'), 'and without it');
+      const found = worksFromWikidata(JSON.parse(wikidata.luther.answer), wikidata.luther.titles).get('The Bondage of the Will');
+      same([found.wikidata, found.date, found.originalTitle], ['Q1180745', '1525', 'De Servo Arbitrio']);
+    },
+  },
+  {
+    name: 'a work is found by its author\'s Wikidata ID however the name is spelt: Dostoevsky, Virgil',
+    fn() {
+      ok(worksQuery(wikidata.dostoevsky.titles, wikidata.dostoevsky.author, '', ['Q991']).includes('?author = wd:Q991'), 'asked by ID');
+      ok(!worksQuery(['Emma'], 'Jane Austen', '', ['Q1; DROP']).includes('DROP'), 'only real IDs are asked');
+      equal(worksFromWikidata(JSON.parse(wikidata.dostoevsky.answer), wikidata.dostoevsky.titles).get('The Brothers Karamazov').date, '1880');
+      equal(worksFromWikidata(JSON.parse(wikidata.virgil.answer), wikidata.virgil.titles).get('The Aeneid').wikidata, 'Q60220');
+    },
+  },
   {
     name: 'Wikidata names each work\'s authors, so a reader\'s card can offer Engels for a work of his',
     fn() {
@@ -340,7 +379,7 @@ export const tests = [
         authorName: { value: author }, time: { value: '1845-01-01T00:00:00Z' }, precision: { value: '9' } });
       const answer = { results: { bindings: [row('Friedrich Engels', 'The Condition of the Working Class in England')] } };
       same(worksFromWikidata(answer, ['The Condition of the Working Class in England']).get('The Condition of the Working Class in England').authors, ['Friedrich Engels']);
-      ok(worksQuery(['The German Ideology'], ['Karl Marx', 'Friedrich Engels']).includes('?authorName ?time'), 'the query asks for the names');
+      ok(worksQuery(['The German Ideology'], ['Karl Marx', 'Friedrich Engels']).includes('SELECT ?title ?work ?authorName '), 'the query asks for the names');
     },
   },
   {

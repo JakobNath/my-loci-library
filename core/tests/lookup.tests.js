@@ -134,7 +134,7 @@ export const tests = [
     name: 'Augustine: the earliest edition (1482) is after his death, so his lifetime is suggested',
     fn() {
       const work = workFromOpenLibrary({ docs: [{ title: 'Confessions', first_publish_year: 1482 }] }, { name: 'Augustine of Hippo', birth_date: '13 November 354', death_date: '28 August 430' });
-      same(work.author, { name: 'Augustine of Hippo', born: 354, died: 430 });
+      same(work.author, { name: 'Augustine of Hippo', born: 354, died: 430, otherNames: [], wikidata: '' });
       const suggestions = suggestOriginalDates(work, 1991);
       equal(suggestions.length, 1);
       equal(suggestions[0].text, '354–430');
