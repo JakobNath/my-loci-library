@@ -22,6 +22,18 @@ const FIELDS_IMAGE = ['id', 'kind', 'source', 'color', 'ratio', 'master', 'waiti
 const T1 = '2026-11-09T10:00:00Z';
 const T2 = '2026-11-09T11:00:00Z';
 
+// Pictures for the merging tests, and a merge checked to come out the same on both devices.
+const picture = (id, kind) => imageEntry(id, kind, 'photo', { color: '#223344', ratio: 0.66 }, true);
+const OLD_COVER = picture('0ldc0ver0001', 'cover');
+const COVER = picture('c0ver0ne00001', 'cover');
+const SPINE = picture('sp1ne0ne0001', 'spine');
+const PAGE = picture('pagephot0001', 'contents');
+function mergedBothWays(mine, theirs, base) {
+  const merged = mergeRecords(mine, theirs, base);
+  same(mergeRecords(theirs, mine, base), merged, 'the same on both devices');
+  return merged;
+}
+
 export const tests = [
   {
     name: 'a new cover photo replaces the old covers and goes first; a new spine photo replaces the old spine',
@@ -485,6 +497,80 @@ export const tests = [
       const merged = mergeRecords(mine, theirs);
       same([merged.firstPrinted, merged.otherIsbns], [1912, ['9780434990122']]);
       same(mergeRecords(theirs, mine), merged, 'the same either way');
+    },
+  },
+  {
+    name: 'a cover taken on one phone and a spine on the other are both kept, the cover first',
+    fn() {
+      const mine = withField(chadwick, 'images', [SPINE], T1);
+      const theirs = withField(chadwick, 'images', [COVER], T2);
+      same(mergedBothWays(mine, theirs, chadwick).images.map(image => image.id), [COVER.id, SPINE.id]);
+    },
+  },
+  {
+    name: 'a new cover taken on both phones keeps the later one, as taking it again would',
+    fn() {
+      const base = { ...chadwick, images: [OLD_COVER] };
+      const mine = withField(base, 'images', [COVER], T1);
+      const theirs = withField(base, 'images', [{ ...COVER, id: 'c0vertw0a002' }], T2);
+      same(mergedBothWays(mine, theirs, base).images.map(image => image.id), ['c0vertw0a002']);
+    },
+  },
+  {
+    name: 'a picture removed on one phone stays removed, and one added on the other is kept',
+    fn() {
+      const base = { ...chadwick, images: [OLD_COVER, SPINE] };
+      const mine = withField(base, 'images', [OLD_COVER], T1);
+      const theirs = withField(base, 'images', [OLD_COVER, SPINE, PAGE], T2);
+      same(mergedBothWays(mine, theirs, base).images.map(image => image.id), [OLD_COVER.id, PAGE.id]);
+    },
+  },
+  {
+    name: 'tags changed on both phones keep both sides\' additions and removals',
+    fn() {
+      const base = { ...confessions, tags: ['Patristics', 'Prayer'] };
+      const mine = withField(base, 'tags', ['Patristics', 'Prayer', 'Autobiography'], T1);
+      const theirs = withField(base, 'tags', ['Prayer', 'Latin'], T2);
+      const merged = mergedBothWays(mine, theirs, base);
+      same(merged.tags, ['Prayer', 'Latin', 'Autobiography'], 'the later side\'s order, then the other side\'s new tag');
+      equal(merged.changed.tags, T2, 'stamped with the later change');
+    },
+  },
+  {
+    name: 'values set on two phones keep one value per day, in date order, the later one winning a shared day',
+    fn() {
+      const base = newRecord('copy', 'c0pyna280001', T1, { edition: na28.id, added: '2026-11-01', valueHistory: [{ date: '2026-11-01', value: 30 }] });
+      const mine = withField(base, 'valueHistory', [...base.valueHistory, { date: '2026-11-12', value: 40 }, { date: '2026-11-14', value: 50 }], T1);
+      const theirs = withField(base, 'valueHistory', [...base.valueHistory, { date: '2026-11-10', value: 35 }, { date: '2026-11-14', value: 55 }], T2);
+      same(mergedBothWays(mine, theirs, base).valueHistory, [
+        { date: '2026-11-01', value: 30 }, { date: '2026-11-10', value: 35 }, { date: '2026-11-12', value: 40 }, { date: '2026-11-14', value: 55 },
+      ]);
+    },
+  },
+  {
+    name: 'contents changed on both phones keep a work added on each side and a translator set on one',
+    fn() {
+      const entry = workId => ({ ...chadwick.contents[0], work: workId });
+      const mine = withField(chadwick, 'contents', [...chadwick.contents, entry('s0l1l0q7y001')], T1);
+      const theirs = withField(chadwick, 'contents', [{ ...chadwick.contents[0], translator: 'Henry Chadwick' }, entry('tr1n1tyw0rk1')], T2);
+      const merged = mergedBothWays(mine, theirs, chadwick);
+      same(merged.contents.map(item => item.work), [confessions.id, 'tr1n1tyw0rk1', 's0l1l0q7y001']);
+      equal(merged.contents[0].translator, 'Henry Chadwick');
+    },
+  },
+  {
+    name: 'a field changed on one phone only keeps that change, even with no edit stamp',
+    fn() {
+      const mine = { ...chadwick, publisher: 'Clarendon Press' }; // as a hand-mended file might be
+      equal(mergedBothWays(mine, chadwick, chadwick).publisher, 'Clarendon Press');
+    },
+  },
+  {
+    name: 'a work\'s authors changed on both phones come whole from the later side, since their order matters',
+    fn() {
+      const mine = withField(confessions, 'authors', [augustine.id, 'a1yp1usx0001'], T1);
+      const theirs = withField(confessions, 'authors', ['m0n1caxxxx01', augustine.id], T2);
+      same(mergedBothWays(mine, theirs, confessions).authors, ['m0n1caxxxx01', augustine.id]);
     },
   },
   {
