@@ -28,7 +28,7 @@ My Loci Library is a lightweight, open-source catalog of our physical books and 
 - **Exports are the guarantee.** CSV, JSON, CSL-JSON, BibTeX, and a self-contained HTML catalog are always available.
 - **Extras live outside the app.** Logos import, Zotero sync, price estimating, and anything AI-related are separate laptop tools or done by hand. They never add weight to the main app.
 - **The phone app stays small and fast.** It reads, searches, adds and edits. Anything heavy (bulk cover processing, re-cropping from masters, the HTML catalog, building `catalog.json`) happens on the laptop, in a tool or in a separate laptop page the phone never loads. Speed is a main design goal: no lag, and search that feels instant.
-- **Human-made feel.** Documentation is plain text written for people. There are no AI attributions anywhere, including commit messages, and credit goes only to Jakob Nath.
+- **Human-made feel.** Documentation is plain text written for people. No assistant or code-writing tool is credited anywhere, including commit messages, and credit goes only to Jakob Nath.
 - **Open source from day one,** under the MIT license, so colleagues can use it.
 
 ## Architecture
@@ -415,7 +415,7 @@ Custom fields, custom color themes, rearranging the form, and plugins. Each woul
 
 **Design process**
 
-Before the full build, Claude Code makes five clickable prototypes. Each uses working navigation, real sample books, and the batch-add flow, on phone and desktop. Jakob and his wife choose and refine one together. Requirements from her: it should look nice, show the photos well, and have a little color, "just a little pop". The design step also produces a logo and app icon. Styling lives in one clearly separated file of design tokens, so the look can change later without touching logic.
+Before the full build, five clickable prototypes are made. Each uses working navigation, real sample books, and the batch-add flow, on phone and desktop. Jakob and his wife choose and refine one together. Requirements from her: it should look nice, show the photos well, and have a little color, "just a little pop". The design step also produces a logo and app icon. Styling lives in one clearly separated file of design tokens, so the look can change later without touching logic.
 
 ## Laptop tools
 
@@ -503,7 +503,7 @@ The existing pattern stays. Better BibTeX makes citekeys from author + edition y
 
 ## Lightweight and long-lasting rules
 
-These rules keep the app fast on any phone and working through years of iOS, Android and Windows updates. Claude Code follows them in every phase.
+These rules keep the app fast on any phone and working through years of iOS, Android and Windows updates. Every working session follows them; the working rules drawn from this plan are all in `CODE_STYLE.md`.
 
 **Only proven web features**
 
@@ -540,20 +540,20 @@ These rules keep the app fast on any phone and working through years of iOS, And
 
 **Checked on real devices**
 
-- Claude Code tests each phase in desktop browsers, including phone-sized views. Anything that needs a real phone goes on a running `DEVICE_CHECKS.md` list, which Jakob works through on his iPhone, an Android phone, and Windows (Edge, Chrome and Firefox) when convenient. Nothing waits on it.
+- Each change is tried in a desktop browser, including phone-sized views, as a person would use it. On the phones, the two of us using the app and reporting problems is the test (decided 15 November 2026). `DEVICE_CHECKS.md` keeps only what daily use would never show (setting up a device, storage, offline, rare failures, the backup), worked through when convenient. Nothing waits on it.
 - `HOW_IT_WORKS.md` includes a yearly ten-minute check: open the app on each device, run the self-test page, and fix anything red.
 
 ## Maintenance, testing and credits
 
-The software won't wear out, but browsers, phones, GitHub and lookup services will change. Everything below makes a repair in 2035 quick, whether it's done by Jakob, another person, or any AI.
+The software won't wear out, but browsers, phones, GitHub and lookup services will change. Everything below makes a repair in 2035 quick, whether it's done by Jakob or another person, with whatever tools exist then.
 
 **Self-tests**
 
 - The app has a plain test page: open it in a browser and it runs readable checks with clear pass/fail lines.
 - The tools use Node's built-in test runner.
 - Tests cover the date parser, the data format, search, exports, cover compression, sync, and the Zotero sync speed target.
-- Tests are short and written so a human can read and fix them. They don't depend on any particular AI tool.
-- Every Claude Code session starts by running the tests.
+- Tests are short and written so a human can read and fix them. They depend on no special tool.
+- Every working session starts by running the tests.
 
 **Speed targets** (checked by the tests)
 
@@ -574,24 +574,24 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 - `DATA_FORMAT.md`: every field, explained in plain language. This is the most important file in the project.
 - `HOW_IT_WORKS.md`: a plain-English guide to the parts and how to fix each one, written for a future reader who remembers nothing.
 - `SETUP_FOR_COLLEAGUES.md`: a roughly 10-minute guide for non-programmers (create a private data repo, open the app, add a key).
-- `CLAUDE.md`: rules every Claude Code session must follow (see below).
-- `CODE_STYLE.md`: how code is written, so any file can be understood and safely changed in five minutes.
+- `CODE_STYLE.md`: every rule for working on the app and the tools (see below), and how code is written, so any file can be understood and safely changed.
+- `CLAUDE.md`: a short pointer to `CODE_STYLE.md`, kept because some editing tools look for that file name.
 - All of it reads as written by and for people, in a plain style with no AI tone.
 
-**Rules in `CLAUDE.md`**
+**Rules in `CODE_STYLE.md`**
 
 - No frameworks, no build step, no npm packages. Third-party code is copied into the repo.
 - Never change the data format without updating `DATA_FORMAT.md` and keeping old records readable.
 - Run the self-tests before and after every change.
 - The app never talks to Zotero, Obsidian, or any AI service.
-- No AI attribution in code, docs, or commit messages. Credit goes only to Jakob Nath.
-- Prefer the simplest working solution, and record anything new under "Decisions" in `HOW_IT_WORKS.md`.
+- No assistant or code-writing tool credited or named in code, docs, or commit messages. Credit goes only to Jakob Nath.
+- Prefer the simplest working solution, and record anything new in `docs/decisions/`.
 
 **Credits and license**
 
 - "Created by Jakob Nath" appears in the README, the app's About screen, and the license.
 - MIT license.
-- Claude Code's commit co-author setting is turned off before the first commit.
+- Any tool's setting that adds co-author lines to commits is turned off.
 
 ## Deferred and out of scope
 
@@ -624,13 +624,13 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 
 ## Build phases (draft order)
 
-The design prototypes come right after the foundations, so the look is chosen early. The data format follows, because everything else is built on it. All phases go into one `BUILD_PLAN.md` that Claude Code works through step by step. It stops only once, after the design prototypes.
+The design prototypes come right after the foundations, so the look is chosen early. The data format follows, because everything else is built on it. All phases go into one `BUILD_PLAN.md`, worked through step by step. It stops only once, after the design prototypes.
 
-1. **Foundations:** turn off commit co-author lines first. Claude Code then creates the repos with Git and the GitHub command line (`my-loci-library`, `my-loci-library-data`, `my-loci-library-tools`, plus `my-loci-library-test-data` for building), turns on GitHub Pages, and adds the license, `CLAUDE.md`, and doc skeletons.
+1. **Foundations:** turn off commit co-author lines first. Then create the repos with Git and the GitHub command line (`my-loci-library`, `my-loci-library-data`, `my-loci-library-tools`, plus `my-loci-library-test-data` for building), turns on GitHub Pages, and adds the license, `CLAUDE.md`, and doc skeletons.
 2. **Design prototypes (as soon as possible):** five clickable options for phone and desktop, published on GitHub Pages so both of us can open them on our phones. They use the sample books as made-up data and show the library grid, book detail, and batch add. A small phone test page comes with them (camera barcode scan and offline storage), plus a logo and icon.
-   - **The one stop:** Jakob and his wife choose and refine a design with Claude Code. Jakob runs the phone test page on both phones and provides a small Logos spreadsheet export. After Jakob says go, every phase below runs without stopping.
+   - **The one stop:** Jakob and his wife choose and refine a design. Jakob runs the phone test page on both phones and provides a small Logos spreadsheet export. After Jakob says go, every phase below runs without stopping.
 3. **Data format and core:** write `DATA_FORMAT.md`, turn the sample books into test data, and build the shared core module (record format, validation, date parser, anthology date ranges) with tests.
-4. **Prove the remaining risky parts:** multi-file commits from a browser, compressing online covers in the browser, Zotero local writes and citekey pinning, and the columns in Jakob's Logos export. If one fails, Claude Code switches to the documented fallback and notes it in `HOW_IT_WORKS.md` instead of stopping.
+4. **Prove the remaining risky parts:** multi-file commits from a browser, compressing online covers in the browser, Zotero local writes and citekey pinning, and the columns in Jakob's Logos export. If one fails, the build switches to the documented fallback and notes it in `HOW_IT_WORKS.md` instead of stopping.
 5. **App skeleton:** storage built ready for sync, Library view (grid and list) in the chosen design, book detail, manual entry including anthology contents, and offline search.
 6. **Batch add:** barcode scanning (camera, plus USB scanner input), Open Library and Google Books lookup with automatic cover import, work matching, missing-data prompts, duplicate warning, cover and spine photos with the manual editor and compression, and the laptop covers page.
 7. **Sync:** against the test-data repo. Per-device keys, first-launch setup, conflict handling, expiry messages.

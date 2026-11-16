@@ -25,7 +25,8 @@ All devices share one token, which does not expire. If it is ever cancelled (a l
 - `docs/plan/PLAN.md`: the master plan.
 - `DATA_FORMAT.md`: how the catalog is stored (written in phase 3).
 - `HOW_IT_WORKS.md`: the parts of the app and how to repair each one.
-- `DEVICE_CHECKS.md`: things that can only be checked on a real phone.
+- `CODE_STYLE.md`: every rule for working on the app and the laptop tools.
+- `DEVICE_CHECKS.md`: the few things only a real phone can show.
 - `SETUP_FOR_COLLEAGUES.md`: setting up your own copy.
 
 ## Self-tests

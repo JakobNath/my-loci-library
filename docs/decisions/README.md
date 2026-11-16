@@ -4,7 +4,7 @@ Choices made while building My Loci Library that `PLAN.md` did not settle, each 
 
 They were kept in `HOW_IT_WORKS.md` under "Decisions" until 10 November 2026, then moved here, word for word, one file per topic. Read the file for the area you are working on. A new decision goes at the end of its topic's file, dated, with the choice and the reason; a decision that replaces an older one says which.
 
-- [`build-process.md`](build-process.md): Build process and working setup (12)
+- [`build-process.md`](build-process.md): Build process and working setup (13)
 - [`design.md`](design.md): Design and look (6)
 - [`photos-and-scanning.md`](photos-and-scanning.md): Photos, covers, spines and scanning (17)
 - [`speed-offline-size.md`](speed-offline-size.md): Speed, offline use and the size budget (13)
