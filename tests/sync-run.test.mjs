@@ -33,7 +33,7 @@ function quietGitHub(duringPush = () => {}) {
   const pushed = [];
   return {
     pushed,
-    async pull({ known }) { return { records: [], known, commit: 'c1', settings: null, backupStatus: null }; },
+    async pull({ known }) { return { records: [], known, commit: 'c1', settings: null, backupStatus: null, unreadable: [] }; },
     async push({ records }) {
       pushed.push(records);
       await duringPush();
@@ -46,7 +46,8 @@ function appWith(records, storage) {
   const state = { records: new Map(records.map(record => [record.id, record])), library: buildLibrary([]), settings: SHARED_DEFAULTS, route: { name: '', id: '' }, syncStatus: '' };
   for (const record of records) storage.queue(record);
   const drawn = [];
-  return { state, storage, drawn, render: () => drawn.push(1), showNote() {}, showUnsent() {} };
+  const notes = [];
+  return { state, storage, drawn, notes, render: () => drawn.push(1), showNote: text => notes.push(text), showUnsent() {} };
 }
 
 const copyRecord = (id, values = {}) => newRecord('copy', id, T0, { edition: 't00000000900', added: '2026-11-13', ...values });
@@ -93,4 +94,16 @@ test('when other devices save first three times running, the sync says the chang
   assert.equal(await runSync(app, github, true), false);
   assert.match(app.state.syncStatus, /still waiting/);
   assert.equal(storage.outboxIds().length, 1, 'the change is kept');
+});
+
+test('a file the download skipped is named in the sync line every time, and as a note once', async () => {
+  const storage = memoryStorage();
+  const app = appWith([], storage);
+  const github = quietGitHub();
+  github.pull = async ({ known }) => ({ records: [], known, commit: 'c1', settings: null, backupStatus: null, unreadable: ['copies/t00000000006.json'] });
+  assert.equal(await runSync(app, github, true), true, 'the rest synced');
+  assert.match(app.state.syncStatus, /^Synced at .*could not be read.*copies\/t00000000006\.json/);
+  await runSync(app, github, true);
+  assert.match(app.state.syncStatus, /copies\/t00000000006\.json/);
+  assert.equal(app.notes.length, 1, 'a quiet sync does not repeat the note');
 });

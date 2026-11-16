@@ -65,7 +65,8 @@ function contributorRowHtml(person) {
 
 /**
  * Draw the form for a new book (#/new), one bought from the wishlist
- * (#/new/<wishlist item id>), or an existing one (#/edit/<edition id>).
+ * (#/new/<wishlist item id>), or an existing one (#/edit/<edition id>, its
+ * first copy; #/edit/<edition id>/<copy id>, another copy).
  * "Works in this book" (#/edit/<edition id>/works) is its own page, ui/works.js,
  * reached through this screen so the app's start-up code does not grow.
  */
@@ -80,7 +81,14 @@ export function render(container, state, actions) {
   const wishRecord = state.route.name === 'new' ? state.records.get(state.route.id) : null;
   const wish = wishRecord && wishRecord.type === 'wishlist' ? formFromWish(wishRecord) : null;
   const edition = entry ? entry.edition : wish ? wish.edition : { title: '', subtitle: '', contributors: [], languages: [], otherIsbns: [], medium: 'physical' };
-  const copy = entry && entry.copies[0] ? entry.copies[0] : { binding: null, material: null, extras: [], location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
+  // #/edit/<edition id> edits the first copy; #/edit/<edition id>/<copy id> another one (its link is on the book page).
+  const chosenCopy = entry ? (part ? entry.copies.find(item => item.id === part) : entry.copies[0]) || null : null;
+  if (entry && part && !chosenCopy) {
+    container.innerHTML = `<a class="back" href="#/book/${escapeHtml(entry.id)}">${iconHtml('back')} Back to the book</a><p class="empty">This copy is not in the catalog on this device.</p>`;
+    return;
+  }
+  const copy = chosenCopy || { binding: null, material: null, extras: [], location: [], acquired: '', price: null, value: null, markings: false, notes: wish ? wish.notes : '', status: 'owned' };
+  const copyLegend = entry && entry.copies.length > 1 ? `Our copy (${entry.copies.indexOf(chosenCopy) + 1} of ${entry.copies.length})` : 'Our copy';
   const isAnthology = entry ? entry.works.length > 1 : false;
   const work = entry && entry.works.length === 1 ? entry.works[0] : { title: '', originalTitle: '', originalLanguage: '', datings: [], category: '', tags: [] };
   const authorsText = entry && !isAnthology ? entry.authors.map(author => author.name).join('; ') : wish ? wish.authorsText : '';
@@ -149,7 +157,7 @@ export function render(container, state, actions) {
         <div class="field-row">${fieldHtml('Pages, as printed', 'pages', edition.pages, { help: true })}${fieldHtml('Languages (separate with ,)', 'languages', edition.languages.join(', '), { help: true })}</div>
         <div class="field-row"><label class="field">Format<select name="medium"><option value="physical">Physical</option><option value="logos"${edition.medium === 'logos' ? ' selected' : ''}>Logos</option></select></label>${fieldHtml('Logos resource ID', 'logosId', edition.logosId)}</div>
       </fieldset>
-      <fieldset><legend>Our copy</legend>
+      <fieldset><legend>${escapeHtml(copyLegend)}</legend>
         ${bindingChoicesHtml(copy, state.settings)}
         <div class="field-row">${fieldHtml('Acquired', 'acquired', copy.acquired, { hint: '"2019", "before 2015", or blank' })}</div>
         <div class="field-row">${locationHtml}</div>
@@ -211,7 +219,7 @@ export function render(container, state, actions) {
   };
   container.onsubmit = async event => {
     event.preventDefault();
-    const existing = entry ? { edition: entry.edition, copy: entry.copies[0] || null, works: entry.works } : null;
+    const existing = entry ? { edition: entry.edition, copy: chosenCopy, works: entry.works } : null;
     // A work this book no longer lists is trashed only when no other book holds it.
     const usedElsewhere = workId => state.library.entries.some(other => other !== entry && other.edition.contents.some(piece => piece.work === workId));
     const result = recordsFromForm(readForm(form), existing, { newId: actions.newId, now: actions.now(), today: actions.today(), authors: [...state.library.authorsById.values()], usedElsewhere });
@@ -236,7 +244,7 @@ export function render(container, state, actions) {
     if (await actions.saveRecords(result.records)) {
       actions.setDraft('');
       actions.showNote(wish ? 'Added to the library, and taken off the wishlist' : 'Saved');
-      actions.go(`#/book/${result.editionId}`);
+      actions.leaveForm(`#/book/${result.editionId}`);
     }
   };
 }
@@ -246,7 +254,7 @@ async function moveToTrash(entry, state, actions) {
   if (await actions.saveRecords(trashBook(state.records, entry.id, actions.today(), actions.now()))) {
     actions.setDraft('');
     actions.showNote('Moved to the trash. Settings › Trash brings it back.');
-    actions.go('#/');
+    actions.leaveForm('#/');
   }
 }
 

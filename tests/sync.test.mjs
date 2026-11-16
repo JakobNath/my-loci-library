@@ -164,3 +164,43 @@ test('a set record goes up in sets/ and reaches the other device; one in catalog
   await laptop.pull();
   assert.equal(laptop.state.local.get(ids(700)).valueAsSet, true);
 });
+
+test('a broken record file is skipped and named, and the rest of the catalog still comes down', async () => {
+  const github = fakeGitHub();
+  const good = copy(31);
+  const notAList = { ...copy(32), location: 'Study' }; // would stop the Library from being drawn
+  github.commitFiles({
+    [recordPath(good)]: recordToFileText(good),
+    [recordPath(notAList)]: recordToFileText(notAList),
+    'copies/t00000000033.json': '{ "type": "copy", "id": "t00000000033", ', // cut off while mending by hand
+    'copies/t00000000034.json': recordToFileText(copy(35)), // a record under another record's name
+    'settings.json': '{ "currency": ',
+  });
+  const phone = device(github);
+  const result = await phone.pull();
+  assert.deepEqual([...phone.state.local.keys()], [good.id]);
+  assert.deepEqual(result.unreadable, [recordPath(notAList), 'copies/t00000000033.json', 'copies/t00000000034.json', 'settings.json']);
+  assert.equal(result.settings, null, 'this device keeps its own settings');
+  assert.equal(phone.state.known.has('copies/t00000000033.json'), false, 'tried again at the next sync');
+});
+
+test('a mended file comes down at the next sync', async () => {
+  const github = fakeGitHub();
+  const mended = copy(36, { notes: 'Mended' });
+  github.commitFiles({ [recordPath(mended)]: '{ broken' });
+  const phone = device(github);
+  assert.equal((await phone.pull()).unreadable.length, 1);
+  github.commitFiles({ [recordPath(mended)]: recordToFileText(mended) });
+  assert.deepEqual((await phone.pull()).unreadable, []);
+  assert.equal(phone.state.local.get(mended.id).notes, 'Mended');
+});
+
+test('a first download whose catalog.json cannot be read downloads every file instead', async () => {
+  const github = fakeGitHub();
+  const records = [37, 38].map(n => copy(n));
+  github.commitFiles({ ...Object.fromEntries(records.map(record => [recordPath(record), recordToFileText(record)])), 'catalog.json': '{ "format": 1, "copies": [' });
+  const phone = device(github);
+  const result = await phone.pull();
+  assert.equal(phone.state.local.size, 2);
+  assert.deepEqual(result.unreadable, ['catalog.json']);
+});

@@ -319,6 +319,16 @@ const actions = {
   go(hash) {
     location.hash = hash;
   },
+
+  /**
+   * Leave a form once it is saved, so that Back does not open it again: step
+   * back when the form was opened from the screen `hash` names (the book page,
+   * usually), otherwise put `hash` in the form's place in the history.
+   */
+  leaveForm(hash) {
+    if (history.state && history.state.from === hash) history.back();
+    else location.replace(hash);
+  },
 };
 
 // ---------- sync with GitHub (PLAN.md, "Sync") ----------
@@ -471,6 +481,9 @@ addEventListener('hashchange', () => {
     return;
   }
   draftNote = '';
+  // A screen reached by a tap, not by Back or Forward, is a new place in the
+  // browser's history with nothing kept in it yet: note where it was opened from (leaveForm).
+  if (history.state === null) history.replaceState({ from: shownHash }, '');
   shownHash = location.hash;
   if (takeSetupLink()) return;
   if (state.route.name === '' && !state.query) libraryScroll = scrollY;

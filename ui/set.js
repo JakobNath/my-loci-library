@@ -106,7 +106,7 @@ export function render(container, state, actions) {
     const changed = [...(result.record !== saved ? [result.record] : []), ...linkEditionsToSet(editions, result.record, actions.now())];
     if (changed.length && !(await actions.saveRecords(changed))) return;
     actions.showNote(isNew ? `Saved, and ${editions.length} ${editions.length === 1 ? 'volume' : 'volumes'} linked to it` : 'Saved');
-    if (isNew) actions.go(`#/set/${result.record.id}`);
+    if (isNew) actions.leaveForm(`#/set/${result.record.id}`);
     else { Object.assign(set, result.record); editing = false; render(container, state, actions); }
   };
 

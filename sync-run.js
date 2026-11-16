@@ -19,6 +19,7 @@ export async function runSync(app, github, quiet) {
   const { state, storage } = app;
   let brought = false; // whether the download changed anything the screen shows
   let settled = false; // whether this device's changes arrived, or there were none
+  let unreadable = []; // files the last download skipped because they could not be read
   try {
     for (let attempt = 0; attempt < 3; attempt++) {
       const outboxIds = (await storage.outbox()).map(item => item.id);
@@ -26,6 +27,7 @@ export async function runSync(app, github, quiet) {
         known: new Map((await storage.meta('known')) || []), local: state.records, outbox: new Set(outboxIds),
         onProgress: (done, total) => { if (!quiet) app.showNote(`Downloading ${done} of ${total}…`); },
       });
+      unreadable = pulled.unreadable;
       await storage.saveRecords(pulled.records);
       for (const record of pulled.records) state.records.set(record.id, record);
       // Settings changed here win over the other device's: the file is small and changed rarely.
@@ -66,6 +68,12 @@ export async function runSync(app, github, quiet) {
     if (!settled) throw new Error('Other devices kept saving at the same moment, so this device\'s changes are still waiting. They are kept here and sent with the next sync.');
     state.library = withSearchText(buildLibrary([...state.records.values()]));
     state.syncStatus = `Synced at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`;
+    if (unreadable.length) {
+      state.syncStatus += ` ${unreadableText(unreadable)}`;
+      // Most syncs are quiet, so a newly broken file is also shown once as a note in each session.
+      if (!quiet || unreadable.join() !== unreadableNoted) app.showNote(unreadableText(unreadable));
+    }
+    unreadableNoted = unreadable.join();
     keepThumbnails(github, app);
     // The screen is drawn again only when the download changed what it shows, and
     // batch add and the entry form are never redrawn under the person's hands.
@@ -79,6 +87,17 @@ export async function runSync(app, github, quiet) {
     if (state.route.name === 'settings') app.render();
     return false;
   }
+}
+
+// The files named in this session's last note about unreadable files, so the
+// same note is not shown at every quiet sync.
+let unreadableNoted = '';
+
+// Plain words for files a sync skipped (edges/sync-github.js, storedRecordOrNull).
+function unreadableText(paths) {
+  const named = paths.length > 3 ? `${paths.slice(0, 3).join(', ')} and ${paths.length - 3} more` : paths.join(', ');
+  const which = paths.length === 1 ? 'One file in the catalog could not be read and was left out' : `${paths.length} files in the catalog could not be read and were left out`;
+  return `${which}: ${named}. Everything else synced. Mend ${paths.length === 1 ? 'it' : 'them'} on the laptop (HOW_IT_WORKS.md, "If a file in the catalog cannot be read"); the app tries again at each sync.`;
 }
 
 async function base64Of(blob) {

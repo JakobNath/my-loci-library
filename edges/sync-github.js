@@ -14,7 +14,7 @@
 // - Local changes go up as one commit: GitHub's "Git Data" API lets one tree
 //   hold many files, so a batch of 30 books is one commit, not 30.
 
-import { recordToFileText, FORMAT_VERSION, migrate } from '../core/records.js';
+import { recordToFileText, FORMAT_VERSION, FIELDS, migrate } from '../core/records.js';
 import { mergeRecords } from '../core/merge.js';
 
 const API = 'https://api.github.com';
@@ -37,6 +37,40 @@ export async function blobSha(text) {
 }
 
 const fromBase64 = text => new TextDecoder().decode(Uint8Array.from(atob(text.replace(/\n/g, '')), c => c.charCodeAt(0)));
+
+// A file mended by hand (on the laptop, or on GitHub's website) can be broken.
+// One broken record must not stop the whole catalog syncing, and must never be
+// saved on the device, where it would stop the Library from being drawn. So a
+// record file is checked in two steps, and one that fails either is skipped
+// and named (HOW_IT_WORKS.md, "If a file in the catalog cannot be read").
+// Only the shape is checked, not DATA_FORMAT.md's rules (core/validate.js):
+// a record that is merely incomplete, such as a work without a date, still
+// comes down.
+
+/** The record stored at `path`, or null when the text is not JSON or not the record its path names. */
+function storedRecordOrNull(path, text) {
+  const [folder, name] = path.split('/');
+  let stored;
+  try {
+    stored = JSON.parse(text);
+  } catch {
+    return null;
+  }
+  const isRecord = Boolean(stored) && stored.type === TYPE_OF_FOLDER[folder] && `${stored.id}.json` === name && Number.isInteger(stored.format);
+  return isRecord ? stored : null;
+}
+
+/** A stored record read in this app's data format, or null when it cannot be: every list must be a list. */
+function readableOrNull(stored) {
+  let record;
+  try {
+    record = migrate(stored);
+  } catch {
+    return null;
+  }
+  const lists = Object.entries(FIELDS[record.type]).filter(([, empty]) => Array.isArray(empty)).map(([name]) => name);
+  return lists.every(name => Array.isArray(record[name])) ? record : null;
+}
 
 /** Plain words for what GitHub or the network said (PLAN.md: never fail silently). */
 function plainError(status, response, what) {
@@ -84,7 +118,8 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
     return { commit: ref.object.sha, files };
   }
 
-  async function downloadRecords(paths, onProgress) {
+  // A file that is not a record (see storedRecordOrNull) goes on `unreadable`.
+  async function downloadRecords(paths, onProgress, unreadable) {
     const records = [];
     let done = 0;
     const queue = [...paths];
@@ -92,7 +127,8 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
       while (queue.length) {
         const [path, sha] = queue.shift();
         const blob = await call('GET', `/git/blobs/${sha}`, null, `downloading ${path}`);
-        records.push({ path, sha, record: JSON.parse(fromBase64(blob.content)) });
+        const record = storedRecordOrNull(path, fromBase64(blob.content));
+        if (record) records.push({ path, sha, record }); else unreadable.push(path);
         onProgress(++done, paths.length);
       }
     }
@@ -100,7 +136,20 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
     return records;
   }
 
+  // A JSON file other than a record (catalog.json, settings.json), or null
+  // when it does not parse, with its path put on `unreadable`.
+  async function downloadJson(path, commit, what, unreadable) {
+    const text = await call('GET', `/contents/${path}?ref=${commit}`, null, what, 'application/vnd.github.raw+json');
+    try {
+      return JSON.parse(text);
+    } catch {
+      unreadable.push(path);
+      return null;
+    }
+  }
+
   // Records newer than this app's data format are never written over or merged (PLAN.md, "IDs and format versions").
+  // Checked before readableOrNull, which would misread them.
   function checkVersions(records) {
     if (records.some(record => record.format > FORMAT_VERSION)) {
       throw new Error('The catalog has records in a newer data format than this app understands. Reload the app to get the new version; nothing was changed.');
@@ -118,48 +167,57 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
      * @param {{ known: Map<string, string>, local: Map<string, object>, outbox: Set<string>, onProgress?: (done: number, total: number) => void }} device
      *   known: path → fingerprint of each file this device holds; local: its records by ID;
      *   outbox: IDs changed here and not yet sent
-     * @returns {Promise<{ records: object[], known: Map<string, string>, commit: string, settings: object|null, backupStatus: object|null }>}
+     * @returns {Promise<{ records: object[], known: Map<string, string>, commit: string, settings: object|null, backupStatus: object|null, unreadable: string[] }>}
      *   settings, backupStatus: settings.json and backup-status.json, when they changed
      *   records: new or changed records to save (already merged with local changes)
+     *   unreadable: paths of files that could not be read and were skipped; their
+     *   fingerprints are not kept, so each sync tries them again until they are mended
      */
     async pull({ known, local, outbox, onProgress = () => {} }) {
       const { commit, files } = await listFiles();
       let fingerprints = new Map(known);
       const fromCatalog = [];
+      const unreadable = [];
       // A first download starts from catalog.json (whose lists are named like
       // the folders); a record whose file still matches needs no download.
-      if (!known.size && files.has('catalog.json')) {
-        const catalog = JSON.parse(await call('GET', `/contents/catalog.json?ref=${commit}`, null, 'downloading the catalog', 'application/vnd.github.raw+json'));
+      // A catalog.json that cannot be read is skipped: every file is then downloaded.
+      const catalog = !known.size && files.has('catalog.json')
+        ? await downloadJson('catalog.json', commit, 'downloading the catalog', unreadable) : null;
+      if (catalog) {
         const all = Object.values(FOLDERS).flatMap(folder => catalog[folder] || []);
         checkVersions(all);
-        for (const record of all) {
-          const path = recordPath(record);
-          const sha = await blobSha(recordToFileText(record));
+        for (const stored of all) {
+          const path = recordPath(stored);
+          const sha = await blobSha(recordToFileText(stored));
           // Compared as stored, then read in this app's data format.
-          if (files.get(path) === sha) { fingerprints.set(path, sha); fromCatalog.push(migrate(record)); }
+          if (files.get(path) !== sha) continue;
+          const record = readableOrNull(stored);
+          if (record) { fingerprints.set(path, sha); fromCatalog.push(record); } else unreadable.push(path);
         }
       }
       const changed = [...files].filter(([path, sha]) => TYPE_OF_FOLDER[path.split('/')[0]] && path.endsWith('.json') && fingerprints.get(path) !== sha);
-      const downloaded = await downloadRecords(changed, onProgress);
+      const downloaded = await downloadRecords(changed, onProgress, unreadable);
       checkVersions(downloaded.map(item => item.record));
       const records = [];
       for (const { path, sha, record: stored } of downloaded) {
+        const record = readableOrNull(stored);
+        if (!record) { unreadable.push(path); continue; }
         fingerprints.set(path, sha);
-        const record = migrate(stored);
         const mine = local.get(record.id);
         records.push(mine && outbox.has(record.id) ? mergeRecords(mine, record) : record);
       }
       // A first download also keeps every catalog record that needed no download.
       records.push(...fromCatalog);
-      const settings = files.has('settings.json') && fingerprints.get('settings.json') !== files.get('settings.json')
-        ? JSON.parse(await call('GET', `/contents/settings.json?ref=${commit}`, null, 'downloading the settings', 'application/vnd.github.raw+json')) : null;
+      // settings.json, and backup-status.json written by the laptop's loci-backup
+      // (when the last backup and archive were made), each only when it changed.
+      const isNew = path => files.has(path) && fingerprints.get(path) !== files.get(path);
+      const settings = isNew('settings.json') ? await downloadJson('settings.json', commit, 'downloading the settings', unreadable) : null;
       if (settings) fingerprints.set('settings.json', files.get('settings.json'));
-      // Written by the laptop's loci-backup: when the last backup and archive were made.
-      const backupStatus = files.has('backup-status.json') && fingerprints.get('backup-status.json') !== files.get('backup-status.json')
-        ? JSON.parse(await call('GET', `/contents/backup-status.json?ref=${commit}`, null, 'downloading the backup status', 'application/vnd.github.raw+json')) : null;
+      const backupStatus = isNew('backup-status.json') ? await downloadJson('backup-status.json', commit, 'downloading the backup status', unreadable) : null;
       if (backupStatus) fingerprints.set('backup-status.json', files.get('backup-status.json'));
       fingerprints = new Map([...fingerprints].filter(([path]) => files.has(path)));
-      return { records, known: fingerprints, commit, settings, backupStatus };
+      // A broken record in catalog.json is also downloaded, and found broken again: named once.
+      return { records, known: fingerprints, commit, settings, backupStatus, unreadable: [...new Set(unreadable)].sort() };
     },
 
     /**

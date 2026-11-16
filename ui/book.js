@@ -51,6 +51,8 @@ function contentsHtml(entry, style) {
 function copiesHtml(entry, currency) {
   // A volume of a set with its own value is counted with the set (core/value.js, copyValueOf).
   const set = entry.set && entry.set.value !== null ? entry.set : null;
+  // The page's Edit button edits the first copy; each other copy has its own form (#/edit/<edition id>/<copy id>).
+  const editLink = copy => (entry.copies.length > 1 ? `<a class="link" href="#/edit/${escapeHtml(entry.id)}/${escapeHtml(copy.id)}">Edit this copy</a>` : '');
   return entry.copies.map(copy => {
     const history = copy.valueHistory.length > 1 ? copy.valueHistory.map(point => `${point.date}: ${money(currency, point.value)}`).join(', ') : '';
     const value = set && (set.valueAsSet || copy.value === null) ? 'Valued with the set' : copy.value !== null ? money(currency, copy.value) : 'No value yet';
@@ -64,7 +66,7 @@ function copiesHtml(entry, currency) {
       ['Price paid', money(currency, copy.price)],
       ['Value history', history],
       ['Markings', copy.markings ? 'Writing or markings when acquired' : ''],
-    ])}</div>`;
+    ])}${editLink(copy)}</div>`;
   }).join('');
 }
 

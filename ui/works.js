@@ -121,7 +121,7 @@ export function render(container, state, actions) {
       const saved = result.records.filter(record => record.type === 'work').length;
       const note = [saved ? `${saved} ${saved === 1 ? 'work' : 'works'}` : '', edition !== entry.edition ? 'the translators and texts' : ''].filter(Boolean).join(' and ');
       actions.showNote(note ? `Saved ${note}` : 'Nothing was changed');
-      actions.go(`#/book/${entry.id}`);
+      actions.leaveForm(`#/book/${entry.id}`);
     }
   };
 }
