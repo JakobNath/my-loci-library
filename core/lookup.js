@@ -113,11 +113,13 @@ function namesIn(text) {
  * "Saint Augustine ; translated by Henry Chadwick." Each part between ";"
  * is read on its own: the words before "by" give the roles, the names after
  * it the people. "associate editor, D.S. Hutchinson" has no "by" and is read too.
+ * Square brackets only mark words a cataloguer supplied, so they are dropped:
+ * "[translated by R.H. Fuller]" names R.H. Fuller.
  * @returns {{ name: string, role: string }[]}
  */
 export function contributorsFrom(byLine) {
   const people = [];
-  for (const part of String(byLine || '').split(';')) {
+  for (const part of String(byLine || '').replace(/[[\]]/g, '').split(';')) {
     const at = part.search(/\bby\s/i);
     const named = at >= 0 ? [part.slice(0, at), part.slice(at + 3)]
       : (part.match(/^\s*([\p{L}\s]*?(?:editor|translator|illustrator)s?),\s+(.+)$/iu) || []).slice(1);

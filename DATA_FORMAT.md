@@ -70,6 +70,7 @@ Each record's file name is its ID. Nothing else about a record is in its file na
 
 - UTF-8, pretty-printed with two spaces, keys always in the order given in this document, and a newline at the end.
 - Fields with no value are written as `null` (or `[]` for lists, `""` for notes), never left out, so every record of a type has the same shape.
+- Only the keys in this document are written. A key added to a file by hand is dropped the next time the record is saved, so anything worth keeping goes in a field named here (a copy's `notes`, for one). (A record in a newer format, whose keys this program does not know, is never saved over: see "Format versions".)
 - Dates are written as `YYYY-MM-DD`; moments as UTC timestamps, `YYYY-MM-DDTHH:MM:SSZ`. A date the app or a tool writes (a copy's `added`, a value's date, `trashed`) is the day on the calendar of the device that wrote it, not the UTC day: a book added at 9 pm in Minnesota is added that day.
 - Money is a plain number in the shared currency (see `settings.json`), with no symbol.
 

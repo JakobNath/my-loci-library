@@ -66,6 +66,15 @@ export const tests = [
     },
   },
   {
+    name: 'a reviser is not a translator, and a cataloguer\'s square brackets stay off the names (Bonhoeffer\'s Cost of Discipleship)',
+    fn() {
+      const fuller = [{ name: 'R.H. Fuller', role: 'translator' }];
+      same(contributorsFrom('Dietrich Bonhoeffer ; [translated from the German by R.H. Fuller, with some revision by Irmgard Booth]'), fuller);
+      same(contributorsFrom('[translated by R.H. Fuller]'), fuller);
+      same(contributorsFrom('translated by R.H. Fuller and Irmgard Booth]'), [...fuller, { name: 'Irmgard Booth', role: 'translator' }]);
+    },
+  },
+  {
     name: 'a series number listing the whole set\'s volumes is left empty: Loeb Greek Lyric\'s "142, 144, 461, 476"',
     fn() {
       const found = lookedUp(greekLyric);

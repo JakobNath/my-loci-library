@@ -11,6 +11,7 @@ const testFiles = [
   '../core/tests/lookup.tests.js',
   '../core/tests/book-data.tests.js',
   '../core/tests/record-noise.tests.js',
+  '../core/tests/marc.tests.js',
   '../core/tests/exports.tests.js',
   '../core/tests/outline.tests.js',
   '../core/tests/known-sets.tests.js',
