@@ -1,6 +1,6 @@
 # Status
 
-Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 15 November 2026 (app version 1.26.1).
+Where the project stands and what comes next. Read this first in any working session; update it at the end of each one. `PLAN.md` is the design and stays the source of truth; this file only says where things are. Last brought up to date on 15 November 2026 (app version 1.26.1; the "End of alpha" list added under "Next tasks" the same day).
 
 ## Where things stand
 
@@ -126,6 +126,15 @@ Moved from `FOR_JAKOB.md` on 10 November 2026. In order.
 
 Each is sized for one session. Take the first one that is not waiting on Jakob.
 
+**End of alpha** (project review with Jakob, 15 November 2026; `PROJECT.md` in the private workspace). Jakob expects alpha to end in about two weeks. These are the first audit's open items (the workspace's `handoffs/2026-11-13-audit.md` has each finding with its file and line) plus the housekeeping, to be done before the catalog becomes real. Fixes from the testing day may come in between. One session each, Opus, effort high unless noted:
+
+- [ ] **1. Sync and copies** (on main). One malformed record file blocks all sync with a raw JSON error (`edges/sync-github.js`): skip it, sync the rest, and name the file plainly. Only the first copy of a book can be edited (`ui/edit.js`). After Save in Edit book, Back returns to the form. Check that the audit's "three push conflicts still report Synced" is fixed.
+- [ ] **2. Merging lists edited on two phones** (audit F5, `core/merge.js`; on a branch, plan mode first). Lists (`images`, `tags`, `contents`, `valueHistory`) are last-writer-wins today, so if he photographs the cover and she the spine before syncing, one picture is dropped. Tests for a list changed on both sides.
+- [ ] **3. Library-record names and titles** (audit F11 to F14; check each against today's code first, since batches 5 and 6 may have fixed some). Re-run the live lookup check afterwards.
+- [ ] **4. Housekeeping** (effort medium). Cut `DEVICE_CHECKS.md` to what daily use would never show (Jakob, 15 November 2026: the two of them using the app and reporting problems is the phone test). Fold the rules into one place with no product named, `CLAUDE.md` kept as a short pointer (agreed 13 November 2026). Shorten this file to one screen. Thin the workspace's `handoffs/` (ask before deleting files).
+
+Not on the list: the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and the admin page's lack of progress display wait for the coming rebuild of the admin page. The laptop page for filling in what is missing is dropped (`docs/decisions/laptop-tools.md`, 15 November 2026).
+
 **First, from 14 November 2026:** the testing day. Fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check (`handoffs/2026-11-14-first-real-book.md` says how) after any change to lookups.
 
 - [x] **Released as 1.19.0, 14 November 2026: testing-day batch 2** (planned and approved with Jakob, 14 November 2026; the whole plan is in the private workspace's `handoffs/2026-11-14-testing-day-batch-2-plan.md`). From Loeb Euripides IV, a book no lookup knows: the "Not found online" form asks for several works, series, set, volume and place; the one-page form asks an anthology's language and category; the Library shows "Euripides, vol. 4" for a volume titled only by its set; "c." stays on BC dates. (The reprint date to Zotero was dropped with the translation year in 1.18.0.) Release as 1.19.0. One session, Opus, effort high. Jakob's answer the same day: adding keeps its many screens (he skips none), so "shortening the add flow" is settled.
@@ -146,7 +155,7 @@ Each is sized for one session. Take the first one that is not waiting on Jakob.
 
 **Added on 13 November 2026** (project review with Jakob; `PLAN.md`, "Original dates"):
 
-- [x] **Original dates made quick.** Released as 1.15.0, 13 November 2026 (`docs/decisions/screens.md`; phone checks in `DEVICE_CHECKS.md`). A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. The same link goes on the laptop's "fill in what is missing" page when that is built.
+- [x] **Original dates made quick.** Released as 1.15.0, 13 November 2026 (`docs/decisions/screens.md`; phone checks in `DEVICE_CHECKS.md`). A "Search the web" link beside every original-date box (adding, editing, "Works in this book") and beside an edition's translation date, opening a web search worded as a question that needs no editing; and the working-date rule as one line of help by the date field. One session, effort high. (That laptop page was dropped on 15 November 2026.)
 - The prototypes and the test-data repository were removed on 13 November 2026. Trials now run against the real catalog (alpha), after checking that the daily backup is recent. The Zotero trial still goes into the "Loci test" collection only.
 - Known-set lists: no new ones are written ahead of time (Jakob, 13 November 2026: research after adding instead). Item 3 below is replaced by that.
 

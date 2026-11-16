@@ -187,7 +187,7 @@ Most dates are found by a web search, whose summary at the top usually answers a
 - Each work's card while adding a collection has one link, "Search the web: author, language, title and date", which does not assume the author: *'The Condition of the Working Class in England', printed in The Marx-Engels Reader (works by Karl Marx and Friedrich Engels): who wrote it, in what language, under what original title, and what is its original date? Give one date: …*
 - Above a collection's cards, "All written about the same time?" asks *When did Plutarch write the works in Plutarch's Lives?*, and the date typed, or the author's lifetime with one tap, fills every work still without a date.
 
-The question carries the rule above (changed on 15 November 2026: it used to ask "written and first published?", and the summary answered with several dates), so the answer is the one date the catalog wants. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change. The laptop's page for filling in what is missing has the same link.
+The question carries the rule above (changed on 15 November 2026: it used to ask "written and first published?", and the summary answered with several dates), so the answer is the one date the catalog wants. The link is a plain web address (`https://www.google.com/search?q=` followed by the question), so the browser does the search, not the app: it is not one of the app's outside calls, sends nothing about the catalog, and if that search address ever changes, it is one line to change.
 
 **Typing a date**
 
