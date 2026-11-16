@@ -414,7 +414,14 @@ Written by the laptop tool `loci-backup`, read by the app to show the last backu
 
 ## Merging
 
-Each record carries, in `changed`, the moment each field was last edited. When two devices have both changed a record, the merged record takes each field from whichever side changed it last. A field changed on only one side keeps that change. Git history keeps every earlier version.
+Each record carries, in `changed`, the moment each field was last edited. When two devices have both changed a record, the merge (`core/merge.js`) also looks at the version both started from: the one the device last synced, which Git still holds. Then:
+
+- A field changed on only one side keeps that change, stamped or not.
+- A field changed on both sides comes from whichever side changed it last (by its stamp in `changed`; equal stamps are settled by comparing the two values, so every device gets the same result).
+- Except these lists, which are merged item by item: `images` (an item is the same image when its `id` is), `valueHistory` (the same `date`), `contents` (the same `work`, or for a piece the same title), and the lists of plain text `tags`, `otherTitles`, `languages`, `subjects`, `otherIsbns`, `extras` and `otherNames`. An item removed on either side goes; an item added on either side stays; an item changed on both sides takes the later side's change. The later side's order comes first, the other side's new items after. Afterwards a book keeps one cover and one spine (the later side's, if both took a new one), with the cover first, and a value history is put in date order.
+- Other lists (`authors`, `editors`, `contributors`, `datings`, `location`, `foundContents`) come whole from one side, since their order carries meaning.
+
+Git history keeps every earlier version.
 
 ## Format versions
 

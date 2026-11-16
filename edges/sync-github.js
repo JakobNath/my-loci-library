@@ -136,6 +136,17 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
     return records;
   }
 
+  // The version of a record this device last synced, from its old fingerprint:
+  // Git keeps every version, so it can always be downloaded again. Null when the
+  // device never held the file, or the old version cannot be read; the merge
+  // then takes each field whole from one side, as before November 2026.
+  async function lastSynced(path, sha) {
+    if (!sha) return null;
+    const blob = await call('GET', `/git/blobs/${sha}`, null, `downloading the earlier ${path}`);
+    const stored = storedRecordOrNull(path, fromBase64(blob.content));
+    return stored && readableOrNull(stored);
+  }
+
   // A JSON file other than a record (catalog.json, settings.json), or null
   // when it does not parse, with its path put on `unreadable`.
   async function downloadJson(path, commit, what, unreadable) {
@@ -204,7 +215,10 @@ export function connectToGitHub({ repo, key, branch = 'main', fetchFn = fetch })
         if (!record) { unreadable.push(path); continue; }
         fingerprints.set(path, sha);
         const mine = local.get(record.id);
-        records.push(mine && outbox.has(record.id) ? mergeRecords(mine, record) : record);
+        if (!mine || !outbox.has(record.id)) { records.push(record); continue; }
+        // Changed here and on another device: merge from the version this device
+        // last synced, so a list changed on both sides keeps both sides' items.
+        records.push(mergeRecords(mine, record, await lastSynced(path, known.get(path))));
       }
       // A first download also keeps every catalog record that needed no download.
       records.push(...fromCatalog);

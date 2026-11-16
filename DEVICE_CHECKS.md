@@ -248,3 +248,7 @@ Checked in the browser preview at phone width on 15 November 2026 (Plutarch by I
 - [ ] Phone, same book: in the Library sorted by original date, it sits under 1812, not 1857.
 - [ ] Phone: add the Reader again (978-0-393-09040-6). On "Translation and editors" tap "Various translators": the translator box empties and the step goes on without asking for a translator. "Check before saving" says "Translators: Various translators"; so does the book page after saving, and Edit book has the tick.
 - [ ] Phone, the other phone: once both have 1.26.0 and have synced, the Grimm shows "1812–15; rev. 1857" there too. A phone still on 1.25 that meets the new records asks to be refreshed.
+
+## Lists merged item by item (1.27.0, 16 November 2026)
+
+- [ ] Both phones: with both on 1.27.0 and synced, turn on airplane mode on both. On one, take the cover of a book; on the other, the spine of the same book. Turn the network back on and sync both (Settings › Sync now), the first one again at the end. Both phones show the book with its cover and its spine.

@@ -102,6 +102,25 @@ test('two devices editing one record offline: each field keeps the newest edit',
   assert.equal(phone.state.local.get(original.id).value, 40, 'the phone receives the laptop\'s change');
 });
 
+test('a cover taken on one phone and a spine on the other, both offline: the book keeps both pictures', async () => {
+  const github = fakeGitHub();
+  const book = newRecord('edition', ids(8), T0, { title: 'Confessions' });
+  github.commitFiles({ [recordPath(book)]: recordToFileText(book) });
+  const his = device(github);
+  const hers = device(github);
+  await his.pull();
+  await hers.pull();
+  const picture = (id, kind) => ({ id, kind, source: 'photo', color: null, ratio: 0.66, master: true, waiting: null });
+  his.edit(withField(his.state.local.get(book.id), 'images', [picture(ids(81), 'cover')], '2026-11-10T12:00:00Z'));
+  hers.edit(withField(hers.state.local.get(book.id), 'images', [picture(ids(82), 'spine')], '2026-11-10T12:05:00Z'));
+  await his.send();
+  await hers.send(); // refused at first; her phone pulls, merges from the version both started from, and sends again
+  const merged = JSON.parse(github.fileText(recordPath(book)));
+  assert.deepEqual(merged.images.map(image => image.kind), ['cover', 'spine']);
+  await his.pull();
+  assert.equal(his.state.local.get(book.id).images.length, 2, 'his phone receives her spine');
+});
+
 test('an expired key, no connection, the GitHub rate limit and a newer data format are explained plainly', async () => {
   const github = fakeGitHub();
   github.commitFiles({ 'README.md': 'Test data\n' });
