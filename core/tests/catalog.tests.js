@@ -97,6 +97,17 @@ export const tests = [
     },
   },
   {
+    name: 'Hebrew and Cyrillic are searched in their own letters, so two such names stay two',
+    fn() {
+      ok(matchesSearch(normalizeForSearch('Фёдор Достоевский'), 'достоевский'));
+      ok(matchesSearch(normalizeForSearch('Фёдор Достоевский'), 'Федор'), 'marks are ignored, as accents are');
+      equal(normalizeForSearch('בְּרֵאשִׁית'), 'בראשית', 'Hebrew vowel points too');
+      ok(normalizeForSearch('Толстой') !== normalizeForSearch('Достоевский'), 'two authors, not one empty name');
+      ok(matchesSearch(normalizeForSearch('Тора: בְּרֵאשִׁית'), 'בראשית'));
+      equal(shownTitle({ title: 'Тора', set: 'Пятикнижие', volume: '1' }), 'Тора', 'a title is not taken for its set');
+    },
+  },
+  {
     name: 'searching "Phaedo" finds Loeb 36 (#9), and so does "platon"',
     fn() {
       const text = searchTextOf(loeb36, byId(loebWorks), byId([plato]));

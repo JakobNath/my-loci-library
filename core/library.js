@@ -196,8 +196,10 @@ export function missingDetails(entry) {
  * @returns {string}
  */
 export function shownTitle(edition) {
-  const plain = text => String(text || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-  if (!edition.set || !edition.volume || plain(edition.title) !== plain(edition.set)) return edition.title;
+  // Letters and digits only, in any alphabet: "Luther's Works" is the set "Luthers Works".
+  const plain = text => normalizeForSearch(text).replace(/ /g, '');
+  const isSetTitle = plain(edition.title) === plain(edition.set);
+  if (!edition.set || !edition.volume || !isSetTitle) return edition.title;
   return `${edition.title}, vol. ${edition.volume}`;
 }
 

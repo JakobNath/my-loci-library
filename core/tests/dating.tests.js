@@ -39,6 +39,8 @@ export const tests = [
   reads('1565-73', 1565, 1573, 'range'),
   reads('1849 to 1850', 1849, 1850, 'range'),
   reads('500–450 BC', -500, -450, 'range'),
+  reads('399–95 BC', -399, -395, 'range'),
+  reads('44–3 BC', -44, -43, 'range'),
   reads('late 4th–early 5th c.', 367, 433, 'century'),
   reads('5th century', 401, 500, 'century'),
   reads('AD 397', 397, 397, 'exact'),

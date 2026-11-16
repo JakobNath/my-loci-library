@@ -227,6 +227,18 @@ export const tests = [
     },
   },
   {
+    name: 'a typed ISBN whose last digit does not fit is refused; one already saved on the book is let be',
+    fn() {
+      const slip = recordsFromForm(blankForm({ title: 'Confessions', isbn: '9780199537823' }), null, context());
+      ok(slip.problems.some(problem => problem.includes('last digit')), 'a slip in typing');
+      ok(recordsFromForm(blankForm({ title: 'Confessions', isbn: '0-19-953782-8' }), null, context()).problems.length === 0, 'a right ISBN-10');
+      const first = recordsFromForm(blankForm({ title: 'Confessions', isbn: '9780199537822' }), null, context());
+      const stored = { ...first.records.find(r => r.type === 'edition'), isbn: '9780199537823' };
+      const existing = { edition: stored, copy: first.records.find(r => r.type === 'copy'), works: first.records.filter(r => r.type === 'work') };
+      same(recordsFromForm(blankForm({ title: 'Confessions', isbn: '9780199537823', year: '2008' }), existing, context()).problems, [], 'saved before the check');
+    },
+  },
+  {
     name: 'an ISBN-10 becomes an ISBN-13',
     fn() {
       equal(isbn13('0-19-953782-6'), '9780199537822');

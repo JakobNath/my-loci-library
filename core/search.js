@@ -10,7 +10,9 @@ const LIGATURES = { æ: 'ae', œ: 'oe', ß: 'ss', ø: 'o', đ: 'd', ł: 'l', þ:
 
 /**
  * Normalize text for searching: lowercase, no accents, Greek in Latin letters,
- * punctuation turned into spaces.
+ * punctuation turned into spaces. Letters of other alphabets (Hebrew,
+ * Cyrillic) are kept as they are, so "\u05de\u05e9\u05d4" finds \u05de\u05e9\u05d4 and two such names
+ * never both read as nothing.
  * @param {string} text
  * @returns {string}
  */
@@ -21,10 +23,10 @@ export function normalizeForSearch(text) {
   const plain = raw
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, ''); // combining accent marks
+    .replace(/\p{M}/gu, ''); // combining marks: accents, and Hebrew vowel points
   let out = '';
   for (const letter of plain) out += GREEK[letter] ?? LIGATURES[letter] ?? letter;
-  return out.replace(/[^a-z0-9]+/g, ' ').trim();
+  return out.replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
 /**

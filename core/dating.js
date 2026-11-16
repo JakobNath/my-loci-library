@@ -113,16 +113,17 @@ function readAcrossEras(text) {
   return { earliest: -Number(match[1]), latest: Number(match[2]) };
 }
 
-// "1689", "397-400", "1530-59", "397/398", "500-450" (BC)
+// "1689", "397-400", "1530-59", "397/398", "500-450" (BC), "399-95" (BC)
 function readYears(text, isBc) {
   const match = text.match(/^(\d{1,4})(?:\s*[-/]\s*(\d{1,4}))?$/);
   if (!match) return null;
   const first = Number(match[1]);
   let second = match[2] === undefined ? first : Number(match[2]);
-  // "1530-59": the second year borrows the first year's leading digits.
+  // "1530-59": the second year borrows the first year's leading digits. BC years
+  // count down, so "399-95 BC" is 399 to 395 BC, the second year the smaller.
   if (match[2] && match[2].length < match[1].length && second < first) {
     const borrowed = Number(match[1].slice(0, match[1].length - match[2].length) + match[2]);
-    if (borrowed >= first) second = borrowed;
+    if (isBc ? borrowed < first : borrowed >= first) second = borrowed;
   }
   if (first === 0 || second === 0) return null;
   if (isBc) {

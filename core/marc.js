@@ -49,13 +49,25 @@ function withoutStop(text) {
   return /\.$/.test(clean) && !/(\b[A-Za-z]{1,3}|\.\w)\.$/.test(clean) ? clean.slice(0, -1) : clean;
 }
 
+// Words in a heading's $c that are a rank or a title, never part of the name.
+const HONORIFICS = new Set(['saint', 'pope', 'king', 'queen', 'emperor', 'empress', 'bishop', 'archbishop', 'cardinal',
+  'patriarch', 'abbot', 'abbess', 'prince', 'princess', 'duke', 'earl', 'count', 'countess', 'sir', 'dame', 'lord', 'lady',
+  'blessed', 'brother', 'sister', 'mother', 'father', 'rabbi', 'mrs', 'mr', 'dr', 'jr', 'sr']);
+
 // "Dostoyevsky, Fyodor," is Fyodor Dostoyevsky; "Plato." and "Augustine, of Hippo" read as they stand.
+// A name entered under its forename (first indicator 0) keeps its byname from
+// $c, but not a title: "Thomas, $c Aquinas, Saint" is Thomas Aquinas, and
+// "Augustine, $c Saint, Bishop of Hippo" is Augustine. Its numbering ($b) stays
+// too: "Gregory $b I, $c Pope" is Gregory I.
 function personName(field) {
   const name = withoutStop(subfield(field, 'a'));
   const inverted = field.ind1 === '1' && name.includes(',');
   const whole = inverted ? `${name.slice(name.indexOf(',') + 1).trim()} ${name.slice(0, name.indexOf(','))}` : name;
-  const title = withoutStop(subfield(field, 'c'));
-  return /^of\b/.test(title) ? `${whole} ${title.split(',')[0]}` : whole;
+  const numbered = field.ind1 === '0' && subfield(field, 'b') ? `${whole} ${withoutStop(subfield(field, 'b'))}` : whole;
+  const byname = withoutStop(subfield(field, 'c')).split(',')[0].trim();
+  const isByname = /^of\b/.test(byname)
+    || (field.ind1 === '0' && /^\p{Lu}\p{Ll}+$/u.test(byname) && !HONORIFICS.has(byname.toLowerCase()));
+  return isByname ? `${numbered} ${byname}` : numbered;
 }
 
 const RELATORS = { trl: 'translator', translator: 'translator', edt: 'editor', editor: 'editor', aui: 'introduction',
@@ -127,7 +139,7 @@ const PART_MARKER = /^\s*(?:part|pt|book|bk|section)\.?\s+[\divxlc]+\.?\s*$/i;
 // fuller form, titles ($t) with their authors ($r). In the fuller form a title
 // right after a part number ($g "Part I.") is that part's heading ("The early
 // Marx"), not a work, and is left out (The Marx-Engels Reader, 1978).
-function contentsOf(record) {
+function contentsOf(record, caseTitle) {
   const contents = [];
   for (const field of fieldsOf(record, '505')) {
     const titles = allSubfields(field, 't');
@@ -137,12 +149,12 @@ function contentsOf(record) {
         const before = field.subfields[i - 1];
         if (before && before[0] === 'g' && PART_MARKER.test(before[1])) return;
         const next = field.subfields[i + 1];
-        contents.push({ title: sentenceToTitleCase(withoutStop(withoutSeparator(text))), author: next && next[0] === 'r' ? withoutStop(withoutSeparator(next[1])) : '' });
+        contents.push({ title: caseTitle(withoutStop(withoutSeparator(text))), author: next && next[0] === 'r' ? withoutStop(withoutSeparator(next[1])) : '' });
       });
     } else {
       for (const part of subfield(field, 'a').split(/\s+-{2,}\s+/)) {
         const [title, author = ''] = part.split(' / ');
-        if (withoutStop(title)) contents.push({ title: sentenceToTitleCase(withoutStop(title)), author: withoutStop(author) });
+        if (withoutStop(title)) contents.push({ title: caseTitle(withoutStop(title)), author: withoutStop(author) });
       }
     }
   }
@@ -163,8 +175,8 @@ function labelValue(label) {
   return total;
 }
 
-// The volume an ISBN's note names: "(v. 1)", "v.2", "vol. III"; empty when it names none ("(hardcover)").
-const volumeInNote = note => (String(note).match(/\bv(?:ol)?\.?\s*(\d+|[ivxlc]+)\b/i) || ['', ''])[1];
+// The volume an ISBN's note names: "(v. 1)", "v.2", "vol. III", "volume 1"; empty when it names none ("(hardcover)").
+const volumeInNote = note => (String(note).match(/\bv(?:ol(?:ume)?)?\.?\s*(\d+|[ivxlc]+)\b/i) || ['', ''])[1];
 
 // The digits of a catalogue number, for comparing "  2003032744 " and "(OCoLC)56058333" with typed ones.
 const digitsOf = text => String(text || '').replace(/\D/g, '');
@@ -200,38 +212,51 @@ function recordsListing(records, isbn) {
  * volumes", ISBN "(v. 1)"). Null when no record lists the ISBN, or when
  * records of different books share it (Great Books of the Western World
  * prints one ISBN on every volume): then nothing can be told about the book.
+ * Two titles are one book catalogued two ways (Loeb's Plato I is "Plato" in
+ * one library and "Euthyphro, Apology, Crito, Phaedo, Phaedrus" in others):
+ * the title most records give is read, not whichever came first.
  */
 function chooseRecord(records, isbn) {
   const listing = recordsListing(records, isbn);
   const own = listing.filter(item => !item.volume);
   // Titles compared by their letters only: "Euthyphro, Apology…" and "Euthyphro ; Apology…" are one book.
-  const titleOf = item => subfield(fieldsOf(item.fields, '245')[0], 'a').toLowerCase().replace(/[^a-z]/g, '');
-  if (new Set(own.map(titleOf)).size > 2) return null;
-  return own[0] || listing[0] || null;
+  const titleOf = item => subfield(fieldsOf(item.fields, '245')[0], 'a').toLowerCase().replace(/[^\p{L}]/gu, '');
+  const counts = new Map();
+  for (const item of own) counts.set(titleOf(item), (counts.get(titleOf(item)) || 0) + 1);
+  if (counts.size > 2) return null;
+  const most = Math.max(...counts.values());
+  return own.find(item => counts.get(titleOf(item)) === most) || listing[0] || null;
+}
+
+// Whether a record describes a book in English, or names no language: the
+// language code at positions 35 to 37 of its fixed-length data (008).
+function isEnglish(record) {
+  const code = ((record.find(item => item.tag === '008') || {}).text || '').slice(35, 38);
+  return !/^[a-z]{3}$/.test(code) || code === 'eng' || code === 'und';
 }
 
 // A record describing a set: "12 v.", "2 volumes", or "v." for an open set.
 const describesSet = record => /^\s*(?:\d+\s*)?v\.|\bvolumes\b/i.test(subfield(fieldsOf(record, '300')[0], 'a'));
 
-// A 505 section's leading volume label: "1. ", "[v. 1] ", "I. ", "V-VI. ", "v. 2. ", "[v.] 1. ".
-const SECTION_VOLUME = /^\s*(?:\[?v(?:ol)?s?\.?\]?\s*)?\[?(\d+|[IVXLC]+)(?:\s*-\s*(\d+|[IVXLC]+))?\s*[.\]]\s+/i;
+// A 505 section's leading volume label: "1. ", "[v. 1] ", "I. ", "V-VI. ", "v. 2. ", "[v.] 1. ", "Volume 1. ".
+const SECTION_VOLUME = /^\s*(?:\[?v(?:ol(?:ume)?)?s?\.?\]?\s*)?\[?(\d+|[IVXLC]+)(?:\s*-\s*(\d+|[IVXLC]+))?\s*[.\]]\s+/i;
 
 // One section of a set's contents, read as works: "I Clement. II Clement. Ignatius."
 // is three works when every piece is a short title; otherwise the section is one work.
-function sectionWorks(section) {
+function sectionWorks(section, caseTitle) {
   const text = section.replace(/\[[^\]]*\]/g, '').trim();
   const pieces = text.split(/\.\s+(?=\S)/).map(piece => withoutStop(piece)).filter(Boolean);
   const titles = pieces.length > 1 && pieces.every(piece => /^[A-Z0-9]/.test(piece) && piece.split(' ').length <= 8) ? pieces : [withoutStop(text)];
   return titles.map(title => {
     const [name, author = ''] = title.split(' / ');
-    return { title: sentenceToTitleCase(withoutStop(name)), author: withoutStop(author) };
+    return { title: caseTitle(withoutStop(name)), author: withoutStop(author) };
   });
 }
 
 // The works of one volume, from a set record's contents note. Sections are
 // split by " -- "; a section starting with a volume label begins that
 // volume, and those after it belong to it until the next label.
-function volumeContents(record, volume) {
+function volumeContents(record, volume, caseTitle) {
   const wanted = labelValue(volume);
   const contents = [];
   let current = null;
@@ -239,7 +264,7 @@ function volumeContents(record, volume) {
     for (const section of subfield(field, 'a').split(/\s*--\s*/)) {
       const label = section.match(SECTION_VOLUME);
       if (label) current = [labelValue(label[1]), labelValue(label[2] || label[1])];
-      if (current && wanted !== null && wanted >= current[0] && wanted <= current[1]) contents.push(...sectionWorks(label ? section.slice(label[0].length) : section));
+      if (current && wanted !== null && wanted >= current[0] && wanted <= current[1]) contents.push(...sectionWorks(label ? section.slice(label[0].length) : section, caseTitle));
     }
   }
   return contents.filter(entry => entry.title && isWorkTitle(entry.title));
@@ -313,9 +338,11 @@ function fromMarc(xml, isbn, source) {
   const found = emptyFound(source);
   const field = tag => fieldsOf(record, tag)[0];
   const titleField = field('245');
+  // Title case is English: a German or Latin title keeps the cataloguer's capitals ("Der Brief an die Römer").
+  const caseTitle = isEnglish(record) ? sentenceToTitleCase : title => title;
   found.isbn = typeof isbn === 'string' ? isbn : '';
-  found.title = sentenceToTitleCase(withoutStop([subfield(titleField, 'a'), ...allSubfields(titleField, 'n'), ...allSubfields(titleField, 'p')].join(' ')));
-  found.subtitle = sentenceToTitleCase(withoutStop(subfield(titleField, 'b')));
+  found.title = caseTitle(withoutStop([subfield(titleField, 'a'), ...allSubfields(titleField, 'n'), ...allSubfields(titleField, 'p')].join(' ')));
+  found.subtitle = caseTitle(withoutStop(subfield(titleField, 'b')));
   found.authors = fieldsOf(record, '100').map(personName);
   if (!found.authors.length) found.authors = authorsOfWorks(record);
   found.contributors = contributorsFrom(subfield(titleField, 'c'));
@@ -325,7 +352,7 @@ function fromMarc(xml, isbn, source) {
   found.year = yearOf(subfield(imprint, 'c'));
   found.editionStatement = plain(subfield(field('250'), 'a'));
   const seriesField = field('490') || field('440') || field('830');
-  found.series = sentenceToTitleCase(withoutStop(subfield(seriesField, 'a')));
+  found.series = caseTitle(withoutStop(subfield(seriesField, 'a')));
   found.seriesNumber = plain(subfield(seriesField, 'v')).replace(/^(?:v|vol|no|nr|bd|t)\.?\s*/i, '');
   const description = field('300');
   // A record for a whole set gives its number of volumes ("2 v."), not pages.
@@ -337,7 +364,7 @@ function fromMarc(xml, isbn, source) {
   const languages = field('041');
   const original = languages && languages.ind1 === '1' ? subfield(languages, 'h') : '';
   found.originalLanguage = original ? LANGUAGE_NAMES[original] || original : '';
-  found.contents = isSet ? volumeContents(record, chosen.volume) : contentsOf(record);
+  found.contents = isSet ? volumeContents(record, chosen.volume, caseTitle) : contentsOf(record, caseTitle);
   if (!isSet && !found.contents.length) found.contents = contentsInTitle(found.title);
   // A work listed without its author is by the book's author, when it has one (Plato's dialogues).
   if (found.authors.length === 1) found.contents = found.contents.map(entry => ({ ...entry, author: entry.author || found.authors[0] }));

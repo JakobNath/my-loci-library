@@ -284,6 +284,10 @@ export function recordsFromForm(form, existing, context) {
   if (!form.title.trim()) problems.push('A title is needed.');
   const isbn = form.isbn.trim() ? isbn13(form.isbn) : null;
   if (form.isbn.trim() && !isbn) problems.push(`"${form.isbn}" is not an ISBN (10 or 13 digits).`);
+  // An ISBN already saved on the book is let be, so a book stored before this
+  // check can still be edited.
+  const isUnchanged = Boolean(existing) && isbn === existing.edition.isbn;
+  if (isbn && !isUnchanged && !hasValidCheckDigit(form.isbn)) problems.push(`"${form.isbn}" is not an ISBN: its last digit does not fit. Check it against the book.`);
   // The first printing and the other ISBNs (format 6). A form without their boxes
   // (undefined) leaves them as they are, so an edit elsewhere never clears them.
   const printing = {};
