@@ -4,6 +4,8 @@ Small laptop tools for My Loci Library. Each lives in its own folder and runs on
 
 Created by Jakob Nath.
 
+The rules for changing these tools are in the app repository's `CODE_STYLE.md`, which covers both.
+
 - `loci-backup/`: the daily backup, the monthly snapshot of the exports and the HTML catalog, and the yearly archive.
 - `loci-enrich/`: fills empty book fields (pages, sizes, edition, series, translators and more) from the Library of Congress, Open Library and Google Books.
 - `logos-to-my-loci-library/`: imports a Logos Library spreadsheet export.
