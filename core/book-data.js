@@ -8,6 +8,7 @@
 import { isbn13 } from './entry.js';
 import { emptyFound, combineFound, contributorsFrom, cleanPages, titleCase, tidy, yearOf, listsIsbn, otherIsbnsListed, googleIsbns, samePerson, describesVolumes, isEditionNotPublisher } from './lookup.js';
 import { normalizeForSearch } from './search.js';
+import { oneLetterApart } from './people.js';
 
 // MARC language codes (also used by Open Library) for the languages a library
 // like ours meets. A code not listed is shown as it is.
@@ -274,6 +275,21 @@ function corrected(found) {
 // A page count alone ("311"), as opposed to pages as printed ("xxviii, 311").
 const isBareCount = pages => /^\d+$/.test(pages);
 
+// Records made by libraries, whose cataloguers check the title page.
+const LIBRARY_SOURCES = ['libraryofcongress', 'hathitrust'];
+
+// A title's words without a leading article: "The Aeneid" is ["aeneid"].
+const titleWords = title => normalizeForSearch(title).split(' ').filter(Boolean).filter((word, i) => i > 0 || !['the', 'a', 'an'].includes(word));
+
+// Whether two titles are one title misspelt: the same words, but for a leading
+// article and a letter in some word ("Aenid" and "The Aeneid"). Titles that differ
+// only in capitals or an article are not misspelt, and each source keeps its own.
+function isSpellingOf(a, b) {
+  const [x, y] = [titleWords(a), titleWords(b)];
+  return x.length > 0 && x.length === y.length && x.some((word, i) => word !== y[i])
+    && x.every((word, i) => word === y[i] || oneLetterApart(word, y[i]));
+}
+
 /**
  * One book's fields from every source that answered, best first: the
  * Library of Congress, then HathiTrust, then Open Library, then Google Books. Each field
@@ -281,7 +297,8 @@ const isBareCount = pages => /^\d+$/.test(pages);
  * PLAN.md for bibliographic facts, and for height, thickness and covers
  * "whichever has them". Pages as printed beat a bare page count from any
  * source. A series written as the subtitle is read as the series, and a year
- * too early for a book with an ISBN is not used. Original dates are never produced.
+ * too early for a book with an ISBN is not used, and a title another source
+ * misspells is taken from a library record. Original dates are never produced.
  * @param {(import('./lookup.js').Found|null)[]} answers in order of preference
  * @returns {import('./lookup.js').Found|null}
  */
@@ -291,6 +308,9 @@ export function mergeFound(answers) {
   const merged = present.reduce(combineFound);
   const printed = present.map(found => found.pages).find(pages => pages && !isBareCount(pages));
   const result = printed ? { ...merged, pages: printed } : { ...merged }; // a copy: answers are never changed
+  // A title misspelt in a bookseller's or reader's record ("Aenid") gives way to a library record's ("The Aeneid").
+  const library = present.find(found => LIBRARY_SOURCES.includes(found.source) && found.title !== result.title && isSpellingOf(found.title, result.title));
+  if (library) result.title = library.title;
   // Every source's other ISBNs together, each once, since each record lists its own few.
   result.otherIsbns = otherIsbnsListed(present.flatMap(found => found.otherIsbns || []), result.isbn);
   // Only a set's record knew the book: it is called by the set and its volume.

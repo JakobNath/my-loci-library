@@ -18,7 +18,7 @@ import { isbn13, isBookBarcode, recordsFromForm, anotherCopy, volumesFromLines, 
 import { editionsWithIsbn, suggestWorks, sameWikidataWorks } from '../core/matching.js';
 import { emptyFound, suggestOriginalDates } from '../core/lookup.js';
 import { mergeFound, withLibraryContents, withLibraryAuthors, isYearTooEarly, categoriesFromSubjects, startingBookLanguages, bookLanguageChoices, loebStyleTitle } from '../core/book-data.js';
-import { tidyPeople, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
+import { tidyPeople, authorName, contributorsFromSteps, editionLanguages, possibleEditors } from '../core/people.js';
 import { isBible } from '../core/bible.js';
 import { keyBetween } from '../core/shelf-order.js';
 import { parseDating, formatYearRange, workingDating, revisionProblem } from '../core/dating.js';
@@ -212,14 +212,17 @@ export function render(container, state, actions) {
     }
     // Translators, editors and publishers the records list as authors are put in their place (core/people.js).
     const known = [...state.library.authorsById.values()].map(author => author.name);
-    found = tidyPeople(found, { search: await workSearch, work: await work, known });
+    const workFound = await work;
+    found = tidyPeople(found, { search: await workSearch, work: workFound, known });
+    // The work's author is named as the book's authors now are, so its lifetime is still offered as theirs.
+    const namedWork = workFound.author ? { ...workFound, author: { ...workFound.author, name: authorName(workFound.author.name, { work: workFound, known }) } } : workFound;
     // A library record naming more of the book's authors (Marx and Engels for the Reader) adds them.
     found = withLibraryAuthors(found, answers.map(answer => answer.found));
     const sources = answers.filter(answer => answer.found).map(answer => answer.name);
     // A year too early for a book with an ISBN was left out (core/book-data.js); with no other year, "Is this the book?" says why.
     const early = answers.map(answer => answer.found).find(answer => answer && isYearTooEarly(answer));
     const yearSetAside = found && !found.year && early ? early.year : '';
-    startBook(found ? { ...found, sources, yearSetAside } : { isbn }, work, found ? '' : problems[0] || '');
+    startBook(found ? { ...found, sources, yearSetAside } : { isbn }, namedWork, found ? '' : problems[0] || '');
   }
 
   function askAboutDuplicate(entry) {
@@ -306,7 +309,8 @@ export function render(container, state, actions) {
     const current = book;
     Promise.resolve(workLookup).then(work => { if (book === current) { book.work = work; if (['date', 'language'].includes(book.step)) drawStep(); } });
     checkCover(current);
-    if (!book.knownSet && full.title && full.authors[0]) askWikidata(current, [full.title], full.authors[0]);
+    // Asked once the work is in (it already is after an ISBN lookup), so its author's Wikidata ID goes with the question.
+    if (!book.knownSet && full.title && full.authors[0]) Promise.resolve(workLookup).then(() => askWikidata(current, [full.title], full.authors[0]));
     goTo(steps()[0]);
   }
 
@@ -603,7 +607,9 @@ export function render(container, state, actions) {
       const note = book.step === 'works' && stepArea.querySelector('[data-wikidata-arrived]');
       if (note) { note.hidden = false; if (text) note.textContent = text; }
     };
-    lookUpWorks(titles, author).then(found => {
+    // Open Library's Wikidata ID for the work's author finds the works however the name is spelt (Dostoevsky).
+    const authorIds = current.work && current.work.author && current.work.author.wikidata ? [current.work.author.wikidata] : [];
+    lookUpWorks(titles, author, fetch, authorIds).then(found => {
       current.wikidataAnswered = key;
       for (const [title, work] of found) current.wikidata.set(title, work);
       // "Possibly the same as…": a work already held under the same Wikidata item is offered in "Same work?".
@@ -786,7 +792,8 @@ export function render(container, state, actions) {
   // after the author died, since the working date is then when it was written (core/wikidata.js).
   function wikidataSuggestion() {
     const work = book.wikidata.get(book.found.title);
-    return work && work.date && !work.posthumous ? [{ text: work.date, label: 'written or first published (Wikidata)' }] : [];
+    const label = { published: 'first published (Wikidata)', written: 'written (Wikidata)' }[work && work.dateKind] || 'written or first published (Wikidata)';
+    return work && work.date && !work.posthumous ? [{ text: work.date, label }] : [];
   }
 
   // 3. When was it written?

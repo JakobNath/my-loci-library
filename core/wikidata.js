@@ -11,11 +11,15 @@
 import { normalizeForSearch } from './search.js';
 
 
-// A title as Wikidata's English label may give it: as it stands, and without a leading article.
+// A title as Wikidata's English label may give it: as it stands, without a leading
+// article, and with or without "On" before "the" (Luther's "On the Bondage of the
+// Will" is often printed "The Bondage of the Will").
 function labelsFor(title) {
   const clean = String(title || '').trim();
   const bare = clean.replace(/^(the|a|an)\s+/i, '');
-  return [...new Set([clean, bare, bare.charAt(0).toUpperCase() + bare.slice(1)])].filter(Boolean);
+  const withOn = /^the\s/i.test(clean) ? `On t${clean.slice(1)}` : '';
+  const withoutOn = /^on\s+the\s/i.test(clean) ? clean.replace(/^on\s+t/i, 'T') : '';
+  return [...new Set([clean, bare, bare.charAt(0).toUpperCase() + bare.slice(1), withOn, withoutOn])].filter(Boolean);
 }
 
 const literal = text => `"${String(text).replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"@en`;
@@ -29,22 +33,29 @@ const literal = text => `"${String(text).replace(/\\/g, '\\\\').replace(/"/g, '\
  *   several (a reader of Marx and Engels): a work by any of them is found
  * @param {string} [prefixes] the PREFIX lines naming Wikidata's vocabularies, which the query service needs
  *   written out; they name Wikidata's address, so they are kept in edges/lookup-wikidata.js
+ * @param {string[]} [authorIds] authors' Wikidata IDs, when known ("Q991"): a work by one of them is found
+ *   however the name is spelt ("Fiódor Dostoievski" for Wikidata's "Fyodor Dostoyevsky")
  * @returns {string} the query, or '' when there is nothing to ask (no author: a title alone matches too much)
  */
-export function worksQuery(titles, author, prefixes = '') {
+export function worksQuery(titles, author, prefixes = '', authorIds = []) {
   const names = Array.isArray(author) ? author : [author];
   const surnames = [...new Set(names.map(name => normalizeForSearch(name || '').split(' ').pop()).filter(Boolean))];
+  const ids = [...new Set(authorIds)].filter(id => /^Q\d+$/.test(id));
   const labels = [...new Set(titles.flatMap(labelsFor))];
-  if (!surnames.length || !labels.length) return '';
-  const byName = surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`).join(' || ');
+  if (!(surnames.length || ids.length) || !labels.length) return '';
+  const byName = [...surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`), ...ids.map(id => `?author = wd:${id}`)].join(' || ');
+  // ?kind tells a first publication (P577) from when the work was written (P571), which the working-date rule treats apart.
   return `${prefixes}
-SELECT ?title ?work ?authorName ?time ?precision ?original ?other ?died WHERE {
+SELECT ?title ?work ?authorName ?kind ?time ?precision ?original ?other ?died WHERE {
   VALUES ?title { ${labels.map(literal).join(' ')} }
   ?work rdfs:label ?title ; wdt:P50 ?author .
   ?author rdfs:label ?authorName .
   FILTER(LANG(?authorName) = "en" && (${byName}))
   FILTER NOT EXISTS { ?work wdt:P629 ?editionOf }
-  OPTIONAL { ?work (p:P571|p:P577)/(psv:P571|psv:P577) ?value . ?value wikibase:timeValue ?time ; wikibase:timePrecision ?precision . }
+  OPTIONAL {
+    VALUES (?kind ?valueOf) { (p:P571 psv:P571) (p:P577 psv:P577) }
+    ?work ?kind ?statement . ?statement ?valueOf ?value . ?value wikibase:timeValue ?time ; wikibase:timePrecision ?precision .
+  }
   OPTIONAL { ?work wdt:P1476 ?original }
   OPTIONAL { ?work skos:altLabel ?other . FILTER(LANG(?other) = "en") }
   OPTIONAL { ?author wdt:P570 ?died }
@@ -105,8 +116,26 @@ function clearlyTheWork(dated) {
 }
 
 /**
- * What Wikidata's answer says about each title asked: its item, the earliest
- * date given (written or first published), its original title and that
+ * Of a work's dates, the one the working-date rule picks (PLAN.md, "Which date
+ * is the working date"): the first publication when it was in the author's
+ * lifetime (Pride and Prejudice 1813, though written c. 1800; Frankenstein
+ * 1818, though written 1816); otherwise when it was written (Augustine's
+ * Confessions); otherwise the earliest date, which is then a posthumous
+ * printing. A date of unknown kind counts as written, as answers asked
+ * before the kinds were told apart had it.
+ */
+function workingDate(work) {
+  const dates = work.dates.map(date => ({ ...date, year: yearOf(date.time) }));
+  const earliest = list => [...list].sort((a, b) => a.year - b.year)[0];
+  const inLifetime = date => work.died === null || date.year <= work.died;
+  return earliest(dates.filter(date => date.kind === 'published' && inLifetime(date)))
+    || earliest(dates.filter(date => date.kind !== 'published'))
+    || earliest(dates);
+}
+
+/**
+ * What Wikidata's answer says about each title asked: its item, the date the
+ * working-date rule picks (workingDate), its original title and that
  * title's language, its other English titles, and its authors as Wikidata
  * names them (those whose names matched the query). posthumous: the date is
  * after the author died (the 1844 Manuscripts, first printed 1932). A title
@@ -114,7 +143,8 @@ function clearlyTheWork(dated) {
  * which is meant, unless one clearly stands out (clearlyTheWork).
  * @param {object} answer the query's JSON answer
  * @param {string[]} titles the titles asked (as in worksQuery)
- * @returns {Map<string, { wikidata: string, date: string, posthumous: boolean, originalTitle: string, originalLanguage: string, otherTitles: string[], authors: string[] }>} by the asked title
+ * dateKind: 'published', 'written', or '' when Wikidata did not say.
+ * @returns {Map<string, { wikidata: string, date: string, dateKind: string, posthumous: boolean, originalTitle: string, originalLanguage: string, otherTitles: string[], authors: string[] }>} by the asked title
  */
 export function worksFromWikidata(answer, titles) {
   const byLabel = new Map();
@@ -124,7 +154,10 @@ export function worksFromWikidata(answer, titles) {
     const works = byLabel.get(label) || new Map();
     const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', originalLanguage: '', otherTitles: new Set(), authors: new Set(), died: null };
     if (row.authorName) work.authors.add(row.authorName.value);
-    if (row.time) work.dates.push({ time: row.time.value, precision: Number(row.precision.value) });
+    if (row.time) {
+      const kind = !row.kind ? '' : row.kind.value.endsWith('P577') ? 'published' : 'written';
+      work.dates.push({ time: row.time.value, precision: Number(row.precision.value), kind });
+    }
     if (row.original) {
       work.originalTitle = row.original.value;
       work.originalLanguage = LANGUAGES_BY_CODE[String(row.original['xml:lang'] || '').toLowerCase()] || work.originalLanguage;
@@ -141,12 +174,12 @@ export function worksFromWikidata(answer, titles) {
     const dated = candidates.filter(work => work.dates.length);
     const work = dated.length === 1 ? dated[0] : dated.length > 1 ? clearlyTheWork(dated) : candidates.length === 1 ? candidates[0] : null;
     if (!work) continue;
-    // The earliest of the dates given: a work's composition comes before its later printings.
-    const earliest = work.dates.map(date => ({ ...date, year: yearOf(date.time) })).sort((a, b) => a.year - b.year)[0];
+    const chosen = workingDate(work);
     found.set(title, {
       wikidata: work.wikidata,
-      date: earliest ? wikidataDateText(earliest.time, earliest.precision) : '',
-      posthumous: Boolean(earliest && work.died !== null && earliest.year > work.died),
+      date: chosen ? wikidataDateText(chosen.time, chosen.precision) : '',
+      dateKind: chosen ? chosen.kind : '',
+      posthumous: Boolean(chosen && work.died !== null && chosen.year > work.died),
       originalTitle: work.originalTitle && work.originalTitle !== title ? work.originalTitle : '',
       originalLanguage: work.originalLanguage,
       otherTitles: [...work.otherTitles].filter(other => other !== title).slice(0, 5),

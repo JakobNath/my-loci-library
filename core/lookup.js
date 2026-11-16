@@ -112,17 +112,21 @@ function namesIn(text) {
  * People named in a statement of responsibility (a "by" line):
  * "Saint Augustine ; translated by Henry Chadwick." Each part between ";"
  * is read on its own: the words before "by" give the roles, the names after
- * it the people. "associate editor, D.S. Hutchinson" has no "by" and is read too.
+ * it the people. "associate editor, D.S. Hutchinson" and "translator and editor
+ * Geoffrey W. Bromiley" have no "by" and are read too. A volume label after the
+ * names ("Geoffrey W. Bromiley. Vol.1, A-G.", Kittel's dictionary) is not a name.
  * Square brackets only mark words a cataloguer supplied, so they are dropped:
  * "[translated by R.H. Fuller]" names R.H. Fuller.
  * @returns {{ name: string, role: string }[]}
  */
 export function contributorsFrom(byLine) {
   const people = [];
-  for (const part of String(byLine || '').replace(/[[\]]/g, '').split(';')) {
+  const text = String(byLine || '').replace(/[[\]]/g, '').replace(/\.\s+(?:vol|v|band|bd|pt|part)\.?\s*\d.*$/i, '');
+  for (const part of text.split(';')) {
     const at = part.search(/\bby\s/i);
+    // Without "by", the role words end in a comma or run straight into a capitalised name.
     const named = at >= 0 ? [part.slice(0, at), part.slice(at + 3)]
-      : (part.match(/^\s*([\p{L}\s]*?(?:editor|translator|illustrator)s?),\s+(.+)$/iu) || []).slice(1);
+      : (part.match(/^\s*([\p{L}\s]*?(?:[Ee]ditor|[Tt]ranslator|[Ii]llustrator)s?)(?:,\s+|\s+(?=\p{Lu}))(.+)$/u) || []).slice(1);
     if (named.length < 2) continue;
     const roles = rolesIn(named[0]);
     for (const name of roles.length ? namesIn(named[1]) : []) {
@@ -377,12 +381,21 @@ export function yearFromText(text) {
 /**
  * What Open Library knows about the work behind an ISBN, from its search
  * answer (/search.json?q=isbn:...) and the first author's record (/authors/<key>.json).
- * @returns {{ workTitle: string, firstPublished: number|null, author: { name: string, born: number|null, died: number|null } | null }}
+ * The author's other names let the library's own spelling be used (core/people.js,
+ * authorName); the Wikidata ID lets Wikidata find the author's works however the
+ * name is spelt ("Fiódor Dostoievski" is Q991, "Fyodor Dostoyevsky" there).
+ * @returns {{ workTitle: string, firstPublished: number|null, author: { name: string, born: number|null, died: number|null,
+ *   otherNames: string[], wikidata: string } | null }}
  */
 export function workFromOpenLibrary(searchAnswer, authorAnswer) {
   const doc = (searchAnswer && searchAnswer.docs && searchAnswer.docs[0]) || {};
+  const wikidata = String((authorAnswer && authorAnswer.remote_ids && authorAnswer.remote_ids.wikidata) || '');
   const author = authorAnswer && authorAnswer.name
-    ? { name: authorAnswer.name, born: yearFromText(authorAnswer.birth_date), died: yearFromText(authorAnswer.death_date) }
+    ? {
+      name: authorAnswer.name, born: yearFromText(authorAnswer.birth_date), died: yearFromText(authorAnswer.death_date),
+      otherNames: [authorAnswer.personal_name, ...(authorAnswer.alternate_names || [])].map(name => tidy(name)).filter(Boolean),
+      wikidata: /^Q\d+$/.test(wikidata) ? wikidata : '',
+    }
     : null;
   return { workTitle: doc.title || '', firstPublished: doc.first_publish_year || null, author };
 }

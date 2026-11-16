@@ -19,8 +19,8 @@ const companyKey = name => normalizeForSearch(name).split(' ').filter(word => wo
 // A name's words, for comparing a misspelt "Henery Bettenson" with "Henry Scowcroft Bettenson".
 const nameWords = name => normalizeForSearch(name).split(' ').filter(Boolean);
 
-// Whether two words differ by one letter added, dropped or changed ("henery" and "henry").
-function oneLetterApart(a, b) {
+/** Whether two words differ by one letter added, dropped or changed ("henery" and "henry", "aenid" and "aeneid"). */
+export function oneLetterApart(a, b) {
   const [short, long] = a.length <= b.length ? [a, b] : [b, a];
   if (long.length - short.length > 1) return false;
   let at = 0;
@@ -44,6 +44,33 @@ function sameLoosely(a, b) {
 const BODY_WORDS = /\b(?:church|kirche|council|synod|society|association|committee|commission|conference|congregation|university|institute|academy|ministry|gesellschaft|verein)\b/i;
 const isBody = name => BODY_WORDS.test(name);
 
+// What may follow a surname's comma without being the forenames: "Martin Luther King, Jr.", "Henry VIII, II".
+const NAME_SUFFIX = /^(?:jr|sr|[ivx]+)\.?$/i;
+
+/**
+ * An author's name as this library writes it. When the library already
+ * holds one of the names Open Library knows for this person ("Virgil" for
+ * "Publius Vergilius Maro", "Fyodor Dostoevsky" for "Fiódor Dostoievski"),
+ * that one, so a name corrected once is used for every later book. Otherwise
+ * a name filed surname first is turned round: "Montaigne, Michel de" is
+ * "Michel de Montaigne". A name with dates, a body's name, or "King, Jr." is
+ * left as it is.
+ * @param {string} name as a record gives it
+ * @param {{ work?: { author: { name: string, otherNames?: string[] }|null }|null, known?: string[] }} context
+ *   work: from workFromOpenLibrary (its author's other names); known: author names in the library
+ * @returns {string}
+ */
+export function authorName(name, { work = null, known = [] } = {}) {
+  const author = work && work.author;
+  const isThisAuthor = author && (author.name === name || samePerson(author.name, name));
+  const forms = [name, ...(isThisAuthor ? [author.name, ...(author.otherNames || [])] : [])].map(form => form.toLowerCase());
+  const held = known.find(knownName => forms.includes(knownName.toLowerCase()));
+  if (held) return held;
+  const parts = name.split(',').map(part => part.trim());
+  if (parts.length !== 2 || !parts[0] || !parts[1] || /\d/.test(name) || NAME_SUFFIX.test(parts[1]) || isBody(name)) return name;
+  return `${parts[1]} ${parts[0]}`;
+}
+
 /**
  * The people of a looked-up book, set right where the records make it clear:
  * - someone the record names as translator, editor or the like is not also an
@@ -53,6 +80,8 @@ const isBody = name => BODY_WORDS.test(name);
  *   dropped: the editors stand for the book, and its works have their own authors;
  * - an "author" that is the publisher is dropped;
  * - an author named in another script gets the Latin form (Ὅμηρος is Homer);
+ * - an author takes the library's spelling, or is turned round from surname
+ *   first (authorName);
  * - an edition's author whom Open Library's work record does not list
  *   (Emily Wilson on Homer's Iliad) becomes a translator when the work is
  *   old (its author died more than a century before this printing, or was
@@ -67,7 +96,7 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
   const doc = (search && search.docs && search.docs[0]) || {};
   const others = doc.author_alternative_name || [];
   const inOtherScript = found.authors.some(name => !latin(name)) || (doc.author_name || []).some(name => !latin(name));
-  const latinAuthors = found.authors.map(name => nameInLatin(tidy(name), others, known));
+  const latinAuthors = found.authors.map(name => authorName(nameInLatin(tidy(name), others, known), { work, known }));
   // A contributor misspelt in the statement of responsibility takes the author list's spelling.
   const contributors = found.contributors.map(person => {
     const author = person.role === 'author' ? null : latinAuthors.find(name => !samePerson(person.name, name) && sameLoosely(person.name, name));
@@ -81,7 +110,7 @@ export function tidyPeople(found, { search = null, work = null, known = [] } = {
     .filter(name => !found.publisher || companyKey(name) !== companyKey(found.publisher));
   // The same person given twice (once in each script) is kept once.
   authors = authors.filter((name, i) => authors.findIndex(other => samePerson(other, name)) === i);
-  const workAuthors = (doc.author_name || []).map(name => nameInLatin(tidy(name), others, known));
+  const workAuthors = (doc.author_name || []).map(name => authorName(nameInLatin(tidy(name), others, known), { work, known }));
   const listed = name => workAuthors.some(author => samePerson(author, name));
   // Only when the work record shares at least one author with the edition is the rest moved aside.
   if (workAuthors.length && authors.some(listed) && !authors.every(listed)) {

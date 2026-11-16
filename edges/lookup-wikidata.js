@@ -13,7 +13,8 @@ import { worksQuery, worksFromWikidata } from '../core/wikidata.js';
 const ENDPOINT = 'https://query.wikidata.org/sparql';
 const AGENT = 'MyLociLibrary/1 (https://github.com/JakobNath/my-loci-library)';
 // Wikidata's vocabularies, written out because the new query service adds none by itself.
-const PREFIXES = `PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+const PREFIXES = `PREFIX wd: <http://www.wikidata.org/entity/>
+PREFIX wdt: <http://www.wikidata.org/prop/direct/>
 PREFIX p: <http://www.wikidata.org/prop/>
 PREFIX psv: <http://www.wikidata.org/prop/statement/value/>
 PREFIX wikibase: <http://wikiba.se/ontology#>
@@ -26,10 +27,11 @@ const TIMEOUT = 25000; // milliseconds; the dates are offered when they come, an
  * @param {string[]} titles the works' English titles
  * @param {string|string[]} author the author's name, or several (core/wikidata.js, worksQuery)
  * @param {typeof fetch} [fetchFn] for the self-tests
+ * @param {string[]} [authorIds] the authors' Wikidata IDs, when Open Library gave them (core/wikidata.js, worksQuery)
  * @returns {Promise<Map<string, object>>} by title (core/wikidata.js, worksFromWikidata); empty when nothing could be asked
  */
-export async function lookUpWorks(titles, author, fetchFn = fetch) {
-  const query = worksQuery(titles, author, PREFIXES);
+export async function lookUpWorks(titles, author, fetchFn = fetch, authorIds = []) {
+  const query = worksQuery(titles, author, PREFIXES, authorIds);
   if (!query) return new Map();
   const response = await fetchFn(ENDPOINT, {
     method: 'POST',
