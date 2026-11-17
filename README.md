@@ -7,9 +7,10 @@ Created by Jakob Nath.
 The rules for changing these tools are in the app repository's `CODE_STYLE.md`, which covers both.
 
 - `loci-backup/`: the daily backup, the monthly snapshot of the exports and the HTML catalog, and the yearly archive.
-- `loci-enrich/`: fills empty book fields (pages, sizes, edition, series, translators and more) from the Library of Congress, Open Library and Google Books.
+- `loci-enrich/`: fills empty book fields (pages, sizes, edition, series, translators and more) from the Library of Congress, HathiTrust, Open Library and Google Books.
 - `logos-to-my-loci-library/`: imports a Logos Library spreadsheet export.
 - `my-loci-library-to-zotero/`: sends books one way into Zotero.
+- `shelf-planner/`: arranges the books of one place on its shelves (run from the admin page; "The shelf planner" below).
 - `admin/`: the admin page, one page in the browser with the project's handbook and a button for each tool.
 - `shared/`: what every tool needs (the settings file, reading and writing record files, Git).
 - `core/`: a copy of the app's shared core module. Refresh it with `update-core.cmd` (Windows) or `update-core.sh` (Linux), which expect the app repository to sit next to this one.
@@ -35,7 +36,7 @@ Google Books refuses most requests without a key. One free key, made once, serve
 
 ## The admin page
 
-Run `admin/admin.cmd` (Windows) or `admin/admin.sh` (Linux). It starts a small server on this laptop and opens `http://127.0.0.1:8650/` in the browser; leave its window open while using the page, and close it to stop. The page is the project's handbook (what it is, adding a book, sync, these tools, the data format, the yearly check and fixing things, the sources), read from the project's own documents each time it opens, so it is never out of date and every fact is written in one place: to change the page, change the document named under each part. Its buttons run the tools below exactly as the command line does (back up, fill book data, check the sources, import a Logos export, fetch Logos covers, send to Zotero), one at a time, and show what each printed. It also links to the app's two laptop pages, "Covers from the inbox" and "Contents to enter". Only this laptop can reach the server, and only the page itself can press its buttons. Options: `--port 8650`, `--no-open`.
+Run `admin/admin.cmd` (Windows) or `admin/admin.sh` (Linux). It starts a small server on this laptop and opens `http://127.0.0.1:8650/` in the browser; leave its window open while using the page, and close it to stop. The page is the project's handbook (what it is, adding a book, sync, these tools, the data format, the yearly check and fixing things, the sources), read from the project's own documents each time it opens, so it is never out of date and every fact is written in one place: to change the page, change the document named under each part. Its buttons run the tools below exactly as the command line does (back up, fill book data, check the sources, import a Logos export, fetch Logos covers, send to Zotero), one at a time, and show what each printed. It also links to the app's laptop page "Covers from the inbox". Only this laptop can reach the server, and only the page itself can press its buttons. Options: `--port 8650`, `--no-open`.
 
 ## The shelf planner
 
@@ -92,7 +93,7 @@ Every request names the tools (`IDENTITY` in `loci-enrich/sources.mjs`), as Open
 
 **Checking the sources.** `check-sources.cmd` (or `check-sources.sh`, or `node loci-enrich/check-sources.mjs`) asks each source live about the books whose answers are recorded for the tests (`core/tests/answers/`), reads both with the same code, and lists any source that no longer answers or any field that now reads differently. A difference is not always a fault (a catalog record may have been corrected), but it is where to look first when lookups seem wrong. Run it in the yearly check, or whenever a source seems to have changed. It changes nothing.
 
-Adding a book on the phone asks only what a person knows; the details above are left to this tool. Run it by hand right after a scanning session, rather than waiting for the night's backup, and the app's "Needs details" filter (in the Library, with a count in Settings) then shows what it could not find.
+Adding a book on the phone asks for most of these while the book is in hand; this tool fills what was left empty. Run it by hand right after a scanning session, rather than waiting for the night's backup, and the app's "Needs details" filter (in the Library, with a count in Settings) then shows what it could not find.
 
 The Library of Congress service has no encrypted connection and does not allow calls from web pages, which is why only this laptop tool asks it. If any source ever changes or disappears, nothing else depends on it: those fields simply stay as they are.
 
@@ -115,15 +116,15 @@ Which column fills which field (`columns.mjs`; every other column is kept as it 
 | --- | --- |
 | Logos resource ID | Resource ID, ResourceId, Resource Id, Resource |
 | Title | Title |
-| Subtitle | Subtitle |
+| Subtitle | Subtitle (the 2026 export has none: the subtitle is what follows the title's first colon) |
 | Authors | Author, Authors, Creator, Creators ("Surname, Given" names, separated by ";") |
-| Publisher | Publisher |
+| Publisher | Publishers, Publisher |
 | Year | Publication Date, Date, Year, Published |
 | Series | Series |
 | Languages | Language, Languages |
-| ISBN | ISBN |
+| ISBN | ISBN (the 2026 export has none) |
 
-These names are a first reading, made before a real export was at hand. When the first real export is imported, check its column names against this table and add any that differ to `columns.mjs`.
+These names were checked against a real export of 53 resources on 10 November 2026; the other names in each row are kept in case a later Logos uses them. If a later export's columns differ, add the new names to `columns.mjs`.
 
 ## my-loci-library-to-zotero
 
@@ -138,7 +139,7 @@ Setting up, once:
 
 Then run `my-loci-library-to-zotero\loci-zotero.cmd` (Windows) or `my-loci-library-to-zotero/loci-zotero.sh` (Linux) whenever you mark a book to cite; it finishes in a few seconds, and Zotero on the laptop shows the book after its next sync (usually within seconds; Edit › Settings › Sync › "Sync automatically" must be on). To run it on a schedule too, make a Task Scheduler task as for loci-backup, repeating every hour, with `--no-pause` as its argument (without it the window waits for a key, so the task would never end).
 
-On the first run, books already in Zotero (matched by ISBN, or by title and year) are linked instead of being added again. Only their empty fields are filled from Loci (changed on 13 November 2026: what a person entered in Zotero is never replaced, on the first run or later), and their notes, attachments, other tags, other collections, other lines in Extra and any pinned citation key are kept; every field that was overwritten is listed in the run's report.
+On the first run, books already in Zotero (matched by ISBN, or by title and year) are linked instead of being added again. Only their empty fields are filled from Loci (changed on 13 November 2026: what a person entered in Zotero is never replaced, on the first run or later), and their notes, attachments, other tags, other collections, other lines in Extra and any pinned citation key are kept; every field that was filled, and every difference left as Zotero has it, is listed in the run's report.
 
 Zotero 7's local connection on the laptop can only read, so the tool writes through Zotero's web API, which the plan names as the fallback.
 
