@@ -2,11 +2,12 @@
 
 Where the project stands and what comes next, on one screen. Read it first in every working session and keep it current. `PLAN.md` is the design; this file only says where things are. The history up to 16 November 2026 (every release, finished tasks, older decisions to look over) is in `archive/STATUS_to_2026-11-16.md`; since then, in git history and `docs/decisions/`.
 
-Last brought up to date on 16 November 2026 (after 1.27.2).
+Last brought up to date on 17 November 2026 (after 1.27.2 and the overnight work).
 
 ## Where things stand
 
-- App **1.27.2**, data format 7. Tests: 341 in the app, 377 in the tools, 319 on the self-test page.
+- App **1.27.2**, data format 7. Tests: 342 in the app, 379 in the tools (and 2 to-do tests for the shelf planner's known faults), 319 on the self-test page.
+- 17 November (no release): docs brought up to date, a few tests added, Wikidata's new address tried (still closed), the live lookup check re-run (1.27.2's fixes hold), and the Marx-Engels Reader's six works given Marx and Engels as two authors in the catalog. Details in the workspace's `handoffs/2026-11-17-overnight.md`.
 - 1.27.2 (16 November) settled the lookup problems left from 14 November: Bromiley no longer an author of Kittel's dictionary; "Michel de Montaigne", not "Montaigne, Michel de"; an author's name already in the library is reused (so "Virgil" or "Fyodor Dostoevsky", once corrected, holds for later books); "The Aeneid" from HathiTrust where Open Library says "Aenid"; Wikidata finds works by the author's ID (Dostoevsky, Virgil) and "On the Bondage of the Will"; its date follows the working-date rule (Pride and Prejudice 1813, not c. 1800). Melville on the Oxford Ovid stays a "Fix details" case.
 - **Alpha**: the app is being tried on real books, and books may be entered again. Jakob expects alpha to end near the end of November 2026; from then on the catalog is real and a format change is serious.
 - Every build phase is done except the shelf view review (13.0), which needs real books on a shelf. Phase 15's known-set lists and step 11 are on hold.
@@ -15,9 +16,8 @@ Last brought up to date on 16 November 2026 (after 1.27.2).
 
 ## Waiting on Jakob
 
-- [ ] **The overnight work of 17 November** (the workspace's `handoffs/2026-11-17-overnight.md`): merge the `overnight-2026-11-17` branches (docs and tests only), the unsent Marx-Engels fix in the laptop's data folder, and the backup that skips days on battery.
+- [ ] **The daily backup skips days on battery**: it missed 16 November and was cut off on 17 November. The scheduled task is set to "Don't start if on batteries" and "Stop if the computer switches to batteries". Allow it on battery (a scheduled-task setting, his yes first), or keep the laptop plugged in at midday.
 - [ ] **The checking hour**: the workspace's `handoffs/CHECKING_HOUR.md` (the three known-set lists, the admin page). Send the answers by number in a new chat; that session corrects the lists, adds their `checked:` lines and releases the Greek tragedies list.
-- [ ] **The Marx-Engels Reader**: six of its works still have one author "Karl Marx; Friedrich Engels" (saved on 1.23.0). Fix them in place, or trash the book and add it again.
 - [ ] **Phone checks**: the ten in `DEVICE_CHECKS.md`, when convenient.
 - [ ] **The first real Zotero run**: `loci-zotero.cmd` with no `--collection`. It links books already in Zotero, filling only their empty fields.
 - [ ] **Shelve and scan**, one bookcase at a time. When a bookcase is ready, "Planning the shelves" on the admin page; record the arrangement only once the books are moved. With a few dozen books shelved: the shelf view review (13.0).
