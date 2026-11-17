@@ -14,7 +14,7 @@ Last brought up to date on 17 November 2026 (after 1.27.3).
 - 1.27.2 (16 November) settled the lookup problems left from 14 November: Bromiley no longer an author of Kittel's dictionary; "Michel de Montaigne", not "Montaigne, Michel de"; an author's name already in the library is reused (so "Virgil" or "Fyodor Dostoevsky", once corrected, holds for later books); "The Aeneid" from HathiTrust where Open Library says "Aenid"; Wikidata finds works by the author's ID (Dostoevsky, Virgil) and "On the Bondage of the Will"; its date follows the working-date rule (Pride and Prejudice 1813, not c. 1800). Melville on the Oxford Ovid stays a "Fix details" case.
 - **Alpha**: the app is being tried on real books, and books may be entered again. Jakob expects alpha to end near the end of November 2026; from then on the catalog is real and a format change is serious.
 - Every build phase is done except the shelf view review (13.0), which needs real books on a shelf. Phase 15's known-set lists and step 11 are on hold.
-- All devices sync with the real catalog (`my-loci-library-data`); the daily backup runs at 12:30.
+- All devices sync with the real catalog (`my-loci-library-data`); the daily backup runs at 12:30, from `tools/loci-backup/` in this repository.
 - The "End of alpha" list is done: 1.26.2 (sync and copies), 1.27.0 (lists merged item by item), 1.27.1 (library-record names and titles), and the housekeeping of 16 November (phone checks cut to ten, rules in `CODE_STYLE.md`, this file shortened).
 
 ## Waiting on Jakob
@@ -29,6 +29,6 @@ Last brought up to date on 17 November 2026 (after 1.27.3).
 ## Next tasks for a working session
 
 1. **Whatever the testing turns up**: fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check after any change to lookups (the workspace's `handoffs/2026-11-14-first-real-book.md` says how). The handoff's own list of lookup problems is done (1.27.2).
-2. **Finish moving the laptop to `tools/`** (17 November 2026, the move itself is done): `config.json` copied to `tools/` with `dataRepo` as `../../my-loci-library-data`, one backup run from the new place, the scheduled task and the desktop shortcut to the admin page pointed at `tools/`, then a pointer note in the old `my-loci-library-tools` and that repository archived on GitHub; its laptop folder deleted after a week of good backups. Each step with Jakob's yes.
+2. **Retire the old tools repository** (the laptop has run the tools from `tools/` since 17 November 2026: `config.json`, the scheduled backup and the admin page's desktop shortcut all moved, and a backup from there passed): a pointer note in `my-loci-library-tools` and that repository archived on GitHub, then, after a week of good backups (from about 24 November 2026), its laptop folder deleted and its line taken out of the workspace's `.gitignore`. Each step with Jakob's yes.
 3. **First week of December 2026**: check Wikidata's new query address (still closed on 17 November) and move to it if it answers (`SOURCES.md`).
 4. **The admin page rebuild**, when Jakob wants it. It takes in the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and a progress display (the workspace's `handoffs/2026-11-13-audit.md`).
