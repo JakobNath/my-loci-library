@@ -2,7 +2,7 @@
 
 My Loci Library is a lightweight, open-source catalog of Jakob and his wife's physical books and Logos library. It has to keep working for 40+ years, so these rules favor simple, durable choices over clever ones. Created by Jakob Nath.
 
-This file holds every rule for working on the project: the app (this repository) and the laptop tools (`my-loci-library-tools`), which follow the same rules and point here. Whoever works on either, by hand or with whatever tools exist then, reads this file in full before changing anything. If a rule here disagrees with `docs/plan/PLAN.md`, follow PLAN.md and record the conflict as a decision.
+This file holds every rule for working on the project: the app and the laptop tools (`tools/`), both in this repository. Whoever works on either, by hand or with whatever tools exist then, reads this file in full before changing anything. If a rule here disagrees with `docs/plan/PLAN.md`, follow PLAN.md and record the conflict as a decision.
 
 ---
 
@@ -14,7 +14,7 @@ This file holds every rule for working on the project: the app (this repository)
 - `DATA_FORMAT.md`: every field of a record.
 - `HOW_IT_WORKS.md`: the parts and how to fix each one.
 - `DEVICE_CHECKS.md`: the few things only a real phone can show.
-- The tools' `README.md`: each laptop tool and how to run it.
+- `tools/README.md`: each laptop tool and how to run it.
 
 The catalog lives in a private repository, `my-loci-library-data`. Automated tests never touch it: they use temporary folders and the sample books in `core/tests/samples.js`. While the app is still being tried out, trials may run against the catalog, after checking that its daily backup is recent.
 
@@ -31,7 +31,7 @@ Read these in full before starting. Paths are in this repository.
 | Photos, covers, scanning | `docs/decisions/photos-and-scanning.md`; PLAN.md "Covers and images" |
 | Sync | `docs/decisions/sync.md`; `edges/sync-github.js` |
 | Speed, offline, size | `docs/decisions/speed-offline-size.md` |
-| Laptop tools | the tools' `README.md`, `docs/decisions/laptop-tools.md`; PLAN.md "Laptop tools" |
+| Laptop tools | `tools/README.md`, `docs/decisions/laptop-tools.md`; PLAN.md "Laptop tools" |
 | Zotero or citations | `docs/decisions/zotero-and-citations.md`; PLAN.md "How Loci, Zotero and Obsidian work together" |
 | Fixing something broken | `HOW_IT_WORKS.md` |
 | Test data | `docs/plan/SAMPLE_BOOKS.md` |
@@ -44,6 +44,7 @@ Read these in full before starting. Paths are in this repository.
 - If something fails, use the fallback the plan names. If none is named, choose the simplest one and record it.
 - Don't add features that aren't in `PLAN.md`.
 - Risky work (a data format change, a migration, a large restructuring) goes on a branch and is merged once the tests pass. Small fixes go straight to `main`.
+- The laptop's scheduled backup runs the tools from the laptop's own checkout of this repository, on whatever branch is checked out there. So a branch that changes the tools or the data format is worked on in a separate worktree (`git worktree add`, a second folder of the same repository), and the main checkout stays on `main`.
 - Before calling a change to a screen done, use it in a browser at phone width as a person would. Anything only a real phone can show, and that daily use would never show (setting up a device, storage, offline, a rare failure), goes on `DEVICE_CHECKS.md` as a short item: what to try and what should happen. Everything else is checked by using the app.
 - Every change meets the definition of done (section 12).
 
@@ -71,7 +72,7 @@ Read these in full before starting. Paths are in this repository.
 
 **Tests**
 
-- Run the self-tests before and after every change: the browser test page (`tests/index.html`) and `node --test` in this repository (the same core tests, plus the sync tests and the architecture checks), and `node --test` in the tools.
+- Run the self-tests before and after every change: the browser test page (`tests/index.html`) and `node --test` at the root of this repository (the same core tests, plus the sync tests, the architecture checks and the laptop tools' tests).
 - Tests are short and plain, so a person can read and fix them with no special tool.
 - Keep the speed targets from `PLAN.md` covered by tests.
 
@@ -144,10 +145,11 @@ ui/ + main   Screens. They call core for rules and edges for the outside world.
 
 ### The laptop tools
 
-The tools follow the same shape: `core/` (a copy of the app's), and per tool an `edges/` for the outside system it touches (Logos CSV files, Zotero, the file system) plus a thin `main.js`.
+The tools live in `tools/`, one folder per tool, plus `tools/shared/` for what every tool needs and `tools/admin/` for the admin page. Each tool imports the app's own `core/` and reads `sets/`; the parts of a tool that talk to an outside system (Logos CSV files, Zotero, the sources, Git, the file system) stay in that tool's folder.
 
-- Never edit the tools' `core/` or `sets/`: change them in the app, then run `update-core` (`.cmd` or `.sh`) in the tools and run the tools' tests. A test there fails if the copies differ.
-- Use `node:path` for every path. Each launcher is a `.cmd` and `.sh` pair; the tools' `.gitattributes` gives `.cmd` Windows line endings and `.sh` Linux ones.
+- A tool may import from the app only `core/`, and nothing in the app imports from `tools/`. An architecture test enforces both. The app's one-edge-per-service rule covers the app only: a tool asks its sources itself.
+- A change to `core/` is a change to the tools too: it is done only when the tools' tests pass as well (one `node --test` runs both).
+- Use `node:path` for every path. Each launcher is a `.cmd` and `.sh` pair; the repository's `.gitattributes` gives `.cmd` Windows line endings and `.sh` Linux ones.
 - The tools read `config.json`, which is never committed because it holds keys. Never print a key.
 - Tests use temporary folders and recorded answers, never the real catalog or the network.
 - Jakob's Zotero library holds real items he cites. A trial never changes an existing item, and goes into a test collection only.
@@ -223,6 +225,7 @@ The usual failure of framework-free code is accidentally building a worse framew
 - **No mocking libraries.** Edges are tested with small hand-written fakes (`tests/fake-github.js`), or real browser APIs where they work in a test page. Never the real services or the real catalog.
 - **Architecture tests**, which are short scans of the source files:
   - `core/` imports nothing outside `core/` and uses no browser or Node globals.
+  - A laptop tool imports nothing of the app but `core/`, and the app imports nothing from `tools/`.
   - Only `edges/sync-github.js` mentions `api.github.com`, and only each lookup edge mentions its service.
   - No file outside `edges/storage.js` uses `indexedDB`.
   - Every `innerHTML` assignment uses `escapeHtml` for data.
@@ -273,7 +276,7 @@ The goal is code that reads as if one careful person wrote it, in one consistent
 ## 12. Definition of done (every step)
 
 - [ ] Follows the three rings; architecture tests pass.
-- [ ] All tests pass in the browser test page and `node --test`, in the app and the tools.
+- [ ] All tests pass in the browser test page and `node --test` (the app and the tools together).
 - [ ] Uses the vocabulary in `DATA_FORMAT.md`; no new synonyms.
 - [ ] Every file has its header comment; comments explain why.
 - [ ] No new dependency, global, or abstraction without a recorded decision.

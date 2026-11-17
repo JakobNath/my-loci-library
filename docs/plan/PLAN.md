@@ -33,13 +33,12 @@ My Loci Library is a lightweight, open-source catalog of our physical books and 
 
 ## Architecture
 
-Three GitHub repositories keep code, data and laptop tools separate. The private data repository is the shared "folder" that every device syncs through.
+Two GitHub repositories keep code and data separate: the app with its laptop tools, and the catalog. The private data repository is the shared "folder" that every device syncs through. (Until 17 November 2026 the tools had a third repository of their own, `my-loci-library-tools`, with a copy of the app's `core/`; they were moved into the app's repository so they always use the app's own core.)
 
 | Repository | Visibility | Holds |
 | --- | --- | --- |
-| `my-loci-library` | Public, MIT | The app: static HTML/CSS/JS served free on GitHub Pages, plus the laptop pages (`laptop/`), docs, self-tests, `CLAUDE.md` and `CODE_STYLE.md` |
+| `my-loci-library` | Public, MIT | The app: static HTML/CSS/JS served free on GitHub Pages, plus the laptop pages (`laptop/`), the laptop tools (`tools/`, one folder each), docs, self-tests, `CLAUDE.md` and `CODE_STYLE.md` |
 | `my-loci-library-data` | Private | The catalog: one text file per record, covers, a generated combined file for fast loading |
-| `my-loci-library-tools` | Public, MIT | Laptop tools, one folder each: Logos importer, Zotero companion, backup, catalog sizes, price estimator |
 
 **Devices**
 
@@ -419,7 +418,7 @@ Before the full build, five clickable prototypes are made. Each uses working nav
 
 ## Laptop tools
 
-All tools live in `my-loci-library-tools`, one independent folder each. They run on Node with zero npm packages and work on Windows and Linux. Every tool is safe to run any number of times, because it only changes what is different. They stay simple, though they are not bound by the app's size limits.
+All tools live in the app repository's `tools/` folder, one independent folder each, and use the app's own `core/`. They run on Node with zero npm packages and work on Windows and Linux. Every tool is safe to run any number of times, because it only changes what is different. They stay simple, though they are not bound by the app's size limits.
 
 **logos-to-my-loci-library** (about 4,000 resources)
 

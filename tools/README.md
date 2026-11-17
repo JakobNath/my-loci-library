@@ -4,7 +4,7 @@ Small laptop tools for My Loci Library. Each lives in its own folder and runs on
 
 Created by Jakob Nath.
 
-The rules for changing these tools are in the app repository's `CODE_STYLE.md`, which covers both.
+The tools live in the app's repository, in this `tools/` folder, and use the app's own `core/` (the rules of the library) and `sets/` (the known sets' lists) directly, so they always follow the app they sit beside. The rules for changing them are in the repository's `CODE_STYLE.md`. Paths below start from this folder.
 
 - `loci-backup/`: the daily backup, the monthly snapshot of the exports and the HTML catalog, and the yearly archive.
 - `loci-enrich/`: fills empty book fields (pages, sizes, edition, series, translators and more) from the Library of Congress, HathiTrust, Open Library and Google Books.
@@ -13,17 +13,18 @@ The rules for changing these tools are in the app repository's `CODE_STYLE.md`, 
 - `shelf-planner/`: arranges the books of one place on its shelves (run from the admin page; "The shelf planner" below).
 - `admin/`: the admin page, one page in the browser with the project's handbook and a button for each tool.
 - `shared/`: what every tool needs (the settings file, reading and writing record files, Git).
-- `core/`: a copy of the app's shared core module. Refresh it with `update-core.cmd` (Windows) or `update-core.sh` (Linux), which expect the app repository to sit next to this one.
 
 ## Setting up on a laptop
 
-1. Install Git and Node. Clone this repository and the data repository (`my-loci-library-data`) next to each other.
-2. Copy `config.example.json` to `config.json` in this folder and fill it in:
-   - `dataRepo`: the data repository's folder (relative paths start from this folder).
+1. Install Git and Node. Clone the app repository (`my-loci-library`) and the data repository (`my-loci-library-data`) next to each other.
+2. Copy `config.example.json` to `config.json` in this `tools/` folder and fill it in:
+   - `dataRepo`: the data repository's folder (relative paths start from this folder, so with the two repositories side by side it is `../../my-loci-library-data`).
    - `backupFolder`: the folder that receives the daily copy, such as "My Loci Library backup" inside Google Drive for desktop. Set Drive for desktop to mirror My Drive (Settings › Preferences › Folders from Drive › Mirror files), so the folder is an ordinary one on the laptop, such as `C:/Users/Jakob/My Drive/My Loci Library backup`; a streamed drive (`G:`) is missing whenever Drive for desktop is not running, and the backup would fail.
    - `googleBooksKey` (optional): a free Google Books key, so the tools can ask Google Books too (see "A Google Books key" below).
    `config.json` stays on this laptop; it is never committed.
 3. Run `loci-backup/loci-backup.cmd` (Windows) or `loci-backup/loci-backup.sh` (Linux) once by hand and read what it reports.
+
+The tools run from whatever is checked out in this folder, the scheduled backup included. Keep the laptop's copy of the app repository on its `main` branch, and bring it up to date with `git pull` in the `my-loci-library` folder; a tool that meets records in a newer data format stops and says so.
 
 ## A Google Books key
 
@@ -58,19 +59,19 @@ Options: `--no-git` (work on the files only), `--no-enrich` (skip filling book f
 
 Windows (Task Scheduler):
 1. Open Task Scheduler › Create Basic Task. Name: "My Loci Library backup". Trigger: Daily, at a time the laptop is usually on (such as 12:30).
-2. Action: Start a program. Program: the full path of `loci-backup\loci-backup.cmd`. Start in: the `loci-backup` folder.
-3. In the task's properties, tick "Run task as soon as possible after a scheduled start is missed", so a day the laptop was off is caught up.
+2. Action: Start a program. Program: the full path of `tools\loci-backup\loci-backup.cmd` in the app repository. Start in: that `loci-backup` folder.
+3. In the task's properties, tick "Run task as soon as possible after a scheduled start is missed", so a day the laptop was off is caught up, and on the Conditions tab untick "Start the task only if the computer is on AC power", so a laptop on battery still backs up.
 
-Or make the same task in one step from PowerShell (change the folder to where the tools are):
+Or make the same task in one step from PowerShell (change the folder to where the app repository is):
 
-    $folder = 'C:\path\to\my-loci-library-tools\loci-backup'
-    Register-ScheduledTask -TaskName 'My Loci Library backup' -Action (New-ScheduledTaskAction -Execute "$folder\loci-backup.cmd" -WorkingDirectory $folder) -Trigger (New-ScheduledTaskTrigger -Daily -At '12:30') -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -ExecutionTimeLimit (New-TimeSpan -Hours 1))
+    $folder = 'C:\path\to\my-loci-library\tools\loci-backup'
+    Register-ScheduledTask -TaskName 'My Loci Library backup' -Action (New-ScheduledTaskAction -Execute "$folder\loci-backup.cmd" -WorkingDirectory $folder) -Trigger (New-ScheduledTaskTrigger -Daily -At '12:30') -Settings (New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 1))
 
 Task Scheduler's "Last Run Result" should read 0 (success) after a run.
 
 Linux (cron): run `crontab -e` and add a line such as
 
-    30 12 * * * /home/jakob/my-loci-library-tools/loci-backup/loci-backup.sh >> /home/jakob/loci-backup.log 2>&1
+    30 12 * * * /home/jakob/my-loci-library/tools/loci-backup/loci-backup.sh >> /home/jakob/loci-backup.log 2>&1
 
 ### The yearly archive
 
@@ -145,8 +146,8 @@ Zotero 7's local connection on the laptop can only read, so the tool writes thro
 
 ## Tests
 
-Run `node --test` in this folder. It runs every tool's tests (with temporary folders and recorded answers, never the real data or the network), the shared core's tests, and checks that `core/` here matches `core/` in the app repository. Never edit `core/` here: edit it in the app repository, then run `update-core.cmd` (Windows) or `update-core.sh` (Linux).
+Run `node --test` at the root of the repository. It runs every tool's tests (with temporary folders and recorded answers, never the real data or the network) together with the app's: core, sync and the architecture checks, one of which makes sure a tool imports nothing of the app but `core/`. A change to `core/` is a change to the tools too, so it is done only when all of them pass. `node --test tools` runs the tools' tests alone.
 
 ## License
 
-MIT. See `LICENSE`.
+MIT, as the rest of the repository. See `LICENSE` at its root.

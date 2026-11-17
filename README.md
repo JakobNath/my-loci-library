@@ -16,7 +16,7 @@ The app keeps its catalog in a private GitHub repository. During the build it us
 1. On the first device, make one key for all devices: open https://github.com/settings/personal-access-tokens/new?name=My+Loci+Library&description=Sync+for+My+Loci+Library&expires_in=none&contents=write while signed in to GitHub. The form opens with a name, no expiry and "Contents: Read and write" already set. Under "Repository access", choose "Only select repositories" and pick `my-loci-library-data`. Click "Generate token" and copy the code (it starts with `github_pat_`). The same steps are in the app, under Settings › Advanced › Sync.
 2. In the app: Settings › Advanced › Sync. Type `JakobNath/my-loci-library-data`, paste the token, and tap "Connect and download". On every other device, skip steps 1 and 2: on the first device tap "Share setup link" (Settings › Advanced › Sync), send the link to the other device, and open it there.
 3. A device that was connected to the test data still holds the sample books. When it connects to the real catalog, the app first checks the new repository and key, then asks before removing the sample books from the device (version 1.1.1 and later). They stay in the test repository, and no sample book is sent to the real catalog. The device keeps its keys and settings.
-4. On the laptop, set `dataRepo` in the tools' `config.json` to the real repository's folder, and schedule `loci-backup` (see the tools README).
+4. On the laptop, set `dataRepo` in `tools/config.json` to the real repository's folder, and schedule `loci-backup` (see `tools/README.md`).
 
 All devices share one token, which does not expire. If it is ever cancelled (a lost phone, say), make a new one the same way on one device and send the setup link to the others; the catalog on each device is kept.
 
@@ -26,6 +26,7 @@ All devices share one token, which does not expire. If it is ever cancelled (a l
 - `DATA_FORMAT.md`: how the catalog is stored.
 - `HOW_IT_WORKS.md`: the parts of the app and how to repair each one.
 - `CODE_STYLE.md`: every rule for working on the app and the laptop tools.
+- `tools/README.md`: the laptop tools (backup, book data, Logos import, Zotero, the shelf planner and the admin page) and how to run them.
 - `DEVICE_CHECKS.md`: the few things only a real phone can show.
 - `SETUP_FOR_COLLEAGUES.md`: setting up your own copy.
 
