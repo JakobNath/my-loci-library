@@ -8,7 +8,7 @@
 // only bibliographic data. The book's permanent Loci link, with its shelf in
 // the title, is a link attached under the book (HOW_IT_WORKS.md, "Zotero fields").
 
-import { editionToCsl, cslName, volumeOfSet, editionForCitation } from '../core/zotero.js';
+import { editionToCsl, cslName, volumeOfSet, editionForCitation } from '../../core/zotero.js';
 
 export const APP_URL = 'https://jakobnath.github.io/my-loci-library/';
 export const TAG_GONE = 'Loci: no longer owned';

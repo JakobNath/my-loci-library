@@ -5,10 +5,10 @@
 // fingerprint changed are sent again. Nothing is ever deleted from Zotero.
 
 import { createHash } from 'node:crypto';
-import { buildLibrary } from '../core/library.js';
-import { freeCitationKey, citationKeyBase } from '../core/zotero.js';
-import { normalizeForSearch } from '../core/search.js';
-import { isbn13 } from '../core/entry.js';
+import { buildLibrary } from '../../core/library.js';
+import { freeCitationKey, citationKeyBase } from '../../core/zotero.js';
+import { normalizeForSearch } from '../../core/search.js';
+import { isbn13 } from '../../core/entry.js';
 import { itemsFor, isSent, extraWithout, pinnedKey, lociTags, TAG_GONE, TAG_REMOVED } from './zotero-items.mjs';
 
 const fingerprint = value => createHash('sha1').update(JSON.stringify(value)).digest('hex').slice(0, 16);

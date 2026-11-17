@@ -1,6 +1,6 @@
 // Git between the laptop and the phones, with real Git in temporary folders:
 // a "GitHub" (a bare repository), the laptop's copy, and a phone's copy.
-// Run with `node --test` in the tools folder.
+// Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

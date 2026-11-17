@@ -23,9 +23,8 @@ import { readRecords } from '../shared/data-repo.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const TOOLS_FOLDER = resolve(here, '..');
-// The app's repository, expected beside this one (as update-core expects); its
-// documents are read from the published app when it is not there.
-const APP_REPO = resolve(TOOLS_FOLDER, '..', 'my-loci-library');
+// The repository these tools are part of; the handbook's documents are read from it.
+const APP_REPO = resolve(TOOLS_FOLDER, '..');
 export const PORT = 8650;
 
 /**
@@ -68,17 +67,10 @@ export function runTool(id, input = {}, toolsFolder = TOOLS_FOLDER) {
 
 // ---------- the documents ----------
 
-const fetched = new Map();
-async function readDocument({ repo, file }, { appRepo, toolsFolder, fetchFn }) {
-  const local = join(repo === 'tools' ? toolsFolder : appRepo, ...file.split('/'));
-  if (existsSync(local)) return readFileSync(local, 'utf8');
-  if (repo === 'tools') throw new Error(`${file} is missing from the tools folder.`);
-  if (!fetched.has(file)) {
-    const response = await fetchFn(new URL(file, APP_URL));
-    if (!response.ok) throw new Error(`${file} could not be read (the app's folder is not beside the tools, and the published app answered ${response.status}).`);
-    fetched.set(file, await response.text());
-  }
-  return fetched.get(file);
+function readDocument(file, appRepo) {
+  const path = join(appRepo, ...file.split('/'));
+  if (!existsSync(path)) throw new Error(`${file} is missing from the repository.`);
+  return readFileSync(path, 'utf8');
 }
 
 /** A source's text: its section, or the whole document without its title and the sections left out. */
@@ -98,7 +90,7 @@ export function sourceText(markdown, { section, leaveOut = [] }) {
   return kept.join('\n');
 }
 
-const sourceName = ({ repo, file, section }) => `${repo === 'tools' ? 'the tools\' ' : ''}${file}${section ? `, "${section}"` : ''}`;
+const sourceName = ({ file, section }) => `${file}${section ? `, "${section}"` : ''}`;
 
 // ---------- the page ----------
 
@@ -131,16 +123,16 @@ function toolsHtml() {
 
 /**
  * The whole page.
- * @param {{ appRepo?: string, toolsFolder?: string, dataRepo?: string|null, fetchFn?: typeof fetch }} options
+ * @param {{ appRepo?: string, dataRepo?: string|null }} options
  */
-export async function buildPage({ appRepo = APP_REPO, toolsFolder = TOOLS_FOLDER, dataRepo = null, fetchFn = fetch } = {}) {
+export function buildPage({ appRepo = APP_REPO, dataRepo = null } = {}) {
   const contents = CHAPTERS.map((chapter, i) => `<li><a href="#${chapter.id}">${chapterNumber(i)}. ${escapeHtml(chapter.title)}</a></li>`).join('');
   const chapters = [];
   for (const [i, chapter] of CHAPTERS.entries()) {
     const parts = [];
     for (const source of chapter.sources) {
       try {
-        const text = sourceText(await readDocument(source, { appRepo, toolsFolder, fetchFn }), source);
+        const text = sourceText(readDocument(source.file, appRepo), source);
         parts.push(`${markdownToHtml(text, { headingShift: 1 })}<p class="source">From ${escapeHtml(sourceName(source))}; change it there.</p>`);
       } catch (error) {
         parts.push(`<p class="problem">${escapeHtml(error.message)}</p>`);
@@ -163,7 +155,7 @@ export async function buildPage({ appRepo = APP_REPO, toolsFolder = TOOLS_FOLDER
 <header><h1>My Loci Library</h1><p class="subtitle">The laptop book</p><p class="status">${escapeHtml(statusLine(dataRepo))}</p></header>
 <nav aria-label="Contents"><ol class="contents">${contents}</ol></nav>
 ${chapters.join('\n')}
-<footer>Created by Jakob Nath. Served by the tools on this laptop only (<code>admin/admin.mjs</code>).</footer>
+<footer>Created by Jakob Nath. Served by the tools on this laptop only (<code>tools/admin/admin.mjs</code>).</footer>
 </main>
 <script type="module" src="/admin.js"></script>
 </body>
@@ -211,10 +203,10 @@ const TYPES = { '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; char
  * The server. It answers only requests addressed to this laptop, and runs a
  * tool only when asked from its own page, so no web site open in the browser
  * can press a button.
- * @param {{ port?: number, appRepo?: string, toolsFolder?: string, dataRepo?: string|null, fetchFn?: typeof fetch, run?: typeof runTool, isTrial?: boolean }} options
+ * @param {{ port?: number, appRepo?: string, toolsFolder?: string, dataRepo?: string|null, run?: typeof runTool, isTrial?: boolean }} options
  *   isTrial: started with --data, so the tool buttons, which always act on config.json's catalog, are off
  */
-export function createAdminServer({ port = PORT, appRepo = APP_REPO, toolsFolder = TOOLS_FOLDER, dataRepo = null, fetchFn = fetch, run = runTool, isTrial = false } = {}) {
+export function createAdminServer({ port = PORT, appRepo = APP_REPO, toolsFolder = TOOLS_FOLDER, dataRepo = null, run = runTool, isTrial = false } = {}) {
   let busy = false;
   const server = createServer(async (request, response) => {
     const own = `127.0.0.1:${server.address().port}`;
@@ -222,7 +214,7 @@ export function createAdminServer({ port = PORT, appRepo = APP_REPO, toolsFolder
     if (![own, `localhost:${server.address().port}`].includes(request.headers.host)) return send(403, 'text/plain', 'Only this laptop may use this page.');
     const url = new URL(request.url, `http://${own}`);
     try {
-      if (request.method === 'GET' && url.pathname === '/') return send(200, 'text/html; charset=utf-8', await buildPage({ appRepo, toolsFolder, dataRepo, fetchFn }));
+      if (request.method === 'GET' && url.pathname === '/') return send(200, 'text/html; charset=utf-8', buildPage({ appRepo, dataRepo }));
       // Printed shelf lists for a place: read only, so a plain link opens them.
       if (request.method === 'GET' && url.pathname === '/print') {
         if (!dataRepo) return send(400, 'text/plain', 'No catalog: config.json names none.');
@@ -234,7 +226,7 @@ export function createAdminServer({ port = PORT, appRepo = APP_REPO, toolsFolder
         return send(200, TYPES[url.pathname.endsWith('.css') ? '.css' : '.js'], readFileSync(join(here, 'page', url.pathname.slice(1))));
       }
       if (request.method === 'GET' && url.pathname === '/tokens.css') {
-        return send(200, TYPES['.css'], await readDocument({ repo: 'app', file: 'styles/tokens.css' }, { appRepo, toolsFolder, fetchFn }));
+        return send(200, TYPES['.css'], readDocument('styles/tokens.css', appRepo));
       }
       if (request.method === 'POST' && ['/run', '/planner'].includes(url.pathname)) {
         if (request.headers.origin !== `http://${own}` && request.headers.origin !== `http://localhost:${server.address().port}`) return send(403, 'text/plain', 'Tools run only from this page.');

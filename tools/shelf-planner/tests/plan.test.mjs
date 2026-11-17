@@ -1,10 +1,10 @@
 // The shelf planner (shelf-planner/plan.mjs), with a few made-up books.
-// Run with `node --test` in the tools folder.
+// Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { newRecord } from '../../core/records.js';
-import { validateRecord } from '../../core/validate.js';
+import { newRecord } from '../../../core/records.js';
+import { validateRecord } from '../../../core/validate.js';
 import { readShelves, shelvesText, planShelves, recordsForPlan, planText, FILL } from '../plan.mjs';
 
 const NOW = '2026-11-12T12:00:00Z';

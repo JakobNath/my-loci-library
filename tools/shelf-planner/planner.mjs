@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock, FOLDERS } from '../shared/data-repo.mjs';
-import { isInside } from '../core/library.js';
+import { isInside } from '../../core/library.js';
 import { readShelves, shelvesText, planShelves, recordsForPlan, planText } from './plan.mjs';
 
 export const SHELVES_FILE = join('integrations', 'shelves.txt');

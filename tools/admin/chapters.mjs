@@ -5,7 +5,8 @@
 // Only the short opening line of each chapter is written here.
 
 /**
- * @typedef {{ repo: 'app'|'tools', file: string, section?: string, leaveOut?: string[] }} Source
+ * @typedef {{ file: string, section?: string, leaveOut?: string[] }} Source
+ *   file: from the repository's root, such as 'HOW_IT_WORKS.md' or 'tools/README.md';
  *   section: one section's heading (the whole document when not given);
  *   leaveOut: headings of sections not shown (with what is under them)
  * @typedef {{ id: string, title: string, opening: string, tools?: boolean, planner?: boolean, sources: Source[] }} Chapter
@@ -17,51 +18,51 @@ export const CHAPTERS = [
     id: 'what-it-is',
     title: 'What it is',
     opening: 'My Loci Library is a catalog of our books: the physical ones on the shelves and the Logos library. It is three things that work together: an app in the browser, a private folder of small text files on GitHub that holds the catalog, and the tools on this laptop.',
-    sources: [{ repo: 'app', file: 'HOW_IT_WORKS.md', section: 'The parts' }],
+    sources: [{ file: 'HOW_IT_WORKS.md', section: 'The parts' }],
   },
   {
     id: 'adding',
     title: 'Adding a book',
     opening: 'Adding asks only what a person knows and lets the catalogs fill the rest.',
-    sources: [{ repo: 'app', file: 'HOW_IT_WORKS.md', section: 'What happens when you add a book' }],
+    sources: [{ file: 'HOW_IT_WORKS.md', section: 'What happens when you add a book' }],
   },
   {
     id: 'sync',
     title: 'Sync between devices',
     opening: 'Each phone and this laptop keep a whole copy of the catalog and send each other their changes through GitHub.',
-    sources: [{ repo: 'app', file: 'HOW_IT_WORKS.md', section: 'Sync between devices' }],
+    sources: [{ file: 'HOW_IT_WORKS.md', section: 'Sync between devices' }],
   },
   {
     id: 'tools',
     title: 'The laptop tools',
     opening: 'The buttons run the same tools as the command line, on this laptop, against the catalog named in config.json. Each says what it did when it finishes.',
     tools: true,
-    sources: [{ repo: 'tools', file: 'README.md', leaveOut: ['License', 'Tests', 'The shelf planner'] }],
+    sources: [{ file: 'tools/README.md', leaveOut: ['License', 'Tests', 'The shelf planner'] }],
   },
   {
     id: 'shelves',
     title: 'Planning the shelves',
     opening: 'Choose a room or a bookcase, give the width of each shelf, and choose an order: the planner fits the books to the shelves by their thickness and lists what moves where. Nothing is saved until the books stand as suggested and you say so.',
     planner: true,
-    sources: [{ repo: 'tools', file: 'README.md', section: 'The shelf planner' }],
+    sources: [{ file: 'tools/README.md', section: 'The shelf planner' }],
   },
   {
     id: 'data',
     title: 'The data and its format',
     opening: 'The catalog is plain text: one small JSON file per work, edition, copy and author. This is the full description of every field, and the one place it is written.',
-    sources: [{ repo: 'app', file: 'DATA_FORMAT.md' }],
+    sources: [{ file: 'DATA_FORMAT.md' }],
   },
   {
     id: 'looking-after',
     title: 'The yearly check, and fixing things',
     opening: 'Ten minutes once a year keeps everything honest, and most troubles have a short fix.',
-    sources: [{ repo: 'app', file: 'HOW_IT_WORKS.md', section: 'Looking after it' }],
+    sources: [{ file: 'HOW_IT_WORKS.md', section: 'Looking after it' }],
   },
   {
     id: 'sources',
     title: 'Where the book data comes from',
     opening: 'The catalogs the app and the tools ask, what each gives, and the terms each sets.',
-    sources: [{ repo: 'app', file: 'SOURCES.md' }],
+    sources: [{ file: 'SOURCES.md' }],
   },
 ];
 

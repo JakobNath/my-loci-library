@@ -1,5 +1,5 @@
 // loci-backup, in temporary folders, with the sample books (no Git, no network).
-// Run with `node --test` in the tools folder.
+// Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -7,11 +7,11 @@ import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, existsSync, rmSync
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
-import { newRecord } from '../../core/records.js';
+import { newRecord } from '../../../core/records.js';
 import { writeRecord, FOLDERS } from '../../shared/data-repo.mjs';
 import { rebuildCatalog, mirrorFolder, monthlySnapshot, fullArchive, writeStatus } from '../backup.mjs';
 import { dailyBackup } from '../loci-backup.mjs';
-import { plato, augustine, confessions, chadwick, loebWorks, loeb36 } from '../../core/tests/samples.js';
+import { plato, augustine, confessions, chadwick, loebWorks, loeb36 } from '../../../core/tests/samples.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const NOW = '2026-11-10T03:00:00Z';

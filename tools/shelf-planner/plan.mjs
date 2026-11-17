@@ -4,11 +4,11 @@
 // has moved the books and says so, record each copy's new shelf and its place
 // along it. Nothing is written until then. The admin page shows it.
 
-import { buildLibrary, isInside } from '../core/library.js';
-import { estimateSize } from '../core/sizes.js';
-import { keysForShelf } from '../core/shelf-order.js';
-import { normalizeForSearch } from '../core/search.js';
-import { withField } from '../core/records.js';
+import { buildLibrary, isInside } from '../../core/library.js';
+import { estimateSize } from '../../core/sizes.js';
+import { keysForShelf } from '../../core/shelf-order.js';
+import { normalizeForSearch } from '../../core/search.js';
+import { withField } from '../../core/records.js';
 
 const SEPARATOR = ' › ';
 // A shelf is filled to this share of its width, leaving room for a hand and for books added later.

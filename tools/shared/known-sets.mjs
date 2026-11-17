@@ -1,12 +1,12 @@
-// The known sets' lists (sets/*.txt, copied from the app by update-core),
+// The known sets' lists (sets/*.txt at the repository root, the app's own),
 // read for the tools: a Logos resource of a known set takes its volume's works.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseKnownSet } from '../core/known-sets.js';
+import { parseKnownSet } from '../../core/known-sets.js';
 
-const setsFolder = join(dirname(fileURLToPath(import.meta.url)), '..', 'sets');
+const setsFolder = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'sets');
 
 /**
  * Every list in the folder that reads without problems; a list with problems

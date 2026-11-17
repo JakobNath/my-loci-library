@@ -10,13 +10,13 @@
 import { readdirSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { fromLibraryOfCongress, fromHathiTrust } from '../core/marc.js';
-import { fromOpenLibraryEdition, fromGoogleBooksVolume } from '../core/book-data.js';
+import { fromLibraryOfCongress, fromHathiTrust } from '../../core/marc.js';
+import { fromOpenLibraryEdition, fromGoogleBooksVolume } from '../../core/book-data.js';
 import { sourcesFor } from './sources.mjs';
 import { readConfig } from '../shared/data-repo.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const ANSWERS = join(here, '..', 'core', 'tests', 'answers');
+const ANSWERS = join(here, '..', '..', 'core', 'tests', 'answers');
 const PAUSE_MS = 1000; // between books, as in loci-enrich
 
 // The fields compared: those a change in a source would most likely break.

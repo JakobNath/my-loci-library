@@ -1,17 +1,17 @@
 // The Zotero companion, against a stand-in for Zotero's web API
-// (tests/fake-zotero.mjs) and the sample books. Run with `node --test` in the tools folder.
+// (tests/fake-zotero.mjs) and the sample books. Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { newRecord, withField } from '../../core/records.js';
+import { newRecord, withField } from '../../../core/records.js';
 import { connectToZotero } from '../zotero-api.mjs';
 import { sendToZotero } from '../zotero-sync.mjs';
 import { originalDateText } from '../zotero-items.mjs';
 import { fakeZotero } from './fake-zotero.mjs';
-import { plato, augustine, confessions, chadwick, loebWorks, loeb36, na28, na28Works, triglotta, triglottaWorks } from '../../core/tests/samples.js';
+import { plato, augustine, confessions, chadwick, loebWorks, loeb36, na28, na28Works, triglotta, triglottaWorks } from '../../../core/tests/samples.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const NOW = '2026-11-10T12:00:00Z';

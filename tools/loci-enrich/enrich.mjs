@@ -6,9 +6,9 @@
 // works a catalog lists inside a book entered as one work are only offered
 // ("foundContents", used or declined in the app), and never for a Bible.
 
-import { withField } from '../core/records.js';
-import { isBible } from '../core/bible.js';
-import { normalizeForSearch } from '../core/search.js';
+import { withField } from '../../core/records.js';
+import { isBible } from '../../core/bible.js';
+import { normalizeForSearch } from '../../core/search.js';
 
 export const RECHECK_DAYS = 90; // each book is asked again after this long, so new catalog records are found
 // A book that a source did not answer (it failed, or was resting) is asked again after this long:
@@ -62,7 +62,7 @@ export function editionsToAsk(editions, memory, today) {
 /**
  * Fill one book's empty fields from its merged answer.
  * @param {{ edition: object, works: object[] }} book the edition and its works
- * @param {import('../core/lookup.js').Found|null} found the merged answer, or null when no source knew the book
+ * @param {import('../../core/lookup.js').Found|null} found the merged answer, or null when no source knew the book
  * @param {{ wrote?: Record<string, unknown> }} [previous] what this tool wrote for the book before
  * @param {string} now timestamp for the changed fields
  * @returns {{ changed: object[], filled: string[], wrote: Record<string, unknown>, contents: string[] }}

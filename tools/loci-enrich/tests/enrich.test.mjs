@@ -1,6 +1,6 @@
 // loci-enrich, against the answers recorded from the three sources on
-// 10 November 2026 (core/tests/answers/, copied from the app). Run with
-// `node --test` in the tools folder.
+// 10 November 2026 (core/tests/answers/, shared with the app). Run with
+// `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -10,14 +10,14 @@ import { tmpdir } from 'node:os';
 import { runEnrich, MEMORY, ANSWERS } from '../loci-enrich.mjs';
 import { gunzipSync } from 'node:zlib';
 import { fillBook } from '../enrich.mjs';
-import { mergeFound } from '../../core/book-data.js';
-import { fromLibraryOfCongress } from '../../core/marc.js';
-import { newRecord, FORMAT_VERSION } from '../../core/records.js';
+import { mergeFound } from '../../../core/book-data.js';
+import { fromLibraryOfCongress } from '../../../core/marc.js';
+import { newRecord, FORMAT_VERSION } from '../../../core/records.js';
 import { writeRecord, readRecords } from '../../shared/data-repo.mjs';
-import * as plato from '../../core/tests/answers/9780872203495.js';
-import * as holmes from '../../core/tests/answers/9780801031083.js';
-import * as anna from '../../core/tests/answers/9781857150582.js';
-import * as wikidata from '../../core/tests/answers/wikidata.js';
+import * as plato from '../../../core/tests/answers/9780872203495.js';
+import * as holmes from '../../../core/tests/answers/9780801031083.js';
+import * as anna from '../../../core/tests/answers/9781857150582.js';
+import * as wikidata from '../../../core/tests/answers/wikidata.js';
 import { askSources, IDENTITY } from '../sources.mjs';
 import { checkSources, loadRecordedBooks } from '../check-sources.mjs';
 

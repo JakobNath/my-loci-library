@@ -14,11 +14,11 @@
 // in the series "Luther's Works") takes that volume's works from the list
 // (sets/, core/known-sets.js), as a scanned copy does on the phone.
 
-import { newRecord, withField } from '../core/records.js';
-import { normalizeForSearch } from '../core/search.js';
-import { suggestWorks } from '../core/matching.js';
-import { buildLibrary } from '../core/library.js';
-import { findKnownVolume, recordsForKnownVolume } from '../core/known-sets.js';
+import { newRecord, withField } from '../../core/records.js';
+import { normalizeForSearch } from '../../core/search.js';
+import { suggestWorks } from '../../core/matching.js';
+import { buildLibrary } from '../../core/library.js';
+import { findKnownVolume, recordsForKnownVolume } from '../../core/known-sets.js';
 import { readRow } from './columns.mjs';
 
 // "Luther's Works, Vol. 31: Career of the Reformer I" names volume 31; "Volume II/1" names II/1.

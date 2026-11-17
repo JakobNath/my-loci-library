@@ -5,7 +5,7 @@
 // Every other column is kept as it came, in the edition's `logosExtra`
 // (DATA_FORMAT.md, "Edition"), except the few in VOLATILE.
 
-import { isbn13 } from '../core/entry.js';
+import { isbn13 } from '../../core/entry.js';
 
 export const COLUMNS = {
   logosId: ['Resource ID', 'ResourceId', 'Resource Id', 'Resource'],

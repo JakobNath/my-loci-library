@@ -1,7 +1,7 @@
 // logos-to-my-loci-library, with a small export in the shape of a real one
 // (tests/logos-sample.csv: the 24 columns Logos wrote in 2026, filled with
 // public bibliographic details) and the sample books, in temporary folders.
-// Run with `node --test` in the tools folder.
+// Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
 import { parseCsv, readRow, personName } from '../columns.mjs';
 import { importFile, confirmLinks, fetchCovers } from '../logos-import.mjs';
 import { writeRecord, readRecords, FOLDERS } from '../../shared/data-repo.mjs';
-import { withField, newRecord } from '../../core/records.js';
-import { augustine, confessions, chadwick } from '../../core/tests/samples.js';
+import { withField, newRecord } from '../../../core/records.js';
+import { augustine, confessions, chadwick } from '../../../core/tests/samples.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SAMPLE = join(here, 'logos-sample.csv');

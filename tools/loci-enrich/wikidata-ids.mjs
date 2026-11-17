@@ -5,8 +5,8 @@
 // work by Wikidata's own record), and reports an ID that no longer exists
 // without changing anything.
 
-import { idsQuery, readIdChecks } from '../core/wikidata.js';
-import { withField } from '../core/records.js';
+import { idsQuery, readIdChecks } from '../../core/wikidata.js';
+import { withField } from '../../core/records.js';
 import { ADDRESSES, IDENTITY } from './sources.mjs';
 
 // Wikidata's vocabularies, written out because the new query service adds none by itself.

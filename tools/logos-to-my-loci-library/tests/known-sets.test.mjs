@@ -1,11 +1,11 @@
 // A Logos resource that is a volume of a known set takes its works from the
 // set's list (core/known-sets.js). The list here is a small one made for the
-// test; the real lists are in sets/. Run with `node --test` in the tools folder.
+// test; the real lists are in sets/. Run with `node --test` at the repository root.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseKnownSet } from '../../core/known-sets.js';
-import { validateRecord } from '../../core/validate.js';
+import { parseKnownSet } from '../../../core/known-sets.js';
+import { validateRecord } from '../../../core/validate.js';
 import { importRows, knownVolumeOf } from '../import.mjs';
 import { readRow } from '../columns.mjs';
 

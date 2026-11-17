@@ -3,9 +3,9 @@
 // search box. It is a backup a person can read without the app, so it uses
 // only plain HTML, the browser's own colors, and a few lines of script.
 
-import { escapeHtml } from '../core/html.js';
-import { originalDateText } from '../core/exports.js';
-import { bindingText } from '../core/bindings.js';
+import { escapeHtml } from '../../core/html.js';
+import { originalDateText } from '../../core/exports.js';
+import { bindingText } from '../../core/bindings.js';
 
 const STYLE = `
   :root { color-scheme: light dark; font-family: Georgia, "Times New Roman", serif; }

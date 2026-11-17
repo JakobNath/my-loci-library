@@ -9,14 +9,14 @@
 // A source that refuses a request (429 "too many requests", or 403) is not
 // asked again for the rest of the run: it is "resting", and the report says so.
 
-import { fromLibraryOfCongress, fromHathiTrust } from '../core/marc.js';
-import { fromOpenLibraryEdition, fromGoogleBooksVolume, mergeFound } from '../core/book-data.js';
-import { googleBooksItem } from '../core/lookup.js';
+import { fromLibraryOfCongress, fromHathiTrust } from '../../core/marc.js';
+import { fromOpenLibraryEdition, fromGoogleBooksVolume, mergeFound } from '../../core/book-data.js';
+import { googleBooksItem } from '../../core/lookup.js';
 
 const TIMEOUT = 15000; // milliseconds; the catalog service is sometimes slow
 
 /** How the laptop tools name themselves to the sources: the app, and where to find it. */
-export const IDENTITY = 'MyLociLibraryTools/1 (+https://github.com/JakobNath/my-loci-library-tools)';
+export const IDENTITY = 'MyLociLibraryTools/1 (+https://github.com/JakobNath/my-loci-library/tree/main/tools)';
 
 /** The addresses asked, in one place, so a source that moves is changed here only (SOURCES.md). */
 export const ADDRESSES = {

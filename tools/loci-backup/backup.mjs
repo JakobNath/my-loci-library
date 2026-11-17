@@ -7,8 +7,8 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync, copyFileSync, utimesSync } from 'node:fs';
 import { join } from 'node:path';
 import { readRecords, readStoredRecords, isGitRepo, git } from '../shared/data-repo.mjs';
-import { buildLibrary } from '../core/library.js';
-import { catalogCsv, catalogJson, cslJson, bibtex } from '../core/exports.js';
+import { buildLibrary } from '../../core/library.js';
+import { catalogCsv, catalogJson, cslJson, bibtex } from '../../core/exports.js';
 import { catalogHtml } from './html-catalog.mjs';
 
 export const STATUS_FILE = 'backup-status.json';

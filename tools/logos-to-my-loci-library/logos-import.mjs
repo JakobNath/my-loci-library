@@ -17,7 +17,7 @@ import { fileURLToPath } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { readConfig, readRecords, writeRecord, isGitRepo, git, pullLatest, commitAndPush, holdLock, localDate } from '../shared/data-repo.mjs';
 import { readKnownSets } from '../shared/known-sets.mjs';
-import { makeId } from '../core/ids.js';
+import { makeId } from '../../core/ids.js';
 import { parseCsv, decodeExport } from './columns.mjs';
 import { importRows, linkEditions } from './import.mjs';
 

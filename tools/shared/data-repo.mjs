@@ -5,7 +5,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, rmSync } from 'no
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
-import { recordToFileText, migrate, FORMAT_VERSION } from '../core/records.js';
+import { recordToFileText, migrate, FORMAT_VERSION } from '../../core/records.js';
 
 const toolsFolder = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -25,8 +25,8 @@ export function localDate(moment) {
 export const FOLDERS = { work: 'works', edition: 'editions', copy: 'copies', author: 'authors', wishlist: 'wishlist', set: 'sets' };
 
 /**
- * This laptop's settings, from config.json beside the tools (copy
- * config.example.json to make it). Paths may be relative to the tools folder.
+ * This laptop's settings, from config.json in the tools/ folder (copy
+ * config.example.json to make it). Paths may be relative to that folder.
  * @returns {{ dataRepo: string, backupFolder: string|null, googleBooksKey: string }}
  */
 export function readConfig(file = join(toolsFolder, 'config.json')) {
@@ -48,8 +48,8 @@ export function readConfig(file = join(toolsFolder, 'config.json')) {
  * not changed until a tool writes the record.
  *
  * A record in a newer format than these tools know stops the tool, because
- * writing it back would drop the fields they do not know (the app may be
- * updated before the tools). Only a tool that never writes records, such as
+ * writing it back would drop the fields they do not know (the phones get a
+ * new app before this laptop's copy is pulled). Only a tool that never writes records, such as
  * the backup's exports, passes { allowNewer: true }.
  */
 export function readRecords(dataRepo, { allowNewer = false } = {}) {
@@ -57,7 +57,7 @@ export function readRecords(dataRepo, { allowNewer = false } = {}) {
   const newest = Math.max(0, ...records.map(record => record.format));
   if (!allowNewer && newest > FORMAT_VERSION) {
     throw new Error(`The catalog has records in data format ${newest}; these tools know format ${FORMAT_VERSION}. `
-      + 'Update the tools first (git pull in the tools folder). Nothing was changed.');
+      + 'Update this laptop\'s copy of the app first (git pull in the my-loci-library folder). Nothing was changed.');
   }
   return records.map(migrate);
 }
@@ -81,7 +81,7 @@ export function readStoredRecords(dataRepo) {
 
 /** Write one record to its file, in the fixed form of DATA_FORMAT.md. Never one newer than these tools know. */
 export function writeRecord(dataRepo, record) {
-  if (record.format > FORMAT_VERSION) throw new Error(`Record ${record.id} is in data format ${record.format}; these tools know format ${FORMAT_VERSION}. Update the tools first.`);
+  if (record.format > FORMAT_VERSION) throw new Error(`Record ${record.id} is in data format ${record.format}; these tools know format ${FORMAT_VERSION}. Update this laptop's copy of the app first (git pull).`);
   writeFileSync(join(dataRepo, FOLDERS[record.type], `${record.id}.json`), recordToFileText(record));
 }
 

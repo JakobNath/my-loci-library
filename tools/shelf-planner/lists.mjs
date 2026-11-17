@@ -3,9 +3,9 @@
 // or by original date, as a page made for paper. The admin page opens it, and
 // the browser prints it. An anthology is listed once, at its earliest date.
 
-import { buildLibrary, isInside } from '../core/library.js';
-import { workingDating, formatYearRange } from '../core/dating.js';
-import { normalizeForSearch } from '../core/search.js';
+import { buildLibrary, isInside } from '../../core/library.js';
+import { workingDating, formatYearRange } from '../../core/dating.js';
+import { normalizeForSearch } from '../../core/search.js';
 
 const SEPARATOR = ' › ';
 

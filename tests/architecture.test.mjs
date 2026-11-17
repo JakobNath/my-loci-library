@@ -13,10 +13,9 @@ import { parseKnownSet } from '../core/known-sets.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-// The app's own files: everything except vendor code, tests and docs.
-function appFiles() {
+// The source files under a folder, as paths from the repository root.
+function sourceFiles(start, skip) {
   const files = [];
-  const skip = new Set(['vendor', 'tests', 'docs', '.git', '.claude', 'node_modules']);
   function walk(folder) {
     for (const name of readdirSync(folder)) {
       const path = join(folder, name);
@@ -27,8 +26,20 @@ function appFiles() {
       }
     }
   }
-  walk(root);
-  return files.filter(file => !file.startsWith('core/tests/'));
+  walk(start);
+  return files;
+}
+
+// The app's own files: everything except vendor code, tests, docs and the
+// laptop tools (tools/), which have their own edges for the services they ask.
+function appFiles() {
+  const skip = new Set(['vendor', 'tests', 'docs', 'tools', '.git', '.claude', 'node_modules']);
+  return sourceFiles(root, skip).filter(file => !file.startsWith('core/tests/'));
+}
+
+// The laptop tools' files, their tests included.
+function toolFiles() {
+  return existsSync(join(root, 'tools')) ? sourceFiles(join(root, 'tools'), new Set()) : [];
 }
 const read = file => readFileSync(join(root, file), 'utf8');
 
@@ -61,6 +72,22 @@ const SERVICES = [
 ];
 export function serviceProblems(file, text) {
   return SERVICES.filter(([word, owner]) => file !== owner && text.includes(word)).map(([word, owner]) => `${file} mentions ${word}; only ${owner} may`);
+}
+
+/**
+ * The laptop tools share the app's core/ and nothing else of it, and the app
+ * never loads a tool: a tool importing ui/ or edges/ would pull browser code
+ * into Node, and the app importing tools/ would put laptop code on the phones.
+ */
+export function toolImportProblems(file, text) {
+  const problems = [];
+  for (const [, path] of text.matchAll(/\bimport(?:\s[^'"]*|\(\s*)['"](\.[^'"]+)['"]/g)) {
+    const target = join(dirname(file), path).split(sep).join('/');
+    const inTools = target.startsWith('tools/');
+    if (file.startsWith('tools/') && !inTools && !target.startsWith('core/')) problems.push(`${file} imports ${target}; a tool may import only core/ and tools/`);
+    if (!file.startsWith('tools/') && inTools) problems.push(`${file} imports ${target}; the app never loads a tool`);
+  }
+  return problems;
 }
 
 /** Every ${...} in a template assigned to innerHTML must be escaped, a number, or a piece named *Html (a variable or a call). */
@@ -107,6 +134,22 @@ test('every script of the app parses, including screens loaded only when opened'
 
 test('each outside service, and IndexedDB, is used by one edge file only', () => {
   assert.deepEqual(appFiles().flatMap(file => serviceProblems(file, read(file))), []);
+});
+
+test('the laptop tools import only core/ from the app, and the app imports no tool', () => {
+  assert.deepEqual([...appFiles(), ...toolFiles()].filter(file => /\.m?js$/.test(file)).flatMap(file => toolImportProblems(file, read(file))), []);
+});
+
+test('every laptop tool parses', () => {
+  const broken = [];
+  for (const file of toolFiles().filter(name => /\.m?js$/.test(name))) {
+    try {
+      execFileSync(process.execPath, ['--check', join(root, file)], { stdio: 'pipe' });
+    } catch (error) {
+      broken.push(`${file}: ${String(error.stderr).split(/\r?\n/).find(line => line.includes('Error')) || 'does not parse'}`);
+    }
+  }
+  assert.deepEqual(broken, []);
 });
 
 test('every innerHTML assignment escapes its data', () => {
@@ -184,6 +227,12 @@ test('the core rule catches an outside import and a clock read', () => {
 test('the service rule catches GitHub named outside the sync module', () => {
   assert.equal(serviceProblems('ui/library.js', "fetch('https://api.github.com/repos')").length, 1);
   assert.equal(serviceProblems('edges/sync-github.js', "fetch('https://api.github.com/repos')").length, 0);
+});
+
+test('the tools rule catches a tool importing an app edge, and a screen importing a tool', () => {
+  assert.equal(toolImportProblems('tools/loci-backup/backup.mjs', "import { save } from '../../edges/storage.js';").length, 1);
+  assert.equal(toolImportProblems('ui/library.js', "import { readConfig } from '../tools/shared/data-repo.mjs';").length, 1);
+  assert.equal(toolImportProblems('tools/loci-backup/backup.mjs', "import { buildLibrary } from '../../core/library.js';\nimport { readConfig } from '../shared/data-repo.mjs';").length, 0);
 });
 
 test('the innerHTML rule catches unescaped data', () => {

@@ -13,8 +13,7 @@ import { CHAPTERS } from '../chapters.mjs';
 import { createAdminServer, buildPage, sourceText, TOOLS } from '../admin.mjs';
 
 const toolsFolder = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
-const appRepo = resolve(toolsFolder, '..', 'my-loci-library');
-const noNetwork = async () => { throw new Error('no network in the tests'); };
+const appRepo = resolve(toolsFolder, '..');
 
 test('the Markdown reader escapes everything and knows headings, lists, tables, code and links', () => {
   const html = markdownToHtml('## Title\n\nA <b>bold</b> claim with `code` and **strong** words.\n\n- one\n- two\n\n| A | B |\n| --- | --- |\n| 1 | 2 |\n\n```\nx < y\n```\n\n[GitHub](https://github.com) and [a file](HOW_IT_WORKS.md)');
@@ -38,18 +37,18 @@ test('a section runs to the next heading of its level, and sections can be left 
   assert.throws(() => sourceText(doc, { section: 'Gone' }), /chapters\.mjs/);
 });
 
-test('every chapter names a section that its document still has', { skip: !existsSync(appRepo) && 'the app repository is not beside the tools' }, () => {
+test('every chapter names a section that its document still has', () => {
   for (const chapter of CHAPTERS) {
     for (const source of chapter.sources) {
-      const file = join(source.repo === 'tools' ? toolsFolder : appRepo, ...source.file.split('/'));
+      const file = join(appRepo, ...source.file.split('/'));
       assert.ok(existsSync(file), `${chapter.title}: ${source.file}`);
       if (source.section) assert.notEqual(sectionOf(readFileSync(file, 'utf8'), source.section), null, `${chapter.title}: "${source.section}" in ${source.file}`);
     }
   }
 });
 
-test('the page holds the contents, every chapter and the tools\' buttons', { skip: !existsSync(appRepo) && 'the app repository is not beside the tools' }, async () => {
-  const page = await buildPage({ appRepo, toolsFolder, dataRepo: null, fetchFn: noNetwork });
+test('the page holds the contents, every chapter and the tools\' buttons', async () => {
+  const page = buildPage({ appRepo, dataRepo: null });
   for (const chapter of CHAPTERS) assert.ok(page.includes(`id="${chapter.id}"`), chapter.title);
   for (const id of Object.keys(TOOLS)) assert.ok(page.includes(`data-tool="${id}"`), id);
   assert.ok(!page.includes('class="problem"'), 'every document was found');
@@ -79,7 +78,7 @@ function ask(port, { method = 'GET', path = '/', headers = {}, body = '' } = {})
 
 test('the server answers only this laptop, and runs a tool only when its own page asks', async () => {
   const ran = [];
-  const server = await createAdminServer({ port: 0, appRepo, toolsFolder, fetchFn: noNetwork, run: async (tool, input) => { ran.push([tool, input]); return { ok: true, output: 'stand-in ran' }; } });
+  const server = await createAdminServer({ port: 0, appRepo, toolsFolder, run: async (tool, input) => { ran.push([tool, input]); return { ok: true, output: 'stand-in ran' }; } });
   const { port } = server.address();
   const own = `http://127.0.0.1:${port}`;
   try {
@@ -112,10 +111,10 @@ test('a path pasted with quotes is read without them', () => {
 
 test('a second start says the port is taken, and a trial page runs no tool', async () => {
   const ran = [];
-  const server = await createAdminServer({ port: 0, appRepo, toolsFolder, fetchFn: noNetwork, isTrial: true, run: async tool => { ran.push(tool); return { ok: true, output: '' }; } });
+  const server = await createAdminServer({ port: 0, appRepo, toolsFolder, isTrial: true, run: async tool => { ran.push(tool); return { ok: true, output: '' }; } });
   const { port } = server.address();
   try {
-    await assert.rejects(createAdminServer({ port, appRepo, toolsFolder, fetchFn: noNetwork }), { code: 'EADDRINUSE' });
+    await assert.rejects(createAdminServer({ port, appRepo, toolsFolder }), { code: 'EADDRINUSE' });
     const answer = await ask(port, { method: 'POST', path: '/run', headers: { origin: `http://127.0.0.1:${port}`, 'content-type': 'application/json' }, body: JSON.stringify({ tool: 'backup' }) });
     assert.equal(answer.status, 409);
     assert.match(JSON.parse(answer.text).output, /--data/);
