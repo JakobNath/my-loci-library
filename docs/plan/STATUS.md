@@ -2,12 +2,14 @@
 
 Where the project stands and what comes next, on one screen. Read it first in every working session and keep it current. `PLAN.md` is the design; this file only says where things are. The history up to 16 November 2026 (every release, finished tasks, older decisions to look over) is in `archive/STATUS_to_2026-11-16.md`; since then, in git history and `docs/decisions/`.
 
-Last brought up to date on 17 November 2026 (after 1.27.2 and the overnight work).
+Last brought up to date on 17 November 2026 (after 1.27.3).
 
 ## Where things stand
 
-- App **1.27.2**, data format 7. Tests: 342 in the app, 379 in the tools (and 2 to-do tests for the shelf planner's known faults), 319 on the self-test page.
-- 17 November (no release): docs brought up to date, a few tests added, Wikidata's new address tried (still closed), the live lookup check re-run (1.27.2's fixes hold), and the Marx-Engels Reader's six works given Marx and Engels as two authors in the catalog. Details in the workspace's `handoffs/2026-11-17-overnight.md`.
+- App **1.27.3**, data format 7. Tests: 344 in the app, 381 in the tools (and 2 to-do tests for the shelf planner's known faults), 322 on the self-test page.
+- 1.27.3 (17 November): Wikidata's original title is the one in the work's own language. A work with titles in many languages (Frankenstein, the City of God, Werther) had been offered whichever came last, such as "Frankenşteyn" (decision "Wikidata's original title in the work's own language", `docs/decisions/book-data.md`). Answers are also smaller and quicker.
+- The feature freeze was lifted on 17 November 2026 (`PROJECT.md`). The daily backup now runs on battery too.
+- 17 November, before 1.27.3: docs brought up to date, a few tests added, Wikidata's new address tried (still closed), the live lookup check re-run (1.27.2's fixes hold), and the Marx-Engels Reader's six works given Marx and Engels as two authors in the catalog. Details in the workspace's `handoffs/2026-11-17-overnight.md`.
 - 1.27.2 (16 November) settled the lookup problems left from 14 November: Bromiley no longer an author of Kittel's dictionary; "Michel de Montaigne", not "Montaigne, Michel de"; an author's name already in the library is reused (so "Virgil" or "Fyodor Dostoevsky", once corrected, holds for later books); "The Aeneid" from HathiTrust where Open Library says "Aenid"; Wikidata finds works by the author's ID (Dostoevsky, Virgil) and "On the Bondage of the Will"; its date follows the working-date rule (Pride and Prejudice 1813, not c. 1800). Melville on the Oxford Ovid stays a "Fix details" case.
 - **Alpha**: the app is being tried on real books, and books may be entered again. Jakob expects alpha to end near the end of November 2026; from then on the catalog is real and a format change is serious.
 - Every build phase is done except the shelf view review (13.0), which needs real books on a shelf. Phase 15's known-set lists and step 11 are on hold.
@@ -16,7 +18,6 @@ Last brought up to date on 17 November 2026 (after 1.27.2 and the overnight work
 
 ## Waiting on Jakob
 
-- [ ] **The daily backup skips days on battery**: it missed 16 November and was cut off on 17 November. The scheduled task is set to "Don't start if on batteries" and "Stop if the computer switches to batteries". Allow it on battery (a scheduled-task setting, his yes first), or keep the laptop plugged in at midday.
 - [ ] **The checking hour**: the workspace's `handoffs/CHECKING_HOUR.md` (the three known-set lists, the admin page). Send the answers by number in a new chat; that session corrects the lists, adds their `checked:` lines and releases the Greek tragedies list.
 - [ ] **Phone checks**: the ten in `DEVICE_CHECKS.md`, when convenient.
 - [ ] **The first real Zotero run**: `loci-zotero.cmd` with no `--collection`. It links books already in Zotero, filling only their empty fields.
@@ -27,6 +28,6 @@ Last brought up to date on 17 November 2026 (after 1.27.2 and the overnight work
 ## Next tasks for a working session
 
 1. **Whatever the testing turns up**: fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check after any change to lookups (the workspace's `handoffs/2026-11-14-first-real-book.md` says how). The handoff's own list of lookup problems is done (1.27.2).
-2. **Frankenstein's wrong original title from Wikidata** ("Frankenşteyn", German): the last of several titles wins in `core/wikidata.js`; details in the overnight handoff.
+2. **Merge the tools into the app repository** (Jakob agreed in principle on 17 November 2026): the tools move into a folder of the app's repository and use its `core/` directly, ending `update-core` and the copied `core/` and `sets/`. Plan it first, on a branch, before the admin page rebuild.
 3. **First week of December 2026**: check Wikidata's new query address (still closed on 17 November) and move to it if it answers (`SOURCES.md`).
 4. **The admin page rebuild**, when Jakob wants it. It takes in the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and a progress display (the workspace's `handoffs/2026-11-13-audit.md`).
