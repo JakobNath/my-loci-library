@@ -6,7 +6,8 @@ Last brought up to date on 17 November 2026 (after 1.27.3).
 
 ## Where things stand
 
-- App **1.27.3**, data format 7. Tests: 344 in the app, 381 in the tools (and 2 to-do tests for the shelf planner's known faults), 322 on the self-test page.
+- App **1.27.3**, data format 7. Tests: 418 with `node --test` at the root, the laptop tools' included (416 pass, and 2 to-do tests for the shelf planner's known faults), 322 on the self-test page.
+- 17 November, after 1.27.3: the laptop tools moved into this repository's `tools/` folder, with their history, and use the app's own `core/` and `sets/`; `update-core` and the copies are gone (decision "The tools moved into the app's repository", `docs/decisions/laptop-tools.md`). No release: nothing the phones load changed.
 - 1.27.3 (17 November): Wikidata's original title is the one in the work's own language. A work with titles in many languages (Frankenstein, the City of God, Werther) had been offered whichever came last, such as "Frankenşteyn" (decision "Wikidata's original title in the work's own language", `docs/decisions/book-data.md`). Answers are also smaller and quicker.
 - The feature freeze was lifted on 17 November 2026 (`PROJECT.md`). The daily backup now runs on battery too.
 - 17 November, before 1.27.3: docs brought up to date, a few tests added, Wikidata's new address tried (still closed), the live lookup check re-run (1.27.2's fixes hold), and the Marx-Engels Reader's six works given Marx and Engels as two authors in the catalog. Details in the workspace's `handoffs/2026-11-17-overnight.md`.
@@ -28,6 +29,6 @@ Last brought up to date on 17 November 2026 (after 1.27.3).
 ## Next tasks for a working session
 
 1. **Whatever the testing turns up**: fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check after any change to lookups (the workspace's `handoffs/2026-11-14-first-real-book.md` says how). The handoff's own list of lookup problems is done (1.27.2).
-2. **Merge the tools into the app repository** (Jakob agreed in principle on 17 November 2026): the tools move into a folder of the app's repository and use its `core/` directly, ending `update-core` and the copied `core/` and `sets/`. Plan it first, on a branch, before the admin page rebuild.
+2. **Finish moving the laptop to `tools/`** (17 November 2026, the move itself is done): `config.json` copied to `tools/` with `dataRepo` as `../../my-loci-library-data`, one backup run from the new place, the scheduled task and the desktop shortcut to the admin page pointed at `tools/`, then a pointer note in the old `my-loci-library-tools` and that repository archived on GitHub; its laptop folder deleted after a week of good backups. Each step with Jakob's yes.
 3. **First week of December 2026**: check Wikidata's new query address (still closed on 17 November) and move to it if it answers (`SOURCES.md`).
 4. **The admin page rebuild**, when Jakob wants it. It takes in the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and a progress display (the workspace's `handoffs/2026-11-13-audit.md`).

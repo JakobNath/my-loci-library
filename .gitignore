@@ -1,0 +1,6 @@
+# The laptop tools' settings and working files on this laptop; never committed.
+# config.json holds keys.
+tools/config.json
+tools/loci-enrich/last-report.txt
+tools/logos-to-my-loci-library/links-to-confirm.txt
+tools/my-loci-library-to-zotero/before/

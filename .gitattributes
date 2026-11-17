@@ -1,4 +1,7 @@
 * text=auto eol=lf
+# The laptop tools' Windows launchers keep Windows line endings, whatever system
+# they are checked out on (the .sh launchers keep Linux ones, as above).
+*.cmd text eol=crlf
 *.jpg binary
 *.png binary
 *.wasm binary
