@@ -363,6 +363,31 @@ export const tests = [
       same([found.wikidata, found.date, found.originalTitle], ['Q1180745', '1525', 'De Servo Arbitrio']);
     },
   },
+  // Recorded on 17 November 2026, with the query that also asks each work's own language.
+  {
+    name: 'a work with titles in many languages takes the one in its own language: the City of God in Latin, Werther in German, Frankenstein in none',
+    fn() {
+      const read = (answer, title) => {
+        const work = worksFromWikidata(JSON.parse(answer.answer), answer.titles).get(title);
+        return [work.originalTitle, work.originalLanguage];
+      };
+      same(read(wikidata.cityOfGod, 'The City of God'), ['De civitate Dei contra paganos', 'Latin'], 'not its Japanese title');
+      same(read(wikidata.rhetoric, 'Rhetoric'), ['Ῥητορική', 'Greek']);
+      same(read(wikidata.werther, 'The Sorrows of Young Werther'), ['Die Leiden des jungen Werthers', 'German'], 'not its Polish title');
+      same(read(wikidata.frankensteinTitles, 'Frankenstein; or, The Modern Prometheus'), ['', 'English'], 'an English work has no other original title');
+      same(read(wikidata.sense, 'Sense and Sensibility'), ['', 'English'], 'not one of its French titles');
+    },
+  },
+  {
+    name: 'with several titles and no word on the work\'s language, no original title is guessed; a single title is still taken',
+    fn() {
+      const row = (title, lang) => ({ work: { value: 'http://www.wikidata.org/entity/Q1' }, title: { value: 'Faust' }, anyTitle: { value: title, 'xml:lang': lang } });
+      const several = worksFromWikidata({ results: { bindings: [row('Faust', 'de'), row('ファウスト', 'ja')] } }, ['Faust']).get('Faust');
+      same([several.originalTitle, several.originalLanguage], ['', '']);
+      const one = worksFromWikidata({ results: { bindings: [row('Faust. Eine Tragödie', 'de')] } }, ['Faust']).get('Faust');
+      same([one.originalTitle, one.originalLanguage], ['Faust. Eine Tragödie', 'German']);
+    },
+  },
   {
     name: 'a work is found by its author\'s Wikidata ID however the name is spelt: Dostoevsky, Virgil',
     fn() {

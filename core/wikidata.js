@@ -46,7 +46,7 @@ export function worksQuery(titles, author, prefixes = '', authorIds = []) {
   const byName = [...surnames.map(surname => `CONTAINS(LCASE(?authorName), ${JSON.stringify(surname)})`), ...ids.map(id => `?author = wd:${id}`)].join(' || ');
   // ?kind tells a first publication (P577) from when the work was written (P571), which the working-date rule treats apart.
   return `${prefixes}
-SELECT ?title ?work ?authorName ?kind ?time ?precision ?original ?other ?died WHERE {
+SELECT ?title ?work ?authorName ?kind ?time ?precision ?original ?languageCode ?anyTitle ?other ?died WHERE {
   VALUES ?title { ${labels.map(literal).join(' ')} }
   ?work rdfs:label ?title ; wdt:P50 ?author .
   ?author rdfs:label ?authorName .
@@ -56,7 +56,14 @@ SELECT ?title ?work ?authorName ?kind ?time ?precision ?original ?other ?died WH
     VALUES (?kind ?valueOf) { (p:P571 psv:P571) (p:P577 psv:P577) }
     ?work ?kind ?statement . ?statement ?valueOf ?value . ?value wikibase:timeValue ?time ; wikibase:timePrecision ?precision .
   }
-  OPTIONAL { ?work wdt:P1476 ?original }
+  # Only the titles in the work's own language (P407), since one in every language it was
+  # translated into (Frankenstein has 40) would multiply the rows; every title only for a
+  # work whose language Wikidata does not give.
+  OPTIONAL {
+    ?work wdt:P407 ?language . ?language wdt:P424 ?languageCode . ?work wdt:P1476 ?original .
+    FILTER(LANG(?original) = ?languageCode)
+  }
+  OPTIONAL { ?work wdt:P1476 ?anyTitle . FILTER NOT EXISTS { ?work wdt:P407 ?anyLanguage } }
   OPTIONAL { ?work skos:altLabel ?other . FILTER(LANG(?other) = "en") }
   OPTIONAL { ?author wdt:P570 ?died }
 }`;
@@ -97,6 +104,26 @@ const LANGUAGES_BY_CODE = {
   ru: 'Russian', pl: 'Polish', cs: 'Czech', fi: 'Finnish', hu: 'Hungarian', is: 'Icelandic', ar: 'Arabic', fa: 'Persian',
   arc: 'Aramaic', syc: 'Syriac', cop: 'Coptic', sa: 'Sanskrit', zh: 'Chinese', ja: 'Japanese', ang: 'Old English',
 };
+
+/**
+ * A work's original title and its language, from the titles Wikidata gives it.
+ * Many works carry a title in each language they were translated into
+ * (Frankenstein has 41, from Japanese to Uzbek; the City of God has its Latin,
+ * Japanese and English), and the answer lists them in no fixed order, so with
+ * several titles the one in the work's own language (P407) is taken; with
+ * none in it, none is taken rather than a translation's. A title in English
+ * means an English work, which has no other original title.
+ * @param {Map<string, string>} titles each title with its language code
+ * @param {Set<string>} languageCodes the codes of the work's own languages
+ */
+function originalOf(titles, languageCodes) {
+  const all = [...titles];
+  const inOwnLanguage = all.filter(([, code]) => languageCodes.has(code));
+  const chosen = all.length === 1 ? all[0] : inOwnLanguage[0];
+  if (!chosen) return { originalTitle: '', originalLanguage: '' };
+  const [text, code] = chosen;
+  return { originalTitle: code === 'en' ? '' : text, originalLanguage: LANGUAGES_BY_CODE[code] || '' };
+}
 
 // An item's number: Q170583 is 170583. Long-known works got low numbers early on.
 const itemNumber = work => Number(work.wikidata.slice(1));
@@ -152,21 +179,22 @@ export function worksFromWikidata(answer, titles) {
     const label = row.title.value;
     const id = row.work.value.split('/').pop();
     const works = byLabel.get(label) || new Map();
-    const work = works.get(id) || { wikidata: id, dates: [], originalTitle: '', originalLanguage: '', otherTitles: new Set(), authors: new Set(), died: null };
+    const work = works.get(id) || { wikidata: id, dates: [], titles: new Map(), languageCodes: new Set(), otherTitles: new Set(), authors: new Set(), died: null };
     if (row.authorName) work.authors.add(row.authorName.value);
     if (row.time) {
       const kind = !row.kind ? '' : row.kind.value.endsWith('P577') ? 'published' : 'written';
       work.dates.push({ time: row.time.value, precision: Number(row.precision.value), kind });
     }
-    if (row.original) {
-      work.originalTitle = row.original.value;
-      work.originalLanguage = LANGUAGES_BY_CODE[String(row.original['xml:lang'] || '').toLowerCase()] || work.originalLanguage;
-    }
+    for (const title of [row.original, row.anyTitle].filter(Boolean)) work.titles.set(title.value, String(title['xml:lang'] || '').toLowerCase());
+    if (row.languageCode) work.languageCodes.add(row.languageCode.value.toLowerCase());
     // With two authors, the later death: a work printed while either lived was printed in an author's lifetime.
     if (row.died) work.died = Math.max(work.died ?? -Infinity, yearOf(row.died.value));
     if (row.other) work.otherTitles.add(row.other.value);
     works.set(id, work);
     byLabel.set(label, works);
+  }
+  for (const works of byLabel.values()) {
+    for (const work of works.values()) Object.assign(work, originalOf(work.titles, work.languageCodes));
   }
   const found = new Map();
   for (const title of titles) {
