@@ -1,4 +1,0 @@
-# Windows launchers keep Windows line endings, and Linux ones Linux line endings,
-# whatever system they are checked out on.
-*.cmd text eol=crlf
-*.sh text eol=lf
