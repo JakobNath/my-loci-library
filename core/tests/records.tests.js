@@ -244,6 +244,15 @@ export const tests = [
     },
   },
   {
+    name: 'a settings.json saved before HathiTrust and Wikidata were added reads both as on, and keeps a lookup someone turned off',
+    fn() {
+      const read = withDefaults({ lookups: { openLibrary: true, googleBooks: false } });
+      same(read.lookups, { openLibrary: true, hathiTrust: true, googleBooks: false, wikidata: true });
+      equal(withDefaults({ lookups: { wikidata: false } }).lookups.wikidata, false, 'turned off stays off');
+      same(withDefaults(null).lookups, SHARED_DEFAULTS.lookups, 'no settings at all');
+    },
+  },
+  {
     name: 'a device connected to one data repository and connecting to another is emptied first; a first connection, or the same repository in other capitals, is not',
     fn() {
       ok(isAnotherCatalog('JakobNath/my-loci-library-test-data', 'JakobNath/my-loci-library-data'), 'test catalog to real catalog');

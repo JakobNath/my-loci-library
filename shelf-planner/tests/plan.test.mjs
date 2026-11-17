@@ -103,6 +103,46 @@ test('on a catalog folder: list the shelves, suggest without writing, and record
   }
 });
 
+// The planner's two known faults (decisions, laptop-tools.md), waiting for the admin page's
+// rebuild. Written as to-do tests: they show the fault and do not fail the run.
+test('a place typed with ">" names the same shelves as one written with "›"', { todo: 'the place field splits only on "›", which cannot be typed' }, async () => {
+  const { mkdtempSync, mkdirSync, rmSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { writeRecord } = await import('../../shared/data-repo.mjs');
+  const { shelvesFor } = await import('../planner.mjs');
+  const folder = mkdtempSync(join(tmpdir(), 'loci-planner-'));
+  try {
+    for (const name of ['works', 'editions', 'copies', 'authors']) mkdirSync(join(folder, name));
+    for (const item of records) writeRecord(folder, item);
+    assert.equal(shelvesFor(folder, 'Home > Office'), shelvesFor(folder, 'Home › Office'));
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('recording a plan leaves alone a book added after the plan was shown', { todo: 'record() works the plan out again instead of recording the one printed' }, async () => {
+  const { mkdtempSync, mkdirSync, rmSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const { writeRecord, readRecords } = await import('../../shared/data-repo.mjs');
+  const { suggest, record } = await import('../planner.mjs');
+  const folder = mkdtempSync(join(tmpdir(), 'loci-planner-'));
+  try {
+    for (const name of ['works', 'editions', 'copies', 'authors']) mkdirSync(join(folder, name));
+    for (const item of records) writeRecord(folder, item);
+    const roomy = 'Home › Office › Case 1 › Shelf 1 = 120\nHome › Office › Case 1 › Shelf 2 = 120';
+    const shown = suggest(folder, { place: 'Home › Office', shelves: roomy, order: 'author' }).output;
+    for (const item of book(7, 'Aristotle', 'Ethics', -340, 50, 'Shelf 2')) writeRecord(folder, item); // a phone adds a book meanwhile
+    assert.ok(record(folder, { place: 'Home › Office', shelves: roomy, order: 'author' }, { now: LATER, useGit: false }).ok, 'recorded');
+    const added = readRecords(folder).find(item => item.id === 'c0py00000007');
+    assert.ok(!shown.includes('Ethics'), 'the plan shown did not have it');
+    assert.equal(added.shelfOrder ?? null, null, 'so recording should not have placed it');
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
 test('shelf lists: each shelf of a place, in shelf order or by original date, as a page for paper', async () => {
   const { shelfLists, shelfListsHtml } = await import('../lists.mjs');
   const placed = records.map(record => (record.id === 'c0py00000004' ? { ...record, shelfOrder: 'a' } : record.id === 'c0py00000001' ? { ...record, shelfOrder: 'b' } : record));

@@ -84,6 +84,23 @@ test('the daily backup runs end to end without Git, and a second run changes not
   }
 });
 
+test('when filling book data fails, the daily backup says so and still rebuilds, mirrors and records the backup', async () => {
+  const repo = sampleRepo();
+  const backup = mkdtempSync(join(tmpdir(), 'loci-backup-drive-'));
+  try {
+    mkdirSync(join(repo, 'integrations'), { recursive: true });
+    writeFileSync(join(repo, 'integrations', 'enrich.json'), '{ half a file'); // loci-enrich cannot read its memory
+    const report = await dailyBackup({ dataRepo: repo, backupFolder: backup }, { useGit: false, enrich: true, now: NOW });
+    assert.ok(report.some(line => line.startsWith('Book data was not filled this time')), report.join('\n'));
+    assert.ok(report.some(line => line.startsWith('catalog.json rebuilt')));
+    assert.ok(existsSync(join(backup, 'data', 'catalog.json')), 'the mirror was made');
+    assert.equal(JSON.parse(readFileSync(join(repo, 'backup-status.json'), 'utf8')).lastMirror, NOW);
+  } finally {
+    rmSync(repo, { recursive: true, force: true });
+    rmSync(backup, { recursive: true, force: true });
+  }
+});
+
 test('the yearly archive holds the data, the exports and a note on restoring', () => {
   const repo = sampleRepo();
   const drive = mkdtempSync(join(tmpdir(), 'loci-archive-'));
