@@ -1,6 +1,6 @@
 # Design
 
-The look of My Loci Library, chosen by Jakob Nath and his wife on 9 November 2026 after four rounds of prototypes. Every value below lives in `styles/tokens.css`; change it there and nowhere else. A clickable prototype of the design, with the sample books, is in `prototypes/design/`.
+The look of My Loci Library, chosen by Jakob Nath and his wife on 9 November 2026 after four rounds of prototypes. Every value below lives in `styles/tokens.css`; change it there and nowhere else. The clickable prototypes were removed on 13 November 2026 (git history keeps them); the app itself now shows the design.
 
 ## Direction
 
@@ -64,12 +64,12 @@ Each mode uses two greens: **accent** fills things (top bar, buttons, selected c
 - The mark: an open book with a capital L on the left page and four lines of text on the right, after the old "ex libris" bookplates. The book and the L are drawn in the main color; the lines of text are honey.
 - `icons/logo.svg`: the mark on a clear background, in forest and honey.
 - `icons/icon.svg`: the home-screen icon, the mark in ivory and honey on a forest-green rounded square.
-- In the app's top bar the mark is drawn in ivory with honey lines, from `prototypes/shared/logo.js` for now.
-- iPhones need PNG copies of the icon for the home screen; these are made from `icon.svg` in phase 5.
+- In the app's top bar the mark is drawn in ivory with honey lines, from `ui/icons.js` (`LOGO_HTML`).
+- iPhones need PNG copies of the icon for the home screen: `icons/icon-180.png` and `icons/icon-512.png`, made from `icon.svg`.
 
 ## Light and dark
 
-Both modes follow the device by default. The settings page (phase 8) offers "follow device", "light" and "dark", which set `data-theme` on the page; `styles/tokens.css` already handles all three.
+Both modes follow the device by default. The settings page offers "follow device", "light" and "dark", which set `data-theme` on the page; `styles/tokens.css` handles all three.
 
 ## Drawn spines
 

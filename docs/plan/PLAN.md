@@ -82,7 +82,7 @@ Records come in three linked layers: a **work** (the *Confessions*), its **editi
 - Original language and original title (e.g., Latin, *Confessiones*), so search finds it under either title.
 - Original date: see the dates section.
 - Main category and topic tags.
-- From format version 3 (planned 11 November 2026): its Wikidata ID, when one is known, and other titles and standard abbreviations ("Ethica Nicomachea", "Eth. Nic."), all searched.
+- From format version 3 (11 November 2026): its Wikidata ID, when one is known, and other titles and standard abbreviations ("Ethica Nicomachea", "Eth. Nic."), all searched.
 
 **Edition**
 
@@ -151,7 +151,7 @@ A wishlist item is a small standalone record, not linked to any existing work. I
 
 - Every record gets a random permanent ID that is never changed or reused. Each book also has its own address in the app, which Zotero items link to.
 - Every record carries a format version. An older copy of the app that meets newer data asks to be refreshed instead of changing anything.
-- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1. Version 2 adds each edition's catalogue numbers and subject headings (see "Book data"). Version 3 (planned 11 November 2026) adds a work's Wikidata ID and other titles, an edition's Open Library and HathiTrust IDs, short pieces inside a book, a "cite" mark on a work inside a book, and contents found by the laptop waiting to be confirmed. Outside identifiers stay fixed, named fields, the same in every file, rather than a free list.
+- New fields can be added later without breaking older records. Lending, read/unread, and whose book it is are not in version 1. Version 2 adds each edition's catalogue numbers and subject headings (see "Book data"). Version 3 (11 November 2026) adds a work's Wikidata ID and other titles, an edition's Open Library and HathiTrust IDs, short pieces inside a book, a "cite" mark on a work inside a book, and contents found by the laptop waiting to be confirmed. Versions 4 to 7 followed during alpha; `DATA_FORMAT.md`, "Format versions", lists every change. Outside identifiers stay fixed, named fields, the same in every file, rather than a free list.
 
 ## Original dates
 
@@ -246,7 +246,7 @@ Every cover is a JPEG in two sizes, made by one shared piece of code. JPEG was c
 
 - A tiny blurred placeholder shows while images load.
 - **Masters:** photos taken from the app are not saved to the phone's photo library, so a straightened master (1,600 px on the long side, high-quality JPEG) is kept in the data repo. Phones never download masters. The laptop page uses them to re-make covers later.
-- **Found covers are imported automatically.** After a scan, a cover from Open Library (then Google Books) is downloaded and saved with no question. A cover under 400 px tall counts as not found. The review card shows it, with "Wrong cover? Take a photo".
+- **Found covers are imported automatically.** After a scan, a cover from Open Library is downloaded and saved with no question (Google Books covers cannot be read by a web page, so since 14 November 2026 a book without an Open Library cover asks for a photo). A cover under 400 px tall counts as not found. The review card shows it, with "Wrong cover? Take a photo".
 - **Cover inbox:** laptop tools save downloaded covers (for example, from the Logos importer) into an inbox folder. A separate laptop page (`laptop/covers.html`, opened in a desktop browser, never loaded by phones) compresses them with the same code used for phone photos. Node cannot decode images without packages, which is why this is a browser page and not a Node tool. One image pipeline, no extra dependencies.
 - **Generated tiles:** when no cover can be found, the tools create a clean, citation-style tile showing the title, subtitle and author, at the same size as other covers.
 - Sizes and quality settings live in one clearly labeled settings block, so they are easy to tune later. Sharpness and beauty take priority over file size.
@@ -276,13 +276,13 @@ The shelf view draws every book at a believable size from the first day, and the
 - **Measuring is optional and never asked for.** When a spine photo is taken, a height box shows the current value with a small label saying where it came from ("23 cm · catalog", "~22 cm · guess"). A ruler is worth it only for a guess, usually an old or rare book. A height typed by a person is never overwritten.
 - **Catalog heights** come from library records (the Library of Congress lists most books' heights, rounded up to the whole centimeter) and, with thickness, sometimes from Open Library or Google Books (see "Book data"). A phone app cannot reach the Library of Congress, which allows neither encrypted connections nor calls from web pages, so the laptop tool `loci-enrich` (formerly `loci-sizes`) fetches them. It runs daily with the backup, and can be run by hand at any time.
 - **No reference object** (such as a sheet of paper) is needed in photos. It would sit at a different depth from the spine, limit the book size, and add a step to every photo.
-- **Later, if wanted:** one photo of a whole shelf would give the relative sizes of every book on it at once.
+- **Dropped (12 November 2026):** one photo of a whole shelf giving the relative sizes of every book on it at once.
 
 ## Book data
 
 Decided with Jakob on 10 November 2026, after testing all three sources against books from the sample shelf. The goal is that a book's first entry already holds everything worth knowing, as exact as the best source allows, without slowing down scanning.
 
-**Three sources, each used for what it does best**
+**The sources, each used for what it does best** (three on 10 November 2026; HathiTrust and Wikidata were added to the plan on 11 November)
 
 | Source | Best for | Limits |
 | --- | --- | --- |
@@ -390,7 +390,7 @@ Settings stay short, and every setting must earn its place. The defaults are cho
 - Anthologies in shelf lists: once at the earliest date, or under each contained work.
 - Which empty fields batch-add prompts for (default: title, subtitle, author, original date, binding, publisher, edition year).
 - Default sort for Library and Wishlist.
-- Lookup sources: Open Library and Google Books, each on or off. Google Books may need a free API key per device; without one it can refuse requests, and the app carries on with Open Library and manual entry.
+- Lookup sources: Open Library, HathiTrust, Google Books and Wikidata, each on or off. Google Books may need a free API key per device; without one it can refuse requests, and the app carries on with Open Library and manual entry.
 - Lists: rename or merge categories, tags, series, bindings, materials, extras and locations; add a binding, material or extra to its list, or remove one no copy uses.
 
 *This device*
@@ -443,7 +443,7 @@ The tool never reads Logos's internal database, which would break whenever Logos
 - Never deletes from Zotero, since Obsidian notes may cite those items. Books we no longer own, or delete from Loci, are tagged "Loci: no longer owned" or "Loci: removed".
 - Keeps its own link file (Loci record → Zotero item) inside the data repo. The app never reads it.
 - On the first run, links books we own that are already in Zotero and lets Loci take over their data, with a report of every difference it overwrote.
-- Uses Zotero's local connection on the laptop, with Zotero's web API as a fallback.
+- Uses Zotero's web API (found in phase 12: Zotero 7's local connection only reads).
 - Speed target: under about 10 seconds to add one newly marked book. Only changed books are processed.
 - Runs from a one-click shortcut on Windows and a matching command on Linux. The README explains optional scheduling with Windows Task Scheduler.
 
@@ -573,7 +573,7 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 - `README.md`: what it is, how to set it up, and how to use it.
 - `DATA_FORMAT.md`: every field, explained in plain language. This is the most important file in the project.
 - `HOW_IT_WORKS.md`: a plain-English guide to the parts and how to fix each one, written for a future reader who remembers nothing.
-- `SETUP_FOR_COLLEAGUES.md`: a roughly 10-minute guide for non-programmers (create a private data repo, open the app, add a key).
+- `SETUP_FOR_COLLEAGUES.md`: a guide of about fifteen minutes for non-programmers (create a private data repo, open the app, add a key).
 - `CODE_STYLE.md`: every rule for working on the app and the tools (see below), and how code is written, so any file can be understood and safely changed.
 - `CLAUDE.md`: a short pointer to `CODE_STYLE.md`, kept because some editing tools look for that file name.
 - All of it reads as written by and for people, in a plain style with no AI tone.
@@ -597,7 +597,7 @@ The tests check these on the laptop against tighter budgets (search 10 ms, book 
 
 *Changed with Jakob on 12 November 2026:* the admin page, the shelf planner and the colleague setup moved from "if wanted" to wanted; five items were dropped; printing shelf lists is allowed once the admin page and the shelf planner exist.
 
-**Wanted next (phase 16)**
+**Wanted next** (the admin page, shelf planner and shelf lists were built on 12 November 2026; the admin page is to be rebuilt)
 
 - **A laptop admin page**, essential: one timeless page on the laptop that gathers the tools' buttons and holds the project's documentation, written for a person: what each part is, how it works, how to fix it. Plain, durable and quiet in look, like a well-made reference book.
 - **A laptop shelf planner:** suggests ways to arrange the library by chosen criteria (author, original date, subject), fits books to shelves using their thicknesses and each shelf's width, lists the moves, and records the new locations and shelf order once the books are moved.
@@ -641,7 +641,7 @@ The design prototypes come right after the foundations, so the look is chosen ea
 12. **Zotero companion.**
 13. **Release:** finish the docs, write the colleague setup guide, and tag version 1.0. The app and tools repos are public from phase 1, since GitHub Pages and open source both need that.
 14. **Better book data** (added 10 November 2026): the three sources together, fuller entries at scan time, `loci-enrich` on the laptop, an easy Google Books key, and data format version 2 with catalogue numbers and subjects. See "Book data".
-15. **Anthologies and lasting sources** (added 11 November 2026): the decisions above under "Anthologies", "Original dates", "Book data", "Search" and the Zotero companion, in small steps ordered by risk: the documents, the sources' groundwork, HathiTrust, the laptop's source files, easier collections, data format version 3, Wikidata, known sets, contents photos, Zotero books without sections (changed 13 November 2026), filling existing books from known lists (put off until a real case needs it), and then one known-set list at a time. The known-set lists and the full Logos import were put on hold by Jakob on 13 November 2026, while he tests the app, to be taken up again only if testing shows they are needed. The steps are listed in `docs/plan/STATUS.md`.
-16. **Later:** price estimator and other deferred items.
+15. **Anthologies and lasting sources** (added 11 November 2026): the decisions above under "Anthologies", "Original dates", "Book data", "Search" and the Zotero companion, in small steps ordered by risk: the documents, the sources' groundwork, HathiTrust, the laptop's source files, easier collections, data format version 3, Wikidata, known sets, contents photos, Zotero books without sections (changed 13 November 2026), filling existing books from known lists (put off until a real case needs it), and then one known-set list at a time. The known-set lists and the full Logos import were put on hold by Jakob on 13 November 2026, while he tests the app, to be taken up again only if testing shows they are needed. The steps are listed in `docs/plan/archive/STATUS_to_2026-11-16.md`.
+16. **The admin page and shelf planner** (built 12 November 2026; "Wanted next" above). **Later:** the price estimator and the other "Later, if wanted" items.
 
 Sample books for phases 2 and 4: see `SAMPLE_BOOKS.md`.

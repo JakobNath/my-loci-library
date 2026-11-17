@@ -12,6 +12,6 @@ Phases 1 to 14 are finished. Their steps, checks and notes are kept word for wor
 
 ---
 
-## Phase 15: Later (not part of this run)
+## Later (not part of this run)
 
-Price estimator, title-page photo recognition, and the other deferred items in `PLAN.md`.
+Phases 15 (anthologies and lasting sources) and 16 (the admin page and shelf planner) were built on 11 and 12 November 2026; their steps are in `docs/plan/archive/STATUS_to_2026-11-16.md`. Still later: the price estimator and the other "Later, if wanted" items in `PLAN.md` (title-page photo recognition was dropped on 12 November 2026).

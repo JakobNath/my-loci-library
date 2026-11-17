@@ -62,6 +62,7 @@ my-loci-library-data/
   integrations/logos-import.json   kept by the Logos importer; the app never reads it
   integrations/enrich.json         kept by loci-enrich; the app never reads it
   integrations/answers/<id>.json.gz  each book's raw answers from the sources, kept by loci-enrich
+  integrations/shelves.txt         shelf widths, kept by the shelf planner; the app never reads it
 ```
 
 Each record's file name is its ID. Nothing else about a record is in its file name, so renaming a book never renames a file.
@@ -235,7 +236,7 @@ Each entry:
 | `color` | text or null | For a cover: its main color as `#rrggbb`, worked out once when it was saved. Used for the edge of a drawn spine. |
 | `ratio` | number or null | The image's width divided by its height. For a spine photo this gives the book's thickness from its height. |
 | `master` | true or false | Whether a master file exists. |
-| `waiting` | text or null | The address of a cover the app could not download itself (Google Books covers), for a laptop tool to fetch into `images/inbox/`. Null once the image files exist. |
+| `waiting` | text or null | Legacy: the address of a Google Books cover the app could not download itself, once meant for a laptop tool to fetch. Nothing fetches them since 1.16.0 (14 November 2026) and new images always have null; an image that still has an address has no files. |
 
 The first cover in the list is the one shown.
 
@@ -313,7 +314,7 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
   "anthologiesInShelfLists": "once",
   "batchAddPrompts": ["title", "subtitle", "authors", "datings", "binding", "publisher", "year"],
   "defaultSort": { "library": "title", "wishlist": "added" },
-  "lookups": { "openLibrary": true, "googleBooks": true },
+  "lookups": { "openLibrary": true, "hathiTrust": true, "googleBooks": true, "wikidata": true },
   "bindings": ["Hardcover", "Paperback", "Mass-market paperback", "Library binding", "Journal issue"],
   "materials": ["Cloth", "Leather", "Bonded leather"],
   "extras": ["Dust jacket", "Slipcase"],
@@ -324,6 +325,7 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
 ```
 
 - `dateStyle`: `AD` (AD/BC) or `CE` (CE/BCE).
+- `lookups`: which sources the phones ask while adding (Settings switches). A source missing from an older file is on.
 - `anthologiesInShelfLists`: `once` (at the earliest date) or `each` (under each contained work).
 - `views`: the saved views, in the order they are shown. `medium` is `physical`, `logos` or `all`; `sort` names a sort (`title`, `subtitle`, `author`, `originalDate`, `year`, `added`, `value`, `location`, `binding`, `category`, `publisher`, `pages`, `series`); `status` is `owned`, `gone` (any status but owned), `all`, or one copy status; `location` is a place path and includes everything inside it; an empty `category` or `tag` means any; `needsDate` shows only books with a work that has no original date, and `needsDetails` only physical books missing a publisher, year, pages or binding (added 11 November 2026; a view saved before then lacks it and counts as false).
 - `bindings`, `materials`, `extras` (the last two from November 2026): the choices offered for a copy's binding, material and extras. A copy's binding is chosen only from these; they are added to, renamed and removed (when no copy uses a choice) in Settings › Rename and merge. A file written before then has only `bindings`, mixing all three ("Hardcover with dust jacket", "Leather"); it is read as three lists by the same reading as a copy's older binding text, with the default materials and extras added.
@@ -332,7 +334,7 @@ Settings shared by everyone using the catalog. Device settings (theme, view, syn
 
 ## sets/ (in the app, not in the catalog)
 
-Known sets: checked contents lists of large sets (Great Books of the Western World, Luther's Works, Loeb), one plain text file each in the app's `sets/` folder, public like the app, since titles and dates are facts. Adding a volume of a known set takes its works from the list (PLAN.md, "Anthologies"). They are read by `core/known-sets.js`. A line starting with `#` is a note.
+Known sets: checked contents lists of large sets (Great Books of the Western World, Luther's Works, the Complete Greek Tragedies; others such as Loeb may follow), one plain text file each in the app's `sets/` folder, public like the app, since titles and dates are facts. Adding a volume of a known set takes its works from the list (PLAN.md, "Anthologies"). They are read by `core/known-sets.js`. A line starting with `#` is a note.
 
 ```
 set: Great Books of the Western World
@@ -366,7 +368,7 @@ It is rebuilt on the laptop (by `loci-backup`, daily or on demand) and never edi
 
 ## integrations/zotero-links.json
 
-Kept by the Zotero tool: the Zotero collection, and for each record sent (an edition, or "<edition id>/<work id>" for a section of an anthology) its Zotero item key, its pinned citation key, a fingerprint of what was last sent, whether a section has been related to its anthology, and, for a book, the key and title of the link attached under it (`attachment`, `attachmentTitle`). No person edits it, and the app never reads it. If it is lost, the next run links the books already in Zotero again, as on a first run.
+Kept by the Zotero tool: the Zotero collection, and for each record sent (an edition, or "<edition id>/<work id>" for a section of an anthology) its Zotero item key, its pinned citation key, a fingerprint of what was last sent, whether a section has been related to its anthology, and, for a book, the key and title of the link attached under it (`attachment`, `attachmentTitle`). Section entries and their "related" mark are legacy: only books are sent now (`docs/decisions/zotero-and-citations.md`, "Books only, no sections"). No person edits it, and the app never reads it. If it is lost, the next run links the books already in Zotero again, as on a first run.
 
 ```json
 { "format": 1, "collection": "ABCD2345", "items": { "chadw1ck1991": { "key": "QW3RTY78", "citationKey": "Augustine1991", "sent": "5f0c1a2b3c4d5e6f" } } }

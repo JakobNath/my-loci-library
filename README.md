@@ -6,7 +6,7 @@ Created by Jakob Nath.
 
 ## Status
 
-In use while the last build phases are finished. The app is published at
+In daily use, on real books. The app is published at
 https://jakobnath.github.io/my-loci-library/
 
 ## Starting to catalog for real
@@ -23,7 +23,7 @@ All devices share one token, which does not expire. If it is ever cancelled (a l
 ## Where to read next
 
 - `docs/plan/PLAN.md`: the master plan.
-- `DATA_FORMAT.md`: how the catalog is stored (written in phase 3).
+- `DATA_FORMAT.md`: how the catalog is stored.
 - `HOW_IT_WORKS.md`: the parts of the app and how to repair each one.
 - `CODE_STYLE.md`: every rule for working on the app and the laptop tools.
 - `DEVICE_CHECKS.md`: the few things only a real phone can show.
