@@ -15,6 +15,7 @@ Last brought up to date on 16 November 2026 (after 1.27.2).
 
 ## Waiting on Jakob
 
+- [ ] **The overnight work of 17 November** (the workspace's `handoffs/2026-11-17-overnight.md`): merge the `overnight-2026-11-17` branches (docs and tests only), the unsent Marx-Engels fix in the laptop's data folder, and the backup that skips days on battery.
 - [ ] **The checking hour**: the workspace's `handoffs/CHECKING_HOUR.md` (the three known-set lists, the admin page). Send the answers by number in a new chat; that session corrects the lists, adds their `checked:` lines and releases the Greek tragedies list.
 - [ ] **The Marx-Engels Reader**: six of its works still have one author "Karl Marx; Friedrich Engels" (saved on 1.23.0). Fix them in place, or trash the book and add it again.
 - [ ] **Phone checks**: the ten in `DEVICE_CHECKS.md`, when convenient.
@@ -26,5 +27,6 @@ Last brought up to date on 16 November 2026 (after 1.27.2).
 ## Next tasks for a working session
 
 1. **Whatever the testing turns up**: fix what Jakob and his wife report, a few problems per release, and re-run the live lookup check after any change to lookups (the workspace's `handoffs/2026-11-14-first-real-book.md` says how). The handoff's own list of lookup problems is done (1.27.2).
-2. **First week of December 2026**: check Wikidata's new query address and move to it if it answers (`SOURCES.md`).
-3. **The admin page rebuild**, when Jakob wants it. It takes in the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and a progress display (the workspace's `handoffs/2026-11-13-audit.md`).
+2. **Frankenstein's wrong original title from Wikidata** ("Frankenşteyn", German): the last of several titles wins in `core/wikidata.js`; details in the overnight handoff.
+3. **First week of December 2026**: check Wikidata's new query address (still closed on 17 November) and move to it if it answers (`SOURCES.md`).
+4. **The admin page rebuild**, when Jakob wants it. It takes in the shelf planner's two faults (it records a newly worked-out plan, not the printed one; its place field needs a "›" that cannot be typed) and a progress display (the workspace's `handoffs/2026-11-13-audit.md`).
